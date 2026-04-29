@@ -1,0 +1,37 @@
+
+============================================================
+  HookSuite — Captura Chrome DevTools
+  Objetivo: http://localhost:8888 | Duración: 60s
+============================================================
+
+⚠️  Backend no disponible. Guardando en local.
+Lanzando Chrome con debugging activo...
+✓ Chrome lanzado con debugging en puerto 9222 (PID: 10600)
+✓ CDP activo. 1 pestaña(s) disponible(s)
+  → Login :: Damn Vulnerable Web Application (DVWA) v1.10 *Development* — http://localhost:8888/login.php
+✓ Conectado al CDP: Login :: Damn Vulnerable Web Application (DVWA) v1.10 *Development*
+✓ Network domain activado
+✓ Page domain activado
+✓ Analizador de red activo
+✓ Console domain activado
+✓ Analizador de consola activo
+
+✓ Captura activa. Navega en Chrome para capturar tráfico.
+  Duración máxima: 60s | Presiona Ctrl+C para detener.
+
+     [GET] http://localhost:8888/index.php → 200 (57ms)
+     [GET] http://localhost:8888/dvwa/js/dvwaPage.js → 200 (35ms)
+     [GET] http://localhost:8888/dvwa/js/add_event_listeners.js → 200 (35ms)
+  ⚠️  Sospechoso: http://localhost:8888/vulnerabilities/sqli/?id=%27&Submit=Su → ['SQL_ERROR_IN_RESPONSE']
+  ⚠️ [GET] http://localhost:8888/vulnerabilities/sqli/?id=%27&Submit=Submit → 200 (46ms)
+
+============================================================
+  CAPTURA COMPLETADA
+  Paquetes: 4 | Sospechosos: 1
+  Tiempo medio: 43ms
+  Consola — Mensajes: 0 | Hallazgos: 0
+============================================================
+
+✓ 4 paquetes en results/captured_packets.json
+  → Enviados al backend: 0 | Fallidos: 0
+✓ Conexión CDP cerrada

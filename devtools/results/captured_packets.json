@@ -1,0 +1,169 @@
+{
+  "session_token": "devtools_session",
+  "timestamp": "2026-04-29T23:53:40.337187",
+  "total": 4,
+  "packets": [
+    {
+      "id": "a64f8ad6-db0e-405a-9f28-3f1cbb310fc2",
+      "method": "GET",
+      "url": "http://localhost:8888/index.php",
+      "status": 200,
+      "size": 6808,
+      "time": 57,
+      "timestamp": "2026-04-29T23:52:47.354540",
+      "request_headers": {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Origin": "http://localhost:8888",
+        "Referer": "http://localhost:8888/login.php",
+        "Upgrade-Insecure-Requests": "1",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
+        "sec-ch-ua": "\"Chromium\";v=\"145\", \"Not:A-Brand\";v=\"99\"",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "\"Linux\""
+      },
+      "request_body": null,
+      "response_headers": {
+        "Cache-Control": "no-cache, must-revalidate",
+        "Connection": "Keep-Alive",
+        "Content-Encoding": "gzip",
+        "Content-Length": "2685",
+        "Content-Type": "text/html;charset=utf-8",
+        "Date": "Wed, 29 Apr 2026 23:52:47 GMT",
+        "Expires": "Tue, 23 Jun 2009 12:00:00 GMT",
+        "Keep-Alive": "timeout=5, max=99",
+        "Pragma": "no-cache",
+        "Server": "Apache/2.4.25 (Debian)",
+        "Vary": "Accept-Encoding"
+      },
+      "response_body": "\r\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\r\n\r\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\r\n\r\n\t<head>\r\n\t\t<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\r\n\r\n\t\t<title>Welcome :: Damn Vulnerable Web Application (DVWA) v1.10 *Development*</title>\r\n\r\n\t\t<link rel=\"stylesheet\" type=\"text/css\" href=\"dvwa/css/main.css\" />\r\n\r\n\t\t<link rel=\"icon\" type=\"\\image/ico\" href=\"favicon.ico\" />\r\n\r\n\t\t<script type=\"text/javascript\" src=\"dvwa/js/dvwaPage.js\"></script>\r\n\r\n\t</head>\r\n\r\n\t<body class=\"home\">\r\n\t\t<div id=\"container\">\r\n\r\n\t\t\t<div id=\"header\">\r\n\r\n\t\t\t\t<img src=\"dvwa/images/logo.png\" alt=\"Damn Vulnerable Web Application\" />\r\n\r\n\t\t\t</div>\r\n\r\n\t\t\t<div id=\"main_menu\">\r\n\r\n\t\t\t\t<div id=\"main_menu_padded\">\r\n\t\t\t\t<ul class=\"menuBlocks\"><li class=\"selected\"><a href=\".\">Home</a></li>\n<li class=\"\"><a href=\"instructions.php\">Instructions</a></li>\n<li class=\"\"><a href=\"setup.php\">Setup / Reset DB</a></li>\n</ul><ul class=\"menuBlocks\"><li class=\"\"><a href=\"vulnerabilities/brute/\">Brute Force</a></li>\n<li class=\"\"><a href=\"vulnerabilities/exec/\">Command Injection</a></li>\n<li class=\"\"><a href=\"vulnerabilities/csrf/\">CSRF</a></li>\n<li class=\"\"><a href=\"vulnerabilities/fi/.?page=include.php\">File Inclusion</a></li>\n<li class=\"\"><a href=\"vulnerabilities/upload/\">File Upload</a></li>\n<li class=\"\"><a href=\"vulnerabilities/captcha/\">Insecure CAPTCHA</a></li>\n<li class=\"\"><a href=\"vulnerabilities/sqli/\">SQL Injection</a></li>\n<li class=\"\"><a href=\"vulnerabilities/sqli_blind/\">SQL Injection (Blind)</a></li>\n<li class=\"\"><a href=\"vulnerabilities/weak_id/\">Weak Session IDs</a></li>\n<li class=\"\"><a href=\"vulnerabilities/xss_d/\">XSS (DOM)</a></li>\n<li class=\"\"><a href=\"vulnerabilities/xss_r/\">XSS (Reflected)</a></li>\n<li class=\"\"><a href=\"vulnerabilities/xss_s/\">XSS (Stored)</a></li>\n<li class=\"\"><a href=\"vulnerabilities/csp/\">CSP Bypass</a></li>\n<li class=\"\"><a href=\"vulnerabilities/javascript/\">JavaScript</a></li>\n</ul><ul class=\"menuBlocks\"><li class=\"\"><a href=\"security.php\">DVWA Security</a></li>\n<li class=\"\"><a href=\"phpinfo.php\">PHP Info</a></li>\n<li class=\"\"><a href=\"about.php\">About</a></li>\n</ul><ul class=\"menuBlocks\"><li class=\"\"><a href=\"logout.php\">Logout</a></li>\n</ul>\r\n\t\t\t\t</div>\r\n\r\n\t\t\t</div>\r\n\r\n\t\t\t<div id=\"main_body\">\r\n\r\n\t\t\t\t\r\n<div class=\"body_padded\">\r\n\t<h1>Welcome to Damn Vulnerable Web Application!</h1>\r\n\t<p>Damn Vulnerable Web Application (DVWA) is a PHP/MySQL web application that is damn vulnerable. Its main goal is to be an aid for security professionals to test their skills and tools in a legal environment, help web developers better understand the processes of securing web applications and to aid both students & teachers to learn about web application security in a controlled class room environment.</p>\r\n\t<p>The aim of DVWA is to <em>practice some of the most common web vulnerabilities</em>, with <em>various levels of difficultly</em>, with a simple straightforward interface.</p>\r\n\t<hr />\r\n\t<br />\r\n\r\n\t<h2>General Instructions</h2>\r\n\t<p>It is up to the user how they approach DVWA. Either by working through every module at a fixed level, or selecting any module and working up to reach the highest level they can before moving onto the next one. There is not a fixed object to complete a module; however users should feel that they have successfully exploited the system as best as they possible could by using that particular vulnerability.</p>\r\n\t<p>Please note, there are <em>both documented and undocumented vulnerability</em> with this software. This is intentional. You are encouraged to try and discover as many issues as possible.</p>\r\n\t<p>DVWA also includes a Web Application Firewall (WAF), PHPIDS, which can be enabled at any stage to further increase the difficulty. This will demonstrate how adding another layer of security may block certain malicious actions. Note, there are also various public methods at bypassing these protections (so this can be seen as an extension for more advanced users)!</p>\r\n\t<p>There is a help button at the bottom of each page, which allows you to view hints & tips for that vulnerability. There are also additional links for further background reading, which relates to that security issue.</p>\r\n\t<hr />\r\n\t<br />\r\n\r\n\t<h2>WARNING!</h2>\r\n\t<p>Damn Vulnerable Web Application is damn vulnerable! <em>Do not upload it to your hosting provider's public html folder or any Internet facing servers</em>, as they will be compromised. It is recommend using a virtual machine (such as <a href=\"https://www.virtualbox.org/\" target=\"_blank\">VirtualBox</a> or <a href=\"https://www.vmware.com/\" target=\"_blank\">VMware</a>), which is set to NAT networking mode. Inside a guest machine, you can downloading and install <a href=\"https://www.apachefriends.org/en/xampp.html\" target=\"_blank\">XAMPP</a> for the web server and database.</p>\r\n\t<br />\r\n\t<h3>Disclaimer</h3>\r\n\t<p>We do not take responsibility for the way in which any one uses this application (DVWA). We have made the purposes of the application clear and it should not be used maliciously. We have given warnings and taken measures to prevent users from installing DVWA on to live web servers. If your web server is compromised via an installation of DVWA it is not our responsibility it is the responsibility of the person/s who uploaded and installed it.</p>\r\n\t<hr />\r\n\t<br />\r\n\r\n\t<h2>More Training Resources</h2>\r\n\t<p>DVWA aims to cover the most commonly seen vulnerabilities found in today's web applications. However there are plenty of other issues with web applications. Should you wish to explore any additional attack vectors, or want more difficult challenges, you may wish to look into the following other projects:</p>\r\n\t<ul>\r\n\t\t<li><a href=\"http://www.itsecgames.com/\" target=\"_blank\">bWAPP</a></li>\r\n\t\t<li><a href=\"http://sourceforge.net/projects/mutillidae/files/mutillidae-project/\" target=\"_blank\">NOWASP</a> (formerly known as <a href=\"http://www.irongeek.com/i.php?page=mutillidae/mutillidae-deliberately-vulnerable-php-owasp-top-10\" target=\"_blank\">Mutillidae</a>)</li>\r\n\t\t<li><a href=\"https://www.owasp.org/index.php/OWASP_Broken_Web_Applications_Project\" target=\"_blank\">OWASP Broken Web Applications Project\r\n</a></li>\r\n\t</ul>\r\n\t<hr />\r\n\t<br />\r\n</div>\r\n\t\t\t\t<br /><br />\r\n\t\t\t\t<div class=\"body_padded\"><div class=\"message\">You have logged in as 'admin'</div></div>\r\n\r\n\t\t\t</div>\r\n\r\n\t\t\t<div class=\"clear\">\r\n\t\t\t</div>\r\n\r\n\t\t\t<div id=\"system_info\">\r\n\t\t\t\t<div align=\"left\"><em>Username:</em> admin<br /><em>Security Level:</em> low<br /><em>PHPIDS:</em> disabled</div>\r\n\t\t\t</div>\r\n\r\n\t\t\t<div id=\"footer\">\r\n\r\n\t\t\t\t<p>Damn Vulnerable Web Application (DVWA) v1.10 *Development*</p>\r\n\t\t\t\t<script src='/dvwa/js/add_event_listeners.js'></script>\r\n\r\n\t\t\t</div>\r\n\r\n\t\t</div>\r\n\r\n\t</body>\r\n\r\n</html>",
+      "suspicious": false,
+      "vulnerable": false,
+      "security_issues": [
+        "MISSING_HEADER: content-security-policy",
+        "MISSING_HEADER: x-frame-options",
+        "MISSING_HEADER: strict-transport-security",
+        "MISSING_HEADER: x-content-type-options",
+        "MISSING_HEADER: referrer-policy"
+      ]
+    },
+    {
+      "id": "40683ff4-6b64-43f7-a0d8-126f43100f47",
+      "method": "GET",
+      "url": "http://localhost:8888/dvwa/js/dvwaPage.js",
+      "status": 200,
+      "size": 1030,
+      "time": 35,
+      "timestamp": "2026-04-29T23:52:47.394812",
+      "request_headers": {
+        "sec-ch-ua-platform": "\"Linux\"",
+        "Referer": "http://localhost:8888/index.php",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
+        "sec-ch-ua": "\"Chromium\";v=\"145\", \"Not:A-Brand\";v=\"99\"",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "request_body": null,
+      "response_headers": {
+        "Content-Encoding": "gzip",
+        "ETag": "\"406-5780ba3955700-gzip\"",
+        "Accept-Ranges": "bytes",
+        "Content-Length": "466",
+        "Date": "Wed, 29 Apr 2026 23:50:01 GMT",
+        "Last-Modified": "Fri, 12 Oct 2018 17:44:28 GMT",
+        "Vary": "Accept-Encoding",
+        "Server": "Apache/2.4.25 (Debian)",
+        "Content-Type": "application/javascript"
+      },
+      "response_body": "/* Help popup */\r\n\r\nfunction popUp(URL) {\r\n\tday = new Date();\r\n\tid = day.getTime();\r\n\twindow.open(URL, '\" + id + \"', 'toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,width=800,height=300,left=540,top=250');\r\n\t//eval(\"page\" + id + \" = window.open(URL, '\" + id + \"', 'toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,width=800,height=300,left=540,top=250');\");\r\n}\r\n\r\n/* Form validation */\r\n\r\nfunction validate_required(field,alerttxt)\r\n{\r\nwith (field) {\r\n  if (value==null||value==\"\") {\r\n    alert(alerttxt);return false;\r\n  }\r\n  else {\r\n    return true;\r\n  }\r\n }\r\n}\r\n\r\nfunction validateGuestbookForm(thisform) {\r\nwith (thisform) {\r\n\r\n  // Guestbook form\r\n  if (validate_required(txtName,\"Name can not be empty.\")==false)\r\n  {txtName.focus();return false;}\r\n  \r\n  if (validate_required(mtxMessage,\"Message can not be empty.\")==false)\r\n  {mtxMessage.focus();return false;}\r\n  \r\n  }\r\n}\r\n\r\nfunction confirmClearGuestbook() {\r\n\treturn confirm(\"Are you sure you want to clear the guestbook?\");\r\n}\r\n",
+      "suspicious": false,
+      "vulnerable": false,
+      "security_issues": [
+        "MISSING_HEADER: content-security-policy",
+        "MISSING_HEADER: x-frame-options",
+        "MISSING_HEADER: strict-transport-security",
+        "MISSING_HEADER: x-content-type-options",
+        "MISSING_HEADER: referrer-policy"
+      ]
+    },
+    {
+      "id": "211c04d8-8ed9-4110-b19c-af111e18ed6b",
+      "method": "GET",
+      "url": "http://localhost:8888/dvwa/js/add_event_listeners.js",
+      "status": 200,
+      "size": 593,
+      "time": 35,
+      "timestamp": "2026-04-29T23:52:47.394859",
+      "request_headers": {
+        "sec-ch-ua-platform": "\"Linux\"",
+        "Referer": "http://localhost:8888/index.php",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
+        "sec-ch-ua": "\"Chromium\";v=\"145\", \"Not:A-Brand\";v=\"99\"",
+        "sec-ch-ua-mobile": "?0"
+      },
+      "request_body": null,
+      "response_headers": {
+        "Content-Encoding": "gzip",
+        "ETag": "\"251-5780ba3955700-gzip\"",
+        "Accept-Ranges": "bytes",
+        "Content-Length": "276",
+        "Date": "Wed, 29 Apr 2026 23:50:01 GMT",
+        "Last-Modified": "Fri, 12 Oct 2018 17:44:28 GMT",
+        "Vary": "Accept-Encoding",
+        "Server": "Apache/2.4.25 (Debian)",
+        "Content-Type": "application/javascript"
+      },
+      "response_body": "// These functions need to be called after the content they reference\n// has been added to the page otherwise they will fail.\n\nfunction addEventListeners() {\n\tvar source_button = document.getElementById (\"source_button\");\n\n\tif (source_button) {\n\t\tsource_button.addEventListener(\"click\", function() {\n\t\t\tvar url=source_button.dataset.sourceUrl;\n\t\t\tpopUp (url);\n\t\t});\n\t}\n\n\tvar help_button = document.getElementById (\"help_button\");\n\n\tif (help_button) {\n\t\thelp_button.addEventListener(\"click\", function() {\n\t\t\tvar url=help_button.dataset.helpUrl;\n\t\t\tpopUp (url);\n\t\t});\n\t}\n}\n\naddEventListeners();\n",
+      "suspicious": false,
+      "vulnerable": false,
+      "security_issues": [
+        "MISSING_HEADER: content-security-policy",
+        "MISSING_HEADER: x-frame-options",
+        "MISSING_HEADER: strict-transport-security",
+        "MISSING_HEADER: x-content-type-options",
+        "MISSING_HEADER: referrer-policy"
+      ]
+    },
+    {
+      "id": "ec0ce492-6fc3-49e0-81d5-643fe06274f5",
+      "method": "GET",
+      "url": "http://localhost:8888/vulnerabilities/sqli/?id=%27&Submit=Submit",
+      "status": 200,
+      "size": 162,
+      "time": 46,
+      "timestamp": "2026-04-29T23:52:53.873416",
+      "request_headers": {
+        "Upgrade-Insecure-Requests": "1",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
+        "sec-ch-ua": "\"Chromium\";v=\"145\", \"Not:A-Brand\";v=\"99\"",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "\"Linux\""
+      },
+      "request_body": null,
+      "response_headers": {
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        "Connection": "Keep-Alive",
+        "Content-Encoding": "gzip",
+        "Content-Length": "141",
+        "Content-Type": "text/html; charset=UTF-8",
+        "Date": "Wed, 29 Apr 2026 23:52:53 GMT",
+        "Expires": "Thu, 19 Nov 1981 08:52:00 GMT",
+        "Keep-Alive": "timeout=5, max=100",
+        "Pragma": "no-cache",
+        "Server": "Apache/2.4.25 (Debian)",
+        "Vary": "Accept-Encoding"
+      },
+      "response_body": "<pre>You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ''''' at line 1</pre>",
+      "suspicious": true,
+      "vulnerable": false,
+      "suspicious_reasons": [
+        "SQL_ERROR_IN_RESPONSE"
+      ],
+      "security_issues": [
+        "MISSING_HEADER: content-security-policy",
+        "MISSING_HEADER: x-frame-options",
+        "MISSING_HEADER: strict-transport-security",
+        "MISSING_HEADER: x-content-type-options",
+        "MISSING_HEADER: referrer-policy"
+      ]
+    }
+  ]
+}
