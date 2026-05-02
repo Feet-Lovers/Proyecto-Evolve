@@ -136,7 +136,15 @@ class AttackOrchestrator:
 
         if result and result.get("result"):
             fingerprint = result["result"]
-            analysis = await self.classifier.analyze_fingerprint(fingerprint)
+            headers = {
+                "server": fingerprint.get("server", ""),
+                "x-powered-by": fingerprint.get("powered_by", ""),
+            }
+            analysis = self.classifier.fingerprint(
+                headers=headers,
+                url=fingerprint.get("url", target_url),
+                response_body="",
+            )
             if analysis:
                 priorities = analysis.get("attack_priorities", [])
                 print(f"  ✓ Prioridades: {[p['tipo'] for p in priorities[:3]]}")
@@ -196,7 +204,7 @@ class AttackOrchestrator:
                 }
 
                 self.analyses_count += 1
-                analysis = await self.classifier.analyze_packet(fake_packet)
+                analysis = self.classifier.analyze_packet(fake_packet)
 
                 if analysis and analysis.get("confianza", 0) >= 0.6:
                     confirmed = await self._confirm_vulnerability(
