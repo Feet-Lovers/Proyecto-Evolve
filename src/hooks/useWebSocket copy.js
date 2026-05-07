@@ -12,25 +12,16 @@ export function useWebSocket(sessionToken) {
 
   useEffect(() => {
     if (config.USE_MOCKS || !sessionToken) return
-
     const ws = new WebSocket(`${WS_URL}/${sessionToken}`)
     wsRef.current = ws
-
     ws.onopen = () => setConnected(true)
     ws.onclose = () => setConnected(false)
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data)
-      if (data.type === 'request_intercepted') {
-        setRequests(prev => [data.payload, ...prev])
-      }
-      if (data.type === 'vulnerability_detected') {
-        setVulnerabilities(prev => [data.payload, ...prev])
-      }
-      if (data.type === 'network_packet') {
-        setRequests(prev => [data.payload, ...prev])
-      }
+      if (data.type === 'request_intercepted') setRequests(prev => [data.payload, ...prev])
+      if (data.type === 'vulnerability_detected') setVulnerabilities(prev => [data.payload, ...prev])
+      if (data.type === 'network_packet') setRequests(prev => [data.payload, ...prev])
     }
-
     return () => ws.close()
   }, [sessionToken])
 
