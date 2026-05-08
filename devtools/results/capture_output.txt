@@ -6,7 +6,7 @@
 
 ⚠️  Backend no disponible. Guardando en local.
 Lanzando Chrome con debugging activo...
-✓ Chrome lanzado con debugging en puerto 9222 (PID: 10600)
+✓ Chrome lanzado con debugging en puerto 9222 (PID: 13169)
 ✓ CDP activo. 1 pestaña(s) disponible(s)
   → Login :: Damn Vulnerable Web Application (DVWA) v1.10 *Development* — http://localhost:8888/login.php
 ✓ Conectado al CDP: Login :: Damn Vulnerable Web Application (DVWA) v1.10 *Development*
@@ -19,19 +19,26 @@ Lanzando Chrome con debugging activo...
 ✓ Captura activa. Navega en Chrome para capturar tráfico.
   Duración máxima: 60s | Presiona Ctrl+C para detener.
 
-     [GET] http://localhost:8888/index.php → 200 (57ms)
-     [GET] http://localhost:8888/dvwa/js/dvwaPage.js → 200 (35ms)
-     [GET] http://localhost:8888/dvwa/js/add_event_listeners.js → 200 (35ms)
+     [GET] http://localhost:8888/index.php → 200 (94ms)
+     [GET] http://localhost:8888/dvwa/js/dvwaPage.js → 200 (57ms)
+     [GET] http://localhost:8888/dvwa/js/add_event_listeners.js → 200 (57ms)
   ⚠️  Sospechoso: http://localhost:8888/vulnerabilities/sqli/?id=%27&Submit=Su → ['SQL_ERROR_IN_RESPONSE']
-  ⚠️ [GET] http://localhost:8888/vulnerabilities/sqli/?id=%27&Submit=Submit → 200 (46ms)
+  ⚠️ [GET] http://localhost:8888/vulnerabilities/sqli/?id=%27&Submit=Submit → 200 (44ms)
+     [GET] http://localhost:8888/dvwa/js/dvwaPage.js → 200 (1221ms)
+     [GET] http://localhost:8888/dvwa/js/add_event_listeners.js → 200 (1220ms)
+     [GET] http://localhost:8888/vulnerabilities/xss_r/?name=%3Cscript%3Ealert(1) → 200 (1294ms)
+     [GET] http://localhost:8888/dvwa/js/dvwaPage.js → 200 (15ms)
+     [GET] http://localhost:8888/dvwa/js/add_event_listeners.js → 200 (16ms)
+  ⚠️  Sospechoso: http://localhost:8888/vulnerabilities/sqli/?id=1%20UNION%20S → ['INJECTION_CHAR_IN_REQUEST']
+  ⚠️ [GET] http://localhost:8888/vulnerabilities/sqli/?id=1%20UNION%20SELECT%201, → 200 (50ms)
 
 ============================================================
   CAPTURA COMPLETADA
-  Paquetes: 4 | Sospechosos: 1
-  Tiempo medio: 43ms
+  Paquetes: 10 | Sospechosos: 2
+  Tiempo medio: 406ms
   Consola — Mensajes: 0 | Hallazgos: 0
 ============================================================
 
-✓ 4 paquetes en results/captured_packets.json
+✓ 10 paquetes en results/captured_packets.json
   → Enviados al backend: 0 | Fallidos: 0
 ✓ Conexión CDP cerrada
