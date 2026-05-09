@@ -1,8 +1,14 @@
 // ============================================================
 // HookSuite — Informe técnico de la Práctica 1
 // Módulo de Ciberseguridad Avanzada | Curso 2026
-// Compilar: typst compile main.typ informe_hooksuite.pdf
+// Compilar: typst compile main.typ informe_hooksuite.pdf --root docs
 // ============================================================
+
+#let azul = rgb("#0F1B2D")
+#let azul-acento = rgb("#1A6FBF")
+#let azul-claro = rgb("#EBF3FB")
+#let gris-texto = rgb("#444444")
+#let gris-borde = rgb("#CCCCCC")
 
 #set document(
   title: "HookSuite — Herramienta de auditoría de seguridad web con IA",
@@ -11,115 +17,173 @@
 
 #set page(
   paper: "a4",
-  margin: (top: 2.5cm, bottom: 2.5cm, left: 3cm, right: 2.5cm),
-  numbering: "1",
-  number-align: center,
+  margin: (top: 0cm, bottom: 0cm, left: 0cm, right: 0cm),
+  numbering: none,
 )
 
 #set text(
-  font: "New Computer Modern",
+  font: "Arial",
   size: 11pt,
   lang: "es",
+  fill: rgb("#1a1a1a"),
 )
 
-#set heading(numbering: "1.1.")
-
-#set par(
-  justify: true,
-  leading: 0.75em,
-)
-
-#show heading.where(level: 1): it => {
-  pagebreak(weak: true)
-  v(1em)
-  text(size: 16pt, weight: "bold", it)
-  v(0.5em)
-}
-
-#show heading.where(level: 2): it => {
-  v(0.8em)
-  text(size: 13pt, weight: "bold", it)
-  v(0.3em)
-}
-
-#show raw.where(block: true): it => {
-  set text(font: "New Computer Modern Mono", size: 9pt)
-  block(
-    fill: luma(245),
-    inset: 10pt,
-    radius: 4pt,
-    width: 100%,
-    it,
-  )
-}
+#set par(justify: true, leading: 0.75em)
 
 // ============================================================
 // PORTADA
 // ============================================================
 
-#page(numbering: none)[
-  #align(center)[
-    #v(3cm)
+#block(width: 100%, height: 100%, fill: azul)[
+  #block(width: 100%, height: 2cm, fill: azul-acento)[]
 
-    #text(size: 28pt, weight: "bold")[HookSuite]
+  #pad(left: 3cm, right: 3cm, top: 1.5cm)[
+    #text(size: 10pt, fill: rgb("#7EB8E8"), tracking: 2pt)[
+      CIBERSEGURIDAD AVANZADA · CURSO 2026 · PRÁCTICA 1
+    ]
 
-    #v(0.5cm)
+    #v(1.5cm)
 
-    #text(size: 16pt, fill: rgb("#444444"))[
+    #text(size: 52pt, weight: "bold", fill: white)[Hook]#text(
+      size: 52pt, weight: "bold", fill: azul-acento,
+    )[Suite]
+
+    #v(0.4cm)
+
+    #text(size: 14pt, fill: rgb("#8FA8C0"))[
       Herramienta de auditoría de seguridad web con Inteligencia Artificial
     ]
 
-    #v(2cm)
-
-    #line(length: 100%, stroke: 1pt + rgb("#333333"))
-
+    #v(1cm)
+    #block(width: 60pt, height: 2pt, fill: azul-acento)[]
     #v(1cm)
 
-    #text(size: 12pt)[
-      *Módulo:* Ciberseguridad Avanzada | Curso 2026 \
-      *Práctica:* Práctica 1 — Red Team \
-      *Línea elegida:* Opción 03 — Escáner de vulnerabilidades web con IA
+    #text(size: 11pt, fill: rgb("#8FA8C0"))[
+      *#text(fill: rgb("#C8D8E8"))[Módulo]* · Ciberseguridad Avanzada | Curso 2026 \
+      *#text(fill: rgb("#C8D8E8"))[Práctica]* · Práctica 1 — Red Team \
+      *#text(fill: rgb("#C8D8E8"))[Línea]* · Opción 03 — Escáner de vulnerabilidades web con IA
     ]
 
-    #v(2cm)
+    #v(1.5cm)
+    #line(length: 100%, stroke: 0.5pt + rgb("#1E3A5F"))
+    #v(0.8cm)
 
-    #text(size: 11pt)[
-      *Equipo de desarrollo*
-    ]
+    #text(size: 9pt, fill: rgb("#5B8DB8"), tracking: 1.5pt)[EQUIPO DE DESARROLLO]
+    #v(0.6cm)
 
-    #v(0.5cm)
+    #let miembro(rol, nombre, modulo) = {
+      grid(
+        columns: (1.2cm, 5cm, 1fr),
+        gutter: 0.5cm,
+        align: left,
+        block(fill: rgb("#1E3A5F"), inset: (x: 6pt, y: 4pt), radius: 3pt)[
+          #text(size: 9pt, weight: "bold", fill: azul-acento)[#rol]
+        ],
+        text(size: 11pt, fill: rgb("#C8D8E8"), weight: "bold")[#nombre],
+        text(size: 10pt, fill: rgb("#8FA8C0"))[#modulo],
+      )
+      v(0.4cm)
+    }
 
-    #table(
-      columns: (auto, auto, auto),
-      inset: 8pt,
-      align: left,
-      stroke: 0.5pt + rgb("#cccccc"),
-      [*Rol*], [*Nombre*], [*Módulo*],
-      [P1], [Ivan Medina Castro], [Frontend — React + Vite + Tailwind],
-      [P2], [Macarena Rogerio], [Backend — FastAPI + mitmproxy],
-      [P3], [Nacho García Monge], [Playwright — Automatización],
-      [P4], [Carlos Bañuelos Fernández], [DevTools — Chrome DevTools Protocol],
-      [P5], [Jose María López Ausín], [IA + GitHub — Claude API],
+    #miembro("P1", "Ivan Medina Castro", "Frontend — React + Vite + Tailwind")
+    #miembro("P2", "Macarena Rogerio", "Backend — FastAPI + mitmproxy")
+    #miembro("P3", "Nacho García Monge", "Playwright — Automatización")
+    #miembro("P4", "Carlos Bañuelos Fernández", "DevTools — Chrome DevTools Protocol")
+    #miembro("P5", "Jose María López Ausín", "IA + GitHub — Claude API")
+
+    #v(1cm)
+    #line(length: 100%, stroke: 0.5pt + rgb("#1E3A5F"))
+    #v(0.6cm)
+
+    #grid(
+      columns: (1fr, auto),
+      text(size: 10pt, fill: azul-acento)[github.com/Feet-Lovers/Proyecto-Evolve],
+      text(size: 10pt, fill: rgb("#8FA8C0"))[Entrega · 25 de Mayo de 2026],
     )
-
-    #v(2cm)
-
-    #text(size: 11pt, fill: rgb("#666666"))[
-      Repositorio: #link("https://github.com/Feet-Lovers/Proyecto-Evolve") \
-      Entrega: 25 de Mayo de 2026
-    ]
   ]
 ]
+
+// ============================================================
+// CONFIGURACIÓN PÁGINAS INTERIORES
+// ============================================================
+
+#set page(
+  paper: "a4",
+  margin: (top: 2.5cm, bottom: 2.5cm, left: 3cm, right: 2.5cm),
+  numbering: "1",
+  number-align: center,
+  header: [
+    #grid(
+      columns: (1fr, auto),
+      align: (left, right),
+      text(size: 9pt, fill: rgb("#888888"))[HookSuite — Ciberseguridad Avanzada | Curso 2026],
+      text(size: 9pt, fill: azul-acento)[Práctica 1],
+    )
+    #line(length: 100%, stroke: 0.5pt + gris-borde)
+  ],
+  footer: [
+    #line(length: 100%, stroke: 0.5pt + gris-borde)
+    #v(4pt)
+    #align(center)[
+      #text(size: 9pt, fill: rgb("#888888"))[context counter(page).display("1")]
+    ]
+  ],
+)
+
+#set text(size: 11pt, fill: rgb("#1a1a1a"))
+#set heading(numbering: "1.1.")
+
+#show heading.where(level: 1): it => {
+  pagebreak(weak: true)
+  v(0.5em)
+  block[
+    #text(size: 9pt, fill: azul-acento, tracking: 1.5pt, weight: "regular")[
+      #upper[Sección #counter(heading).display("1")]
+    ]
+    #v(0.2em)
+    #text(size: 20pt, weight: "bold", fill: azul)[#it.body]
+    #v(0.2em)
+    #block(width: 50pt, height: 2pt, fill: azul-acento)[]
+  ]
+  v(0.8em)
+}
+
+#show heading.where(level: 2): it => {
+  v(0.8em)
+  grid(
+    columns: (3pt, 1fr),
+    gutter: 8pt,
+    block(width: 3pt, height: 16pt, fill: azul-acento, radius: 1pt)[],
+    text(size: 13pt, weight: "bold", fill: azul)[#it.body],
+  )
+  v(0.3em)
+}
+
+#show heading.where(level: 3): it => {
+  v(0.5em)
+  text(size: 11pt, weight: "bold", fill: gris-texto)[#it.body]
+  v(0.2em)
+}
+
+#show raw.where(block: true): it => {
+  block(fill: azul, inset: 12pt, radius: 4pt, width: 100%)[
+    #text(font: "Courier New", size: 9pt, fill: rgb("#8FA8C0"))[#it]
+  ]
+}
+
+#set table(stroke: none, inset: (x: 10pt, y: 8pt))
 
 // ============================================================
 // ÍNDICE
 // ============================================================
 
-#page(numbering: none)[
-  #outline(
-    title: "Índice de contenidos",
-    indent: auto,
-  )
+#page(header: none, footer: none, numbering: none)[
+  #v(2cm)
+  #text(size: 20pt, weight: "bold", fill: azul)[Índice de contenidos]
+  #v(0.3cm)
+  #block(width: 50pt, height: 2pt, fill: azul-acento)[]
+  #v(1cm)
+  #outline(title: none, indent: auto)
 ]
 
 // ============================================================
@@ -174,8 +238,8 @@ Este proyecto desarrolla competencias en cinco áreas simultáneamente: desarrol
 
 = Arquitectura técnica
 
-// TODO — P5: Insertar diagrama de arquitectura cuando esté disponible
-// Usar: #figure(image("../capturas/arquitectura.png", width: 100%), caption: "Arquitectura técnica de HookSuite")
+// TODO: Insertar diagrama cuando esté disponible
+// #figure(image("../capturas/arquitectura.png", width: 100%), caption: "Arquitectura técnica de HookSuite")
 
 == Visión general del sistema
 
@@ -199,31 +263,31 @@ Playwright    IA Claude     DevTools CDP
 == Stack tecnológico
 
 #table(
-  columns: (auto, auto, auto),
-  inset: 8pt,
-  align: left,
-  stroke: 0.5pt + rgb("#cccccc"),
-  [*Módulo*], [*Tecnologías*], [*Responsable*],
+  columns: (auto, 1fr, auto),
+  fill: (_, y) => if y == 0 { azul } else if calc.odd(y) { azul-claro } else { white },
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Módulo]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Tecnologías]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Responsable]],
   [Frontend], [React 18 + Vite + Tailwind CSS], [P1 — Ivan],
   [Backend], [Python 3.11 + FastAPI + mitmproxy + WebSockets], [P2 — Macarena],
   [Playwright], [Playwright + asyncio + httpx], [P3 — Nacho],
   [DevTools], [Chrome DevTools Protocol + Python], [P4 — Carlos],
   [IA], [Anthropic Claude API (claude-sonnet-4-20250514)], [P5 — Jose María],
-  [Infraestructura], [Docker + Hetzner CX22 + Nginx + GitHub Actions], [P2 + P5],
+  [Infraestructura], [Docker + Hetzner Cloud CX22 + Nginx + GitHub Actions], [P2 + P5],
 )
 
 == Contratos de integración entre módulos
 
 #table(
-  columns: (auto, auto, auto),
-  inset: 8pt,
-  align: left,
-  stroke: 0.5pt + rgb("#cccccc"),
-  [*Integración*], [*Endpoint*], [*Estado*],
+  columns: (1fr, 1fr, auto),
+  fill: (_, y) => if y == 0 { azul } else if calc.odd(y) { azul-claro } else { white },
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Integración]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Endpoint]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Estado]],
   [P4 → P2 (paquetes de red)], [`POST /api/network/packet`], [Implementado],
-  [P5 → P2 → P3 (instrucciones de ataque)], [`POST /api/playwright/instruction/{token}`], [Implementado],
+  [P5 → P2 → P3 (instrucciones)], [`POST /api/playwright/instruction/{token}`], [Implementado],
   [P3 → P2 (resultado del ataque)], [`POST /api/playwright/result/{token}`], [Implementado],
-  [P5 → P2 (vulnerabilidades detectadas)], [`POST /api/vulnerabilities`], [Implementado],
+  [P5 → P2 (vulnerabilidades)], [`POST /api/vulnerabilities`], [Implementado],
 )
 
 // ============================================================
@@ -232,87 +296,30 @@ Playwright    IA Claude     DevTools CDP
 
 = Proceso de desarrollo
 
-// ----- 4.1 FRONTEND — P1 -----
 == Módulo Frontend (P1 — Ivan Medina Castro)
 
-// TODO — P1: Insertar aquí tu sección de documentación técnica
-// Contenido mínimo esperado:
-// - Stack: React 18 + Vite + Tailwind CSS
-// - Componentes principales implementados
-// - Gestión del estado y WebSocket
-// - Capturas del dashboard funcionando
-// Formato: Markdown convertido a Typst
-
-#rect(
-  fill: luma(250),
-  stroke: 1pt + rgb("#dddddd"),
-  inset: 12pt,
-  width: 100%,
-)[
+#rect(fill: azul-claro, stroke: 1pt + azul-acento, inset: 12pt, width: 100%, radius: 4pt)[
   _Sección pendiente de entrega por P1 — Límite: 19 de Mayo de 2026_
 ]
 
-// ----- 4.2 BACKEND — P2 -----
 == Módulo Backend (P2 — Macarena Rogerio)
 
-// TODO — P2: Insertar aquí tu sección de documentación técnica
-// Contenido mínimo esperado:
-// - Stack: FastAPI + mitmproxy + WebSockets
-// - Endpoints implementados con descripción
-// - Configuración del proxy PAC
-// - Capturas del proxy interceptando tráfico
-// Formato: Markdown convertido a Typst
-
-#rect(
-  fill: luma(250),
-  stroke: 1pt + rgb("#dddddd"),
-  inset: 12pt,
-  width: 100%,
-)[
+#rect(fill: azul-claro, stroke: 1pt + azul-acento, inset: 12pt, width: 100%, radius: 4pt)[
   _Sección pendiente de entrega por P2 — Límite: 19 de Mayo de 2026_
 ]
 
-// ----- 4.3 PLAYWRIGHT — P3 -----
 == Módulo Playwright (P3 — Nacho García Monge)
 
-// TODO — P3: Insertar aquí tu sección de documentación técnica
-// Contenido mínimo esperado:
-// - Stack: Playwright + asyncio
-// - Módulos implementados (spider, attacker, fingerprint, forms)
-// - Protocolo de recepción de instrucciones de IA
-// - Capturas de ataques automatizados en ejecución
-// Formato: Markdown convertido a Typst
-
-#rect(
-  fill: luma(250),
-  stroke: 1pt + rgb("#dddddd"),
-  inset: 12pt,
-  width: 100%,
-)[
+#rect(fill: azul-claro, stroke: 1pt + azul-acento, inset: 12pt, width: 100%, radius: 4pt)[
   _Sección pendiente de entrega por P3 — Límite: 19 de Mayo de 2026_
 ]
 
-// ----- 4.4 DEVTOOLS — P4 -----
 == Módulo DevTools (P4 — Carlos Bañuelos Fernández)
 
-// TODO — P4: Insertar aquí tu sección de documentación técnica
-// Contenido mínimo esperado:
-// - Stack: Chrome DevTools Protocol
-// - Cliente CDP y constructor de paquetes
-// - Analizadores de red y consola
-// - Capturas de captura de tráfico en tiempo real
-// Formato: Markdown convertido a Typst
-
-#rect(
-  fill: luma(250),
-  stroke: 1pt + rgb("#dddddd"),
-  inset: 12pt,
-  width: 100%,
-)[
+#rect(fill: azul-claro, stroke: 1pt + azul-acento, inset: 12pt, width: 100%, radius: 4pt)[
   _Sección pendiente de entrega por P4 — Límite: 19 de Mayo de 2026_
 ]
 
-// ----- 4.5 IA — P5 -----
 == Módulo de Inteligencia Artificial (P5 — Jose María López Ausín)
 
 === Stack tecnológico
@@ -344,25 +351,10 @@ El modo de operación se controla mediante la variable de entorno `MOCK_PLAYWRIG
   caption: "Test de conectividad con la API de Anthropic — respuesta correcta de Claude"
 )
 
-#figure(
-  image("../capturas/ia/test_standalone_output.png", width: 90%),
-  caption: "Test standalone — detección de inyección SQL con 95% de confianza"
-)
-
-#figure(
-  image("../capturas/ia/analisis_sqli.png", width: 90%),
-  caption: "Clasificador detectando SQLi en modo real sobre DVWA"
-)
-
-#figure(
-  image("../capturas/ia/fingerprint_prioridades.png", width: 90%),
-  caption: "Análisis de fingerprinting con prioridades de ataque generadas por IA"
-)
-
-#figure(
-  image("../capturas/ia/vulnerabilidades_json.png", width: 90%),
-  caption: "Archivo vulnerabilities.json con los hallazgos del ciclo de auditoría"
-)
+// #figure(image("../capturas/ia/test_standalone_output.png", width: 90%), caption: "Test standalone — detección de inyección SQL con 95% de confianza")
+// #figure(image("../capturas/ia/analisis_sqli.png", width: 90%), caption: "Clasificador detectando SQLi en modo real sobre DVWA")
+// #figure(image("../capturas/ia/fingerprint_prioridades.png", width: 90%), caption: "Análisis de fingerprinting con prioridades de ataque generadas por IA")
+// #figure(image("../capturas/ia/vulnerabilidades_json.png", width: 90%), caption: "Archivo vulnerabilities.json con los hallazgos del ciclo de auditoría")
 
 // ============================================================
 // 5. GUÍA DE DESPLIEGUE
@@ -370,21 +362,7 @@ El modo de operación se controla mediante la variable de entorno `MOCK_PLAYWRIG
 
 = Guía de despliegue
 
-// TODO — P2: Insertar aquí la guía de despliegue completa
-// Contenido mínimo esperado:
-// - Requisitos del servidor (Hetzner CX22, Ubuntu 24)
-// - Configuración de Docker y docker-compose
-// - Variables de entorno necesarias
-// - Pasos de despliegue reproducibles paso a paso
-// - Configuración de Nginx
-// - Verificación de que el sistema está funcionando
-
-#rect(
-  fill: luma(250),
-  stroke: 1pt + rgb("#dddddd"),
-  inset: 12pt,
-  width: 100%,
-)[
+#rect(fill: azul-claro, stroke: 1pt + azul-acento, inset: 12pt, width: 100%, radius: 4pt)[
   _Sección pendiente de entrega por P2 — Límite: 19 de Mayo de 2026_
 ]
 
@@ -394,20 +372,7 @@ El modo de operación se controla mediante la variable de entorno `MOCK_PLAYWRIG
 
 = Manual de uso
 
-// TODO — P1: Insertar aquí el manual de uso de la herramienta
-// Contenido mínimo esperado:
-// - Cómo configurar el proxy en el navegador
-// - Cómo usar el dashboard para ver el tráfico interceptado
-// - Cómo lanzar un análisis automatizado
-// - Cómo interpretar los resultados
-// - Capturas de pantalla de cada paso
-
-#rect(
-  fill: luma(250),
-  stroke: 1pt + rgb("#dddddd"),
-  inset: 12pt,
-  width: 100%,
-)[
+#rect(fill: azul-claro, stroke: 1pt + azul-acento, inset: 12pt, width: 100%, radius: 4pt)[
   _Sección pendiente de entrega por P1 — Límite: 19 de Mayo de 2026_
 ]
 
@@ -449,19 +414,6 @@ La inteligencia artificial como componente de un sistema mayor introduce un tipo
 
 = Road map de mejora para la Práctica 2
 
-// TODO — P4: Insertar aquí el road map completo
-// Contenido mínimo esperado según el enunciado:
-// - Mínimo 5 nuevas funcionalidades planificadas
-// - Mejoras de rendimiento o escalabilidad
-// - Mejoras de seguridad de la propia herramienta
-// - Integración con otras herramientas o APIs
-// - Estimación de tiempo y recursos para cada mejora
-
-#rect(
-  fill: luma(250),
-  stroke: 1pt + rgb("#dddddd"),
-  inset: 12pt,
-  width: 100%,
-)[
+#rect(fill: azul-claro, stroke: 1pt + azul-acento, inset: 12pt, width: 100%, radius: 4pt)[
   _Sección pendiente de entrega por P4 — Límite: 19 de Mayo de 2026_
 ]
