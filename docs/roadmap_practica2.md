@@ -70,4 +70,8 @@ Estimación: 1 día | Recursos: P2
 | 5 | Endpoints ocultos JS | 2 | 3 | P4, P3 |
 | 6 | Integración CVEs | 3 | 3 | P4, P1 |
 | 7 | Exportación estándar | 3 | 4 | P5, P1 |
-| 8 | Autentic
+| 8 | Autenticación JWT | Seguridad | 2 | P2, P1 |
+| 9 | Cifrado interno | Seguridad | 1 | P2 |
+| 10 | Rate limiting | Seguridad | 1 | P2 |
+
+**Total estimado Práctica 2:** 28 días distribuidos entre los 5 roles
