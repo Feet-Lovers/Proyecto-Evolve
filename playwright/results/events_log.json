@@ -1,0 +1,68 @@
+[
+  {
+    "type": "fingerprint",
+    "data": {
+      "url": "http://localhost:8888",
+      "technologies": [
+        "PHP"
+      ],
+      "server": "Apache/2.4.25 (Debian)",
+      "powered_by": null,
+      "response_headers": {
+        "cache-control": "no-cache, must-revalidate",
+        "connection": "Keep-Alive",
+        "content-encoding": "gzip",
+        "content-length": "276",
+        "content-type": "application/javascript",
+        "date": "Mon, 11 May 2026 07:29:54 GMT",
+        "expires": "Tue, 23 Jun 2009 12:00:00 GMT",
+        "keep-alive": "timeout=5, max=100",
+        "pragma": "no-cache",
+        "server": "Apache/2.4.25 (Debian)",
+        "vary": "Accept-Encoding",
+        "etag": "\"251-5780ba3955700-gzip\"",
+        "accept-ranges": "bytes",
+        "last-modified": "Fri, 12 Oct 2018 17:44:28 GMT"
+      },
+      "attack_priorities": [
+        "sqli",
+        "blind_sqli",
+        "file_inclusion"
+      ]
+    }
+  },
+  {
+    "type": "vulnerability",
+    "data": {
+      "id": "vuln_1",
+      "tipo": "SQL Injection",
+      "severidad": "critical",
+      "titulo": "SQL Injection en campo 'id'",
+      "descripcion": "El campo 'id' en http://localhost:8888/vulnerabilities/sqli/ es vulnerable a SQL Injection.",
+      "url": "http://localhost:8888/vulnerabilities/sqli/",
+      "payload": "' OR '1'='1'--",
+      "anomalies": [
+        "SQL_ERROR: you have an error in your sql syntax"
+      ],
+      "recomendacion": "Usar consultas preparadas con par\u00e1metros enlazados. Nunca concatenar input de usuario en consultas SQL.",
+      "screenshot": "results/screenshots/after_id_1778484610.png"
+    }
+  },
+  {
+    "type": "vulnerability",
+    "data": {
+      "id": "vuln_2",
+      "tipo": "SQL Injection",
+      "severidad": "critical",
+      "titulo": "SQL Injection en campo 'username'",
+      "descripcion": "El campo 'username' en http://localhost:8888/vulnerabilities/brute/ es vulnerable a SQL Injection.",
+      "url": "http://localhost:8888/vulnerabilities/brute/",
+      "payload": "' OR '1'='1'--",
+      "anomalies": [
+        "SQL_ERROR: you have an error in your sql syntax"
+      ],
+      "recomendacion": "Usar consultas preparadas con par\u00e1metros enlazados. Nunca concatenar input de usuario en consultas SQL.",
+      "screenshot": "results/screenshots/after_username_1778484613.png"
+    }
+  }
+]
