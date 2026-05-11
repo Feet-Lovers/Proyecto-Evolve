@@ -3,6 +3,7 @@ import sys
 import os
 import time
 import httpx
+import asyncio
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -38,19 +39,22 @@ def launch_chrome_with_debugging(url: str = "about:blank") -> subprocess.Popen:
     process = subprocess.Popen(args, stdout=subprocess.DEVNULL,
 stderr=subprocess.DEVNULL)
     print(f"✓ Chrome lanzado con debugging en puerto {DEBUG_PORT} (PID: {process.pid})")
-    time.sleep(2)
+    time.sleep(1)
     return process
 
-async def verify_cdp_connection() -> bool:
-    try:
-        async with httpx.AsyncClient(timeout=5) as client:
-            response = await client.get(f"http://localhost:{DEBUG_PORT}/json")
-            tabs = response.json()
-            if tabs:
-                print(f"✓ CDP activo. {len(tabs)} pestaña(s) disponible(s)")
-                for tab in tabs:
-                    print(f"  → {tab.get('title', 'Sin título')} — {tab.get('url', '')}")
-                return True
-    except Exception as e:
-        print(f"✗ CDP no disponible en puerto {DEBUG_PORT}: {e}")
-        return False
+async def verify_cdp_connection(max_retries: int = 10, wait_seconds: float = 1.0) -> bool:
+    for attempt in range(max_retries):
+        try:
+            async with httpx.AsyncClient(timeout=5) as client:
+                response = await client.get(f"http://localhost:{DEBUG_PORT}/json")
+                tabs = response.json()
+                if tabs:
+                    print(f"✓ CDP activo. {len(tabs)} pestaña(s) disponible(s)")
+                    for tab in tabs:
+                        print(f"  → {tab.get('title', 'Sin título')} — {tab.get('url', '')}")
+                    return True
+        except Exception as e:
+            print(f"  Intento {attempt + 1}/{max_retries} fallido, esperando {wait_seconds}s...")
+            await asyncio.sleep(wait_seconds)
+    print(f"✗ CDP no disponible en puerto {DEBUG_PORT} tras {max_retries} intentos")
+    return False

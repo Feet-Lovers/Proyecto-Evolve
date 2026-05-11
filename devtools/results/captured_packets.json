@@ -1,16 +1,16 @@
 {
   "session_token": "devtools_session",
-  "timestamp": "2026-05-08T16:55:01.157112",
-  "total": 10,
+  "timestamp": "2026-05-10T16:43:26.492232",
+  "total": 6,
   "packets": [
     {
-      "id": "08be08e5-7d25-4ebc-89f5-c7ab84a51fe2",
+      "id": "e2709e05-92cc-4e41-ab58-a6f27883924e",
       "method": "GET",
       "url": "http://localhost:8888/index.php",
       "status": 200,
       "size": 6808,
-      "time": 94,
-      "timestamp": "2026-05-08T16:54:30.984625",
+      "time": 78,
+      "timestamp": "2026-05-10T16:42:36.369748",
       "request_headers": {
         "Content-Type": "application/x-www-form-urlencoded",
         "Origin": "http://localhost:8888",
@@ -28,7 +28,7 @@
         "Content-Encoding": "gzip",
         "Content-Length": "2685",
         "Content-Type": "text/html;charset=utf-8",
-        "Date": "Fri, 08 May 2026 16:54:30 GMT",
+        "Date": "Sun, 10 May 2026 16:42:36 GMT",
         "Expires": "Tue, 23 Jun 2009 12:00:00 GMT",
         "Keep-Alive": "timeout=5, max=99",
         "Pragma": "no-cache",
@@ -47,13 +47,13 @@
       ]
     },
     {
-      "id": "3781743b-3a7e-48dc-a969-25ed9acca4f2",
+      "id": "57982e9c-a619-40a7-8ea7-c3d1f3163e6a",
       "method": "GET",
       "url": "http://localhost:8888/dvwa/js/dvwaPage.js",
       "status": 200,
       "size": 1030,
-      "time": 57,
-      "timestamp": "2026-05-08T16:54:31.022096",
+      "time": 41,
+      "timestamp": "2026-05-10T16:42:36.406735",
       "request_headers": {
         "sec-ch-ua-platform": "\"Linux\"",
         "Referer": "http://localhost:8888/index.php",
@@ -85,13 +85,13 @@
       ]
     },
     {
-      "id": "2d444ba6-4dce-4153-b31c-e63faf141e60",
+      "id": "54ab72a1-b988-4c41-9655-d9e439c88e7f",
       "method": "GET",
       "url": "http://localhost:8888/dvwa/js/add_event_listeners.js",
       "status": 200,
       "size": 593,
-      "time": 57,
-      "timestamp": "2026-05-08T16:54:31.022122",
+      "time": 41,
+      "timestamp": "2026-05-10T16:42:36.406769",
       "request_headers": {
         "sec-ch-ua-platform": "\"Linux\"",
         "Referer": "http://localhost:8888/index.php",
@@ -123,59 +123,16 @@
       ]
     },
     {
-      "id": "9438b195-35d9-4e4d-94c3-ad5eac0c75bc",
-      "method": "GET",
-      "url": "http://localhost:8888/vulnerabilities/sqli/?id=%27&Submit=Submit",
-      "status": 200,
-      "size": 162,
-      "time": 44,
-      "timestamp": "2026-05-08T16:54:34.004524",
-      "request_headers": {
-        "Upgrade-Insecure-Requests": "1",
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
-        "sec-ch-ua": "\"Chromium\";v=\"147\", \"Not.A/Brand\";v=\"8\"",
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": "\"Linux\""
-      },
-      "request_body": null,
-      "response_headers": {
-        "Cache-Control": "no-store, no-cache, must-revalidate",
-        "Connection": "Keep-Alive",
-        "Content-Encoding": "gzip",
-        "Content-Length": "141",
-        "Content-Type": "text/html; charset=UTF-8",
-        "Date": "Fri, 08 May 2026 16:54:34 GMT",
-        "Expires": "Thu, 19 Nov 1981 08:52:00 GMT",
-        "Keep-Alive": "timeout=5, max=98",
-        "Pragma": "no-cache",
-        "Server": "Apache/2.4.25 (Debian)",
-        "Vary": "Accept-Encoding"
-      },
-      "response_body": "<pre>You have an error in your SQL syntax; check the manual that corresponds to your MariaDB server version for the right syntax to use near ''''' at line 1</pre>",
-      "suspicious": true,
-      "vulnerable": false,
-      "suspicious_reasons": [
-        "SQL_ERROR_IN_RESPONSE"
-      ],
-      "security_issues": [
-        "MISSING_HEADER: content-security-policy",
-        "MISSING_HEADER: x-frame-options",
-        "MISSING_HEADER: strict-transport-security",
-        "MISSING_HEADER: x-content-type-options",
-        "MISSING_HEADER: referrer-policy"
-      ]
-    },
-    {
-      "id": "2f6f18f5-792d-4d37-a5f6-a5c6f3643890",
+      "id": "fb8bcedc-9831-454a-aadd-ee1cc48a81a5",
       "method": "GET",
       "url": "http://localhost:8888/dvwa/js/dvwaPage.js",
       "status": 200,
       "size": 1030,
-      "time": 1221,
-      "timestamp": "2026-05-08T16:54:37.220481",
+      "time": 24,
+      "timestamp": "2026-05-10T16:42:38.745432",
       "request_headers": {
         "sec-ch-ua-platform": "\"Linux\"",
-        "Referer": "http://localhost:8888/vulnerabilities/xss_r/?name=%3Cscript%3Ealert(1)%3C/script%3E",
+        "Referer": "http://localhost:8888/vulnerabilities/xss_r/?name=%3Cscript%3Econsole.error(%27password=admin123%27)%3C/script%3E",
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
         "sec-ch-ua": "\"Chromium\";v=\"147\", \"Not.A/Brand\";v=\"8\"",
         "sec-ch-ua-mobile": "?0"
@@ -204,16 +161,16 @@
       ]
     },
     {
-      "id": "50452937-c519-4106-9df0-90ecea2f4dba",
+      "id": "06d6d684-bf86-44b8-85fa-f98aeb63a96d",
       "method": "GET",
       "url": "http://localhost:8888/dvwa/js/add_event_listeners.js",
       "status": 200,
       "size": 593,
-      "time": 1220,
-      "timestamp": "2026-05-08T16:54:37.221200",
+      "time": 25,
+      "timestamp": "2026-05-10T16:42:38.745590",
       "request_headers": {
         "sec-ch-ua-platform": "\"Linux\"",
-        "Referer": "http://localhost:8888/vulnerabilities/xss_r/?name=%3Cscript%3Ealert(1)%3C/script%3E",
+        "Referer": "http://localhost:8888/vulnerabilities/xss_r/?name=%3Cscript%3Econsole.error(%27password=admin123%27)%3C/script%3E",
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
         "sec-ch-ua": "\"Chromium\";v=\"147\", \"Not.A/Brand\";v=\"8\"",
         "sec-ch-ua-mobile": "?0"
@@ -242,13 +199,13 @@
       ]
     },
     {
-      "id": "64dc8438-ce12-4851-933c-21938e89669f",
+      "id": "855cf9be-6d2b-4cb1-bf9d-8ddc55fdb12f",
       "method": "GET",
-      "url": "http://localhost:8888/vulnerabilities/xss_r/?name=%3Cscript%3Ealert(1)%3C/script%3E",
+      "url": "http://localhost:8888/vulnerabilities/xss_r/?name=%3Cscript%3Econsole.error(%27password=admin123%27)%3C/script%3E",
       "status": 200,
-      "size": 4380,
-      "time": 1294,
-      "timestamp": "2026-05-08T16:54:37.181440",
+      "size": 4406,
+      "time": 59,
+      "timestamp": "2026-05-10T16:42:38.718243",
       "request_headers": {
         "Upgrade-Insecure-Requests": "1",
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
@@ -261,138 +218,19 @@
         "Cache-Control": "no-cache, must-revalidate",
         "Connection": "Keep-Alive",
         "Content-Encoding": "gzip",
-        "Content-Length": "1400",
+        "Content-Length": "1419",
         "Content-Type": "text/html;charset=utf-8",
-        "Date": "Fri, 08 May 2026 16:54:37 GMT",
+        "Date": "Sun, 10 May 2026 16:42:38 GMT",
         "Expires": "Tue, 23 Jun 2009 12:00:00 GMT",
-        "Keep-Alive": "timeout=5, max=97",
+        "Keep-Alive": "timeout=5, max=98",
         "Pragma": "no-cache",
         "Server": "Apache/2.4.25 (Debian)",
         "Vary": "Accept-Encoding",
         "X-XSS-Protection": "0"
       },
-      "response_body": "\r\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\r\n\r\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\r\n\r\n\t<head>\r\n\t\t<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\r\n\r\n\t\t<title>Vulnerability: Reflected Cross Site Scripting (XSS) :: Damn Vulnerable Web Application (DVWA) v1.10 *Development*</title>\r\n\r\n\t\t<link rel=\"stylesheet\" type=\"text/css\" href=\"../../dvwa/css/main.css\" />\r\n\r\n\t\t<link rel=\"icon\" type=\"\\image/ico\" href=\"../../favicon.ico\" />\r\n\r\n\t\t<script type=\"text/javascript\" src=\"../../dvwa/js/dvwaPage.js\"></script>\r\n\r\n\t</head>\r\n\r\n\t<body class=\"home\">\r\n\t\t<div id=\"container\">\r\n\r\n\t\t\t<div id=\"header\">\r\n\r\n\t\t\t\t<img src=\"../../dvwa/images/logo.png\" alt=\"Damn Vulnerable Web Application\" />\r\n\r\n\t\t\t</div>\r\n\r\n\t\t\t<div id=\"main_menu\">\r\n\r\n\t\t\t\t<div id=\"main_menu_padded\">\r\n\t\t\t\t<ul class=\"menuBlocks\"><li class=\"\"><a href=\"../../.\">Home</a></li>\n<li class=\"\"><a href=\"../../instructions.php\">Instructions</a></li>\n<li class=\"\"><a href=\"../../setup.php\">Setup / Reset DB</a></li>\n</ul><ul class=\"menuBlocks\"><li class=\"\"><a href=\"../../vulnerabilities/brute/\">Brute Force</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/exec/\">Command Injection</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/csrf/\">CSRF</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/fi/.?page=include.php\">File Inclusion</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/upload/\">File Upload</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/captcha/\">Insecure CAPTCHA</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/sqli/\">SQL Injection</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/sqli_blind/\">SQL Injection (Blind)</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/weak_id/\">Weak Session IDs</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/xss_d/\">XSS (DOM)</a></li>\n<li class=\"selected\"><a href=\"../../vulnerabilities/xss_r/\">XSS (Reflected)</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/xss_s/\">XSS (Stored)</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/csp/\">CSP Bypass</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/javascript/\">JavaScript</a></li>\n</ul><ul class=\"menuBlocks\"><li class=\"\"><a href=\"../../security.php\">DVWA Security</a></li>\n<li class=\"\"><a href=\"../../phpinfo.php\">PHP Info</a></li>\n<li class=\"\"><a href=\"../../about.php\">About</a></li>\n</ul><ul class=\"menuBlocks\"><li class=\"\"><a href=\"../../logout.php\">Logout</a></li>\n</ul>\r\n\t\t\t\t</div>\r\n\r\n\t\t\t</div>\r\n\r\n\t\t\t<div id=\"main_body\">\r\n\r\n\t\t\t\t\r\n<div class=\"body_padded\">\r\n\t<h1>Vulnerability: Reflected Cross Site Scripting (XSS)</h1>\r\n\r\n\t<div class=\"vulnerable_code_area\">\r\n\t\t<form name=\"XSS\" action=\"#\" method=\"GET\">\r\n\t\t\t<p>\r\n\t\t\t\tWhat's your name?\r\n\t\t\t\t<input type=\"text\" name=\"name\">\r\n\t\t\t\t<input type=\"submit\" value=\"Submit\">\r\n\t\t\t</p>\n\r\n\t\t</form>\r\n\t\t<pre>Hello <script>alert(1)</script></pre>\r\n\t</div>\r\n\r\n\t<h2>More Information</h2>\r\n\t<ul>\r\n\t\t<li><a href=\"https://www.owasp.org/index.php/Cross-site_Scripting_(XSS)\" target=\"_blank\">https://www.owasp.org/index.php/Cross-site_Scripting_(XSS)</a></li>\r\n\t\t<li><a href=\"https://www.owasp.org/index.php/XSS_Filter_Evasion_Cheat_Sheet\" target=\"_blank\">https://www.owasp.org/index.php/XSS_Filter_Evasion_Cheat_Sheet</a></li>\r\n\t\t<li><a href=\"https://en.wikipedia.org/wiki/Cross-site_scripting\" target=\"_blank\">https://en.wikipedia.org/wiki/Cross-site_scripting</a></li>\r\n\t\t<li><a href=\"http://www.cgisecurity.com/xss-faq.html\" target=\"_blank\">http://www.cgisecurity.com/xss-faq.html</a></li>\r\n\t\t<li><a href=\"http://www.scriptalert1.com/\" target=\"_blank\">http://www.scriptalert1.com/</a></li>\r\n\t</ul>\r\n</div>\n\r\n\t\t\t\t<br /><br />\r\n\t\t\t\t\r\n\r\n\t\t\t</div>\r\n\r\n\t\t\t<div class=\"clear\">\r\n\t\t\t</div>\r\n\r\n\t\t\t<div id=\"system_info\">\r\n\t\t\t\t<input type=\"button\" value=\"View Help\" class=\"popup_button\" id='help_button' data-help-url='../../vulnerabilities/view_help.php?id=xss_r&security=low' )\"> <input type=\"button\" value=\"View Source\" class=\"popup_button\" id='source_button' data-source-url='../../vulnerabilities/view_source.php?id=xss_r&security=low' )\"> <div align=\"left\"><em>Username:</em> admin<br /><em>Security Level:</em> low<br /><em>PHPIDS:</em> disabled</div>\r\n\t\t\t</div>\r\n\r\n\t\t\t<div id=\"footer\">\r\n\r\n\t\t\t\t<p>Damn Vulnerable Web Application (DVWA) v1.10 *Development*</p>\r\n\t\t\t\t<script src='/dvwa/js/add_event_listeners.js'></script>\r\n\r\n\t\t\t</div>\r\n\r\n\t\t</div>\r\n\r\n\t</body>\r\n\r\n</html>",
+      "response_body": "\r\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\r\n\r\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\r\n\r\n\t<head>\r\n\t\t<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\r\n\r\n\t\t<title>Vulnerability: Reflected Cross Site Scripting (XSS) :: Damn Vulnerable Web Application (DVWA) v1.10 *Development*</title>\r\n\r\n\t\t<link rel=\"stylesheet\" type=\"text/css\" href=\"../../dvwa/css/main.css\" />\r\n\r\n\t\t<link rel=\"icon\" type=\"\\image/ico\" href=\"../../favicon.ico\" />\r\n\r\n\t\t<script type=\"text/javascript\" src=\"../../dvwa/js/dvwaPage.js\"></script>\r\n\r\n\t</head>\r\n\r\n\t<body class=\"home\">\r\n\t\t<div id=\"container\">\r\n\r\n\t\t\t<div id=\"header\">\r\n\r\n\t\t\t\t<img src=\"../../dvwa/images/logo.png\" alt=\"Damn Vulnerable Web Application\" />\r\n\r\n\t\t\t</div>\r\n\r\n\t\t\t<div id=\"main_menu\">\r\n\r\n\t\t\t\t<div id=\"main_menu_padded\">\r\n\t\t\t\t<ul class=\"menuBlocks\"><li class=\"\"><a href=\"../../.\">Home</a></li>\n<li class=\"\"><a href=\"../../instructions.php\">Instructions</a></li>\n<li class=\"\"><a href=\"../../setup.php\">Setup / Reset DB</a></li>\n</ul><ul class=\"menuBlocks\"><li class=\"\"><a href=\"../../vulnerabilities/brute/\">Brute Force</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/exec/\">Command Injection</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/csrf/\">CSRF</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/fi/.?page=include.php\">File Inclusion</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/upload/\">File Upload</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/captcha/\">Insecure CAPTCHA</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/sqli/\">SQL Injection</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/sqli_blind/\">SQL Injection (Blind)</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/weak_id/\">Weak Session IDs</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/xss_d/\">XSS (DOM)</a></li>\n<li class=\"selected\"><a href=\"../../vulnerabilities/xss_r/\">XSS (Reflected)</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/xss_s/\">XSS (Stored)</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/csp/\">CSP Bypass</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/javascript/\">JavaScript</a></li>\n</ul><ul class=\"menuBlocks\"><li class=\"\"><a href=\"../../security.php\">DVWA Security</a></li>\n<li class=\"\"><a href=\"../../phpinfo.php\">PHP Info</a></li>\n<li class=\"\"><a href=\"../../about.php\">About</a></li>\n</ul><ul class=\"menuBlocks\"><li class=\"\"><a href=\"../../logout.php\">Logout</a></li>\n</ul>\r\n\t\t\t\t</div>\r\n\r\n\t\t\t</div>\r\n\r\n\t\t\t<div id=\"main_body\">\r\n\r\n\t\t\t\t\r\n<div class=\"body_padded\">\r\n\t<h1>Vulnerability: Reflected Cross Site Scripting (XSS)</h1>\r\n\r\n\t<div class=\"vulnerable_code_area\">\r\n\t\t<form name=\"XSS\" action=\"#\" method=\"GET\">\r\n\t\t\t<p>\r\n\t\t\t\tWhat's your name?\r\n\t\t\t\t<input type=\"text\" name=\"name\">\r\n\t\t\t\t<input type=\"submit\" value=\"Submit\">\r\n\t\t\t</p>\n\r\n\t\t</form>\r\n\t\t<pre>Hello <script>console.error('password=admin123')</script></pre>\r\n\t</div>\r\n\r\n\t<h2>More Information</h2>\r\n\t<ul>\r\n\t\t<li><a href=\"https://www.owasp.org/index.php/Cross-site_Scripting_(XSS)\" target=\"_blank\">https://www.owasp.org/index.php/Cross-site_Scripting_(XSS)</a></li>\r\n\t\t<li><a href=\"https://www.owasp.org/index.php/XSS_Filter_Evasion_Cheat_Sheet\" target=\"_blank\">https://www.owasp.org/index.php/XSS_Filter_Evasion_Cheat_Sheet</a></li>\r\n\t\t<li><a href=\"https://en.wikipedia.org/wiki/Cross-site_scripting\" target=\"_blank\">https://en.wikipedia.org/wiki/Cross-site_scripting</a></li>\r\n\t\t<li><a href=\"http://www.cgisecurity.com/xss-faq.html\" target=\"_blank\">http://www.cgisecurity.com/xss-faq.html</a></li>\r\n\t\t<li><a href=\"http://www.scriptalert1.com/\" target=\"_blank\">http://www.scriptalert1.com/</a></li>\r\n\t</ul>\r\n</div>\n\r\n\t\t\t\t<br /><br />\r\n\t\t\t\t\r\n\r\n\t\t\t</div>\r\n\r\n\t\t\t<div class=\"clear\">\r\n\t\t\t</div>\r\n\r\n\t\t\t<div id=\"system_info\">\r\n\t\t\t\t<input type=\"button\" value=\"View Help\" class=\"popup_button\" id='help_button' data-help-url='../../vulnerabilities/view_help.php?id=xss_r&security=low' )\"> <input type=\"button\" value=\"View Source\" class=\"popup_button\" id='source_button' data-source-url='../../vulnerabilities/view_source.php?id=xss_r&security=low' )\"> <div align=\"left\"><em>Username:</em> admin<br /><em>Security Level:</em> low<br /><em>PHPIDS:</em> disabled</div>\r\n\t\t\t</div>\r\n\r\n\t\t\t<div id=\"footer\">\r\n\r\n\t\t\t\t<p>Damn Vulnerable Web Application (DVWA) v1.10 *Development*</p>\r\n\t\t\t\t<script src='/dvwa/js/add_event_listeners.js'></script>\r\n\r\n\t\t\t</div>\r\n\r\n\t\t</div>\r\n\r\n\t</body>\r\n\r\n</html>",
       "suspicious": false,
       "vulnerable": false,
-      "security_issues": [
-        "MISSING_HEADER: content-security-policy",
-        "MISSING_HEADER: x-frame-options",
-        "MISSING_HEADER: strict-transport-security",
-        "MISSING_HEADER: x-content-type-options",
-        "MISSING_HEADER: referrer-policy"
-      ]
-    },
-    {
-      "id": "335dc626-73bb-486f-93ca-eec6bac51052",
-      "method": "GET",
-      "url": "http://localhost:8888/dvwa/js/dvwaPage.js",
-      "status": 200,
-      "size": 1030,
-      "time": 15,
-      "timestamp": "2026-05-08T16:54:41.182265",
-      "request_headers": {
-        "sec-ch-ua-platform": "\"Linux\"",
-        "Referer": "http://localhost:8888/vulnerabilities/sqli/?id=1%20UNION%20SELECT%201,2--&Submit=Submit",
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
-        "sec-ch-ua": "\"Chromium\";v=\"147\", \"Not.A/Brand\";v=\"8\"",
-        "sec-ch-ua-mobile": "?0"
-      },
-      "request_body": null,
-      "response_headers": {
-        "Content-Encoding": "gzip",
-        "ETag": "\"406-5780ba3955700-gzip\"",
-        "Accept-Ranges": "bytes",
-        "Content-Length": "466",
-        "Date": "Wed, 29 Apr 2026 23:50:01 GMT",
-        "Last-Modified": "Fri, 12 Oct 2018 17:44:28 GMT",
-        "Vary": "Accept-Encoding",
-        "Server": "Apache/2.4.25 (Debian)",
-        "Content-Type": "application/javascript"
-      },
-      "response_body": "/* Help popup */\r\n\r\nfunction popUp(URL) {\r\n\tday = new Date();\r\n\tid = day.getTime();\r\n\twindow.open(URL, '\" + id + \"', 'toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,width=800,height=300,left=540,top=250');\r\n\t//eval(\"page\" + id + \" = window.open(URL, '\" + id + \"', 'toolbar=0,scrollbars=1,location=0,statusbar=0,menubar=0,resizable=1,width=800,height=300,left=540,top=250');\");\r\n}\r\n\r\n/* Form validation */\r\n\r\nfunction validate_required(field,alerttxt)\r\n{\r\nwith (field) {\r\n  if (value==null||value==\"\") {\r\n    alert(alerttxt);return false;\r\n  }\r\n  else {\r\n    return true;\r\n  }\r\n }\r\n}\r\n\r\nfunction validateGuestbookForm(thisform) {\r\nwith (thisform) {\r\n\r\n  // Guestbook form\r\n  if (validate_required(txtName,\"Name can not be empty.\")==false)\r\n  {txtName.focus();return false;}\r\n  \r\n  if (validate_required(mtxMessage,\"Message can not be empty.\")==false)\r\n  {mtxMessage.focus();return false;}\r\n  \r\n  }\r\n}\r\n\r\nfunction confirmClearGuestbook() {\r\n\treturn confirm(\"Are you sure you want to clear the guestbook?\");\r\n}\r\n",
-      "suspicious": false,
-      "vulnerable": false,
-      "security_issues": [
-        "MISSING_HEADER: content-security-policy",
-        "MISSING_HEADER: x-frame-options",
-        "MISSING_HEADER: strict-transport-security",
-        "MISSING_HEADER: x-content-type-options",
-        "MISSING_HEADER: referrer-policy"
-      ]
-    },
-    {
-      "id": "1b3269fd-fc99-4120-a886-697e9e95bfa8",
-      "method": "GET",
-      "url": "http://localhost:8888/dvwa/js/add_event_listeners.js",
-      "status": 200,
-      "size": 593,
-      "time": 16,
-      "timestamp": "2026-05-08T16:54:41.182405",
-      "request_headers": {
-        "sec-ch-ua-platform": "\"Linux\"",
-        "Referer": "http://localhost:8888/vulnerabilities/sqli/?id=1%20UNION%20SELECT%201,2--&Submit=Submit",
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
-        "sec-ch-ua": "\"Chromium\";v=\"147\", \"Not.A/Brand\";v=\"8\"",
-        "sec-ch-ua-mobile": "?0"
-      },
-      "request_body": null,
-      "response_headers": {
-        "Content-Encoding": "gzip",
-        "ETag": "\"251-5780ba3955700-gzip\"",
-        "Accept-Ranges": "bytes",
-        "Content-Length": "276",
-        "Date": "Wed, 29 Apr 2026 23:50:01 GMT",
-        "Last-Modified": "Fri, 12 Oct 2018 17:44:28 GMT",
-        "Vary": "Accept-Encoding",
-        "Server": "Apache/2.4.25 (Debian)",
-        "Content-Type": "application/javascript"
-      },
-      "response_body": "// These functions need to be called after the content they reference\n// has been added to the page otherwise they will fail.\n\nfunction addEventListeners() {\n\tvar source_button = document.getElementById (\"source_button\");\n\n\tif (source_button) {\n\t\tsource_button.addEventListener(\"click\", function() {\n\t\t\tvar url=source_button.dataset.sourceUrl;\n\t\t\tpopUp (url);\n\t\t});\n\t}\n\n\tvar help_button = document.getElementById (\"help_button\");\n\n\tif (help_button) {\n\t\thelp_button.addEventListener(\"click\", function() {\n\t\t\tvar url=help_button.dataset.helpUrl;\n\t\t\tpopUp (url);\n\t\t});\n\t}\n}\n\naddEventListeners();\n",
-      "suspicious": false,
-      "vulnerable": false,
-      "security_issues": [
-        "MISSING_HEADER: content-security-policy",
-        "MISSING_HEADER: x-frame-options",
-        "MISSING_HEADER: strict-transport-security",
-        "MISSING_HEADER: x-content-type-options",
-        "MISSING_HEADER: referrer-policy"
-      ]
-    },
-    {
-      "id": "8331504f-c74d-4051-9d65-258cd73a7fbe",
-      "method": "GET",
-      "url": "http://localhost:8888/vulnerabilities/sqli/?id=1%20UNION%20SELECT%201,2--&Submit=Submit",
-      "status": 200,
-      "size": 4557,
-      "time": 50,
-      "timestamp": "2026-05-08T16:54:41.147966",
-      "request_headers": {
-        "Upgrade-Insecure-Requests": "1",
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36",
-        "sec-ch-ua": "\"Chromium\";v=\"147\", \"Not.A/Brand\";v=\"8\"",
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": "\"Linux\""
-      },
-      "request_body": null,
-      "response_headers": {
-        "Cache-Control": "no-cache, must-revalidate",
-        "Connection": "Keep-Alive",
-        "Content-Encoding": "gzip",
-        "Content-Length": "1460",
-        "Content-Type": "text/html;charset=utf-8",
-        "Date": "Fri, 08 May 2026 16:54:41 GMT",
-        "Expires": "Tue, 23 Jun 2009 12:00:00 GMT",
-        "Keep-Alive": "timeout=5, max=96",
-        "Pragma": "no-cache",
-        "Server": "Apache/2.4.25 (Debian)",
-        "Vary": "Accept-Encoding"
-      },
-      "response_body": "\r\n<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\r\n\r\n<html xmlns=\"http://www.w3.org/1999/xhtml\">\r\n\r\n\t<head>\r\n\t\t<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\r\n\r\n\t\t<title>Vulnerability: SQL Injection :: Damn Vulnerable Web Application (DVWA) v1.10 *Development*</title>\r\n\r\n\t\t<link rel=\"stylesheet\" type=\"text/css\" href=\"../../dvwa/css/main.css\" />\r\n\r\n\t\t<link rel=\"icon\" type=\"\\image/ico\" href=\"../../favicon.ico\" />\r\n\r\n\t\t<script type=\"text/javascript\" src=\"../../dvwa/js/dvwaPage.js\"></script>\r\n\r\n\t</head>\r\n\r\n\t<body class=\"home\">\r\n\t\t<div id=\"container\">\r\n\r\n\t\t\t<div id=\"header\">\r\n\r\n\t\t\t\t<img src=\"../../dvwa/images/logo.png\" alt=\"Damn Vulnerable Web Application\" />\r\n\r\n\t\t\t</div>\r\n\r\n\t\t\t<div id=\"main_menu\">\r\n\r\n\t\t\t\t<div id=\"main_menu_padded\">\r\n\t\t\t\t<ul class=\"menuBlocks\"><li class=\"\"><a href=\"../../.\">Home</a></li>\n<li class=\"\"><a href=\"../../instructions.php\">Instructions</a></li>\n<li class=\"\"><a href=\"../../setup.php\">Setup / Reset DB</a></li>\n</ul><ul class=\"menuBlocks\"><li class=\"\"><a href=\"../../vulnerabilities/brute/\">Brute Force</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/exec/\">Command Injection</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/csrf/\">CSRF</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/fi/.?page=include.php\">File Inclusion</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/upload/\">File Upload</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/captcha/\">Insecure CAPTCHA</a></li>\n<li class=\"selected\"><a href=\"../../vulnerabilities/sqli/\">SQL Injection</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/sqli_blind/\">SQL Injection (Blind)</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/weak_id/\">Weak Session IDs</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/xss_d/\">XSS (DOM)</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/xss_r/\">XSS (Reflected)</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/xss_s/\">XSS (Stored)</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/csp/\">CSP Bypass</a></li>\n<li class=\"\"><a href=\"../../vulnerabilities/javascript/\">JavaScript</a></li>\n</ul><ul class=\"menuBlocks\"><li class=\"\"><a href=\"../../security.php\">DVWA Security</a></li>\n<li class=\"\"><a href=\"../../phpinfo.php\">PHP Info</a></li>\n<li class=\"\"><a href=\"../../about.php\">About</a></li>\n</ul><ul class=\"menuBlocks\"><li class=\"\"><a href=\"../../logout.php\">Logout</a></li>\n</ul>\r\n\t\t\t\t</div>\r\n\r\n\t\t\t</div>\r\n\r\n\t\t\t<div id=\"main_body\">\r\n\r\n\t\t\t\t\r\n<div class=\"body_padded\">\r\n\t<h1>Vulnerability: SQL Injection</h1>\r\n\r\n\t\r\n\r\n\t<div class=\"vulnerable_code_area\">\r\n\t\t<form action=\"#\" method=\"GET\">\r\n\t\t\t<p>\r\n\t\t\t\tUser ID:\n\t\t\t\t<input type=\"text\" size=\"15\" name=\"id\">\n\t\t\t\t<input type=\"submit\" name=\"Submit\" value=\"Submit\">\r\n\t\t\t</p>\n\r\n\t\t</form>\r\n\t\t<pre>ID: 1 UNION SELECT 1,2--<br />First name: admin<br />Surname: admin</pre>\r\n\t</div>\r\n\r\n\t<h2>More Information</h2>\r\n\t<ul>\r\n\t\t<li><a href=\"http://www.securiteam.com/securityreviews/5DP0N1P76E.html\" target=\"_blank\">http://www.securiteam.com/securityreviews/5DP0N1P76E.html</a></li>\r\n\t\t<li><a href=\"https://en.wikipedia.org/wiki/SQL_injection\" target=\"_blank\">https://en.wikipedia.org/wiki/SQL_injection</a></li>\r\n\t\t<li><a href=\"http://ferruh.mavituna.com/sql-injection-cheatsheet-oku/\" target=\"_blank\">http://ferruh.mavituna.com/sql-injection-cheatsheet-oku/</a></li>\r\n\t\t<li><a href=\"http://pentestmonkey.net/cheat-sheet/sql-injection/mysql-sql-injection-cheat-sheet\" target=\"_blank\">http://pentestmonkey.net/cheat-sheet/sql-injection/mysql-sql-injection-cheat-sheet</a></li>\r\n\t\t<li><a href=\"https://www.owasp.org/index.php/SQL_Injection\" target=\"_blank\">https://www.owasp.org/index.php/SQL_Injection</a></li>\r\n\t\t<li><a href=\"http://bobby-tables.com/\" target=\"_blank\">http://bobby-tables.com/</a></li>\r\n\t</ul>\r\n</div>\n\r\n\t\t\t\t<br /><br />\r\n\t\t\t\t\r\n\r\n\t\t\t</div>\r\n\r\n\t\t\t<div class=\"clear\">\r\n\t\t\t</div>\r\n\r\n\t\t\t<div id=\"system_info\">\r\n\t\t\t\t<input type=\"button\" value=\"View Help\" class=\"popup_button\" id='help_button' data-help-url='../../vulnerabilities/view_help.php?id=sqli&security=low' )\"> <input type=\"button\" value=\"View Source\" class=\"popup_button\" id='source_button' data-source-url='../../vulnerabilities/view_source.php?id=sqli&security=low' )\"> <div align=\"left\"><em>Username:</em> admin<br /><em>Security Level:</em> low<br /><em>PHPIDS:</em> disabled</div>\r\n\t\t\t</div>\r\n\r\n\t\t\t<div id=\"footer\">\r\n\r\n\t\t\t\t<p>Damn Vulnerable Web Application (DVWA) v1.10 *Development*</p>\r\n\t\t\t\t<script src='/dvwa/js/add_event_listeners.js'></script>\r\n\r\n\t\t\t</div>\r\n\r\n\t\t</div>\r\n\r\n\t</body>\r\n\r\n</html>",
-      "suspicious": true,
-      "vulnerable": false,
-      "suspicious_reasons": [
-        "INJECTION_CHAR_IN_REQUEST"
-      ],
       "security_issues": [
         "MISSING_HEADER: content-security-policy",
         "MISSING_HEADER: x-frame-options",
