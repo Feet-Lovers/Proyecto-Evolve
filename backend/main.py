@@ -57,13 +57,14 @@ async def new_session():
     token = session_manager.create_session()
     return {"token": token}
 
-from routes import proxy, repeater, intruder, utils, network, playwright
+from routes import proxy, repeater, intruder, utils, network, playwright, vulnerabilities
 app.include_router(proxy.router, prefix="/api/proxy", tags=["proxy"])
 app.include_router(repeater.router, prefix="/api/repeater", tags=["repeater"])
 app.include_router(intruder.router, prefix="/api/intruder", tags=["intruder"])
 app.include_router(utils.router, prefix="/api/utils", tags=["utils"])
 app.include_router(network.router, prefix="/api/network", tags=["network"])
 app.include_router(playwright.router, prefix="/api/playwright", tags=["playwright"])
+app.include_router(vulnerabilities.router, prefix="/api/vulnerabilities", tags=["vulnerabilities"])
 
 if __name__ == "__main__":
     import uvicorn
