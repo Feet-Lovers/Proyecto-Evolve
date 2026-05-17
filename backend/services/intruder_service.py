@@ -5,6 +5,7 @@ from typing import Optional
 from services.payloads import get_payloads
 from services.session_service import session_manager
 from services.proxy_service import is_suspicious
+from routes.network import session_cookies
 
 
 class IntruderEngine:
@@ -26,6 +27,13 @@ class IntruderEngine:
         session["intruder_results"] = []
 
         payloads = get_payloads(attack_type)
+
+        from urllib.parse import urlparse
+        parsed = urlparse(url)
+        target_host = f"{parsed.hostname}:{parsed.port}" if parsed.port else parsed.hostname
+        phpsessid = session_cookies.get(target_host, "")
+        cookie_header = f"PHPSESSID={phpsessid}; security=low" if phpsessid else "security=low"
+        print(f"  Cookie de sesión para {target_host}: {'encontrada' if phpsessid else 'no encontrada'}")
         semaphore = asyncio.Semaphore(concurrency)
 
         await session_manager.emit(session_token, "intruder_status", {
@@ -52,7 +60,7 @@ class IntruderEngine:
 
                 try:
                     async with httpx.AsyncClient(verify=False, timeout=10) as client:
-                        response = await client.get(injected_url)
+                        response = await client.get(injected_url, headers={"Cookie": cookie_header})
                         elapsed = int((time.time() - start) * 1000)
 
                         try:
