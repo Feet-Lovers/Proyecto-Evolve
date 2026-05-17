@@ -11,7 +11,7 @@ services:
       - HOST=0.0.0.0
       - PORT=8000
       - PROXY_PORT=8080
-      - MOCK_PLAYWRIGHT=false
+      - MOCK_PLAYWRIGHT=true
     restart: unless-stopped
 
   playwright:
@@ -27,7 +27,7 @@ services:
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - BACKEND_URL=http://backend:8000
-      - MOCK_PLAYWRIGHT=false
+      - MOCK_PLAYWRIGHT=true
     depends_on:
       - backend
     restart: unless-stopped
