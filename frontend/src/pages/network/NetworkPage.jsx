@@ -4,9 +4,8 @@ import { Badge } from '@/components/ui'
 
 export function NetworkPage() {
   const sessionToken = useSession()
-  const { requests, connected } = useWebSocket(sessionToken)
+  const { networkPackets, connected } = useWebSocket(sessionToken)
 
-  const networkPackets = requests.filter(p => !p.request_headers?.['X-HookSuite-Proxy'])
 
   return (
     <div className="flex flex-col h-full">
@@ -63,7 +62,7 @@ export function NetworkPage() {
             </tr>
           </thead>
           <tbody>
-            {requests.map(p => (
+            {networkPackets.map(p => (
               <tr
                 key={p.id}
                 className="border-b"
@@ -100,7 +99,7 @@ export function NetworkPage() {
             ))}
           </tbody>
         </table>
-        {requests.length === 0 && (
+        {networkPackets.length === 0 && (
           <div
             className="flex items-center justify-center h-32 text-[11px]"
             style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}

@@ -16,6 +16,7 @@ function normalizePacket(p) {
 
 export function useWebSocket(sessionToken) {
   const [requests, setRequests] = useState(config.USE_MOCKS ? mockRequests : [])
+  const [networkPackets, setNetworkPackets] = useState([])
   const [vulnerabilities, setVulnerabilities] = useState(config.USE_MOCKS ? mockVulnerabilities : [])
   const [connected, setConnected] = useState(config.USE_MOCKS)
   const wsRef = useRef(null)
@@ -30,11 +31,11 @@ export function useWebSocket(sessionToken) {
       const data = JSON.parse(event.data)
       if (data.type === 'request_intercepted') setRequests(prev => [normalizePacket(data.payload), ...prev])
       if (data.type === 'vulnerability_detected') setVulnerabilities(prev => [data.payload, ...prev])
-      if (data.type === 'network_packet') setRequests(prev => [normalizePacket(data.payload), ...prev])
+      if (data.type === 'network_packet') setNetworkPackets(prev => [normalizePacket(data.payload), ...prev])
     }
     return () => ws.close()
   }, [sessionToken])
 
   const clearRequests = useCallback(() => setRequests([]), [])
-  return { requests, connected, clearRequests, vulnerabilities }
+  return { requests, networkPackets, connected, clearRequests, vulnerabilities }
 }
