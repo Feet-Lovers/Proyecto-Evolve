@@ -16,7 +16,7 @@ async def receive_network_packet(packet: NetworkPacket):
     packet_dict = packet.model_dump()
     for token, session in session_manager.sessions.items():
         session.setdefault("network_packets", []).append(packet_dict)
-        await session_manager.emit(token, "network_packet", packet_dict)
+        await session_manager.emit(token, "request_intercepted", packet_dict)
     return {"received": True, "id": packet.id}
 
 @router.post("/packet/{session_token}")
