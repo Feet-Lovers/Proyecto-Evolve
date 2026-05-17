@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 from dotenv import load_dotenv
 from datetime import datetime
 
-from ia.analyzers.vulnerability_classifier import VulnerabilityClassifier
+from analyzers.vulnerability_classifier import VulnerabilityClassifier
 
 load_dotenv()
 
