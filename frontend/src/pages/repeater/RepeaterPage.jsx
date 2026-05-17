@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { RequestEditor } from './RequestEditor'
 import { ResponsePanel } from './ResponsePanel'
-import { Button } from '@/components/ui'
 import axios from 'axios'
 import { config } from '@/services/api'
 
@@ -13,11 +12,23 @@ const MOCK_RESPONSE = {
   headers: { 'Content-Type': 'application/json' },
 }
 
+function normalizeResponse(data) {
+  return {
+    ...data,
+    body: data.body || data.response_body || '',
+    headers: data.headers || data.response_headers || {},
+    time: data.time || 0,
+    size: data.size || 0,
+    status: data.status || 0,
+  }
+}
+
 export function RepeaterPage() {
   const [initialRequest, setInitialRequest] = useState(null)
   const [response, setResponse] = useState(null)
   const [loading, setLoading] = useState(false)
   const [history, setHistory] = useState([])
+  const [lastUrl, setLastUrl] = useState('')
 
   useEffect(() => {
     const stored = sessionStorage.getItem('repeater_request')
@@ -29,6 +40,7 @@ export function RepeaterPage() {
 
   const handleSend = async (request) => {
     setLoading(true)
+    setLastUrl(request.url || '')
     try {
       if (config.USE_MOCKS) {
         await new Promise(r => setTimeout(r, 500))
@@ -37,8 +49,9 @@ export function RepeaterPage() {
         return
       }
       const res = await axios.post(`${config.API_BASE}/api/repeater/send`, request)
-      setResponse(res.data)
-      setHistory(prev => [{ request, response: res.data, timestamp: new Date() }, ...prev.slice(0, 99)])
+      const normalized = normalizeResponse(res.data)
+      setResponse(normalized)
+      setHistory(prev => [{ request, response: normalized, timestamp: new Date() }, ...prev.slice(0, 99)])
     } catch (e) {
       setResponse({ status: 0, time: 0, size: 0, body: 'Error: ' + e.message })
     } finally {
@@ -65,16 +78,14 @@ export function RepeaterPage() {
           {history.length} peticiones en historial
         </span>
       </div>
-
       <div className="flex flex-1 overflow-hidden">
         <div className="w-1/2 border-r overflow-hidden flex flex-col" style={{ borderColor: 'var(--hs-border)' }}>
           <RequestEditor initialRequest={initialRequest} onSend={handleSend} loading={loading} />
         </div>
         <div className="w-1/2 overflow-hidden flex flex-col">
-          <ResponsePanel response={response} />
+          <ResponsePanel response={response} requestUrl={lastUrl} />
         </div>
       </div>
     </div>
   )
 }
-  
