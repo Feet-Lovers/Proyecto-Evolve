@@ -17,15 +17,15 @@ class IntruderEngine:
         url: str,
         injection_point: str,
         attack_type: str,
-        payloads: list,
+
         concurrency: int = 5,
         delay_ms: int = 0,
     ):
-        session = session_manager.get(session_token)
+        session = session_manager.get_session(session_token)
         session["intruder_status"] = "running"
         session["intruder_results"] = []
 
-        payloads = gql_payload(attack_type)
+        payloads = get_payloads(attack_type)
         semaphore = asyncio.Semaphore(concurrency)
 
         await session_manager.emit(session_token, "intruder_status", {
@@ -101,11 +101,11 @@ class IntruderEngine:
             })
 
     def pause(self, session_token: str):
-        session = session_manager.get(session_token)
+        session = session_manager.get_session(session_token)
         session["intruder_status"] = "paused"
 
     def resume(self, session_token: str):
-        session = session_manager.get(session_token)
+        session = session_manager.get_session(session_token)
         session["intruder_status"] = "running"
 
 

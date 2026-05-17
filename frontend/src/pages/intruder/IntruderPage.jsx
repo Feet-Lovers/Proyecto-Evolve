@@ -35,6 +35,26 @@ export function IntruderPage() {
   const [progress, setProgress] = useState(0)
   const [total, setTotal] = useState(0)
 
+  const pollResults = async (token) => {
+    let done = false
+    while (!done) {
+      await new Promise(r => setTimeout(r, 1000))
+      try {
+        const res = await axios.get(`${config.API_BASE}/api/intruder/results/${token}`)
+        const data = res.data
+        setResults(data.results || [])
+        setProgress((data.results || []).length)
+        if (data.status === 'complete' || data.status === 'cancelled') {
+          done = true
+          setRunning(false)
+        }
+      } catch {
+        done = true
+        setRunning(false)
+      }
+    }
+  }
+
   const handleStart = async () => {
     setResults([])
     setRunning(true)
@@ -53,8 +73,14 @@ export function IntruderPage() {
 
     try {
       await axios.post(`${config.API_BASE}/api/intruder/start`, {
-        url, injectionPoint, attackType, sessionToken
+        url,
+        injection_point: injectionPoint,
+        attack_type: attackType,
+        session_token: sessionToken,
+        concurrency: 5,
+        delay_ms: 0
       })
+      pollResults(sessionToken)
     } catch {
       setRunning(false)
     }
@@ -178,16 +204,16 @@ export function IntruderPage() {
                   className="border-b transition-colors"
                   style={{
                     borderColor: '#13161c',
-                    background: r.vulnerable ? '#1a0d0d' : 'transparent',
+                    background: (r.vulnerable || r.validated) ? '#1a0d0d' : 'transparent',
                   }}
                 >
                   <td className="px-4 py-2" style={{ color: 'var(--hs-text-dim)' }}>{r.id}</td>
                   <td className="px-4 py-2" style={{ color: 'var(--hs-text-secondary)' }}>{r.payload}</td>
                   <td className="px-4 py-2" style={{ color: r.status >= 500 ? '#ef5a5a' : 'var(--hs-text-muted)' }}>{r.status}</td>
-                  <td className="px-4 py-2" style={{ color: 'var(--hs-text-dim)' }}>{r.size}B</td>
+                  <td className="px-4 py-2" style={{ color: 'var(--hs-text-dim)' }}>{r.size || r.length || 0}B</td>
                   <td className="px-4 py-2" style={{ color: 'var(--hs-text-dim)' }}>{r.time}ms</td>
                   <td className="px-4 py-2">
-                    {r.vulnerable
+                    {(r.vulnerable || r.validated)
                       ? <Badge variant="critical">vulnerable</Badge>
                       : <Badge variant="default">limpio</Badge>
                     }
