@@ -60,7 +60,7 @@ export function Layout() {
           className="px-4 py-3 border-t text-[9px] tracking-widest"
           style={{ borderColor: 'var(--hs-border)', fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}
         >
-          v1.0.0 — mock mode
+          v1.0.0
         </div>
       </aside>
 

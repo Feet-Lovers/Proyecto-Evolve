@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui'
 
 export function RequestEditor({ initialRequest, onSend, loading }) {
@@ -9,6 +9,17 @@ export function RequestEditor({ initialRequest, onSend, loading }) {
       .map(([k, v]) => ({ key: k, value: v }))
   )
   const [body, setBody] = useState(initialRequest?.requestBody || '')
+
+  useEffect(() => {
+    if (!initialRequest) return
+    setMethod(initialRequest.method || 'GET')
+    setUrl(initialRequest.url || '')
+    setHeaders(
+      Object.entries(initialRequest.requestHeaders || { 'Content-Type': 'application/json' })
+        .map(([k, v]) => ({ key: k, value: v }))
+    )
+    setBody(initialRequest.requestBody || '')
+  }, [initialRequest])
 
   const addHeader = () => setHeaders(prev => [...prev, { key: '', value: '' }])
   const removeHeader = (i) => setHeaders(prev => prev.filter((_, idx) => idx !== i))
