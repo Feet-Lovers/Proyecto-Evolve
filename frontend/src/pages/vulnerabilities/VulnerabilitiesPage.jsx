@@ -2,12 +2,16 @@ import { useState } from 'react'
 import { Badge } from '@/components/ui'
 import { mockVulnerabilities } from '@/services/mockData'
 import { config } from '@/services/api'
+import { useWebSocket } from '@/hooks/useWebSocket'
+import { useSession } from '@/hooks/useSession'
 
 const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 }
 const SEVERITY_LABEL = { critical: 'Crítica', high: 'Alta', medium: 'Media', low: 'Baja' }
 
 export function VulnerabilitiesPage() {
-  const [vulnerabilities] = useState(config.USE_MOCKS ? mockVulnerabilities : [])
+  const sessionToken = useSession()
+  const { vulnerabilities: wsVulnerabilities } = useWebSocket(sessionToken)
+  const vulnerabilities = config.USE_MOCKS ? mockVulnerabilities : wsVulnerabilities
   const [selected, setSelected] = useState(null)
   const [filter, setFilter] = useState('all')
 
