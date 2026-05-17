@@ -1,6 +1,5 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 import os
 import asyncio
@@ -8,20 +7,11 @@ import asyncio
 load_dotenv()
 
 from services.session_service import session_manager
-from services.mitm_proxy import start_proxy
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    proxy_port = int(os.getenv("PROXY_PORT", 8080))
-    asyncio.create_task(start_proxy(proxy_port))
-    print(f"✓ Proxy TCP escuchando en puerto {proxy_port}")
-    yield
 
 app = FastAPI(
     title="HookSuite API",
     description="Backend del sistema de pentesting HookSuite",
     version="1.0.0",
-    lifespan=lifespan   # ← aquí se conecta el lifespan
 )
 
 app.add_middleware(
