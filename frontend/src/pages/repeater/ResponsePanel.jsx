@@ -2,7 +2,26 @@ import { useState } from 'react'
 
 const TABS = ['Raw', 'Pretty', 'Preview']
 
-export function ResponsePanel({ response }) {
+function rewriteUrls(html, baseUrl) {
+  try {
+    const base = new URL(baseUrl)
+    const origin = `${base.protocol}//${base.host}`
+    const basePath = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1)
+    return html
+      .replace(/(href|src|action)="(?!http|https|\/\/|#|mailto|javascript)([^"]*?)"/gi, (match, attr, url) => {
+        if (url.startsWith('/')) return `${attr}="${origin}${url}"`
+        return `${attr}="${basePath}${url}"`
+      })
+      .replace(/(href|src|action)='(?!http|https|\/\/|#|mailto|javascript)([^']*?)'/gi, (match, attr, url) => {
+        if (url.startsWith('/')) return `${attr}='${origin}${url}'`
+        return `${attr}='${basePath}${url}'`
+      })
+  } catch {
+    return html
+  }
+}
+
+export function ResponsePanel({ response, requestUrl }) {
   const [tab, setTab] = useState('Pretty')
 
   if (!response) {
@@ -18,6 +37,8 @@ export function ResponsePanel({ response }) {
 
   const statusColor = response.status >= 200 && response.status < 300
     ? '#4a9a5a' : response.status >= 400 ? '#ef5a5a' : '#dfc050'
+
+  const previewHtml = requestUrl ? rewriteUrls(response.body || '', requestUrl) : (response.body || '')
 
   return (
     <div className="flex flex-col h-full">
@@ -72,8 +93,8 @@ export function ResponsePanel({ response }) {
         )}
         {tab === 'Preview' && (
           <iframe
-            srcDoc={response.body}
-            sandbox="allow-same-origin"
+            srcDoc={previewHtml}
+            sandbox="allow-same-origin allow-scripts"
             className="w-full h-full border-0 rounded"
             title="preview"
           />
