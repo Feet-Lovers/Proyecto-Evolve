@@ -8,19 +8,14 @@ from services.session_service import session_manager
 from services.proxy_service import is_suspicious
 
 intercepted_requests = []
-session_callbacks = []
 
 class HookSuiteAddon:
     def __init__(self):
         self.request_data = {}
-        self.session_map = {}
 
     def request(self, flow: http.HTTPFlow):
         request_id = str(uuid.uuid4())
         flow.request.headers["X-HookSuite-ID"] = request_id
-
-        session_cookie = flow.request.cookies.get("hooksuite_session", "")
-
         self.request_data[request_id] = {
             "id": request_id,
             "method": flow.request.method,
@@ -28,7 +23,6 @@ class HookSuiteAddon:
             "request_headers": dict(flow.request.headers),
             "request_body": flow.request.get_text(strict=False),
             "timestamp": datetime.utcnow().isoformat(),
-            "session_token": session_cookie,
         }
 
     def response(self, flow: http.HTTPFlow):
@@ -50,15 +44,10 @@ class HookSuiteAddon:
             "vulnerable": False,
         }
 
-        session_token = req_data.get("session_token", "")
-        if session_token:
-            asyncio.create_task(
-                session_manager.emit(session_token, "request_intercepted", packet)
-            )
-
         intercepted_requests.append(packet)
-        for callback in session_callbacks:
-            asyncio.create_task(callback(packet))
+        asyncio.create_task(
+            session_manager.emit_all("request_intercepted", packet)
+        )
 
 async def start_proxy(port: int = 8080):
     opts = Options(listen_host="0.0.0.0", listen_port=port)
