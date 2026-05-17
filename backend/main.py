@@ -3,17 +3,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
 import asyncio
-
 load_dotenv()
-
 from services.session_service import session_manager
-
 app = FastAPI(
     title="HookSuite API",
     description="Backend del sistema de pentesting HookSuite",
     version="1.0.0",
 )
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -21,15 +17,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "HookSuite Backend"}
-
 @app.get("/check/alive")
 async def check_alive():
     return {"status": "proxy_active"}
-
 @app.websocket("/ws/{token}")
 async def websocket_endpoint(websocket: WebSocket, token: str):
     await websocket.accept()
@@ -37,16 +30,23 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
     session_manager.register_websocket(token, websocket)
     try:
         while True:
-            await asyncio.sleep(30)
-            await websocket.send_json({"type": "ping"})
+            try:
+                data = await asyncio.wait_for(websocket.receive_text(), timeout=30)
+            except asyncio.TimeoutError:
+                try:
+                    await websocket.send_json({"type": "ping"})
+                except Exception:
+                    break
     except WebSocketDisconnect:
+        pass
+    except Exception:
+        pass
+    finally:
         session_manager.unregister_websocket(token)
-
 @app.get("/api/session/new")
 async def new_session():
     token = session_manager.create_session()
     return {"token": token}
-
 from routes import proxy, repeater, intruder, utils, network, playwright, vulnerabilities
 app.include_router(proxy.router, prefix="/api/proxy", tags=["proxy"])
 app.include_router(repeater.router, prefix="/api/repeater", tags=["repeater"])
@@ -55,7 +55,6 @@ app.include_router(utils.router, prefix="/api/utils", tags=["utils"])
 app.include_router(network.router, prefix="/api/network", tags=["network"])
 app.include_router(playwright.router, prefix="/api/playwright", tags=["playwright"])
 app.include_router(vulnerabilities.router, prefix="/api/vulnerabilities", tags=["vulnerabilities"])
-
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
