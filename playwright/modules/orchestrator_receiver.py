@@ -138,19 +138,18 @@ class InstructionReceiver:
                         )
                         if response.status_code == 200:
                             data = response.json()
-                            if data.get("instruction"):
-                                instruction = data["instruction"]
-                                print(
-                                    f"\n📨 Instrucción recibida: {instruction.get('type')}"
-                                )
+                            instructions = data.get("instructions", [])
+                            if instructions:
+                                instruction = instructions[0]
+                                print(f"Instruccion recibida: {instruction.get('type')}")
                                 result = await self.execute_instruction(instruction, page)
                                 await client.post(
                                     f"{BACKEND_URL}/api/playwright/result/{self.session_token}",
                                     json=result,
                                 )
-                                print(f"✓ Resultado enviado al backend")
-            except Exception:
-                pass
+                                print("Resultado enviado al backend")
+            except Exception as e:
+                print(f"Error en polling: {e}")
 
             await asyncio.sleep(POLL_INTERVAL)
 

@@ -1,5 +1,9 @@
 version: '3.8'
 
+networks:
+  hooksuite-net:
+    driver: bridge
+
 services:
   backend:
     build: ./backend
@@ -11,26 +15,37 @@ services:
       - HOST=0.0.0.0
       - PORT=8000
       - PROXY_PORT=8080
-      - MOCK_PLAYWRIGHT=true
+      - MOCK_PLAYWRIGHT=false
     restart: unless-stopped
+    networks:
+      - hooksuite-net
 
   playwright:
     build: ./playwright
     environment:
       - BACKEND_URL=http://backend:8000
+      - SESSION_TOKEN=hooksuite_session
+      - PYTHONUNBUFFERED=1
+      - DVWA_URL=http://dvwa:80
     depends_on:
       - backend
     restart: unless-stopped
+    networks:
+      - hooksuite-net
 
   ia:
     build: ./ia
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - BACKEND_URL=http://backend:8000
-      - MOCK_PLAYWRIGHT=true
+      - MOCK_PLAYWRIGHT=false
+      - SESSION_TOKEN=ia_session
+      - PYTHONUNBUFFERED=1
     depends_on:
       - backend
     restart: unless-stopped
+    networks:
+      - hooksuite-net
 
   frontend:
     build: ./frontend
@@ -39,6 +54,8 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+    networks:
+      - hooksuite-net
 
   nginx:
     image: nginx:alpine
@@ -50,3 +67,5 @@ services:
       - backend
       - frontend
     restart: unless-stopped
+    networks:
+      - hooksuite-net

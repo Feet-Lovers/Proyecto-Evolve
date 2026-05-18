@@ -35,3 +35,10 @@ async def receive_result(session_token: str, result: Dict[str, Any]):
     session.setdefault("playwright_results", []).append(result)
     await session_manager.emit(session_token, "playwright_result", result)
     return {"received": True}
+
+@router.get("/result/{session_token}")
+async def get_playwright_results(session_token: str):
+    session = session_manager.get_session(session_token)
+    results = session.get("playwright_results", [])
+    session["playwright_results"] = []
+    return results
