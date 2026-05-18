@@ -13,6 +13,7 @@ load_dotenv()
 
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 MOCK_MODE = os.getenv("MOCK_PLAYWRIGHT", "true").lower() == "true"
+PLAYWRIGHT_SESSION = os.getenv("PLAYWRIGHT_SESSION_TOKEN", "hooksuite_session")
 
 SQLI_PAYLOADS = [
     "' OR '1'='1",
@@ -50,7 +51,7 @@ class AttackOrchestrator:
     async def check_backend(self) -> bool:
         try:
             async with httpx.AsyncClient(timeout=5) as client:
-                response = await client.get(f"{BACKEND_URL}/health")
+                response = await client.get(f"{BACKEND_URL}/api/playwright/instruction/test")
                 self.backend_available = response.status_code == 200
                 if self.backend_available:
                     print(f"✓ Backend disponible en {BACKEND_URL}")
@@ -63,15 +64,28 @@ class AttackOrchestrator:
     async def send_instruction_to_playwright(self, instruction: dict) -> Optional[dict]:
         if MOCK_MODE or not self.backend_available:
             return self._mock_playwright_response(instruction)
-
         try:
             async with httpx.AsyncClient(timeout=30) as client:
+                # Limpiar resultados anteriores
+                await client.get(f"{BACKEND_URL}/api/playwright/result/{PLAYWRIGHT_SESSION}")
+                # Encolar instrucción
                 response = await client.post(
-                    f"{BACKEND_URL}/api/playwright/instruction/{self.session_token}",
-                    json={**instruction, "session_token": self.session_token},
+                    f"{BACKEND_URL}/api/playwright/instruction/{PLAYWRIGHT_SESSION}",
+                    json={**instruction, "session_token": PLAYWRIGHT_SESSION},
                 )
-                if response.status_code == 200:
-                    return response.json()
+                if response.status_code != 200:
+                    return None
+                # Esperar resultado con polling
+                await asyncio.sleep(3)  # espera inicial
+                for _ in range(40):
+                    await asyncio.sleep(2)
+                    result_response = await client.get(
+                        f"{BACKEND_URL}/api/playwright/result/{PLAYWRIGHT_SESSION}"
+                    )
+                    if result_response.status_code == 200:
+                        data = result_response.json()
+                        if data:
+                            return data[0] if isinstance(data, list) else data
         except Exception as e:
             print(f"  ✗ Error enviando instrucción: {e}")
         return None
@@ -197,10 +211,10 @@ class AttackOrchestrator:
                     "url": target_url,
                     "method": "GET",
                     "status": result.get("status", 200),
-                    "time": result.get("time_ms", 100),
+                    "time": result.get("time_ms", result.get("time", 100)),
                     "request_body": payload,
-                    "response_body": result.get("response_body", ""),
-                    "suspicious_reasons": ["INJECTION_CHAR_IN_REQUEST"] if result.get("vulnerable") else [],
+                    "response_body": result.get("response_body_snippet", result.get("response_body", "")),
+                    "suspicious_reasons": ["INJECTION_CHAR_IN_REQUEST"] if result.get("vulnerable") or result.get("anomalies") else [],
                 }
 
                 self.analyses_count += 1
@@ -295,10 +309,12 @@ class AttackOrchestrator:
         attack_priorities = ["sqli", "xss", "fuzzing"]
         if fingerprint_analysis:
             priorities_data = fingerprint_analysis.get("attack_priorities", [])
-            attack_priorities = [
+            derived = [
                 p["tipo"].lower().replace(" ", "_")
                 for p in sorted(priorities_data, key=lambda x: x.get("prioridad", 99))
             ]
+            if derived:
+                attack_priorities = derived
 
         discovered_urls = await self.run_spider_phase(target_url, max_pages=10)
         target_pages = [target_url] + [u for u in discovered_urls if u != target_url][:4]
