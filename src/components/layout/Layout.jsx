@@ -1,4 +1,5 @@
 import { Outlet, NavLink } from 'react-router-dom'
+import ProxyConfig from '@/components/ProxyConfig'
 
 const navItems = [
   { path: '/proxy',           label: 'Proxy',            icon: '⇄' },
@@ -9,7 +10,7 @@ const navItems = [
   { path: '/network',         label: 'Red',              icon: '~'  },
 ]
 
-export function Layout() {
+export function Layout({ onLogout, proxyPort }) {
   return (
     <div className="flex h-screen overflow-hidden" style={{ background: 'var(--hs-bg)' }}>
       <aside
@@ -56,11 +57,29 @@ export function Layout() {
           ))}
         </nav>
 
+        <div className="px-3 pb-3">
+          <ProxyConfig proxyPort={proxyPort} />
+        </div>
+
         <div
-          className="px-4 py-3 border-t text-[9px] tracking-widest"
-          style={{ borderColor: 'var(--hs-border)', fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}
+          className="px-4 py-3 border-t flex items-center justify-between"
+          style={{ borderColor: 'var(--hs-border)' }}
         >
-          v1.0.0 — mock mode
+          <span
+            className="text-[9px] tracking-widest"
+            style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}
+          >
+            v1.0.0
+          </span>
+          <button
+            onClick={onLogout}
+            className="text-[9px] tracking-wide transition-colors"
+            style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}
+            onMouseEnter={e => e.target.style.color = '#ef5a5a'}
+            onMouseLeave={e => e.target.style.color = 'var(--hs-text-dim)'}
+          >
+            logout
+          </button>
         </div>
       </aside>
 
