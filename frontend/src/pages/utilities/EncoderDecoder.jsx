@@ -16,6 +16,26 @@ function decodeJWT(token) {
 
 export function EncoderDecoder() {
   const [input, setInput] = useState('')
+  const [copied, setCopied] = useState(null)
+
+  const copyText = (value, key) => {
+    const doCopy = () => {
+      const el = document.createElement('textarea')
+      el.value = value
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      document.body.removeChild(el)
+      setCopied(key)
+      setTimeout(() => setCopied(null), 1500)
+    }
+    try {
+      navigator.clipboard.writeText(value).then(() => {
+        setCopied(key)
+        setTimeout(() => setCopied(null), 1500)
+      }).catch(doCopy)
+    } catch { doCopy() }
+  }
 
   const outputs = [
     { label: 'base64 encode', value: (() => { try { return btoa(input) } catch { return 'error' } })() },
@@ -64,11 +84,16 @@ export function EncoderDecoder() {
                 {o.label}
               </p>
               <button
-                onClick={() => navigator.clipboard.writeText(o.value)}
-                className="text-[10px] transition-colors"
-                style={{ fontFamily: 'var(--font-mono)', color: '#6aafef' }}
+                onClick={() => copyText(o.value, o.label)}
+                className="text-[10px] transition-colors px-2 py-0.5 rounded border"
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  color: copied === o.label ? '#6adf9a' : '#6aafef',
+                  borderColor: copied === o.label ? '#1e3d2a' : 'var(--hs-border)',
+                  background: copied === o.label ? '#0f1f17' : 'transparent',
+                }}
               >
-                copiar
+                {copied === o.label ? '✓ copiado' : 'copiar'}
               </button>
             </div>
             <pre

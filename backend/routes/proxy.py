@@ -13,8 +13,8 @@ PROXY_PORT = int(os.getenv("PROXY_PORT", "8080"))
 async def get_pac_file(request: Request):
     host = request.headers.get("host", "localhost").split(":")[0]
     pac_content = f"""function FindProxyForURL(url, host) {{
-    if (host === "{host}") return "PROXY {host}:{PROXY_PORT}";
-    return "DIRECT";
+    if (host === "{host}" && url.indexOf(":8888") === -1) return "DIRECT";
+    return "PROXY {host}:{PROXY_PORT}";
 }}"""
     return PlainTextResponse(
         content=pac_content,

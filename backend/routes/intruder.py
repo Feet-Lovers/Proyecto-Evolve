@@ -16,6 +16,9 @@ async def start_attack(config: IntruderConfig, background_tasks: BackgroundTasks
 		attack_type=config.attack_type,
 		concurrency=config.concurrency,
 		delay_ms=config.delay_ms,
+		method=config.method,
+		body=config.body,
+		headers=config.headers,
 	)
 	return {"status": "started", "message": "Ataque iniciado en segundo plano"}
 

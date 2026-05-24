@@ -9,7 +9,6 @@ IGNORED_DOMAINS = [
     'facebook.com', 'twitter.com', 'cdn.cloudflare.com',
     'fonts.googleapis.com', 'fonts.gstatic.com', 'ajax.googleapis.com',
 ]
-
 IGNORED_EXTENSIONS = ['.css', '.woff', '.woff2', '.ttf', '.ico', '.png', '.jpg', '.gif', '.svg']
 
 def should_filter(url: str) -> bool:
@@ -36,12 +35,25 @@ def is_suspicious(url: str, response_body: str, status: int) -> bool:
             return True
     return False
 
+# Clientes persistentes por sesion
+_session_clients: Dict[str, httpx.AsyncClient] = {}
+
+def get_session_client(session_token: str) -> httpx.AsyncClient:
+    if session_token not in _session_clients:
+        _session_clients[session_token] = httpx.AsyncClient(
+            verify=False,
+            follow_redirects=True,
+            timeout=30,
+        )
+    return _session_clients[session_token]
+
 async def forward_request(
     method: str,
     url: str,
     headers: Dict[str, str],
     body: Optional[str],
-    timeout: int = 30
+    timeout: int = 30,
+    session_token: str = None,
 ) -> dict:
     start = time.time()
     request_id = str(uuid.uuid4())
@@ -49,19 +61,42 @@ async def forward_request(
     clean_headers = {k: v for k, v in headers.items() if k.lower() not in protected_headers}
 
     try:
-        async with httpx.AsyncClient(verify=False, follow_redirects=True, timeout=timeout) as client:
+        if session_token:
+            client = get_session_client(session_token)
             response = await client.request(
                 method=method,
                 url=url,
                 headers=clean_headers,
                 content=body.encode() if body else None,
             )
+        else:
+            async with httpx.AsyncClient(verify=False, follow_redirects=True, timeout=timeout) as client:
+                response = await client.request(
+                    method=method,
+                    url=url,
+                    headers=clean_headers,
+                    content=body.encode() if body else None,
+                )
+
         elapsed_ms = int((time.time() - start) * 1000)
         try:
             response_body = response.text
         except Exception:
             response_body = '[binary content]'
+
         suspicious = is_suspicious(url, response_body, response.status_code)
+
+        # Detectar cookies de sesion y notificar al frontend
+        if session_token:
+            cookies = dict(client.cookies)
+            if cookies:
+                from services.session_service import session_manager
+                import asyncio
+                asyncio.create_task(session_manager.emit(session_token, 'session_cookies', {
+                    'cookies': cookies,
+                    'url': url
+                }))
+
         return {
             "id": request_id,
             "method": method,

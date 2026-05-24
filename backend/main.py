@@ -5,6 +5,8 @@ import os
 import asyncio
 load_dotenv()
 from services.session_service import session_manager
+from services.redis_consumer import start_redis_consumer
+from services.proxy_manager import proxy_manager
 app = FastAPI(
     title="HookSuite API",
     description="Backend del sistema de pentesting HookSuite",
@@ -43,11 +45,17 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
         pass
     finally:
         session_manager.unregister_websocket(token)
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(start_redis_consumer())
+    asyncio.create_task(proxy_manager.cleanup_expired())
+
 @app.get("/api/session/new")
 async def new_session():
     token = session_manager.create_session()
     return {"token": token}
-from routes import proxy, repeater, intruder, utils, network, playwright, vulnerabilities
+from routes import proxy, repeater, intruder, utils, network, playwright, vulnerabilities, auth, spider
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(proxy.router, prefix="/api/proxy", tags=["proxy"])
 app.include_router(repeater.router, prefix="/api/repeater", tags=["repeater"])
 app.include_router(intruder.router, prefix="/api/intruder", tags=["intruder"])
@@ -55,6 +63,7 @@ app.include_router(utils.router, prefix="/api/utils", tags=["utils"])
 app.include_router(network.router, prefix="/api/network", tags=["network"])
 app.include_router(playwright.router, prefix="/api/playwright", tags=["playwright"])
 app.include_router(vulnerabilities.router, prefix="/api/vulnerabilities", tags=["vulnerabilities"])
+app.include_router(spider.router, prefix="/api/spider", tags=["spider"])
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(

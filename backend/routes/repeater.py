@@ -13,6 +13,7 @@ async def send_request(request: RepeaterRequest):
 		url=request.url,
 		headers=request.headers,
 		body=request.body,
+		session_token=request.session_token,
 	)
 	return result
 
