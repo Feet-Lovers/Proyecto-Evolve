@@ -3,14 +3,7 @@ import { RequestEditor } from './RequestEditor'
 import { ResponsePanel } from './ResponsePanel'
 import axios from 'axios'
 import { config } from '@/services/api'
-
-const MOCK_RESPONSE = {
-  status: 200,
-  time: 134,
-  size: 2048,
-  body: JSON.stringify({ message: 'OK', data: { id: 1, name: 'admin' } }, null, 2),
-  headers: { 'Content-Type': 'application/json' },
-}
+import { useAppContext } from '@/AppContext'
 
 function normalizeResponse(data) {
   return {
@@ -24,6 +17,7 @@ function normalizeResponse(data) {
 }
 
 export function RepeaterPage() {
+  const { sessionToken } = useAppContext()
   const [initialRequest, setInitialRequest] = useState(null)
   const [response, setResponse] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -42,13 +36,10 @@ export function RepeaterPage() {
     setLoading(true)
     setLastUrl(request.url || '')
     try {
-      if (config.USE_MOCKS) {
-        await new Promise(r => setTimeout(r, 500))
-        setResponse(MOCK_RESPONSE)
-        setHistory(prev => [{ request, response: MOCK_RESPONSE, timestamp: new Date() }, ...prev.slice(0, 99)])
-        return
-      }
-      const res = await axios.post(`${config.API_BASE}/api/repeater/send`, request)
+      const res = await axios.post(`${config.API_BASE}/api/repeater/send`, {
+        ...request,
+        session_token: sessionToken,
+      })
       const normalized = normalizeResponse(res.data)
       setResponse(normalized)
       setHistory(prev => [{ request, response: normalized, timestamp: new Date() }, ...prev.slice(0, 99)])

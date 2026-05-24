@@ -14,6 +14,7 @@ export function HashGenerator() {
   const [input, setInput] = useState('')
   const [hashes, setHashes] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [copied, setCopied] = useState(null)
 
   const generate = async () => {
     if (!input) return
@@ -68,11 +69,33 @@ export function HashGenerator() {
                   {algo}
                 </p>
                 <button
-                  onClick={() => navigator.clipboard.writeText(hash)}
-                  className="text-[10px]"
-                  style={{ fontFamily: 'var(--font-mono)', color: '#6aafef' }}
+                  onClick={() => {
+                    const doCopy = () => {
+                      const el = document.createElement('textarea')
+                      el.value = hash
+                      document.body.appendChild(el)
+                      el.select()
+                      document.execCommand('copy')
+                      document.body.removeChild(el)
+                      setCopied(algo)
+                      setTimeout(() => setCopied(null), 1500)
+                    }
+                    try {
+                      navigator.clipboard.writeText(hash).then(() => {
+                        setCopied(algo)
+                        setTimeout(() => setCopied(null), 1500)
+                      }).catch(doCopy)
+                    } catch { doCopy() }
+                  }}
+                  className="text-[10px] px-2 py-0.5 rounded border transition-colors"
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    color: copied === algo ? '#6adf9a' : '#6aafef',
+                    borderColor: copied === algo ? '#1e3d2a' : 'var(--hs-border)',
+                    background: copied === algo ? '#0f1f17' : 'transparent',
+                  }}
                 >
-                  copiar
+                  {copied === algo ? '✓ copiado' : 'copiar'}
                 </button>
               </div>
               <p

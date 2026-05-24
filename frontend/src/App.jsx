@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AppProvider } from '@/AppContext'
 import { Layout } from '@/components/layout/Layout'
 import { ProxyPage } from '@/pages/proxy/ProxyPage'
 import { RepeaterPage } from '@/pages/repeater/RepeaterPage'
@@ -9,6 +10,7 @@ import { NetworkPage } from '@/pages/network/NetworkPage'
 
 export default function App() {
   return (
+    <AppProvider>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Layout />}>
@@ -22,5 +24,6 @@ export default function App() {
         </Route>
       </Routes>
     </BrowserRouter>
+    </AppProvider>
   )
 }

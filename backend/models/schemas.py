@@ -29,6 +29,7 @@ class RepeaterRequest(BaseModel):
 	url: str
 	headers: Dict[str, str] = {}
 	body: Optional[str] = None
+	session_token: Optional[str] = None
 
 class ParseRequest(BaseModel):
 	text: str
@@ -40,6 +41,9 @@ class IntruderConfig(BaseModel):
 	session_token: str
 	concurrency: int = 5
 	delay_ms: int = 0
+	method: str = "GET"
+	body: str = ""
+	headers: dict = {}
 
 class NetworkPacket(BaseModel):
 	id: str

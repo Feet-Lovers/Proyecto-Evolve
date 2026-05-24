@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-const TABS = ['Raw', 'Pretty', 'Preview']
+const TABS = ['Raw', 'Pretty', 'Preview', 'Headers']
 
 function rewriteUrls(html, baseUrl) {
   try {
@@ -90,6 +90,22 @@ export function ResponsePanel({ response, requestUrl }) {
           >
             {(() => { try { return JSON.stringify(JSON.parse(response.body), null, 2) } catch { return response.body } })()}
           </pre>
+        )}
+        {tab === 'Headers' && (
+          <div className="space-y-1">
+            {Object.entries(response.headers || {}).length === 0 ? (
+              <p className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}>
+                No hay headers disponibles
+              </p>
+            ) : (
+              Object.entries(response.headers || {}).map(([k, v]) => (
+                <div key={k} className="flex gap-3 py-1.5 px-3 rounded border" style={{ background: 'var(--hs-bg)', borderColor: 'var(--hs-border)' }}>
+                  <span className="min-w-[180px] text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}>{k}</span>
+                  <span className="text-[10px] break-all" style={{ fontFamily: 'var(--font-mono)', color: k.toLowerCase() === 'set-cookie' ? '#6adf9a' : 'var(--hs-text-secondary)' }}>{v}</span>
+                </div>
+              ))
+            )}
+          </div>
         )}
         {tab === 'Preview' && (
           <iframe

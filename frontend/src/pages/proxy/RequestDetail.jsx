@@ -3,7 +3,7 @@ import { Button } from '@/components/ui'
 
 const TABS = ['Request', 'Response', 'Headers']
 
-export function RequestDetail({ request, onSendToRepeater }) {
+export function RequestDetail({ request, onSendToRepeater, onSendToIntruder }) {
   const [activeTab, setActiveTab] = useState('Request')
 
   if (!request) {
@@ -12,7 +12,7 @@ export function RequestDetail({ request, onSendToRepeater }) {
         className="flex items-center justify-center h-full text-[11px]"
         style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}
       >
-        selecciona una petición para ver el detalle
+        selecciona una peticion para ver el detalle
       </div>
     )
   }
@@ -40,9 +40,14 @@ export function RequestDetail({ request, onSendToRepeater }) {
             </button>
           ))}
         </div>
-        <Button size="sm" onClick={() => onSendToRepeater(request)}>
-          enviar al repeater →
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="secondary" onClick={() => onSendToIntruder(request)}>
+            enviar al intruder →
+          </Button>
+          <Button size="sm" onClick={() => onSendToRepeater(request)}>
+            enviar al repeater →
+          </Button>
+        </div>
       </div>
 
       <div
@@ -52,7 +57,7 @@ export function RequestDetail({ request, onSendToRepeater }) {
         {activeTab === 'Request' && (
           <div className="space-y-4">
             <div>
-              <p className="text-[9px] tracking-widest uppercase mb-2" style={{ color: 'var(--hs-text-dim)' }}>petición</p>
+              <p className="text-[9px] tracking-widest uppercase mb-2" style={{ color: 'var(--hs-text-dim)' }}>peticion</p>
               <p>
                 <span style={{ color: '#6adf9a' }}>{request.method} </span>
                 <span style={{ color: '#6aafef' }}>{request.url}</span>
@@ -89,7 +94,7 @@ export function RequestDetail({ request, onSendToRepeater }) {
         {activeTab === 'Headers' && (
           <div className="space-y-4">
             <div>
-              <p className="text-[9px] tracking-widest uppercase mb-2" style={{ color: 'var(--hs-text-dim)' }}>headers de petición</p>
+              <p className="text-[9px] tracking-widest uppercase mb-2" style={{ color: 'var(--hs-text-dim)' }}>headers de peticion</p>
               {Object.entries(request.requestHeaders || {}).map(([k, v]) => (
                 <div key={k} className="flex gap-3 py-1 border-b" style={{ borderColor: '#13161c' }}>
                   <span className="min-w-[120px]" style={{ color: 'var(--hs-text-dim)' }}>{k}</span>
