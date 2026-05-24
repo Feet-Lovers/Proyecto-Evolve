@@ -1,0 +1,158 @@
+{
+  "forms": [
+    {
+      "url": "http://localhost:8888/vulnerabilities/xss_r/",
+      "action": "http://localhost:8888/vulnerabilities/xss_r/#",
+      "method": "GET",
+      "fields": [
+        {
+          "name": "name",
+          "type": "text",
+          "value": ""
+        }
+      ],
+      "injectable_fields": [
+        {
+          "name": "name",
+          "type": "text",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "url": "http://localhost:8888/vulnerabilities/csrf/",
+      "action": "http://localhost:8888/vulnerabilities/csrf/#",
+      "method": "GET",
+      "fields": [
+        {
+          "name": "password_new",
+          "type": "password",
+          "value": ""
+        },
+        {
+          "name": "password_conf",
+          "type": "password",
+          "value": ""
+        }
+      ],
+      "injectable_fields": [
+        {
+          "name": "password_new",
+          "type": "password",
+          "value": ""
+        },
+        {
+          "name": "password_conf",
+          "type": "password",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "url": "http://localhost:8888/vulnerabilities/sqli/",
+      "action": "http://localhost:8888/vulnerabilities/sqli/#",
+      "method": "GET",
+      "fields": [
+        {
+          "name": "id",
+          "type": "text",
+          "value": ""
+        }
+      ],
+      "injectable_fields": [
+        {
+          "name": "id",
+          "type": "text",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "url": "http://localhost:8888/vulnerabilities/brute/",
+      "action": "http://localhost:8888/vulnerabilities/brute/#",
+      "method": "GET",
+      "fields": [
+        {
+          "name": "username",
+          "type": "text",
+          "value": ""
+        },
+        {
+          "name": "password",
+          "type": "password",
+          "value": ""
+        }
+      ],
+      "injectable_fields": [
+        {
+          "name": "username",
+          "type": "text",
+          "value": ""
+        },
+        {
+          "name": "password",
+          "type": "password",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "url": "http://localhost:8888/vulnerabilities/exec/",
+      "action": "http://localhost:8888/vulnerabilities/exec/#",
+      "method": "POST",
+      "fields": [
+        {
+          "name": "ip",
+          "type": "text",
+          "value": ""
+        }
+      ],
+      "injectable_fields": [
+        {
+          "name": "ip",
+          "type": "text",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "url": "http://localhost:8888/vulnerabilities/sqli_blind/",
+      "action": "http://localhost:8888/vulnerabilities/sqli_blind/#",
+      "method": "GET",
+      "fields": [
+        {
+          "name": "id",
+          "type": "text",
+          "value": ""
+        }
+      ],
+      "injectable_fields": [
+        {
+          "name": "id",
+          "type": "text",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "url": "http://localhost:8888/setup.php",
+      "action": "http://localhost:8888/setup.php#",
+      "method": "POST",
+      "fields": [
+        {
+          "name": "user_token",
+          "type": "hidden",
+          "value": "3a9cc9b8eb3a80c04d88910915587af9"
+        }
+      ],
+      "injectable_fields": [
+        {
+          "name": "user_token",
+          "type": "hidden",
+          "value": "3a9cc9b8eb3a80c04d88910915587af9"
+        }
+      ]
+    }
+  ],
+  "total": 7
+}
