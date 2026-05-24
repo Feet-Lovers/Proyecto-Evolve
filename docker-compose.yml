@@ -1,0 +1,84 @@
+version: '3.8'
+
+networks:
+  hooksuite-net:
+    driver: bridge
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - HOST=0.0.0.0
+      - PORT=8000
+      - PROXY_PORT=8080
+      - MOCK_PLAYWRIGHT=false
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - /tmp/firewall.sock:/tmp/firewall.sock
+    networks:
+      - hooksuite-net
+
+  playwright:
+    build: ./playwright
+    environment:
+      - BACKEND_URL=http://backend:8000
+      - SESSION_TOKEN=hooksuite_session
+      - PYTHONUNBUFFERED=1
+      - DVWA_URL=http://dvwa:80
+    depends_on:
+      - backend
+    restart: unless-stopped
+  redis:
+    image: redis:7-alpine
+    container_name: hooksuite-redis-1
+    restart: unless-stopped
+    networks:
+      - hooksuite-net
+  dvwa:
+    image: vulnerables/web-dvwa
+    restart: unless-stopped
+    networks:
+      - hooksuite-net
+
+  ia:
+    build: ./ia
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - BACKEND_URL=http://backend:8000
+      - MOCK_PLAYWRIGHT=false
+      - SESSION_TOKEN=ia_session
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - hooksuite-net
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - hooksuite-net
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./infra/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/htpasswd:/etc/nginx/htpasswd:ro
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
+    networks:
+      - hooksuite-net

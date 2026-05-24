@@ -1,0 +1,71 @@
+export const mockRequests = [
+  {
+    id: '1',
+    method: 'POST',
+    url: 'http://dvwa.local/login.php',
+    status: 200,
+    size: 4823,
+    time: 142,
+    timestamp: new Date().toISOString(),
+    requestHeaders: { 'Content-Type': 'application/x-www-form-urlencoded', 'Cookie': 'PHPSESSID=abc123' },
+    requestBody: 'username=admin&password=password&Login=Login',
+    responseHeaders: { 'Content-Type': 'text/html; charset=UTF-8', 'Server': 'Apache/2.4.51' },
+    responseBody: '<html><body>Welcome to DVWA</body></html>',
+    suspicious: false,
+    vulnerable: false,
+  },
+  {
+    id: '2',
+    method: 'GET',
+    url: 'http://dvwa.local/vulnerabilities/sqli/?id=1&Submit=Submit',
+    status: 200,
+    size: 5102,
+    time: 89,
+    timestamp: new Date().toISOString(),
+    requestHeaders: { 'Cookie': 'PHPSESSID=abc123; security=low' },
+    requestBody: null,
+    responseHeaders: { 'Content-Type': 'text/html; charset=UTF-8' },
+    responseBody: '<html><body>ID: 1<br>First name: admin<br>Surname: admin</body></html>',
+    suspicious: true,
+    vulnerable: false,
+  },
+  {
+    id: '3',
+    method: 'GET',
+    url: "http://dvwa.local/vulnerabilities/sqli/?id=' OR '1'='1&Submit=Submit",
+    status: 200,
+    size: 8934,
+    time: 312,
+    timestamp: new Date().toISOString(),
+    requestHeaders: { 'Cookie': 'PHPSESSID=abc123; security=low' },
+    requestBody: null,
+    responseHeaders: { 'Content-Type': 'text/html; charset=UTF-8' },
+    responseBody: '<html><body>ID: admin, First name: admin...</body></html>',
+    suspicious: true,
+    vulnerable: true,
+  },
+]
+
+export const mockVulnerabilities = [
+  {
+    id: 'vuln-1',
+    tipo: 'SQL Injection',
+    severidad: 'critical',
+    titulo: 'SQL Injection en parámetro id',
+    descripcion: 'El parámetro id en /vulnerabilities/sqli/ no está sanitizado correctamente. Es posible extraer toda la base de datos.',
+    url: 'http://dvwa.local/vulnerabilities/sqli/',
+    payload: "' OR '1'='1",
+    recomendacion: 'Usar consultas preparadas con parámetros enlazados. Nunca concatenar input del usuario en consultas SQL.',
+    timestamp: new Date().toISOString(),
+  },
+]
+
+export const mockConsoleErrors = [
+  {
+    level: 'error',
+    message: "MySQL error: You have an error in your SQL syntax near '1''",
+    url: 'http://dvwa.local/vulnerabilities/sqli/index.php',
+    line: 42,
+    timestamp: new Date().toISOString(),
+  },
+]
