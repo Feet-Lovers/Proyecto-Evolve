@@ -4,7 +4,7 @@ import time
 from typing import Optional
 from services.payloads import get_payloads
 from services.session_service import session_manager
-from services.proxy_service import is_suspicious
+from services.proxy_service import is_suspicious, get_session_client
 from routes.network import session_cookies
 
 
@@ -18,9 +18,11 @@ class IntruderEngine:
         url: str,
         injection_point: str,
         attack_type: str,
-
         concurrency: int = 5,
         delay_ms: int = 0,
+        method: str = "GET",
+        body: str = "",
+        headers: dict = {},
     ):
         session = session_manager.get_session(session_token)
         session["intruder_status"] = "running"
@@ -28,12 +30,6 @@ class IntruderEngine:
 
         payloads = get_payloads(attack_type)
 
-        from urllib.parse import urlparse
-        parsed = urlparse(url)
-        target_host = f"{parsed.hostname}:{parsed.port}" if parsed.port else parsed.hostname
-        phpsessid = session_cookies.get(target_host, "")
-        cookie_header = f"PHPSESSID={phpsessid}; security=low" if phpsessid else "security=low"
-        print(f"  Cookie de sesión para {target_host}: {'encontrada' if phpsessid else 'no encontrada'}")
         semaphore = asyncio.Semaphore(concurrency)
 
         await session_manager.emit(session_token, "intruder_status", {
@@ -50,24 +46,28 @@ class IntruderEngine:
                 if delay_ms:
                     await asyncio.sleep(delay_ms / 1000)
 
-                injected_url = url.replace("[injection_point]", payload)
-
-                if injection_point not in url:
+                if "*" in url:
+                    injected_url = url.replace("*", payload)
+                else:
                     injected_url = url + ("&" if "?" in url else "?") + f"{injection_point}={payload}"
 
                 start = time.time()
-                client = httpx.AsyncClient(verify=False, timeout=10)
 
                 try:
-                    async with httpx.AsyncClient(verify=False, timeout=10) as client:
-                        response = await client.get(injected_url, headers={"Cookie": cookie_header})
-                        elapsed = int((time.time() - start) * 1000)
+                    client = get_session_client(session_token)
+                    merged_headers = {}
+                    merged_headers.update(headers)
+                    injected_body = body.replace("[injection_point]", payload) if body else None
+                    response = await client.request(method, injected_url, headers=merged_headers, content=injected_body.encode() if injected_body else None)
+                    elapsed = int((time.time() - start) * 1000)
 
-                        try:
-                            body = response.text
-                        except Exception:
-                            body = ""
+                    try:
+                        response_body = response.text
+                    except Exception:
+                        response_body = ""
 
+                    sqli_patterns = ['First name:', 'Surname:', 'sql syntax', 'mysql_fetch', 'ORA-', 'pg_query', 'sqlite_', 'You have an error']
+                    is_vuln = any(p.lower() in response_body.lower() for p in sqli_patterns)
                     payload_result = {
                         "id": index,
                         "payload": payload,
@@ -75,8 +75,9 @@ class IntruderEngine:
                         "status": response.status_code,
                         "time": elapsed,
                         "length": len(response.content),
-                        "snippet": body[:200],
-                        "validated": False,
+                        "snippet": response_body[:200],
+                        "validated": is_vuln,
+                        "vulnerable": is_vuln,
                     }
 
                 except Exception as e:
