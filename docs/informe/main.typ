@@ -38,10 +38,6 @@
   #block(width: 100%, height: 2cm, fill: azul-acento)[]
 
   #pad(left: 3cm, right: 3cm, top: 1.5cm)[
-    #text(size: 10pt, fill: rgb("#7EB8E8"), tracking: 2pt)[
-      CIBERSEGURIDAD AVANZADA · CURSO 2026 · PRÁCTICA 1
-    ]
-
     #v(1.5cm)
 
     #text(size: 52pt, weight: "bold", fill: white)[Hook]#text(
@@ -60,8 +56,7 @@
 
     #text(size: 11pt, fill: rgb("#8FA8C0"))[
       *#text(fill: rgb("#C8D8E8"))[Módulo]* · Ciberseguridad Avanzada | Curso 2026 \
-      *#text(fill: rgb("#C8D8E8"))[Práctica]* · Práctica 1 — Red Team \
-      *#text(fill: rgb("#C8D8E8"))[Línea]* · Opción 03 — Escáner de vulnerabilidades web con IA
+      *#text(fill: rgb("#C8D8E8"))[Práctica]* · Práctica 1 — Red Team
     ]
 
     #v(1.5cm)
@@ -86,7 +81,7 @@
     }
 
     #miembro("P1", "Ivan Medina Castro", "Frontend — React + Vite + Tailwind")
-    #miembro("P2", "Macarena Rogerio", "Backend — FastAPI + mitmproxy")
+    #miembro("P2", "Macarena Rogerio", "Backend — FastAPI + Python")
     #miembro("P3", "Nacho García Monge", "Playwright — Automatización")
     #miembro("P4", "Carlos Bañuelos Fernández", "DevTools — Chrome DevTools Protocol")
     #miembro("P5", "Jose María López Ausín", "IA + GitHub — Claude API")
@@ -97,8 +92,8 @@
 
     #grid(
       columns: (1fr, auto),
-      text(size: 10pt, fill: azul-acento)[github.com/Feet-Lovers/Proyecto-Evolve],
-      text(size: 10pt, fill: rgb("#8FA8C0"))[Entrega · 25 de Mayo de 2026],
+      text(size: 10pt, fill: azul-acento)[#link("https://github.com/Feet-Lovers/Proyecto-Evolve")[github.com/Feet-Lovers/Proyecto-Evolve]],
+      text(size: 10pt, fill: rgb("#8FA8C0"))[Entrega · 31 de Mayo de 2026],
     )
   ]
 ]
@@ -125,7 +120,7 @@
     #line(length: 100%, stroke: 0.5pt + gris-borde)
     #v(4pt)
     #align(center)[
-      #text(size: 9pt, fill: rgb("#888888"))[context counter(page).display("1")]
+      #context text(size: 9pt, fill: rgb("#888888"))[#counter(page).display("1")]
     ]
   ],
 )
@@ -192,15 +187,13 @@
 
 = Resumen ejecutivo
 
-HookSuite es una herramienta de auditoría de seguridad web desarrollada íntegramente por el equipo en el marco de la Práctica 1 del Módulo de Ciberseguridad Avanzada. Su objetivo es automatizar el proceso de detección de vulnerabilidades web combinando interceptación de tráfico HTTP en tiempo real, automatización de ataques con navegador real y análisis inteligente mediante la API de Claude de Anthropic.
+HookSuite es una herramienta de auditoría de seguridad web desarrollada íntegramente por el equipo en el marco de la Práctica 1 del Módulo de Ciberseguridad Avanzada. Su objetivo es automatizar el proceso de detección de vulnerabilidades web combinando análisis de tráfico HTTP en tiempo real, fuzzing automatizado de parámetros y análisis inteligente mediante inteligencia artificial.
 
-Funcionalmente, HookSuite opera de forma similar a Burp Suite pero con tres diferencias clave: está construida desde cero, incorpora inteligencia artificial para clasificar y priorizar vulnerabilidades, y es accesible desde cualquier navegador sin instalación de software adicional en el cliente.
+Funcionalmente, HookSuite opera de forma similar a Burp Suite pero con tres diferencias clave: está construida desde cero, es accesible desde cualquier navegador sin instalación de software adicional en el cliente, e incorpora inteligencia artificial para clasificar y priorizar vulnerabilidades según el estándar OWASP.
 
-El sistema está compuesto por cinco módulos integrados: un dashboard web en React que actúa como interfaz de control, un backend en FastAPI con mitmproxy que intercepta el tráfico HTTP del usuario, un motor de automatización con Playwright que ejecuta los ataques sobre el objetivo, un módulo de captura de tráfico basado en Chrome DevTools Protocol, y un módulo de inteligencia artificial que analiza los paquetes capturados, genera instrucciones de ataque y clasifica las vulnerabilidades detectadas según el estándar OWASP.
+El sistema está compuesto por cinco módulos integrados: un dashboard web en React que actúa como interfaz de control, un backend en FastAPI que gestiona las sesiones de auditoría y ejecuta las peticiones HTTP por el auditor, un motor de automatización con Playwright para la ejecución de ataques con navegador real, un módulo de captura de tráfico basado en Chrome DevTools Protocol, y un módulo de inteligencia artificial para el análisis y clasificación de vulnerabilidades. Los módulos de Playwright, DevTools e IA están integrados en la arquitectura del sistema y su activación completa está planificada para la Práctica 2.
 
-Durante las pruebas realizadas sobre DVWA (Damn Vulnerable Web Application), el sistema detectó con éxito inyecciones SQL con un nivel de confianza superior al 90%, identificó tecnologías del objetivo mediante fingerprinting automatizado y generó un informe estructurado con las vulnerabilidades confirmadas. El umbral de confianza del 60% establecido para la clasificación redujo los falsos positivos a un nivel por debajo del 5%.
-
-La herramienta está desplegada en un servidor Hetzner Cloud CX22 y es accesible a través de la URL pública del proyecto. El desarrollo completo, incluyendo el historial de commits, está disponible en el repositorio público de la organización Feet-Lovers en GitHub.
+La herramienta está desplegada en un servidor Hetzner Cloud CX22 y es accesible desde cualquier navegador a través de su URL pública. En su estado actual, el Spider, el Repeater, el Intruder y las Utilidades están completamente operativos y han sido validados contra DVWA (Damn Vulnerable Web Application). El desarrollo completo, incluyendo el historial de commits, está disponible en el repositorio público de la organización Feet-Lovers en GitHub.
 
 // ============================================================
 // 2. DESCRIPCIÓN DEL PROBLEMA Y JUSTIFICACIÓN
@@ -222,9 +215,9 @@ La tercera es la trazabilidad. Las auditorías realizadas con herramientas tradi
 
 HookSuite nace como respuesta a estas tres limitaciones. Su arquitectura combina tecnologías modernas para construir una solución que es a la vez accesible, inteligente y trazable.
 
-La accesibilidad se resuelve mediante un dashboard web: el único requisito para el usuario es configurar el proxy en su navegador apuntando a HookSuite. Todo lo demás —interceptación, análisis, ataques— ocurre en el servidor sin intervención del cliente.
+La accesibilidad se resuelve mediante un dashboard web accesible desde cualquier navegador sin instalación ni configuración adicional. El analista dirige el proceso —introduce la URL objetivo, define el scope, lanza el spider, selecciona peticiones para el Repeater y configura los ataques en el Intruder— mientras el servidor ejecuta las operaciones pesadas sin intervención adicional del cliente.
 
-La automatización del análisis se resuelve mediante la integración con la API de Claude de Anthropic. El módulo de inteligencia artificial analiza cada paquete interceptado, identifica patrones de vulnerabilidad, genera instrucciones de ataque específicas para el objetivo y clasifica los resultados según el estándar OWASP. El analista recibe vulnerabilidades clasificadas y priorizadas, no datos en bruto.
+La automatización del análisis se resuelve mediante un módulo de inteligencia artificial integrado en el sistema. Este módulo está diseñado para analizar cada paquete interceptado, identificar patrones de vulnerabilidad, generar instrucciones de ataque específicas para el objetivo y clasificar los resultados según el estándar OWASP. El analista recibirá vulnerabilidades clasificadas y priorizadas, no datos en bruto.
 
 La trazabilidad se resuelve mediante un sistema de registro estructurado. Cada vulnerabilidad detectada genera una ficha completa con identificador único, tipo, severidad, URL afectada, payload utilizado y recomendación de mitigación, exportable en formato JSON estándar.
 
@@ -238,27 +231,26 @@ Este proyecto desarrolla competencias en cinco áreas simultáneamente: desarrol
 
 = Arquitectura técnica
 
-// TODO: Insertar diagrama cuando esté disponible
-// #figure(image("../capturas/arquitectura.png", width: 100%), caption: "Arquitectura técnica de HookSuite")
-
 == Visión general del sistema
 
 HookSuite está compuesto por cinco módulos independientes que se comunican a través de una capa de backend centralizada. Cada módulo fue desarrollado por un miembro del equipo de forma autónoma y se integra con el resto a través de contratos de API definidos previamente.
 
+// TODO: Sustituir el diagrama ASCII por la imagen definitiva del diagrama de arquitectura
+// #figure(image("../capturas/arquitectura.png", width: 100%), caption: "Arquitectura técnica de HookSuite")
+
 ```
-Usuario (navegador con proxy PAC)
-         │
-         ▼
 P1 — Frontend React (dashboard web)
          │ WebSocket + REST
          ▼
-P2 — Backend FastAPI + mitmproxy
+P2 — Backend FastAPI + httpx
     ┌────┴────┬─────────────┐
     ▼         ▼             ▼
 P3            P5            P4
-Playwright    IA Claude     DevTools CDP
+Playwright    IA            DevTools
 (ataques)     (análisis)    (captura red)
 ```
+
+_Los módulos P3, P4 y P5 están integrados en la arquitectura y su activación completa está planificada para la Práctica 2._
 
 == Stack tecnológico
 
@@ -268,27 +260,26 @@ Playwright    IA Claude     DevTools CDP
   table.cell(fill: azul)[#text(fill: white, weight: "bold")[Módulo]],
   table.cell(fill: azul)[#text(fill: white, weight: "bold")[Tecnologías]],
   table.cell(fill: azul)[#text(fill: white, weight: "bold")[Responsable]],
-  [Frontend], [React 18 + Vite + Tailwind CSS], [P1 — Ivan],
-  [Backend], [Python 3.11 + FastAPI + mitmproxy + WebSockets], [P2 — Macarena],
-  [Playwright], [Playwright + asyncio + httpx], [P3 — Nacho],
-  [DevTools], [Chrome DevTools Protocol + Python], [P4 — Carlos],
-  [IA], [Anthropic Claude API (claude-sonnet-4-20250514)], [P5 — Jose María],
-  [Infraestructura], [Docker + Hetzner Cloud CX22 + Nginx + GitHub Actions], [P2 + P5],
+  [Frontend], [React 19 + Vite + Tailwind CSS], [P1 — Ivan],
+  [Backend], [Python 3.11 + FastAPI + httpx + WebSockets], [P2 — Macarena],
+  [Playwright], [Python + Playwright + httpx], [P3 — Nacho],
+  [DevTools], [Python + WebSockets + httpx], [P4 — Carlos],
+  [IA], [Claude Code], [P5 — Jose María],
+  [Infraestructura], [Docker + Hetzner Cloud CX22 + Nginx], [Todos],
 )
 
-== Contratos de integración entre módulos
+== Contratos de integración activos — Práctica 1
 
 #table(
   columns: (1fr, 1fr, auto),
   fill: (_, y) => if y == 0 { azul } else if calc.odd(y) { azul-claro } else { white },
   table.cell(fill: azul)[#text(fill: white, weight: "bold")[Integración]],
-  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Endpoint]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Canal]],
   table.cell(fill: azul)[#text(fill: white, weight: "bold")[Estado]],
-  [P4 → P2 (paquetes de red)], [`POST /api/network/packet`], [Implementado],
-  [P5 → P2 → P3 (instrucciones)], [`POST /api/playwright/instruction/{token}`], [Implementado],
-  [P3 → P2 (resultado del ataque)], [`POST /api/playwright/result/{token}`], [Implementado],
-  [P5 → P2 (vulnerabilidades)], [`POST /api/vulnerabilities`], [Implementado],
+  [P1 ↔ P2 (Frontend — Backend)], [WebSocket + REST], [✅ Activo],
 )
+
+_Los contratos de integración de P3, P4 y P5 con el Backend se definirán y documentarán durante la Práctica 2._
 
 // ============================================================
 // 4. PROCESO DE DESARROLLO
