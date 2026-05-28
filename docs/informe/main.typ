@@ -499,6 +499,11 @@ El *reporter* gestiona el envío de paquetes al Backend con un buffer local como
 
 El módulo está construido y validado en local. No está desplegado como contenedor en el servidor — su integración completa en la infraestructura Docker de Hetzner está planificada para la Práctica 2.
 
+#figure(
+  image("../capturas/devtools/cdp_conectado.png", width: 90%),
+  caption: "Arranque del módulo DevTools — Chrome lanzado, CDP activo y analizadores inicializados"
+)
+
 === Proceso de desarrollo
 
 ==== Fase 1 — Setup y construcción del módulo
@@ -512,6 +517,21 @@ Con esa decisión tomada construyó los cinco componentes del módulo: el lanzad
 Con el módulo construido, Carlos lo validó contra DVWA navegando la aplicación con el Chrome controlado por DevTools. Durante esta fase verificó que el CDP capturaba correctamente las peticiones HTTP, que el filtrado eliminaba el tráfico irrelevante — imágenes, fuentes, CDNs — dejando únicamente las peticiones relevantes para la auditoría, y que los analizadores detectaban correctamente los patrones sospechosos al provocar errores SQL en los formularios de DVWA.
 
 En esta fase apareció el bug más relevante del módulo: Chrome ignoraba los flags de debugging cuando ya había una instancia abierta en el sistema. Carlos lo identificó y lo resolvió añadiendo `--user-data-dir` con un directorio de perfil separado, garantizando que el Chrome lanzado por DevTools arranque siempre con los flags correctos independientemente del estado del sistema. También añadió `--remote-allow-origins=*` para evitar restricciones de origen en la conexión WebSocket al CDP.
+
+#figure(
+  image("../capturas/devtools/paquetes_tiempo_real.png", width: 90%),
+  caption: "Captura de tráfico en tiempo real — petición marcada como sospechosa con SQL_ERROR_IN_RESPONSE"
+)
+
+#figure(
+  image("../capturas/devtools/hallazgo_consola.png", width: 90%),
+  caption: "Analizador de consola detectando PASSWORD_EXPOSED en los logs de DVWA"
+)
+
+#figure(
+  image("../capturas/devtools/json_paquete.png", width: 70%),
+  caption: "Objeto paquete generado por el constructor — cinco headers de seguridad ausentes detectados"
+)
 
 ==== Fase 3 — El pivote y sus consecuencias para P4
 
