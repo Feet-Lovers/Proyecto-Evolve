@@ -477,9 +477,45 @@ Este cambio no invalidó el trabajo realizado pero sí afectó a la integración
 
 == Módulo DevTools (P4 — Carlos Bañuelos Fernández)
 
-#rect(fill: azul-claro, stroke: 1pt + azul-acento, inset: 12pt, width: 100%, radius: 4pt)[
-  _Sección pendiente de entrega por P4 — Límite: 19 de Mayo de 2026_
-]
+=== El módulo
+
+El módulo DevTools es el componente de captura de tráfico de red de HookSuite — un cliente del Chrome DevTools Protocol que se conecta a una instancia de Chrome en ejecución, intercepta todo el tráfico HTTP en tiempo real y analiza tanto los paquetes de red como los mensajes de consola del navegador en busca de patrones sospechosos. Construido sobre Python con comunicación WebSocket nativa al CDP, envía los paquetes estructurados al Backend para que aparezcan en el panel Red del Frontend.
+
+La decisión técnica central del módulo es usar el CDP de forma nativa mediante WebSocket en lugar de una librería de alto nivel. Esta decisión da control total sobre los eventos de red — qué se captura, cuándo y con qué granularidad — y elimina dependencias que podrían introducir comportamientos no deseados en entornos de auditoría.
+
+El módulo se organiza en cinco componentes:
+
+El *lanzador de Chrome* arranca una instancia de Google Chrome con el flag `--remote-debugging-port=9222` que activa el CDP. Detecta automáticamente la ruta del ejecutable en Windows, macOS y Linux. Incluye dos configuraciones relevantes para el contexto de HookSuite: `--user-data-dir` con un perfil separado para evitar que una instancia de Chrome ya abierta ignore los flags de debug, y `--proxy-pac-url` apuntando al servidor para que el tráfico capturado pase por el proxy de HookSuite. Una vez lanzado, verifica la conexión al CDP con reintentos automáticos antes de continuar.
+
+El *cliente CDP* gestiona la comunicación WebSocket con Chrome. Se conecta al endpoint de debugging, enumera las pestañas disponibles y establece la conexión WebSocket con la pestaña activa. Mantiene un sistema de comandos asíncronos con futures de Python — cada comando enviado al Chrome recibe un identificador único y espera la respuesta correspondiente con timeout de 10 segundos. Los eventos de red llegan como mensajes entrantes y se despachan a los handlers registrados mediante el método `on()`. Expone métodos de alto nivel para habilitar los dominios Network, Console y Page del CDP y para recuperar el body de las respuestas.
+
+El *constructor de paquetes* transforma los eventos del CDP — que llegan en tres momentos separados: petición enviada, respuesta recibida y carga completada — en un único objeto paquete coherente. Implementa filtrado de tráfico irrelevante: descarta recursos estáticos como imágenes, fuentes y CSS, CDNs conocidos como Google Analytics, Cloudflare y Google Fonts, y tipos de recurso no relevantes para la auditoría. El resultado es una reducción de ruido de aproximadamente el 70% del tráfico bruto. Cada paquete resultante sigue el contrato JSON acordado con el Backend, compatible con el modelo `NetworkPacket` de P2.
+
+El *analizador de red* recibe los paquetes del constructor y aplica dos capas de análisis. La primera detecta patrones sospechosos: errores HTTP 500 o superiores, errores SQL en el body de la respuesta, caracteres de inyección en la URL o el body de la petición como comillas, `UNION SELECT` o `1=1`, y respuestas lentas superiores a 5 segundos que pueden indicar Blind SQLi time-based. La segunda detecta problemas de seguridad en los headers de respuesta: ausencia de los cinco headers de seguridad obligatorios — `Content-Security-Policy`, `X-Frame-Options`, `Strict-Transport-Security`, `X-Content-Type-Options` y `Referrer-Policy` — y cookies de sesión sin los flags `HttpOnly` o `Secure`. Los paquetes marcados como sospechosos incluyen la lista de razones que motivaron el marcado.
+
+El *analizador de consola* monitoriza los mensajes de la consola del navegador buscando once patrones sensibles: rutas de servidor expuestas, API keys, passwords, tokens, funciones de base de datos, errores SQL, errores Oracle, stack traces y direcciones IP internas. Solo procesa mensajes de nivel `error` y `warning` para reducir el ruido. Los hallazgos se clasifican por severidad — alta cuando se detectan credenciales o tokens, media en los demás casos.
+
+El *reporter* gestiona el envío de paquetes al Backend con un buffer local como fallback. Acumula los paquetes en memoria y los persiste en disco cada diez paquetes en `results/captured_packets.json`. Cuando el Backend está disponible los envía al endpoint `/api/network/packet/{session_token}`. Al cierre de la captura genera un resumen con el total de paquetes, los enviados correctamente y los fallidos.
+
+El módulo está construido y validado en local. No está desplegado como contenedor en el servidor — su integración completa en la infraestructura Docker de Hetzner está planificada para la Práctica 2.
+
+=== Proceso de desarrollo
+
+==== Fase 1 — Setup y construcción del módulo
+
+Carlos construyó el módulo de forma completamente autónoma siguiendo el manual técnico. Arrancó configurando el entorno Python y levantando DVWA en Docker como objetivo de pruebas. La primera decisión técnica fue usar CDP nativo mediante WebSocket en lugar de una librería de abstracción de alto nivel — necesitaba control total sobre qué eventos capturar y cuándo recuperar el body de la respuesta, algo que las librerías de abstracción no permiten gestionar con la precisión necesaria para una herramienta de auditoría.
+
+Con esa decisión tomada construyó los cinco componentes del módulo: el lanzador de Chrome con detección multiplataforma del ejecutable, el cliente CDP con su sistema de comandos asíncronos y dispatching de eventos, el constructor de paquetes con filtrado de tráfico irrelevante, los analizadores de red y consola con sus respectivos catálogos de patrones, y el reporter con buffer local como fallback.
+
+==== Fase 2 — Validación contra DVWA
+
+Con el módulo construido, Carlos lo validó contra DVWA navegando la aplicación con el Chrome controlado por DevTools. Durante esta fase verificó que el CDP capturaba correctamente las peticiones HTTP, que el filtrado eliminaba el tráfico irrelevante — imágenes, fuentes, CDNs — dejando únicamente las peticiones relevantes para la auditoría, y que los analizadores detectaban correctamente los patrones sospechosos al provocar errores SQL en los formularios de DVWA.
+
+En esta fase apareció el bug más relevante del módulo: Chrome ignoraba los flags de debugging cuando ya había una instancia abierta en el sistema. Carlos lo identificó y lo resolvió añadiendo `--user-data-dir` con un directorio de perfil separado, garantizando que el Chrome lanzado por DevTools arranque siempre con los flags correctos independientemente del estado del sistema. También añadió `--remote-allow-origins=*` para evitar restricciones de origen en la conexión WebSocket al CDP.
+
+==== Fase 3 — El pivote y sus consecuencias para P4
+
+La arquitectura original preveía que DevTools capturara el tráfico del navegador del auditor — que navegaba con el proxy PAC configurado — y lo enviara al Backend para análisis. Cuando el equipo pivotó hacia el modelo de cliente httpx activo, el rol de P4 cambió: en lugar de capturar el tráfico del auditor, el módulo pasó a estar diseñado para capturar el tráfico generado por el propio Chrome durante las auditorías automatizadas. Esta redefinición no invalidó el trabajo técnico pero sí cambió el contexto de uso. El módulo funciona correctamente en local y su despliegue como contenedor Docker en el servidor está pendiente para la Práctica 2.
 
 == Módulo de Inteligencia Artificial (P5 — Jose María López Ausín)
 
