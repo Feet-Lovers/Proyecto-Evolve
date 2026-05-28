@@ -369,9 +369,63 @@ En la fase final Ivan añadió componentes de autenticación y gestión de confi
 
 == Módulo Backend (P2 — Macarena Rogerio)
 
-#rect(fill: azul-claro, stroke: 1pt + azul-acento, inset: 12pt, width: 100%, radius: 4pt)[
-  _Sección pendiente de entrega por P2 — Límite: 19 de Mayo de 2026_
-]
+=== El módulo
+
+El Backend es el núcleo del sistema — el único módulo que habla con todos los demás y el que hace posible que HookSuite funcione como una herramienta de auditoría real. Construido sobre Python 3.11 y FastAPI, gestiona las sesiones de auditoría, ejecuta todas las peticiones HTTP por el auditor, emite los resultados al Frontend en tiempo real mediante WebSockets y expone la API REST que coordina el resto de módulos.
+
+El módulo se organiza en seis bloques funcionales:
+
+El *servidor FastAPI* es el punto de entrada del sistema. Arranca con CORS habilitado para aceptar peticiones desde cualquier origen, registra todos los routers de la aplicación bajo el prefijo `/api/`, e inicia al arranque dos tareas asíncronas en segundo plano: un consumidor Redis y un gestor de limpieza de sesiones expiradas. La documentación interactiva de la API — generada automáticamente por FastAPI — está disponible en `/docs` y lista todos los endpoints con sus modelos de entrada y salida.
+
+El *sistema de sesiones y WebSockets* es la pieza que permite que múltiples auditores trabajen simultáneamente sin interferirse. Cada auditor recibe un token UUID único al conectarse. El `SessionManager` mantiene en memoria el estado completo de cada sesión — historial de peticiones, estado del Intruder, paquetes de red, vulnerabilidades detectadas — y registra la conexión WebSocket asociada a cada token. El canal WebSocket en `/ws/{token}` mantiene la conexión viva mediante pings cada 30 segundos y emite eventos tipados con la estructura `{type, payload}` cada vez que ocurre algo relevante en el servidor. El método `emit_all()` permite difundir eventos a todas las sesiones activas simultáneamente.
+
+El *spider httpx* es el módulo de reconocimiento activo. Dado un punto de entrada y un token de sesión, navega la aplicación objetivo de forma autónoma usando un cliente httpx persistente que comparte con el Repeater y el Intruder. Esta persistencia es lo que permite el flujo de auditoría autenticada: el auditor hace login desde el Repeater, y el spider hereda automáticamente esa sesión y navega autenticado sin configuración adicional. El spider implementa un algoritmo BFS con scope restringido al dominio objetivo, filtra extensiones estáticas irrelevantes y varía los User-Agent de forma aleatoria entre peticiones. Para cada página visitada extrae mediante expresiones regulares todos los formularios HTML — método, acción y campos — y los emite al Frontend como peticiones independientes con status `FORM`, lo que permite al auditor identificar de un vistazo los vectores de ataque disponibles. La velocidad es configurable en tres presets — rápido, normal y completo — que determinan el número máximo de páginas a visitar.
+
+El *cliente httpx persistente por sesión* es la decisión técnica más importante del módulo. En lugar de crear un cliente HTTP nuevo para cada petición, el backend mantiene un diccionario que asocia cada token de sesión con un `AsyncClient` de httpx configurado con seguimiento de redirects y verificación SSL desactivada. Este cliente acumula automáticamente las cookies que el servidor objetivo va devolviendo a lo largo de la auditoría. El resultado es que el Repeater, el Spider y el Intruder comparten implícitamente la misma sesión HTTP — incluyendo las cookies de autenticación — sin que el auditor tenga que copiar ni gestionar nada manualmente. Cuando el backend detecta nuevas cookies, emite un evento WebSocket al Frontend para mostrarlas en el panel de estado de auditoría.
+
+El *motor de fuzzing del Intruder* ejecuta ataques automatizados contra parámetros específicos. Recibe del Frontend la URL objetivo con el punto de inyección marcado con `*`, el tipo de ataque y la configuración de paralelismo. Sustituye el marcador por cada payload de la lista correspondiente y lanza todas las peticiones de forma concurrente usando `asyncio.Semaphore` con un límite de cinco peticiones simultáneas — elegido para no sobrecargar el servidor de producción. Soporta cuatro tipos de ataque con sus respectivas listas de payloads: SQL Injection con trece vectores, Blind SQLi con nueve variantes incluyendo time-based, XSS con diez payloads, y fuzzing genérico con diecisiete entradas que cubren path traversal, null bytes, templates y cadenas extremadamente largas. La detección de vulnerabilidades SQLi se basa en la búsqueda de patrones de confirmación en la respuesta — `First name:`, `Surname:`, errores de base de datos — que indican que el payload ha producido una respuesta anómala. Los resultados se emiten al Frontend en tiempo real a medida que cada payload completa su ejecución.
+
+Las *utilidades* exponen tres endpoints auxiliares implementados con la librería estándar de Python sin dependencias externas. El generador de hashes calcula MD5, SHA1, SHA256 y SHA512 de cualquier texto. El encoder/decoder transforma texto entre Base64, URL encoding y HTML encoding en ambas direcciones. El regex tester compila y ejecuta expresiones regulares con soporte de flags — case insensitive, multiline, dotall — y devuelve todos los matches con sus posiciones.
+
+El *receptor de paquetes de red* y los *endpoints de integración con Playwright e IA* están completamente implementados en el Backend. El receptor de paquetes expone dos endpoints para recibir los paquetes capturados por el módulo DevTools y distribuirlos a las sesiones activas por WebSocket. Los endpoints de instrucciones y resultados de Playwright permiten al módulo de IA enviar órdenes de ataque y recibir los resultados de su ejecución. El endpoint de vulnerabilidades recibe las detecciones del módulo de IA y las emite al panel correspondiente del Frontend. Estos tres bloques permanecen inactivos en esta entrega porque los módulos que los alimentan — DevTools, Playwright e IA en ciclo completo — están pendientes de integración completa en la Práctica 2.
+
+=== Proceso de desarrollo
+
+==== Fase 1 — Construcción del servidor base
+
+Macarena comenzó configurando el entorno Python en Windows, donde encontró el primer obstáculo técnico del módulo: la versión de Python disponible en el sistema era incompatible con algunas dependencias del proyecto. Lo resolvió instalando Python 3.12 mediante el gestor oficial y creando un entorno virtual específico para esa versión, con lo que el servidor arrancó sin errores.
+
+Con el entorno configurado, construyó la estructura de carpetas del módulo — `routes/`, `services/`, `models/`, `middleware/` — y el servidor FastAPI base con los endpoints de salud, la gestión de sesiones con tokens UUID y el canal WebSocket en `/ws/{token}`. Verificó el funcionamiento del servidor consultando `/health` desde el navegador y comprobando que el Swagger UI en `/docs` mostraba los endpoints registrados. Esta primera versión funcional fue el punto de coordinación con el Frontend: en cuanto el WebSocket estuvo operativo, Ivan pudo conectar el Frontend al Backend real y validar el contrato de comunicación.
+
+==== Fase 2 — Arquitectura inicial con mitmproxy e integración en producción
+
+La arquitectura original de HookSuite requería que el Backend actuara como proxy TCP real — un intermediario que interceptara el tráfico del navegador del auditor antes de que llegara al servidor objetivo. Macarena implementó esta arquitectura usando mitmproxy, una librería que escucha en el puerto 8080 y procesa cada petición HTTP a través de un addon personalizado que extrae los datos relevantes y los emite por WebSocket al Frontend en tiempo real.
+
+La integración de mitmproxy en el proceso FastAPI presentó cuatro errores encadenados que Macarena resolvió de forma sistemática: la librería no estaba instalada, una dependencia de gestión de contraseñas tenía una versión incompatible, los bloques de excepción del proxy_service estaban mal colocados y al corregirlos se perdieron funciones del fichero. Cada error llevó al siguiente hasta tener el servidor arrancando limpiamente con mitmproxy y FastAPI como procesos independientes bajo el mismo contenedor.
+
+En paralelo implementó los modelos Pydantic en `schemas.py` — los contratos de datos que definen la forma exacta de cada entidad que entra y sale del servidor — y la función `forward_request` en el servicio de proxy HTTP, que gestiona el reenvío de peticiones con manejo de timeouts, filtrado de headers protegidos y análisis de respuestas sospechosas.
+
+Con el sistema desplegado en Hetzner y los módulos conectados por primera vez en producción, aparecieron varios bugs de integración que Macarena resolvió en tiempo real: el router de proxy tenía una ruta duplicada que impedía servir el archivo PAC, el ciclo de vida del WebSocket no gestionaba correctamente las desconexiones y reconexiones, el Intruder tenía referencias incorrectas al gestor de sesiones, y el tráfico interno del propio HookSuite se colaba en el panel Proxy mezclado con el tráfico del objetivo. Al cierre de esta fase el sistema estaba operativo en producción con la arquitectura de proxy interceptor.
+
+==== Fase 3 — El pivote
+
+Al exponer el servidor al exterior, los bots saturaron el proxy TCP. El tráfico automatizado externo colapsó el servidor impidiendo su uso como herramienta de auditoría. El equipo tomó la decisión de cambiar la arquitectura completamente: en lugar de interceptar el tráfico del navegador del auditor, el Backend realizaría las peticiones HTTP directamente por el auditor usando su propio cliente HTTP.
+
+Este pivote transformó el rol del Backend de forma fundamental. En la arquitectura anterior era un intermediario pasivo que capturaba lo que el auditor hacía con su navegador. En la nueva arquitectura es un agente activo que ejecuta las operaciones por el auditor — el spider navega, el Repeater reenvía, el Intruder ataca — todo desde el servidor, sin que el navegador del auditor intervenga en las peticiones al objetivo. mitmproxy se mantuvo en el código sin eliminarlo, con vistas a su uso en auditorías de aplicaciones móviles en la Práctica 2.
+
+==== Fase 4 — Nueva arquitectura: cliente persistente y módulos de auditoría
+
+Con la nueva arquitectura definida, la pieza técnica central fue el cliente httpx persistente por sesión — un `AsyncClient` compartido por todos los módulos bajo el mismo token que acumula automáticamente las cookies de la sesión de auditoría. Esta decisión resolvió de raíz el problema de la autenticación compartida: el auditor hace login desde el Repeater y el Spider y el Intruder heredan automáticamente esa sesión sin configuración adicional.
+
+Sobre esa base, Macarena completó los módulos de herramientas de auditoría. El Repeater recibió los parsers de raw HTTP y cURL que permiten al auditor importar peticiones copiadas desde el navegador o desde otras herramientas. El Intruder recibió el motor de fuzzing asíncrono con control de concurrencia y la biblioteca de payloads organizada por tipo de ataque. Las Utilidades implementaron los tres endpoints auxiliares con la librería estándar de Python. El spider recibió la lógica de extracción de formularios y la emisión de peticiones `FORM` al Frontend.
+
+En paralelo implementó los endpoints de integración con los módulos pendientes de activación — receptor de paquetes de DevTools, instrucciones y resultados de Playwright, y receptor de vulnerabilidades de IA — dejando el Backend preparado para la integración completa en la Práctica 2 sin necesidad de modificaciones adicionales en su lado.
+
+==== Fase 5 — Últimos ajustes y estado final
+
+En la fase final el equipo validó el flujo completo de auditoría end-to-end contra DVWA: spider sin autenticación descubriendo el formulario de login, login desde el Repeater con gestión automática de cookies, spider autenticado navegando todas las vulnerabilidades, e Intruder detectando SQLi con confirmación en la respuesta. Esta validación confirmó que la nueva arquitectura funcionaba correctamente de punta a punta.
+
+Se añadieron los últimos elementos de gestión de sesión: la detección y notificación de cookies vía WebSocket que el Frontend muestra en el panel de estado de auditoría, y los dos endpoints de control — liberar solo la cookie o resetear todo el estado — que permiten al auditor gestionar su sesión sin interrumpir la auditoría en curso.
 
 == Módulo Playwright (P3 — Nacho García Monge)
 
