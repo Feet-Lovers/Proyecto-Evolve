@@ -429,9 +429,51 @@ Se añadieron los últimos elementos de gestión de sesión: la detección y not
 
 == Módulo Playwright (P3 — Nacho García Monge)
 
-#rect(fill: azul-claro, stroke: 1pt + azul-acento, inset: 12pt, width: 100%, radius: 4pt)[
-  _Sección pendiente de entrega por P3 — Límite: 19 de Mayo de 2026_
-]
+=== El módulo
+
+El módulo Playwright es el motor de automatización de HookSuite — un navegador real controlado por código que navega aplicaciones web, descubre su superficie de ataque y ejecuta ataques automatizados sin intervención humana. Construido sobre Python y la librería Playwright con Chromium headless, se comunica con el Backend mediante httpx para recibir instrucciones y reportar resultados.
+
+La decisión técnica más importante del módulo es el uso de `page.fill()` en lugar de `page.type()` para todas las interacciones con campos de texto. Mientras `page.type()` simula la pulsación tecla a tecla — replicando el comportamiento humano pero con un coste temporal proporcional a la longitud del texto — `page.fill()` pasa el contenido completo de una vez, resultando en una mejora de velocidad medida de hasta 60 veces. Esta optimización, indicada por el profesor al inicio del proyecto, se aplica de forma consistente en todos los módulos y es especialmente relevante cuando se prueban payloads de cientos de caracteres.
+
+El módulo se organiza en cinco componentes:
+
+El *gestor del navegador* centraliza la creación y el ciclo de vida de todas las instancias de Chromium. Lanza el navegador con los flags necesarios para ejecutarse en entornos sin interfaz gráfica — `--no-sandbox`, `--disable-setuid-sandbox`, `--disable-dev-shm-usage` — y gestiona el paralelismo mediante `asyncio.Semaphore` con un límite configurable de tres páginas simultáneas. Todos los contextos de navegador se crean con `ignore_https_errors=True` para no bloquear en sitios con certificados autofirmados, habitual en entornos de auditoría.
+
+El *sistema de autenticación* implementa dos variantes: login específico para DVWA, que navega al formulario de login, rellena las credenciales con `page.fill()` y verifica el resultado comprobando que la URL resultante no sea la página de login; y un login genérico parametrizable que acepta selectores personalizados para adaptarse a cualquier aplicación. El módulo también soporta guardar y cargar el estado de sesión del navegador en disco, lo que permitirá en futuras versiones reutilizar sesiones autenticadas sin necesidad de repetir el proceso de login.
+
+El *spider* mapea la superficie de ataque de la aplicación objetivo usando un algoritmo BFS. Dado un punto de entrada, navega la página con Playwright, extrae todos los enlaces mediante `query_selector_all('a[href]')`, normaliza las URLs relativas y las encola si pertenecen al mismo dominio y no han sido visitadas. Filtra automáticamente extensiones estáticas irrelevantes — CSS, imágenes, fuentes, PDFs — y patrones que indiquen logout o esquemas no HTTP. El límite de páginas máximo es configurable y los resultados se persisten en disco en formato JSON.
+
+El *descubridor de formularios* analiza cada página visitada para identificar todos los formularios HTML presentes — su método, acción y campos — y clasifica los campos en inyectables según su tipo: `text`, `search`, `email`, `url`, `hidden` y `password`. Implementa también el descubrimiento de endpoints AJAX mediante la interceptación de eventos de red durante la simulación de interacciones con elementos clicables de la página, lo que permite descubrir peticiones que no aparecen en el HTML estático.
+
+El *fingerprinter de tecnologías* detecta el stack tecnológico de la aplicación objetivo analizando headers de respuesta, cookies y contenido HTML contra un catálogo de nueve tecnologías: PHP, ASP.NET, Java, WordPress, Nginx, Apache, MySQL, jQuery y Bootstrap. A partir de las tecnologías detectadas genera una lista priorizada de tipos de ataque — si detecta PHP y MySQL prioriza SQLi y Blind SQLi; si detecta WordPress añade la búsqueda de vulnerabilidades en plugins. Esta lista de prioridades está diseñada para ser consumida por el módulo de IA para ordenar sus instrucciones de ataque.
+
+El *motor de ataques* automatiza la inyección de payloads en formularios y la detección de anomalías en las respuestas. Para cada ataque navega al formulario, rellena todos los campos con valores genéricos y el campo objetivo con el payload, envía el formulario y analiza la respuesta buscando errores SQL, respuestas lentas que indiquen Blind SQLi time-based, XSS reflejado y datos sensibles expuestos. Toma capturas de pantalla antes y después de cada ataque como evidencia. Implementa además dos variantes de Blind SQLi: boolean-based, que compara la longitud de la respuesta ante condiciones verdaderas y falsas buscando diferencias superiores a 100 caracteres; y time-based, que mide el tiempo de respuesta ante payloads con `SLEEP()` y `WAITFOR DELAY`.
+
+El *receptor de instrucciones* es el componente de integración con el módulo de IA. Diseñado para hacer polling al backend cada dos segundos consultando el endpoint de instrucciones asociado a su token de sesión, recibir instrucciones — fingerprint, spider, navegación o ataque — ejecutarlas y devolver el resultado al backend. El `EventReporter` gestiona el envío de resultados con fallback a log local cuando el backend no está disponible.
+
+El módulo está construido y desplegado en el servidor en modo polling. Permanece inactivo en esta entrega por un problema de configuración de red Docker que impide la comunicación estable entre el contenedor de Playwright y el resto de servicios — su activación completa está planificada para la Práctica 2.
+
+=== Proceso de desarrollo
+
+==== Fase 1 — Setup y optimización de velocidad
+
+Nacho arrancó el módulo configurando el entorno Playwright con Chromium y levantando DVWA en Docker como entorno de pruebas local. La primera decisión técnica fue la optimización de velocidad: siguiendo la recomendación del profesor, verificó la diferencia real entre `page.type()` y `page.fill()` mediante un script de benchmark sobre el formulario de login de DVWA. La mejora medida — hasta 60 veces más rápido — confirmó que `page.fill()` debía usarse de forma sistemática en todo el módulo. Con esa decisión tomada, construyó el `BrowserManager` con `asyncio.Semaphore` para el control de paralelismo, que actúa como base para todos los demás componentes.
+
+==== Fase 2 — Reconocimiento automático
+
+Con la infraestructura base operativa, Nacho construyó los tres módulos de reconocimiento. El sistema de autenticación para DVWA y la variante genérica parametrizable. El spider con BFS y filtrado de extensiones estáticas. El fingerprinter con detección de nueve tecnologías y generación de prioridades de ataque.
+
+Durante el desarrollo del fingerprinter apareció un bug que no llegó a resolverse antes de la entrega: en determinadas condiciones al procesar los headers de respuesta, el módulo lanza un error `not enough values to unpack`. El bug no bloquea el funcionamiento — cuando ocurre el fingerprinter devuelve igualmente los resultados parciales disponibles, habitualmente la detección de PHP a través de la cookie `PHPSESSID` — pero es una deuda técnica identificada para la Práctica 2.
+
+==== Fase 3 — Automatización de ataques
+
+Nacho implementó el motor de ataques con las cuatro variantes requeridas: inyección de payloads en formularios con detección de anomalías, Blind SQLi boolean-based con comparación de longitudes de respuesta, Blind SQLi time-based con medición de tiempos de respuesta, y captura de screenshots como evidencia de cada ataque. El descubridor de formularios recibió también en esta fase la capacidad de detectar endpoints AJAX mediante interceptación de eventos de red.
+
+==== Fase 4 — El pivote y sus consecuencias para P3
+
+La arquitectura original de HookSuite preveía que Playwright actuara como el motor de navegación del sistema — recibiendo instrucciones de la IA y ejecutando los ataques que mitmproxy no podía realizar con un cliente httpx. Cuando el equipo pivotó hacia el modelo de cliente httpx activo tras la saturación por bots, el rol de P3 cambió: dejó de ser el motor principal de navegación para convertirse en un componente complementario especializado en ataques que requieren un navegador real.
+
+Este cambio no invalidó el trabajo realizado pero sí afectó a la integración. El receptor de instrucciones — el componente que conecta Playwright con la IA — fue desarrollado, pero la comunicación estable entre contenedores en producción no llegó a establecerse por un problema de configuración de red Docker. Nacho adaptó el modo de arranque del contenedor a polling pasivo para que el sistema pudiera desplegarse sin bloquear el arranque del resto de servicios. La resolución del bug de red Docker y la activación completa del ciclo IA↔Playwright↔Backend son los objetivos principales de la Práctica 2.
 
 == Módulo DevTools (P4 — Carlos Bañuelos Fernández)
 
