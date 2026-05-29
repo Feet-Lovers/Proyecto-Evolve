@@ -393,19 +393,53 @@ El *receptor de paquetes de red* y los *endpoints de integración con Playwright
 
 ==== Fase 1 — Construcción del servidor base
 
-Macarena comenzó configurando el entorno Python en Windows, donde encontró el primer obstáculo técnico del módulo: la versión de Python disponible en el sistema era incompatible con algunas dependencias del proyecto. Lo resolvió instalando Python 3.12 mediante el gestor oficial y creando un entorno virtual específico para esa versión, con lo que el servidor arrancó sin errores.
+Macarena comenzó configurando el entorno Python en Windows, donde encontró el primer obstáculo técnico del módulo: al intentar instalar las dependencias del proyecto, la versión de Python disponible en el sistema era incompatible con `pydantic-core`, que requería compilar extensiones nativas con Rust y Cargo — una cadena de herramientas que no estaba disponible en el entorno. Lo resolvió instalando Python 3.12 mediante el gestor oficial y creando un entorno virtual específico para esa versión, con lo que el servidor arrancó sin errores.
 
-Con el entorno configurado, construyó la estructura de carpetas del módulo — `routes/`, `services/`, `models/`, `middleware/` — y el servidor FastAPI base con los endpoints de salud, la gestión de sesiones con tokens UUID y el canal WebSocket en `/ws/{token}`. Verificó el funcionamiento del servidor consultando `/health` desde el navegador y comprobando que el Swagger UI en `/docs` mostraba los endpoints registrados. Esta primera versión funcional fue el punto de coordinación con el Frontend: en cuanto el WebSocket estuvo operativo, Ivan pudo conectar el Frontend al Backend real y validar el contrato de comunicación.
+#figure(
+  image("../capturas/backend/backend_error_instalacion.png", width: 90%),
+  caption: "Error de compilación de pydantic-core durante la instalación de dependencias"
+)
+
+Con el entorno configurado, definió la estructura de carpetas del módulo — `routes/`, `services/`, `models/`, `middleware/` — que organizaría todos los bloques funcionales del backend.
+
+#figure(
+  image("../capturas/backend/backend_estructura_carpetas.png", width: 80%),
+  caption: "Estructura de carpetas del Backend planificada al inicio de la construcción"
+)
+
+Con la estructura en su sitio, construyó el servidor FastAPI base con los endpoints de salud, la gestión de sesiones con tokens UUID y el canal WebSocket en `/ws/{token}`. Verificó el funcionamiento del servidor consultando `/health` desde el navegador y comprobando que el Swagger UI en `/docs` mostraba los endpoints registrados.
+
+#figure(
+  image("../capturas/backend/backend_health_respondiendo.png", width: 70%),
+  caption: "Endpoint /health respondiendo correctamente — servidor base operativo"
+)
+
+#figure(
+  image("../capturas/backend/backend_swagger_base.png", width: 90%),
+  caption: "Swagger UI con los primeros endpoints registrados"
+)
+
+Una vez verificado el servidor base, añadió la gestión de sesiones con el endpoint `/api/session/new` — el punto de coordinación con el Frontend: en cuanto el WebSocket estuvo operativo, Ivan pudo conectar el Frontend al Backend real y validar el contrato de comunicación.
+
+#figure(
+  image("../capturas/backend/backend_swagger_session.png", width: 90%),
+  caption: "Swagger UI con el endpoint /api/session/new añadido — gestión de sesiones operativa"
+)
 
 ==== Fase 2 — Arquitectura inicial con mitmproxy e integración en producción
 
 La arquitectura original de HookSuite requería que el Backend actuara como proxy TCP real — un intermediario que interceptara el tráfico del navegador del auditor antes de que llegara al servidor objetivo. Macarena implementó esta arquitectura usando mitmproxy, una librería que escucha en el puerto 8080 y procesa cada petición HTTP a través de un addon personalizado que extrae los datos relevantes y los emite por WebSocket al Frontend en tiempo real.
 
-La integración de mitmproxy en el proceso FastAPI presentó cuatro errores encadenados que Macarena resolvió de forma sistemática: la librería no estaba instalada, una dependencia de gestión de contraseñas tenía una versión incompatible, los bloques de excepción del proxy_service estaban mal colocados y al corregirlos se perdieron funciones del fichero. Cada error llevó al siguiente hasta tener el servidor arrancando limpiamente con mitmproxy y FastAPI como procesos independientes bajo el mismo contenedor.
+Para implementar el proxy TCP, Macarena añadió mitmproxy al `requirements.txt` e instaló la librería. La integración en el proceso FastAPI presentó cuatro errores encadenados que resolvió de forma sistemática: la librería no estaba instalada correctamente, una dependencia de gestión de contraseñas tenía una versión incompatible, los bloques de excepción del `proxy_service` estaban mal colocados y al corregirlos se perdieron funciones del fichero. Cada error llevó al siguiente hasta tener el servidor arrancando limpiamente con mitmproxy y FastAPI como procesos independientes bajo el mismo contenedor.
 
 En paralelo implementó los modelos Pydantic en `schemas.py` — los contratos de datos que definen la forma exacta de cada entidad que entra y sale del servidor — y la función `forward_request` en el servicio de proxy HTTP, que gestiona el reenvío de peticiones con manejo de timeouts, filtrado de headers protegidos y análisis de respuestas sospechosas.
 
 Con el sistema desplegado en Hetzner y los módulos conectados por primera vez en producción, aparecieron varios bugs de integración que Macarena resolvió en tiempo real: el router de proxy tenía una ruta duplicada que impedía servir el archivo PAC, el ciclo de vida del WebSocket no gestionaba correctamente las desconexiones y reconexiones, el Intruder tenía referencias incorrectas al gestor de sesiones, y el tráfico interno del propio HookSuite se colaba en el panel Proxy mezclado con el tráfico del objetivo. Al cierre de esta fase el sistema estaba operativo en producción con la arquitectura de proxy interceptor.
+
+#figure(
+  image("../capturas/backend/backend_swagger_proxy.png", width: 90%),
+  caption: "Swagger UI con el grupo proxy y los schemas Pydantic definidos — arquitectura de proxy interceptor operativa"
+)
 
 ==== Fase 3 — El pivote
 
