@@ -345,7 +345,59 @@ Estas decisiones definieron el alcance inicial del módulo de Ivan y los compone
 
 Ivan construyó el Frontend completo siguiendo su manual de desarrollo, entregando la primera versión funcional con toda la estructura base del proyecto: layout con sidebar de navegación, sistema de componentes UI reutilizables, hooks de WebSocket y sesión, las seis páginas principales, el asistente de configuración del proxy con detección automática de navegador y sistema operativo, el importador de peticiones, y un sistema completo de mock data.
 
-El sistema de mock data fue una de las decisiones técnicas más relevantes del módulo. Dado que el Frontend se desarrollaba en paralelo al Backend, Ivan construyó un conjunto de datos simulados que replicaban exactamente el formato que emitiría el WebSocket real — peticiones interceptadas, vulnerabilidades detectadas, paquetes de red. Esto permitió desarrollar y validar toda la interfaz de forma completamente independiente, sin bloqueos por dependencias entre módulos. La transición posterior al Backend real fue más controlada al tener ya definido un contrato de datos concreto.
+El sistema de mock data fue una de las decisiones técnicas más relevantes del módulo. Dado que el Frontend se desarrollaba en paralelo al Backend, Ivan construyó un conjunto de datos simulados que replicaban exactamente el formato que emitiría el WebSocket real — peticiones interceptadas, vulnerabilidades detectadas, paquetes de red. Esto permitió desarrollar y validar toda la interfaz de forma completamente independiente, sin bloqueos por dependencias entre módulos.
+
+#figure(
+  image("../capturas/frontend/hooksuite_dashboard.png", width: 90%),
+  caption: "Dashboard completo en local — los seis paneles operativos con datos simulados"
+)
+
+Con la interfaz validada en mock, Ivan configuró el proxy PAC en local y conectó el Frontend contra DVWA en local. En esta fase la herramienta funcionó como estaba diseñada originalmente: el proxy interceptaba el tráfico del navegador del auditor, las peticiones aparecían en el panel Proxy en tiempo real, el auditor podía enviarlas al Repeater para modificarlas y reenviarlas, y el Intruder ejecutaba payloads SQLi reales contra los formularios de DVWA. El panel Vulnerabilidades mostraba las detecciones clasificadas por severidad. La transición posterior al Backend real fue más controlada al tener ya definido un contrato de datos concreto.
+
+#figure(
+  image("../capturas/frontend/hooksuite_onboarding.png", width: 90%),
+  caption: "Asistente de configuración del proxy PAC — detección automática de navegador y pasos personalizados"
+)
+
+#figure(
+  image("../capturas/frontend/proxy_interceptando_real.png", width: 90%),
+  caption: "Panel Proxy interceptando tráfico real de DVWA en local — peticiones con status codes reales"
+)
+
+#figure(
+  image("../capturas/frontend/proxy_detalle_headers.png", width: 90%),
+  caption: "Detalle de headers de petición y respuesta — cookie PHPSESSID de sesión autenticada visible"
+)
+
+#figure(
+  image("../capturas/frontend/repeater_vacio.png", width: 90%),
+  caption: "Panel Repeater construido — editor de peticiones con soporte de headers y body"
+)
+
+#figure(
+  image("../capturas/frontend/repeater_editor_sqli.png", width: 90%),
+  caption: "Repeater con petición SQLi cargada desde el Proxy — headers completos y cookie de sesión activa"
+)
+
+#figure(
+  image("../capturas/frontend/repeater_preview.png", width: 90%),
+  caption: "Vista Preview del Repeater — DVWA renderizado con datos reales extraídos por inyección SQL"
+)
+
+#figure(
+  image("../capturas/frontend/intruder_vacio.png", width: 90%),
+  caption: "Panel Intruder construido — configuración de URL objetivo, punto de inyección y tipo de ataque"
+)
+
+#figure(
+  image("../capturas/frontend/intruder_configurado.png", width: 90%),
+  caption: "Intruder ejecutando 13 payloads SQLi contra DVWA en local — resultados en tiempo real"
+)
+
+#figure(
+  image("../capturas/frontend/vulnerabilidades_detalle.png", width: 90%),
+  caption: "Panel Vulnerabilidades — SQL Injection crítica detectada con payload ' OR '1'='1 y recomendación de mitigación"
+)
 
 ==== Fase 2 — Cambio de arquitectura
 
@@ -437,6 +489,11 @@ En paralelo implementó los modelos Pydantic en `schemas.py` — los contratos d
 Con el sistema desplegado en Hetzner y los módulos conectados por primera vez en producción, aparecieron varios bugs de integración que Macarena resolvió en tiempo real: el router de proxy tenía una ruta duplicada que impedía servir el archivo PAC, el ciclo de vida del WebSocket no gestionaba correctamente las desconexiones y reconexiones, el Intruder tenía referencias incorrectas al gestor de sesiones, y el tráfico interno del propio HookSuite se colaba en el panel Proxy mezclado con el tráfico del objetivo. Al cierre de esta fase el sistema estaba operativo en producción con la arquitectura de proxy interceptor.
 
 #figure(
+  image("../capturas/frontend/proxy_pac_descarga.png", width: 90%),
+  caption: "Archivo proxy.pac sirviéndose correctamente desde el backend — bug de ruta duplicada resuelto"
+)
+
+#figure(
   image("../capturas/backend/backend_swagger_proxy.png", width: 90%),
   caption: "Swagger UI con el grupo proxy y los schemas Pydantic definidos — arquitectura de proxy interceptor operativa"
 )
@@ -454,6 +511,11 @@ Con la nueva arquitectura definida, la pieza técnica central fue el cliente htt
 Sobre esa base, Macarena completó los módulos de herramientas de auditoría. El Repeater recibió los parsers de raw HTTP y cURL que permiten al auditor importar peticiones copiadas desde el navegador o desde otras herramientas. El Intruder recibió el motor de fuzzing asíncrono con control de concurrencia y la biblioteca de payloads organizada por tipo de ataque. Las Utilidades implementaron los tres endpoints auxiliares con la librería estándar de Python. El spider recibió la lógica de extracción de formularios y la emisión de peticiones `FORM` al Frontend.
 
 En paralelo implementó los endpoints de integración con los módulos pendientes de activación — receptor de paquetes de DevTools, instrucciones y resultados de Playwright, y receptor de vulnerabilidades de IA — dejando el Backend preparado para la integración completa en la Práctica 2 sin necesidad de modificaciones adicionales en su lado.
+
+#figure(
+  image("../capturas/backend/backend_api_docs1.png", width: 90%),
+  caption: "Swagger UI con todos los grupos de endpoints implementados — proxy, repeater, intruder, utils, network, playwright y vulnerabilities"
+)
 
 ==== Fase 5 — Últimos ajustes y estado final
 
@@ -546,11 +608,21 @@ Carlos construyó el módulo de forma completamente autónoma siguiendo el manua
 
 Con esa decisión tomada construyó los cinco componentes del módulo: el lanzador de Chrome con detección multiplataforma del ejecutable, el cliente CDP con su sistema de comandos asíncronos y dispatching de eventos, el constructor de paquetes con filtrado de tráfico irrelevante, los analizadores de red y consola con sus respectivos catálogos de patrones, y el reporter con buffer local como fallback.
 
+#figure(
+  image("../capturas/devtools/devtools_terminal_captura.png", width: 90%),
+  caption: "Módulo DevTools en ejecución — capturando peticiones HTTP de DVWA vía Chrome DevTools Protocol"
+)
+
 ==== Fase 2 — Validación contra DVWA
 
 Con el módulo construido, Carlos lo validó contra DVWA navegando la aplicación con el Chrome controlado por DevTools. Durante esta fase verificó que el CDP capturaba correctamente las peticiones HTTP, que el filtrado eliminaba el tráfico irrelevante — imágenes, fuentes, CDNs — dejando únicamente las peticiones relevantes para la auditoría, y que los analizadores detectaban correctamente los patrones sospechosos al provocar errores SQL en los formularios de DVWA.
 
 En esta fase apareció el bug más relevante del módulo: Chrome ignoraba los flags de debugging cuando ya había una instancia abierta en el sistema. Carlos lo identificó y lo resolvió añadiendo `--user-data-dir` con un directorio de perfil separado, garantizando que el Chrome lanzado por DevTools arranque siempre con los flags correctos independientemente del estado del sistema. También añadió `--remote-allow-origins=*` para evitar restricciones de origen en la conexión WebSocket al CDP.
+
+#figure(
+  image("../capturas/devtools/devtools_red_tiempo_real.png", width: 90%),
+  caption: "Panel Red de HookSuite recibiendo tráfico capturado por DevTools — peticiones de DVWA en tiempo real"
+)
 
 #figure(
   image("../capturas/devtools/paquetes_tiempo_real.png", width: 90%),
@@ -593,9 +665,10 @@ El coste por sesión de auditoría se estimó en aproximadamente 0,15$ — 0,002
 
 El módulo está construido y desplegado en el servidor en modo polling. Permanece en integración parcial en esta entrega porque el pivote de arquitectura — el abandono de mitmproxy y la transición al modelo de cliente httpx activo — redefinió el rol del módulo a mitad del desarrollo, y la nueva integración estable entre el contenedor de IA, el Backend y Playwright no llegó a establecerse antes de la entrega. Su activación completa está planificada para la Práctica 2.
 
-// Capturas pendientes — añadir cuando estén disponibles
-// #figure(image("../capturas/ia/api_funcionando.png", width: 90%), caption: "Test de conectividad con la API de Anthropic — respuesta correcta")
-// #figure(image("../capturas/ia/test_standalone_output.png", width: 90%), caption: "Test standalone — detección de SQLi con 95% de confianza")
+#figure(
+  image("../capturas/ia/api_funcionando.png", width: 90%),
+  caption: "Test standalone — detección de SQLi con 95% de confianza y fingerprint con vectores priorizados"
+)
 
 === Proceso de desarrollo
 
@@ -613,6 +686,11 @@ Con el clasificador validado, se construyó el orquestador con las tres fases de
 
 Durante la construcción del orquestador aparecieron dos bugs que se resolvieron antes del primer commit: algunos métodos síncronos del clasificador se llamaban con `await`, y la firma del método `fingerprint` era incorrecta. Ambos se detectaron en las primeras pruebas locales y no llegaron al repositorio.
 
+#figure(
+  image("../capturas/ia/orquestador_mock.png", width: 90%),
+  caption: "Orquestador en modo mock — las tres fases ejecutadas, 4 URLs descubiertas, 0 vulnerabilidades confirmadas (comportamiento esperado en mock)"
+)
+
 ==== Fase 3 — El pivote y sus consecuencias para P5
 
 La arquitectura original preveía que el módulo de IA actuara como orquestador activo — lanzando el ciclo completo de auditoría de forma autónoma cuando el usuario lo iniciara desde el Frontend. Cuando el equipo pivotó hacia el modelo de cliente httpx activo tras la saturación por bots, el rol de P5 cambió: en lugar de orquestar auditorías completas de forma autónoma, el módulo pasó a modo polling — esperando instrucciones del Backend y ejecutándolas una a una.
@@ -620,6 +698,11 @@ La arquitectura original preveía que el módulo de IA actuara como orquestador 
 El despliegue en Hetzner como contenedor Docker presentó tres problemas encadenados. Los imports usaban el prefijo `from ia.` que no existe dentro del contenedor porque el WORKDIR es `/app` — se corrigieron directamente en el servidor con sed y se commitearon. La versión de la librería de Anthropic era incompatible con el entorno del contenedor — se actualizó el `requirements.txt` y se reconstruyó la imagen. La API key del `.env` había caducado — se regeneró y se recargó el contenedor sin usar `restart`, que no recarga las variables de entorno.
 
 Con los tres problemas resueltos y crédito en la cuenta de Anthropic, el módulo arrancó correctamente en modo polling con `MOCK_PLAYWRIGHT=true` — el comportamiento esperado en ese punto, ya que Playwright no estaba integrado. El pivote de arquitectura — que redefinió el rol del módulo a mitad del desarrollo — dejó la integración estable con el Backend y Playwright pendiente para la Práctica 2.
+
+#figure(
+  image("../capturas/ia/analisis_sqli.png", width: 90%),
+  caption: "Ciclo IA+Playwright en servidor — auditoría completada, 5 páginas analizadas, 1 vulnerabilidad confirmada"
+)
 
 // ============================================================
 // 5. GUÍA DE DESPLIEGUE
