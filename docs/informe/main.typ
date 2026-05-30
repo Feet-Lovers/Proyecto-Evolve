@@ -553,17 +553,84 @@ El módulo está construido y desplegado en el servidor en modo polling. Permane
 
 ==== Fase 1 — Setup y optimización de velocidad
 
-Nacho arrancó el módulo configurando el entorno Playwright con Chromium y levantando DVWA en Docker como entorno de pruebas local. La primera decisión técnica fue la optimización de velocidad: siguiendo la recomendación del profesor, verificó la diferencia real entre `page.type()` y `page.fill()` mediante un script de benchmark sobre el formulario de login de DVWA. La mejora medida — hasta 60 veces más rápido — confirmó que `page.fill()` debía usarse de forma sistemática en todo el módulo. Con esa decisión tomada, construyó el `BrowserManager` con `asyncio.Semaphore` para el control de paralelismo, que actúa como base para todos los demás componentes.
+Nacho arrancó el módulo configurando el entorno Playwright con Chromium y levantando DVWA en Docker como entorno de pruebas local.
+
+#figure(
+  image("../capturas/playwright/docker_dvwa.png", width: 90%),
+  caption: "DVWA levantándose en Docker — entorno de pruebas local operativo"
+)
+
+Antes de construir el BrowserManager, verificó el entorno con dos scripts de prueba: uno que comprobó que Playwright arrancaba correctamente navegando a example.com, y otro que confirmó el login automático en DVWA. Ambos se eliminaron tras la verificación.
+
+#figure(
+  image("../capturas/playwright/test_playwright.png", width: 90%),
+  caption: "Verificación de Playwright — instalación de Chromium, Firefox y WebKit completada"
+)
+
+#figure(
+  image("../capturas/playwright/test_playwright_ok.png", width: 90%),
+  caption: "Script de prueba ejecutándose correctamente — Playwright funciona, título de la página verificado"
+)
+
+#figure(
+  image("../capturas/playwright/test_dvwa_ok.png", width: 90%),
+  caption: "Login automático en DVWA verificado — autenticación con Playwright funcionando"
+)
+
+La primera decisión técnica fue la optimización de velocidad: siguiendo la recomendación del profesor, verificó la diferencia real entre `page.type()` y `page.fill()` mediante un script de benchmark sobre el formulario de login de DVWA. La mejora medida — hasta 60 veces más rápido — confirmó que `page.fill()` debía usarse de forma sistemática en todo el módulo. Nacho verificó también que ningún módulo utilizara `page.type()`, confirmando que la optimización se aplicaba de forma consistente en toda la base de código.
+
+#figure(
+  image("../capturas/playwright/verificacion_pagetype.png", width: 90%),
+  caption: "Verificación sistemática — ningún uso de page.type() en el código, comentario de optimización visible en browser.py"
+)
+
+Con esa decisión tomada, construyó el `BrowserManager` con `asyncio.Semaphore` para el control de paralelismo, que actúa como base para todos los demás componentes.
 
 ==== Fase 2 — Reconocimiento automático
 
 Con la infraestructura base operativa, Nacho construyó los tres módulos de reconocimiento. El sistema de autenticación para DVWA y la variante genérica parametrizable. El spider con BFS y filtrado de extensiones estáticas. El fingerprinter con detección de nueve tecnologías y generación de prioridades de ataque.
+
+En la primera ejecución contra DVWA el spider descubrió 20 URLs — la totalidad de la superficie de ataque de la aplicación — guardando los resultados en `results/spider_results.json`.
+
+#figure(
+  image("../capturas/playwright/spider_output.png", width: 90%),
+  caption: "Spider ejecutándose contra DVWA — 20 URLs descubiertas en la primera ejecución"
+)
+
+#figure(
+  image("../capturas/playwright/spider_results_json.png", width: 90%),
+  caption: "Fichero spider_results.json generado automáticamente — 20 URLs descubiertas en formato JSON"
+)
 
 Durante el desarrollo del fingerprinter apareció un bug que no llegó a resolverse antes de la entrega: en determinadas condiciones al procesar los headers de respuesta, el módulo lanza un error `not enough values to unpack`. El bug no bloquea el funcionamiento — cuando ocurre el fingerprinter devuelve igualmente los resultados parciales disponibles, habitualmente la detección de PHP a través de la cookie `PHPSESSID` — pero es una deuda técnica identificada para la Práctica 2.
 
 ==== Fase 3 — Automatización de ataques
 
 Nacho implementó el motor de ataques con las cuatro variantes requeridas: inyección de payloads en formularios con detección de anomalías, Blind SQLi boolean-based con comparación de longitudes de respuesta, Blind SQLi time-based con medición de tiempos de respuesta, y captura de screenshots como evidencia de cada ataque. El descubridor de formularios recibió también en esta fase la capacidad de detectar endpoints AJAX mediante interceptación de eventos de red.
+
+Para validar la integración entre módulos, Nacho desarrolló `test_full_flow.py` — un test que ejecuta de forma encadenada fingerprinting, spider y ataque SQLi verificando que el receptor de instrucciones coordina correctamente los tres módulos. Los tres tests completaron correctamente: PHP detectado, 5 URLs descubiertas, SQLi vulnerable.
+
+#figure(
+  image("../capturas/playwright/test_full_flow.png", width: 90%),
+  caption: "test_full_flow.py — los tres tests completados: fingerprinting PHP, spider 5 URLs, SQLi vulnerable: True"
+)
+
+Con todos los módulos construidos, Nacho los integró en el orquestador `main.py` y ejecutó el flujo completo contra DVWA: autenticación, fingerprinting, reconocimiento con el spider, descubrimiento de formularios y ataques automatizados. La auditoría completó las cinco fases descubriendo 15 URLs, analizando 7 formularios y detectando 1 vulnerabilidad de SQL Injection. Desarrolló también `demo.py` como script de demostración del flujo completo, que confirmó la detección de SQLi mediante el error `SQL_ERROR: you have an error in your sql syntax` en la respuesta.
+
+#figure(
+  image("../capturas/playwright/auditoria_fases.png", width: 90%),
+  caption: "Orquestador main.py ejecutando las cinco fases — autenticación, fingerprinting, spider, formularios y ataques"
+)
+
+#figure(
+  image("../capturas/playwright/auditoria_completada.png", width: 90%),
+  caption: "AUDITORÍA COMPLETADA — 15 URLs descubiertas, 7 formularios analizados, 1 vulnerabilidad encontrada"
+)
+
+#figure(
+  image("../capturas/playwright/demo_completada.png", width: 90%),
+  caption: "demo.py — flujo completo en 7 pasos, SQL Injection detectada con error SQL real en la respuesta"
+)
 
 ==== Fase 4 — El pivote y sus consecuencias para P3
 
