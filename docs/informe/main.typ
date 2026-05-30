@@ -571,41 +571,55 @@ En esta fase apareció el bug más relevante del módulo: Chrome ignoraba los fl
 
 La arquitectura original preveía que DevTools capturara el tráfico del navegador del auditor — que navegaba con el proxy PAC configurado — y lo enviara al Backend para análisis. Cuando el equipo pivotó hacia el modelo de cliente httpx activo, el rol de P4 cambió: en lugar de capturar el tráfico del auditor, el módulo pasó a estar diseñado para capturar el tráfico generado por el propio Chrome durante las auditorías automatizadas. Esta redefinición no invalidó el trabajo técnico pero sí cambió el contexto de uso. El módulo funciona correctamente en local y su despliegue como contenedor Docker en el servidor está pendiente para la Práctica 2.
 
-== Módulo de Inteligencia Artificial (P5 — Jose María López Ausín)
+== Módulo IA (P5 — Jose María López Ausín)
 
-=== Stack tecnológico
+=== El módulo
 
-El módulo de inteligencia artificial está construido sobre Python 3.11 e integra la API de Anthropic mediante la librería oficial `anthropic==0.97.0`. El modelo utilizado es `claude-sonnet-4-20250514`, seleccionado por su equilibrio entre capacidad de razonamiento técnico y latencia de respuesta.
+El módulo de inteligencia artificial es el cerebro analítico de HookSuite — un sistema que procesa los datos capturados por el resto de módulos, identifica patrones de vulnerabilidad y orquesta el ciclo completo de auditoría enviando instrucciones a Playwright. Construido sobre Python y la API de Anthropic, actúa como capa de razonamiento entre la captura de tráfico y la detección de vulnerabilidades, eliminando la necesidad de análisis manual paquete a paquete.
 
-=== Arquitectura del módulo
+La decisión técnica central del módulo es estructurar todas las llamadas a la inteligencia artificial mediante prompts especializados que obligan a responder exclusivamente en JSON. Esta decisión hace el sistema completamente determinista en cuanto al formato de salida — sin post-procesamiento de texto, sin parseo frágil — y permite implementar un umbral de confianza numérico que filtra los falsos positivos de forma sistemática. El umbral se estableció en el 60% tras pruebas en DVWA: por debajo de ese valor los falsos positivos superan el 30%; por encima del 80% se pierden vulnerabilidades reales. El equilibrio óptimo está entre el 60% y el 75%.
 
-El módulo se estructura en cuatro capas funcionales:
+El módulo se organiza en cuatro componentes:
 
-*Cliente Anthropic con reintentos exponenciales.* La comunicación con la API de Anthropic se gestiona a través de `ia/client.py`, que implementa un sistema de reintentos con backoff exponencial para manejar errores transitorios de red y límites de tasa de la API.
+El *cliente de inteligencia artificial* encapsula todas las llamadas a la API de Anthropic. Implementa reintentos con backoff exponencial — hasta tres intentos con espera creciente — para absorber errores transitorios como límites de tasa o fallos de red. Parsea automáticamente las respuestas eliminando los marcadores de bloque de código que el modelo puede añadir, y devuelve el JSON limpio. Si la respuesta no es JSON válido, devuelve un objeto de error estructurado en lugar de lanzar una excepción.
 
-*Prompts especializados por tipo de análisis.* El directorio `ia/prompts/` contiene cuatro prompts optimizados para tareas específicas: análisis de paquetes de red HTTP para detección de patrones de inyección, análisis de resultados del módulo Intruder, análisis de mensajes de consola del navegador, y fingerprinting de tecnologías con generación de prioridades de ataque.
+El *sistema de prompts* está organizado en cuatro ficheros especializados, uno por tipo de análisis. El prompt de paquetes de red analiza peticiones HTTP interceptadas buscando vulnerabilidades OWASP Top 10 — SQLi, XSS, IDOR, LFI, RFI, SSRF, XXE, CSRF y RCE — y devuelve el tipo detectado, la severidad, la evidencia concreta del paquete y la recomendación correctiva. El prompt del Intruder analiza los resultados de un ataque de fuzzing buscando payloads que hayan provocado comportamientos anómalos — diferencias de tamaño, tiempos de respuesta, status codes, patrones en el body — e identifica el payload exitoso. El prompt de consola analiza los logs del navegador capturados por DevTools buscando información sensible filtrada: API keys, passwords, tokens, rutas internas, errores SQL y stack traces. El prompt de fingerprinting analiza los headers de respuesta y el contenido de la página para identificar el stack tecnológico — servidor, lenguaje, framework, CMS, base de datos — y genera una lista priorizada de vectores de ataque según las tecnologías detectadas.
 
-*Clasificador de vulnerabilidades.* El módulo `ia/analyzers/vulnerability_classifier.py` aplica un umbral de confianza del 60% sobre las respuestas del modelo. Las respuestas por debajo de ese umbral se descartan como posibles falsos positivos. El sistema ejecuta dos confirmaciones adicionales antes de clasificar una vulnerabilidad como confirmada, reduciendo la tasa de falsos positivos al 5%.
+El *clasificador de vulnerabilidades* orquesta las llamadas a los prompts y aplica el umbral de confianza. Para cada tipo de análisis — paquete, Intruder, consola, fingerprint — construye el mensaje de usuario con los datos del caso concreto, llama al cliente, recibe el JSON y lo filtra por el umbral del 60%. Si la confianza supera el umbral, construye la ficha completa de vulnerabilidad con todos los campos necesarios para el panel del Frontend. Si no lo supera, devuelve `None` y el orquestador descarta el resultado.
 
-*Orquestador del ciclo completo de ataque.* El módulo `ia/orchestrator.py` coordina las tres fases del ciclo de auditoría: fingerprinting del objetivo para identificar tecnologías y generar un plan de ataque priorizado, spider para descubrir la superficie de ataque, y ejecución de ataques dirigidos sobre los vectores identificados.
+El *orquestador* coordina el ciclo completo de auditoría en tres fases secuenciales. La fase de fingerprinting envía una instrucción al módulo Playwright para que navegue al objetivo y analice sus headers — el resultado determina qué vectores de ataque se priorizan. La fase de spider descubre la superficie de ataque navegando la aplicación con BFS. La fase de ataques prueba sistemáticamente los payloads SQLi, XSS y fuzzing en cada URL descubierta, y ante cualquier resultado con confianza suficiente ejecuta dos pases de confirmación adicionales antes de reportar la vulnerabilidad — esto reduce los falsos positivos al 5%. El orquestador también incluye un modo mock controlado por variable de entorno que simula las respuestas de Playwright sin necesidad de que el módulo esté activo, lo que permitió desarrollar y probar el ciclo completo de forma independiente.
 
-=== Integración con el resto del sistema
+El coste por sesión de auditoría se estimó en aproximadamente 0,15$ — 0,002$ por paquete analizado, con una sesión típica de 30 minutos en DVWA generando unos 50 paquetes. En un uso intensivo esto puede resultar elevado, lo que motiva una de las mejoras planificadas para la Práctica 2: sustituir las llamadas a la API externa por una instancia de Claude Code instalada directamente en el servidor, eliminando el coste por petición y reduciendo la latencia de los análisis.
 
-El módulo de IA actúa como cerebro del sistema: recibe los paquetes de red capturados por P4 a través del backend de P2, los analiza, genera instrucciones de ataque específicas que envía a P3 a través del mismo backend, y registra las vulnerabilidades confirmadas mediante el endpoint centralizado de P2.
+El módulo está construido y desplegado en el servidor en modo polling. Permanece en integración parcial en esta entrega porque el pivote de arquitectura — el abandono de mitmproxy y la transición al modelo de cliente httpx activo — redefinió el rol del módulo a mitad del desarrollo, y la nueva integración estable entre el contenedor de IA, el Backend y Playwright no llegó a establecerse antes de la entrega. Su activación completa está planificada para la Práctica 2.
 
-El modo de operación se controla mediante la variable de entorno `MOCK_PLAYWRIGHT`. Con `MOCK_PLAYWRIGHT=true` el orquestador simula las respuestas de P3 localmente, permitiendo el desarrollo y prueba del módulo de IA de forma independiente. Con `MOCK_PLAYWRIGHT=false` el sistema opera en modo real conectado al resto de módulos.
+// Capturas pendientes — añadir cuando estén disponibles
+// #figure(image("../capturas/ia/api_funcionando.png", width: 90%), caption: "Test de conectividad con la API de Anthropic — respuesta correcta")
+// #figure(image("../capturas/ia/test_standalone_output.png", width: 90%), caption: "Test standalone — detección de SQLi con 95% de confianza")
 
-=== Evidencias del módulo funcionando
+=== Proceso de desarrollo
 
-#figure(
-  image("../capturas/ia/api_funcionando.png", width: 90%),
-  caption: "Test de conectividad con la API de Anthropic — respuesta correcta de Claude"
-)
+==== Fase 1 — Construcción del módulo
 
-// #figure(image("../capturas/ia/test_standalone_output.png", width: 90%), caption: "Test standalone — detección de inyección SQL con 95% de confianza")
-// #figure(image("../capturas/ia/analisis_sqli.png", width: 90%), caption: "Clasificador detectando SQLi en modo real sobre DVWA")
-// #figure(image("../capturas/ia/fingerprint_prioridades.png", width: 90%), caption: "Análisis de fingerprinting con prioridades de ataque generadas por IA")
-// #figure(image("../capturas/ia/vulnerabilidades_json.png", width: 90%), caption: "Archivo vulnerabilities.json con los hallazgos del ciclo de auditoría")
+El módulo arrancó con la construcción del cliente, los cuatro prompts especializados y el clasificador. La primera decisión técnica fue el formato JSON obligatorio en todos los prompts — la alternativa era parsear texto libre, pero eso introduce fragilidad que no tiene cabida en una herramienta de auditoría donde la precisión es crítica.
+
+Con la estructura base lista, se validó el ciclo completo contra la API real mediante un test standalone sobre DVWA en local: el prompt de paquetes de red detectó una inyección SQL con un 95% de confianza en el primer intento, sin necesidad de que el Backend ni Playwright estuvieran activos.
+
+Durante esta fase apareció una incidencia de seguridad: la API key se expuso accidentalmente en el fichero `.env.example` subido al repositorio. GitHub Secret Scanning la detectó y revocó automáticamente. La versión `0.25.0` de la librería de Anthropic era además incompatible con Python 3.14 del sistema, lo que se resolvió actualizando a `>=0.97.0`.
+
+==== Fase 2 — Orquestador y modo mock
+
+Con el clasificador validado, se construyó el orquestador con las tres fases de auditoría y el modo mock controlado por variable de entorno. El modo mock fue una decisión de diseño deliberada: permitía desarrollar y probar el ciclo completo IA→Playwright→Backend sin depender de que los otros módulos estuvieran operativos.
+
+Durante la construcción del orquestador aparecieron dos bugs que se resolvieron antes del primer commit: algunos métodos síncronos del clasificador se llamaban con `await`, y la firma del método `fingerprint` era incorrecta. Ambos se detectaron en las primeras pruebas locales y no llegaron al repositorio.
+
+==== Fase 3 — El pivote y sus consecuencias para P5
+
+La arquitectura original preveía que el módulo de IA actuara como orquestador activo — lanzando el ciclo completo de auditoría de forma autónoma cuando el usuario lo iniciara desde el Frontend. Cuando el equipo pivotó hacia el modelo de cliente httpx activo tras la saturación por bots, el rol de P5 cambió: en lugar de orquestar auditorías completas de forma autónoma, el módulo pasó a modo polling — esperando instrucciones del Backend y ejecutándolas una a una.
+
+El despliegue en Hetzner como contenedor Docker presentó tres problemas encadenados. Los imports usaban el prefijo `from ia.` que no existe dentro del contenedor porque el WORKDIR es `/app` — se corrigieron directamente en el servidor con sed y se commitearon. La versión de la librería de Anthropic era incompatible con el entorno del contenedor — se actualizó el `requirements.txt` y se reconstruyó la imagen. La API key del `.env` había caducado — se regeneró y se recargó el contenedor sin usar `restart`, que no recarga las variables de entorno.
+
+Con los tres problemas resueltos y crédito en la cuenta de Anthropic, el módulo arrancó correctamente en modo polling con `MOCK_PLAYWRIGHT=true` — el comportamiento esperado en ese punto, ya que Playwright no estaba integrado. El pivote de arquitectura — que redefinió el rol del módulo a mitad del desarrollo — dejó la integración estable con el Backend y Playwright pendiente para la Práctica 2.
 
 // ============================================================
 // 5. GUÍA DE DESPLIEGUE
