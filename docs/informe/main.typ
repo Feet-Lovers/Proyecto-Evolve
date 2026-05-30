@@ -440,6 +440,36 @@ En la primera ejecución contra DVWA el spider descubrió 20 URLs — la totalid
 
 Durante el desarrollo del fingerprinter apareció un bug que no llegó a resolverse antes de la entrega: en determinadas condiciones al procesar los headers de respuesta, el módulo lanza un error `not enough values to unpack`. El bug no bloquea el funcionamiento — cuando ocurre el fingerprinter devuelve igualmente los resultados parciales disponibles — pero es una deuda técnica identificada para la Práctica 2.
 
+==== Fase 3 — Automatización de ataques y validación del flujo completo
+
+Con los módulos de reconocimiento operativos, Nacho implementó el motor de ataques con cuatro variantes: inyección de payloads en formularios con detección de anomalías en la respuesta, Blind SQLi boolean-based con comparación de longitudes de respuesta ante condiciones verdaderas y falsas, Blind SQLi time-based con medición de tiempos de respuesta ante payloads con `SLEEP()` y `WAITFOR DELAY`, y captura automática de screenshots como evidencia de cada ataque. El descubridor de formularios recibió también en esta fase la capacidad de detectar endpoints AJAX mediante interceptación de eventos de red.
+
+Para validar la integración entre los módulos de reconocimiento y ataque, Nacho desarrolló `test_full_flow.py` — un test que ejecuta de forma encadenada fingerprinting, spider y ataque SQLi verificando que el receptor de instrucciones coordina correctamente los tres módulos. Los tres tests completaron correctamente: PHP detectado, 5 URLs descubiertas, SQLi vulnerable.
+
+#figure(
+  image("../capturas/playwright/test_full_flow.png", width: 90%),
+  caption: "test_full_flow.py — los tres tests completados: fingerprinting PHP, spider 5 URLs, SQLi vulnerable: True"
+)
+
+Con todos los módulos construidos, Nacho los integró en el orquestador `main.py` y ejecutó el flujo completo contra DVWA: autenticación, fingerprinting, reconocimiento con el spider, descubrimiento de formularios y ataques automatizados. La auditoría completó las cinco fases descubriendo 15 URLs, analizando 7 formularios y detectando 1 vulnerabilidad de SQL Injection.
+
+#figure(
+  image("../capturas/playwright/auditoria_fases.png", width: 90%),
+  caption: "Orquestador main.py ejecutando las cinco fases — autenticación, fingerprinting, spider, formularios y ataques"
+)
+
+#figure(
+  image("../capturas/playwright/auditoria_completada.png", width: 90%),
+  caption: "AUDITORÍA COMPLETADA — 15 URLs descubiertas, 7 formularios analizados, 1 vulnerabilidad encontrada"
+)
+
+Desarrolló también `demo.py` como script de demostración del flujo completo, que confirmó la detección de SQLi mediante el error `SQL_ERROR: you have an error in your sql syntax` en la respuesta.
+
+#figure(
+  image("../capturas/playwright/demo_completada.png", width: 90%),
+  caption: "demo.py — flujo completo en 7 pasos, SQL Injection detectada con error SQL real en la respuesta"
+)
+
 === P4 — DevTools (Carlos Bañuelos Fernández)
 
 ==== Fase 1 — Construcción del módulo
