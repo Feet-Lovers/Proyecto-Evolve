@@ -252,19 +252,12 @@ Este proyecto desarrolla competencias en cinco áreas simultáneamente: desarrol
 HookSuite está compuesto por cinco módulos independientes que se comunican a través de una capa de backend centralizada. Cada módulo fue desarrollado por un miembro del equipo de forma autónoma y se integra con el resto a través de contratos de API definidos previamente.
 
 // TODO: Sustituir el diagrama ASCII por la imagen definitiva del diagrama de arquitectura
-// #figure(image("../capturas/arquitectura.png", width: 100%), caption: "Arquitectura técnica de HookSuite")
+// #figure(image("../capturas/arquitectura.jpg", width: 100%), caption: "Arquitectura técnica de HookSuite")
 
-```
-P1 — Frontend React (dashboard web)
-         │ WebSocket + REST
-         ▼
-P2 — Backend FastAPI + httpx
-    ┌────┴────┬─────────────┐
-    ▼         ▼             ▼
-P3            P5            P4
-Playwright    IA            DevTools
-(ataques)     (análisis)    (captura red)
-```
+#figure(
+  image("../capturas/arquitectura.jpg", width: 100%),
+  caption: "Arquitectura técnica de HookSuite — estado actual Práctica 1"
+)
 
 _Los módulos P3, P4 y P5 están integrados en la arquitectura y su activación completa está planificada para la Práctica 2._
 
@@ -1321,3 +1314,8 @@ Con usuarios reales accediendo a la herramienta, esta fase cierra el único aspe
 )
 
 *Total estimado Práctica 2: 29 días distribuidos en 8 semanas entre los 5 roles*
+
+#figure(
+  image("../capturas/arquitectura_completa.jpg", width: 100%),
+  caption: "Arquitectura completa de HookSuite — visión objetivo Práctica 1 + Práctica 2"
+)
