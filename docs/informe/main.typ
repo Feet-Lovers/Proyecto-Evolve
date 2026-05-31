@@ -1173,6 +1173,100 @@ Trabajar en equipo distribuido con cinco módulos independientes enseña algo qu
 
 = Road map de mejora para la Práctica 2
 
-#rect(fill: azul-claro, stroke: 1pt + azul-acento, inset: 12pt, width: 100%, radius: 4pt)[
-  _Sección pendiente — en espera de roadmap_tabla.png de P4_
-]
+HookSuite llega a la Práctica 2 con cinco módulos construidos pero con tres de ellos pendientes de integración completa en producción. El road map de esta fase prioriza resolver esa deuda técnica antes de añadir funcionalidades nuevas, y estructura el sistema de usuarios antes de exponer la herramienta al público general.
+
+== Fase 1 — Integración de módulos pendientes
+
+_Semanas 1-2 · P3, P4 y P5 construidos pero sin conectar en producción_
+
+El objetivo de esta fase es completar el trabajo que quedó pendiente en la Práctica 1: los módulos DevTools, Playwright e IA están construidos y validados en local, pero no están integrados de forma estable en la infraestructura Docker de producción en Hetzner.
+
+#table(
+  columns: (auto, 1fr, 2fr, auto, auto),
+  fill: (_, y) => if y == 0 { azul } else if calc.odd(y) { azul-claro } else { white },
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Nº]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Mejora]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Descripción]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Días]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Responsables]],
+  [1], [Integración de DevTools (P4) en Docker], [Desplegar el contenedor y conectar el panel Red al Backend. El endpoint receptor ya está implementado.], [3], [P4, P2],
+  [2], [Integración de Playwright (P3) en Docker], [Resolver el bug de red Docker y activar el ciclo completo IA↔Playwright↔Backend en producción.], [3], [P3, P2],
+  [3], [Activación completa del módulo IA (P5)], [Pasar de modo mock a modo polling real. El módulo arranca en el servidor — falta la integración estable.], [2], [P5, P2],
+)
+
+== Fase 2 — Sistema de usuarios público
+
+_Semanas 3-4 · Convierte HookSuite de herramienta del equipo a producto multi-usuario_
+
+Con los módulos integrados, el siguiente paso es convertir HookSuite de herramienta de equipo a producto multi-usuario. El sistema actual usa un único usuario compartido gestionado por Nginx — esta fase lo sustituye por un sistema de registro y login individual.
+
+#table(
+  columns: (auto, 1fr, 2fr, auto, auto),
+  fill: (_, y) => if y == 0 { azul } else if calc.odd(y) { azul-claro } else { white },
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Nº]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Mejora]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Descripción]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Días]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Responsables]],
+  [4], [Registro y login por usuario con JWT], [Sustituye el Nginx básico. El frontend ya tiene componentes de auth preparados desde la Práctica 1.], [3], [P2, P1],
+  [5], [Aislamiento de sesiones por usuario], [Cada usuario ve solo su historial y auditorías. El SessionManager ya gestiona tokens UUID — se vincula al usuario.], [2], [P2, P1],
+)
+
+== Fase 3 — Nuevas funcionalidades
+
+_Semanas 5-7 · Valor añadido que diferencia HookSuite de otras herramientas_
+
+Con la integración completa y el sistema de usuarios operativo, esta fase añade funcionalidades que amplían la superficie de auditoría de HookSuite y la diferencian de otras herramientas del mercado.
+
+#table(
+  columns: (auto, 1fr, 2fr, auto, auto),
+  fill: (_, y) => if y == 0 { azul } else if calc.odd(y) { azul-claro } else { white },
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Nº]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Mejora]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Descripción]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Días]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Responsables]],
+  [6], [Interceptación de WebSockets], [CDP webSocketFrameReceived. Nuevo panel WS en el frontend. Las apps modernas usan WS de forma extensiva.], [5], [P4, P1],
+  [7], [Análisis JS estático con AST + endpoints ocultos], [esprima/acorn para detectar URLs hardcodeadas, API keys y endpoints. Se pasan al spider automáticamente.], [5], [P4, P5, P3],
+  [8], [Integración CVEs (NVD) + exportación de informes], [Cruzar fingerprint con CVEs conocidos. Exportar hallazgos en JSON y PDF auto-generado con IA.], [5], [P5, P4, P1],
+)
+
+== Fase 4 — Seguridad y producción
+
+_Semana 8 · Con usuarios reales, el servidor necesita esto antes de la apertura pública_
+
+Con usuarios reales accediendo a la herramienta, esta fase cierra el único aspecto de seguridad del servidor que queda pendiente. El resto de la seguridad perimetral ya está resuelta desde la Práctica 1: los puertos del servidor están cerrados por defecto, y el sistema de firewall dinámico abre un puerto exclusivo por sesión asociado al SUID del usuario, cerrándolo automáticamente al hacer logout o tras 4 horas de inactividad.
+
+#table(
+  columns: (auto, 1fr, 2fr, auto, auto),
+  fill: (_, y) => if y == 0 { azul } else if calc.odd(y) { azul-claro } else { white },
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Nº]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Mejora]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Descripción]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Días]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Responsables]],
+  [9], [TLS con Let's Encrypt en endpoints públicos], [Configurar HTTPS en Nginx para los endpoints expuestos. El firewall dinámico por sesión ya está operativo desde la Práctica 1.], [1], [P2],
+)
+
+== Tabla resumen
+
+#table(
+  columns: (auto, 1fr, auto, auto, auto),
+  fill: (_, y) => if y == 0 { azul } else if calc.odd(y) { azul-claro } else { white },
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Nº]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Mejora]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Fase]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Días]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Responsables]],
+  [1], [Integración DevTools en Docker], [Fase 1], [3], [P4, P2],
+  [2], [Integración Playwright en Docker], [Fase 1], [3], [P3, P2],
+  [3], [Activación módulo IA], [Fase 1], [2], [P5, P2],
+  [4], [Registro y login JWT], [Fase 2], [3], [P2, P1],
+  [5], [Aislamiento de sesiones], [Fase 2], [2], [P2, P1],
+  [6], [Interceptación WebSockets], [Fase 3], [5], [P4, P1],
+  [7], [Análisis JS estático + endpoints], [Fase 3], [5], [P4, P5, P3],
+  [8], [CVEs + exportación informes], [Fase 3], [5], [P5, P4, P1],
+  [9], [TLS Let's Encrypt], [Fase 4], [1], [P2],
+)
+
+*Total estimado Práctica 2: 29 días distribuidos en 8 semanas entre los 5 roles*
