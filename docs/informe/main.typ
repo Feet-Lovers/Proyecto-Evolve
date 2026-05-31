@@ -202,7 +202,7 @@ La herramienta está desplegada en un servidor Hetzner Cloud CX22 y es accesible
 // 2. DESCRIPCIÓN DEL PROBLEMA Y JUSTIFICACIÓN
 // ============================================================
 
-= Descripción del problema y justificación
+= Análisis y comparación con otras herramientas
 
 == El ecosistema actual de herramientas de auditoría web
 
@@ -268,11 +268,11 @@ Con esa premisa, el equipo evaluó cinco opciones para gestionar la interceptaci
   fill: (_, y) => if y == 0 { azul } else if calc.odd(y) { azul-claro } else { white },
   table.cell(fill: azul)[#text(fill: white, weight: "bold")[Opción]],
   table.cell(fill: azul)[#text(fill: white, weight: "bold")[Resultado]],
-  [Extensión de navegador], [❌ Descartada — rompe el concepto de web app],
-  [Certificado CA propio], [❌ Descartada — requiere instalar certificado en el cliente],
-  [Proxy SOCKS5], [❌ Descartada — configuración manual compleja],
-  [Electron híbrido], [❌ Descartada — requiere instalar aplicación de escritorio],
-  [Archivo PAC + WebSockets], [✅ Seleccionada],
+  [Extensión de navegador], [No Descartada — rompe el concepto de web app],
+  [Certificado CA propio], [No Descartada — requiere instalar certificado en el cliente],
+  [Proxy SOCKS5], [No Descartada — configuración manual compleja],
+  [Electron híbrido], [No Descartada — requiere instalar aplicación de escritorio],
+  [Archivo PAC + WebSockets], [Sí Seleccionada],
 )
 
 La opción seleccionada combinaba dos elementos. Un archivo PAC (Proxy Auto-Configuration) alojado en el servidor — un fichero JavaScript que el navegador lee antes de cada petición para decidir si enrutar el tráfico a través del proxy. Y WebSockets como canal de comunicación bidireccional en tiempo real entre el frontend y el backend. Esta combinación ofrecía compatibilidad con todos los navegadores modernos, sin instalaciones en el cliente, y soporte nativo para múltiples usuarios simultáneos mediante tokens de sesión UUID.
@@ -305,7 +305,7 @@ Esta arquitectura inicial fue posteriormente descartada cuando al exponerla al e
   table.cell(fill: azul)[#text(fill: white, weight: "bold")[Integración]],
   table.cell(fill: azul)[#text(fill: white, weight: "bold")[Canal]],
   table.cell(fill: azul)[#text(fill: white, weight: "bold")[Estado]],
-  [P1 ↔ P2 (Frontend — Backend)], [WebSocket + REST], [✅ Activo],
+  [P1 ↔ P2 (Frontend — Backend)], [WebSocket + REST], [Activo],
 )
 
 _Los contratos de integración de P3, P4 y P5 con el Backend se definirán y documentarán durante la Práctica 2._
@@ -324,7 +324,14 @@ _Los contratos de integración de P3, P4 y P5 con el Backend se definirán y doc
 
 El desarrollo de HookSuite arrancó con cada miembro construyendo su módulo de forma autónoma. Durante esta fase el equipo trabajó en paralelo — cada uno contra su propio entorno local con DVWA como objetivo de pruebas — siguiendo los contratos de integración definidos al inicio del proyecto. El resultado fue cinco módulos independientes y validados en local, listos para conectarse entre sí.
 
-=== P1 — Frontend (Ivan Medina Castro)
+#block(
+  stroke: 1pt + gris-borde,
+  inset: 8pt,
+  width: 100%,
+  radius: 3pt,
+)[
+  #text(weight: "bold", size: 11pt)[P1 — Frontend (Ivan Medina Castro)]
+]
 
 ==== Fase 0 — Investigación y decisiones de arquitectura
 
@@ -340,7 +347,14 @@ El sistema de mock data fue una de las decisiones técnicas más relevantes del 
 
 Con la interfaz validada en mock, Ivan configuró el proxy PAC en local y conectó el Frontend contra DVWA. En esta fase la herramienta funcionó como estaba diseñada originalmente: el proxy interceptaba el tráfico del navegador del auditor, las peticiones aparecían en el panel Proxy en tiempo real, el auditor podía enviarlas al Repeater para modificarlas y reenviarlas, y el Intruder ejecutaba payloads SQLi reales contra los formularios de DVWA.
 
-=== P2 — Backend (Macarena Rogerio)
+#block(
+  stroke: 1pt + gris-borde,
+  inset: 8pt,
+  width: 100%,
+  radius: 3pt,
+)[
+  #text(weight: "bold", size: 11pt)[P2 — Backend (Macarena Rogerio)]
+]
 
 ==== Fase 1 — Construcción del servidor base
 
@@ -388,7 +402,14 @@ La integración de mitmproxy presentó cuatro errores encadenados que Macarena r
   caption: "Swagger UI con el grupo proxy y los schemas Pydantic definidos — arquitectura de proxy interceptor operativa"
 )
 
-=== P3 — Playwright (Nacho García Monge)
+#block(
+  stroke: 1pt + gris-borde,
+  inset: 8pt,
+  width: 100%,
+  radius: 3pt,
+)[
+  #text(weight: "bold", size: 11pt)[P3 — Playwright (Nacho García Monge)]
+]
 
 ==== Fase 1 — Setup y optimización de velocidad
 
@@ -473,7 +494,14 @@ Desarrolló también `demo.py` como script de demostración del flujo completo, 
   caption: "demo.py — flujo completo en 7 pasos, SQL Injection detectada con error SQL real en la respuesta"
 )
 
-=== P4 — DevTools (Carlos Bañuelos Fernández)
+#block(
+  stroke: 1pt + gris-borde,
+  inset: 8pt,
+  width: 100%,
+  radius: 3pt,
+)[
+  #text(weight: "bold", size: 11pt)[P4 — DevTools (Carlos Bañuelos Fernández)]
+]
 
 ==== Fase 1 — Construcción del módulo
 
@@ -510,7 +538,14 @@ En esta fase apareció el bug más relevante del módulo: Chrome ignoraba los fl
   caption: "Objeto paquete generado por el constructor — cinco headers de seguridad ausentes detectados"
 )
 
-=== P5 — IA (Jose María López Ausín)
+#block(
+  stroke: 1pt + gris-borde,
+  inset: 8pt,
+  width: 100%,
+  radius: 3pt,
+)[
+  #text(weight: "bold", size: 11pt)[P5 — IA (Jose María López Ausín)]
+]
 
 ==== Fase 1 — Construcción del módulo
 
@@ -828,13 +863,13 @@ El sistema se compone de siete contenedores Docker orquestados con Docker Compos
   table.cell(fill: azul)[#text(fill: white, weight: "bold")[Imagen base]],
   table.cell(fill: azul)[#text(fill: white, weight: "bold")[Puerto externo]],
   table.cell(fill: azul)[#text(fill: white, weight: "bold")[Estado P1]],
-  [nginx], [nginx:alpine], [80], [✅ Activo],
-  [frontend], [node:20-alpine + nginx:alpine], [—], [✅ Activo],
-  [backend], [python:3.11-slim], [8000], [✅ Activo],
-  [redis], [redis:7-alpine], [—], [✅ Activo],
-  [dvwa], [vulnerables/web-dvwa], [—], [✅ Activo],
-  [playwright], [imagen propia], [—], [⏳ Práctica 2],
-  [ia], [imagen propia], [—], [⏳ Práctica 2],
+  [nginx], [nginx:alpine], [80], [Activo],
+  [frontend], [node:20-alpine + nginx:alpine], [—], [Activo],
+  [backend], [python:3.11-slim], [8000], [Activo],
+  [redis], [redis:7-alpine], [—], [Activo],
+  [dvwa], [vulnerables/web-dvwa], [—], [Activo],
+  [playwright], [imagen propia], [—], [Práctica 2],
+  [ia], [imagen propia], [—], [Práctica 2],
 )
 
 == Construcción de los contenedores
