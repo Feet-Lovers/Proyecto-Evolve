@@ -660,28 +660,13 @@ Macarena realizó en paralelo una mejora visual del Frontend — navegación hor
 
 Al cierre de esta fase el núcleo de HookSuite estaba operativo con la nueva arquitectura: el panel Proxy mostraba las peticiones que el servidor realizaba por el auditor en tiempo real, el Repeater reenviaba peticiones con gestión automática de cookies, el Intruder ejecutaba ataques con paralelismo controlado y el panel de Vulnerabilidades recibía alertas por WebSocket. El flujo completo de auditoría — spider sin autenticación, login desde el Repeater, spider autenticado, Intruder detectando SQLi — fue validado end-to-end contra DVWA antes de la entrega.
 
-#figure(
-  image("../capturas/backend/backend_api_docs1.png", width: 90%),
-  caption: "Swagger UI con todos los grupos de endpoints implementados — proxy, repeater, intruder, utils, network, playwright y vulnerabilities"
-)
-
-#figure(
-  image("../capturas/frontend/frontend_nuevo_proxy_autenticado.png", width: 90%),
-  caption: "Panel Proxy con sesión autenticada — spider navegando DVWA con cookie PHPSESSID activa y formularios detectados"
-)
-
-#figure(
-  image("../capturas/frontend/frontend_nuevo_intruder_resultados.png", width: 90%),
-  caption: "Intruder ejecutando 13 payloads SQLi contra DVWA — 12 vulnerables detectados en tiempo real"
-)
-
 // ============================================================
 // 4.3 ESTADO ACTUAL DE LA HERRAMIENTA
 // ============================================================
 
 == Estado actual de la herramienta
 
-=== Frontend (P1 — Ivan Medina Castro)
+=== Frontend
 
 El Frontend es la interfaz visual de HookSuite — un dashboard web accesible desde cualquier navegador sin instalación adicional. Construido sobre React 19, Vite y Tailwind CSS, con JetBrains Mono como tipografía de código, se comunica con el Backend exclusivamente mediante WebSocket para recibir eventos en tiempo real y REST para enviar las acciones del auditor. La gestión del estado compartido entre paneles se centraliza en un contexto global que mantiene la conexión WebSocket activa, el identificador de sesión UUID del auditor y los datos que fluyen entre los distintos módulos de la interfaz. El diseño incorpora un sistema de variables CSS con soporte de modo oscuro y modo claro, navegación horizontal en topbar y paneles redimensionables.
 
@@ -714,8 +699,6 @@ El *panel Proxy* es el centro de operaciones de la auditoría. El auditor introd
   caption: "Panel Proxy con sesión autenticada — spider navegando DVWA con todas las páginas descubiertas y formularios detectados"
 )
 
-El *panel Proxy* es el centro de operaciones de la auditoría. El auditor introduce la URL objetivo, selecciona la velocidad del análisis — rápido, normal o completo, que determina el número máximo de páginas que el spider visitará — y lanza el proceso. Las peticiones que el servidor realiza por el auditor aparecen en tiempo real agrupadas por URL. Los formularios detectados en cada página se muestran como subelementos desplegables bajo su URL correspondiente, lo que permite identificar de un vistazo los vectores de ataque disponibles. El panel de estado muestra las cookies de sesión activas en verde cuando el auditor está autenticado, y ofrece tres acciones: liberar la sesión activa sin perder el historial de peticiones, limpiar el panel manteniendo la sesión, o iniciar una nueva auditoría completa reseteando todo el estado.
-
 El *Repeater* permite modificar y reenviar cualquier petición manualmente. El auditor puede enviar al Repeater cualquier petición interceptada en el panel Proxy con un solo clic, y desde ahí modificar el método HTTP, la URL, los headers y el body antes de reenviarla. La respuesta se muestra en cuatro vistas: Raw muestra la respuesta tal como llega del servidor; Pretty formatea automáticamente el JSON para facilitar su lectura; Preview renderiza el HTML de la respuesta en un iframe reescribiendo las URLs relativas para que los recursos del objetivo se carguen correctamente; y Headers muestra los headers de respuesta con las cookies resaltadas en verde para identificarlas fácilmente.
 
 #figure(
@@ -747,11 +730,39 @@ El *Intruder* automatiza el fuzzing de parámetros al estilo Burp Suite. Al reci
 
 Las *Utilidades* agrupan cuatro herramientas auxiliares de uso frecuente en auditorías web. El Encoder/Decoder transforma texto entre los formatos más comunes — Base64, URL encoding, HTML encoding y decodificación de tokens JWT. El Hash Generator calcula los hashes MD5, SHA1, SHA256 y SHA512 de cualquier texto. El Regex Tester permite probar expresiones regulares contra texto de prueba con resaltado visual de los matches en tiempo real. El Payload Generator organiza colecciones de payloads por tipo de ataque — SQLi, Blind SQLi, XSS y fuzzing genérico — con opción de copiar payloads individuales o la lista completa.
 
+#figure(
+  image("../capturas/frontend/frontend_nuevo_utilidades_encoder.png", width: 90%),
+  caption: "Utilidades — Encoder/Decoder con texto 'admin' transformado a Base64, URL encoding y HTML encoding"
+)
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_utilidades_hash.png", width: 90%),
+  caption: "Utilidades — Hash Generator con hashes MD5, SHA1, SHA256 y SHA512 de 'administrator'"
+)
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_utilidades_regex.png", width: 90%),
+  caption: "Utilidades — Regex Tester con patrón \\d+ y match resaltado en 'administrator123'"
+)
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_utilidades_payload.png", width: 90%),
+  caption: "Utilidades — Payload Generator con lista de payloads XSS listos para copiar"
+)
+
 El *panel Vulnerabilidades* y el *panel Red* están completamente construidos e integrados en la interfaz. El panel Vulnerabilidades está diseñado para recibir las detecciones del módulo de IA clasificadas por severidad — crítica, alta, media y baja — con descripción de la vulnerabilidad, payload utilizado y recomendación de mitigación. El panel Red está diseñado para mostrar el tráfico capturado por el módulo DevTools en tiempo real, con código de colores para identificar peticiones limpias, sospechosas y vulnerables. Ambos paneles permanecen inactivos en esta entrega porque los módulos que los alimentan están pendientes de integración completa en la Práctica 2.
 
-// TODO: Revisar y actualizar descripción visual una vez subida la mejora de Macarena al servidor
+#figure(
+  image("../capturas/frontend/frontend_nuevo_vulnerabilidades.png", width: 90%),
+  caption: "Panel Vulnerabilidades — construido e integrado, pendiente de activación con el módulo IA en la Práctica 2"
+)
 
-=== Backend (P2 — Macarena Rogerio)
+#figure(
+  image("../capturas/frontend/frontend_nuevo_red.png", width: 90%),
+  caption: "Panel Red — construido e integrado, pendiente de activación con el módulo DevTools en la Práctica 2"
+)
+
+=== Backend
 
 El Backend es el núcleo del sistema — el único módulo que habla con todos los demás y el que hace posible que HookSuite funcione como una herramienta de auditoría real. Construido sobre Python 3.11 y FastAPI, gestiona las sesiones de auditoría, ejecuta todas las peticiones HTTP por el auditor, emite los resultados al Frontend en tiempo real mediante WebSockets y expone la API REST que coordina el resto de módulos.
 
