@@ -126,7 +126,10 @@
 )
 
 #set text(size: 11pt, fill: rgb("#1a1a1a"))
-#set heading(numbering: "1.1.")
+#set heading(numbering: (..nums) => {
+  let n = nums.pos()
+  if n.len() <= 2 { numbering("1.1.", ..nums) }
+})
 
 #show heading.where(level: 1): it => {
   pagebreak(weak: true)
