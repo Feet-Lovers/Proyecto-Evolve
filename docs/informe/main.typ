@@ -1135,7 +1135,7 @@ El panel *Red* está construido e integrado en la interfaz. Está diseñado para
 
 == Lo que funcionó mejor de lo esperado
 
-La integración entre módulos fue más fluida de lo que el equipo anticipaba. Definir los contratos de API al inicio del proyecto —antes de que cada miembro arrancara su desarrollo— eliminó la mayoría de los problemas de compatibilidad que suelen aparecer en proyectos distribuidos de este tipo. Cuando P4 terminó el módulo de captura CDP y P2 ya tenía el endpoint receptor implementado, la integración se completó sin fricción.
+La integración entre módulos fue más fluida de lo que el equipo anticipaba. Definir los contratos de API al inicio del proyecto —antes de que cada miembro arrancara su desarrollo— eliminó la mayoría de los problemas de compatibilidad que suelen aparecer en proyectos distribuidos de este tipo. La definición de contratos de API desde el inicio permitió que los módulos de Playwright, DevTools e IA estuvieran preparados para integrarse con el Backend sin necesidad de cambios en sus interfaces — una decisión que simplificará significativamente la integración en la Práctica 2.
 
 El uso de variables de entorno para controlar el modo de operación del módulo de IA resultó ser una decisión especialmente acertada. El modo mock (`MOCK_PLAYWRIGHT=true`) permitió desarrollar y validar el ciclo completo de análisis de forma independiente, sin depender de que P2 y P3 tuvieran sus módulos listos. Esto desbloqueó el desarrollo en paralelo real y redujo los tiempos de espera entre módulos.
 
@@ -1147,17 +1147,25 @@ La coordinación entre cinco módulos con dependencias cruzadas generó cuellos 
 
 La gestión del entorno Python en Windows presentó más fricción de la esperada. La incompatibilidad entre la versión inicial de la librería `anthropic` y Python 3.14, la exposición accidental de una API key en el repositorio o la configuración del entorno virtual en distintos sistemas operativos fueron incidencias menores que, sumadas, consumieron tiempo de desarrollo que no estaba previsto en el plan inicial.
 
+El pivote de arquitectura fue el momento más exigente del proyecto. El error de los bots al abrir el proxy TCP al exterior no estaba en ningún plan de contingencia — y no podía estarlo, porque es el tipo de problema que solo aparece cuando expones un sistema real en internet por primera vez. La decisión de cambiar de modelo a mitad del desarrollo, con módulos ya integrados y una demo próxima, requirió que el equipo reorganizara prioridades en tiempo real y concentrara el esfuerzo donde más impactaba.
+
 == Qué haríamos diferente si empezáramos de nuevo
 
 Estableceríamos la convención de commits desde el primer commit del repositorio, no como corrección posterior. La convención de commits es un estándar de calidad que penaliza directamente la nota cuando no se aplica, y su adopción tardía en un historial ya creado es costosa de corregir sin reescribir el historial.
 
 Definiríamos un entorno de integración compartido desde el inicio. Durante el desarrollo, cada módulo se probó de forma aislada contra DVWA en local. Un entorno de integración compartido en Hetzner desde la primera semana habría permitido detectar antes los problemas de integración real entre módulos y habría dado más tiempo para resolverlos.
 
+Diseñaríamos desde el inicio un plan de contingencia para cambios de arquitectura. El pivote al modelo httpx fue la decisión correcta, pero llegó en un momento en que varios módulos ya estaban construidos sobre la arquitectura anterior. Haber anticipado ese escenario — aunque fuera como un plan B documentado — habría reducido el impacto del cambio en el resto del equipo.
+
 == Aprendizajes sobre integración de sistemas complejos
 
 Este proyecto confirma que la dificultad de un sistema distribuido no está en la complejidad de cada módulo individual, sino en la gestión de sus interfaces. Un módulo técnicamente excelente que no cumple el contrato de API acordado bloquea a todos los módulos que dependen de él. La disciplina en la definición y el respeto de los contratos de integración es tan importante como la calidad del código.
 
-La inteligencia artificial como componente de un sistema mayor introduce un tipo de incertidumbre diferente al del código determinista. Los tiempos de respuesta variables, los costes por llamada y la naturaleza probabilística de las clasificaciones requieren diseñar el sistema de forma que pueda operar de forma degradada cuando la IA no está disponible o cuando su respuesta no supera el umbral de confianza requerido.
+La inteligencia artificial como componente de un sistema mayor introduce un tipo de incertidumbre diferente al del código determinista. Los tiempos de respuesta variables y la naturaleza probabilística de las clasificaciones requieren diseñar el sistema de forma que pueda operar de forma degradada cuando la IA no está disponible o cuando su respuesta no supera el umbral de confianza requerido.
+
+Exponer un sistema en internet real es una experiencia de aprendizaje que ningún entorno local puede replicar. El error de los bots enseñó al equipo que la seguridad no es una capa que se añade al final — es una restricción de diseño que condiciona cada decisión de arquitectura desde el principio. Un proxy TCP abierto en local es una herramienta; el mismo proxy abierto en internet es una vulnerabilidad. Esa distinción no aparece en ningún manual pero define la diferencia entre un sistema de laboratorio y un sistema real.
+
+Trabajar en equipo distribuido con cinco módulos independientes enseña algo que el trabajo individual no puede: que la confianza técnica entre compañeros es tan importante como la competencia técnica individual. Cada miembro del equipo construyó su módulo sabiendo que otros dependían de él — y esa responsabilidad genera un nivel de cuidado en el código que es difícil de alcanzar cuando uno trabaja solo. El pivote de arquitectura demostró además que un equipo que confía en sus decisiones colectivas puede adaptarse a cambios drásticos sin perder la cohesión.
 
 // ============================================================
 // 8. ROAD MAP DE MEJORA — PRÁCTICA 2
