@@ -975,9 +975,134 @@ curl -s -o /dev/null -w "%{http_code}" http://91.98.143.219
 
 = Manual de uso
 
-#rect(fill: azul-claro, stroke: 1pt + azul-acento, inset: 12pt, width: 100%, radius: 4pt)[
-  _Sección pendiente de redactar_
-]
+== Acceso a la herramienta
+
+HookSuite es accesible desde cualquier navegador sin instalación adicional. La herramienta está desplegada en `http://91.98.143.219`. Al acceder, Nginx solicita autenticación básica — introducir las credenciales proporcionadas para acceder al dashboard.
+
+Una vez autenticado, el navegador muestra el panel Proxy directamente. La navegación entre los seis paneles se realiza desde el topbar superior. El indicador verde *conectado* en el panel Proxy confirma que el WebSocket con el Backend está activo y la herramienta lista para operar.
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_proxy_vacio.png", width: 90%),
+  caption: "Dashboard de HookSuite — panel Proxy con WebSocket conectado y listo para iniciar una auditoría"
+)
+
+== Flujo de auditoría completo
+
+=== Paso 1 — Lanzar el spider
+
+En el campo *URL objetivo* del panel Proxy, introducir la URL de la aplicación a auditar. Seleccionar la velocidad de análisis según el alcance deseado — *Rápido* visita hasta 50 páginas, *Normal* hasta 200 y *Completo* hasta 500. Pulsar *Iniciar spider*.
+
+El spider navega la aplicación de forma autónoma realizando peticiones HTTP por el auditor. Cada petición descubierta aparece en tiempo real en la tabla del panel Proxy con su método, URL, status code, tamaño y tiempo de respuesta. Los formularios detectados en cada página aparecen como subelementos desplegables bajo su URL correspondiente, identificados con el indicador *[N FORM ▼]*.
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_proxy_interceptando.png", width: 90%),
+  caption: "Spider en ejecución — petición de login de DVWA capturada con formulario detectado"
+)
+
+=== Paso 2 — Login desde el Repeater
+
+Cuando el spider detecta el formulario de login de la aplicación objetivo, aparece como subelemento desplegable bajo la URL del login. Desplegar el formulario pulsando *[N FORM ▼]* y seleccionar el formulario POST. Hacer clic en él para ver su detalle en el panel derecho y pulsar *enviar al repeater →*.
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_proxy_formulario.png", width: 90%),
+  caption: "Formulario de login detectado — botones de envío al Repeater y al Intruder visibles"
+)
+
+El Repeater recibe la petición con el método POST ya configurado, los headers correctos — incluyendo `Content-Type: application/x-www-form-urlencoded` — y el body con todos los campos del formulario rellenos con sus valores por defecto, incluido el token CSRF si la aplicación lo requiere.
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_repeater_form_post.png", width: 90%),
+  caption: "Repeater con el formulario POST recibido — body con campos del formulario y token CSRF incluidos"
+)
+
+Modificar los campos de credenciales en el body con los valores correctos y pulsar *enviar*. Si el login es exitoso, la vista Preview mostrará el dashboard de la aplicación autenticada. La cookie de sesión queda automáticamente acumulada en el cliente httpx del Backend — el Spider y el Intruder la heredan sin configuración adicional.
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_repeater_preview.png", width: 90%),
+  caption: "Vista Preview del Repeater — DVWA autenticado tras login exitoso"
+)
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_repeater_headers.png", width: 90%),
+  caption: "Vista Headers del Repeater — headers de respuesta del servidor"
+)
+
+=== Paso 3 — Spider autenticado
+
+Con la sesión activa, volver al panel Proxy y lanzar el spider de nuevo. Esta vez navega con las cookies de sesión acumuladas — descubre todas las páginas internas de la aplicación que requieren autenticación. El indicador de cookies en verde confirma que el spider opera autenticado.
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_proxy_autenticado.png", width: 90%),
+  caption: "Panel Proxy con sesión autenticada — todas las páginas de DVWA descubiertas con formularios detectados"
+)
+
+=== Paso 4 — Enviar al Intruder y configurar el ataque
+
+Desplegar el formulario de la página objetivo pulsando *[N FORM ▼]*. Seleccionar el formulario que se quiere atacar y pulsar *enviar al intruder →*. El Intruder recibe automáticamente la URL con los parámetros detectados.
+
+En el Intruder, pulsar *→ marcar* junto al parámetro que se quiere atacar — el marcador `*` se resalta en naranja en la URL. Seleccionar el tipo de ataque en el desplegable: *SQL Injection*, *Blind SQLi*, *XSS* o *Fuzzing genérico*. Pulsar *iniciar ataque*.
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_intruder_configurado.png", width: 90%),
+  caption: "Intruder configurado — parámetro id marcado con * y tipo de ataque SQL Injection seleccionado"
+)
+
+=== Paso 5 — Resultados del ataque
+
+El Intruder ejecuta todos los payloads de forma concurrente y muestra los resultados en tiempo real. Las peticiones que producen una respuesta identificada como vulnerable se marcan en rojo en la columna *Resultado*.
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_intruder_resultados.png", width: 90%),
+  caption: "Resultados del Intruder — 12 de 13 payloads SQLi marcados como vulnerables en DVWA"
+)
+
+== Utilidades
+
+Las Utilidades agrupan cuatro herramientas auxiliares accesibles desde el topbar, útiles durante cualquier fase de la auditoría.
+
+El *Encoder/Decoder* transforma texto entre Base64, URL encoding, HTML encoding y decodificación de JWT en tiempo real — útil para preparar payloads o analizar respuestas codificadas.
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_utilidades_encoder.png", width: 90%),
+  caption: "Encoder/Decoder — transformación de 'admin' a los distintos formatos de codificación"
+)
+
+El *Hash Generator* calcula los hashes MD5, SHA1, SHA256 y SHA512 de cualquier texto — útil para verificar integridad de datos o preparar ataques de fuerza bruta con hashes conocidos.
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_utilidades_hash.png", width: 90%),
+  caption: "Hash Generator — hashes de 'administrator' en los cuatro algoritmos"
+)
+
+El *Regex Tester* compila y ejecuta expresiones regulares contra texto de prueba con resaltado visual de los matches en tiempo real — útil para construir patrones de extracción de datos de respuestas HTTP.
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_utilidades_regex.png", width: 90%),
+  caption: "Regex Tester — patrón \\d+ con match resaltado en 'administrator123'"
+)
+
+El *Payload Generator* organiza colecciones de payloads por tipo de ataque con opción de copiar individualmente o todos a la vez — útil para preparar listas de payloads personalizadas antes de lanzar el Intruder.
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_utilidades_payload.png", width: 90%),
+  caption: "Payload Generator — lista de payloads XSS listos para copiar"
+)
+
+== Paneles pendientes de activación
+
+El panel *Vulnerabilidades* está construido e integrado en la interfaz. Está diseñado para recibir las detecciones del módulo de IA clasificadas por severidad — crítica, alta, media y baja — con descripción de la vulnerabilidad, payload utilizado y recomendación de mitigación. Su activación completa está planificada para la Práctica 2.
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_vulnerabilidades.png", width: 90%),
+  caption: "Panel Vulnerabilidades — construido e integrado, pendiente de activación en la Práctica 2"
+)
+
+El panel *Red* está construido e integrado en la interfaz. Está diseñado para mostrar el tráfico capturado por el módulo DevTools en tiempo real, con código de colores para identificar peticiones limpias, sospechosas y vulnerables. Su activación completa está planificada para la Práctica 2.
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_red.png", width: 90%),
+  caption: "Panel Red — construido e integrado, pendiente de activación en la Práctica 2"
+)
 
 // ============================================================
 // 7. CONCLUSIONES Y LECCIONES APRENDIDAS
