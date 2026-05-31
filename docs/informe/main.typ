@@ -80,11 +80,11 @@
       v(0.4cm)
     }
 
-    #miembro("P1", "Ivan Medina Castro", "Frontend — React + Vite + Tailwind")
+    #miembro("P1", "Ivan Medina", "Frontend — React + Vite + Tailwind")
     #miembro("P2", "Macarena Rogerio", "Backend — FastAPI + Python")
-    #miembro("P3", "Nacho García Monge", "Playwright — Automatización")
-    #miembro("P4", "Carlos Bañuelos Fernández", "DevTools — Chrome DevTools Protocol")
-    #miembro("P5", "Jose María López Ausín", "IA + GitHub — Claude API")
+    #miembro("P3", "Nacho García", "Playwright — Automatización")
+    #miembro("P4", "Carlos Bañuelos", "DevTools — Chrome DevTools Protocol")
+    #miembro("P5", "Jose María López", "IA + GitHub — Claude API")
 
     #v(1cm)
     #line(length: 100%, stroke: 0.5pt + rgb("#1E3A5F"))
@@ -178,7 +178,7 @@
   #v(0.3cm)
   #block(width: 50pt, height: 2pt, fill: azul-acento)[]
   #v(1cm)
-  #outline(title: none, indent: auto)
+  #outline(title: none, indent: auto, depth: 2)
 ]
 
 // ============================================================
