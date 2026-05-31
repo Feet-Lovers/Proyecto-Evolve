@@ -792,9 +792,182 @@ Los módulos de Playwright, DevTools e IA están construidos y validados en sus 
 
 = Guía de despliegue
 
-#rect(fill: azul-claro, stroke: 1pt + azul-acento, inset: 12pt, width: 100%, radius: 4pt)[
-  _Sección pendiente de redactar — requiere docker-compose.yml y nginx.conf del servidor_
-]
+== Entorno de producción
+
+HookSuite está desplegado en un servidor Hetzner Cloud CX22 con las siguientes especificaciones:
+
+#table(
+  columns: (auto, 1fr),
+  fill: (_, y) => if y == 0 { azul } else if calc.odd(y) { azul-claro } else { white },
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Parámetro]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Valor]],
+  [Proveedor], [Hetzner Cloud],
+  [Plan], [CX22],
+  [vCPUs], [2 vCPUs compartidas],
+  [RAM], [4 GB],
+  [Almacenamiento], [40 GB NVMe SSD],
+  [Tráfico incluido], [20 TB/mes],
+  [Sistema operativo], [Ubuntu 24.04 LTS],
+  [Kernel], [6.8.0-117-generic],
+  [IP pública], [91.98.143.219],
+  [Docker], [29.5.0],
+  [Docker Compose], [v5.1.3],
+)
+
+== Arquitectura de contenedores
+
+El sistema se compone de siete contenedores Docker orquestados con Docker Compose y comunicados a través de la red interna `hooksuite-net` de tipo bridge:
+
+#table(
+  columns: (auto, 1fr, auto, auto),
+  fill: (_, y) => if y == 0 { azul } else if calc.odd(y) { azul-claro } else { white },
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Servicio]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Imagen base]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Puerto externo]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Estado P1]],
+  [nginx], [nginx:alpine], [80], [✅ Activo],
+  [frontend], [node:20-alpine + nginx:alpine], [—], [✅ Activo],
+  [backend], [python:3.11-slim], [8000], [✅ Activo],
+  [redis], [redis:7-alpine], [—], [✅ Activo],
+  [dvwa], [vulnerables/web-dvwa], [—], [✅ Activo],
+  [playwright], [imagen propia], [—], [⏳ Práctica 2],
+  [ia], [imagen propia], [—], [⏳ Práctica 2],
+)
+
+== Construcción de los contenedores
+
+=== Backend
+
+El contenedor de backend usa Python 3.11-slim como imagen base. Durante la construcción instala `redis-tools`, `iptables` y `build-essential` — necesarios para la gestión dinámica del firewall por sesión. Expone los puertos 8000 (API) y 8080 (mitmproxy). Arranca con `NET_ADMIN` para poder manipular reglas de iptables, y monta el socket del agente de firewall desde el host.
+
+El `entrypoint.sh` implementa el siguiente flujo de arranque:
+
+```bash
+# 1. Espera a que Redis esté disponible
+until redis-cli -h redis -p 6379 ping; do sleep 1; done
+
+# 2. Levanta mitmproxy en segundo plano en el puerto 8080
+mitmdump --listen-host 0.0.0.0 --listen-port 8080 \
+    --set block_global=false \
+    --proxyauth hooksuite:audit2026 \
+    -s /app/services/mitm_addon.py &
+
+# 3. Arranca el servidor FastAPI en el puerto 8000
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+mitmproxy está presente en la infraestructura aunque no forma parte del flujo de auditoría principal en esta entrega — el sistema opera con httpx directo. Está disponible para un posible uso futuro sin necesidad de cambios en la infraestructura.
+
+=== Frontend
+
+El contenedor de frontend usa un proceso de construcción multietapa. En la primera etapa, Node 20 Alpine compila la aplicación React con Vite inyectando la URL del backend como variable de entorno en tiempo de compilación:
+
+```bash
+ARG VITE_API_URL=http://91.98.143.219:8000
+ENV VITE_API_URL=$VITE_API_URL
+RUN npm run build
+```
+
+En la segunda etapa, Nginx Alpine sirve los ficheros estáticos compilados. El resultado es una imagen final ligera sin dependencias de Node en producción.
+
+=== Módulos Playwright e IA
+
+Ambos contenedores están desplegados en el servidor en modo polling pasivo — operativos como infraestructura pero sin integración activa con el núcleo del sistema. Su activación completa está planificada para la Práctica 2.
+
+== Enrutamiento Nginx
+
+Nginx actúa como punto de entrada único en el puerto 80 y distribuye el tráfico según la ruta:
+
+#table(
+  columns: (auto, 1fr),
+  fill: (_, y) => if y == 0 { azul } else if calc.odd(y) { azul-claro } else { white },
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Ruta]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Destino y notas]],
+  [`/api/`], [Backend FastAPI — endpoints REST con cabeceras de proxy],
+  [`/ws/`], [Backend WebSockets — upgrade HTTP/1.1 a WS],
+  [`/proxy.pac`], [Backend — fichero PAC de configuración del proxy],
+  [`/check/`], [Backend — endpoint de verificación del proxy activo],
+  [`/dvwa/`], [DVWA — protegido con autenticación básica Nginx],
+  [`/`], [Frontend React — protegido con autenticación básica Nginx],
+)
+
+El acceso al dashboard y a DVWA requiere autenticación HTTP básica gestionada por Nginx mediante fichero `htpasswd`. El puerto 8080 de mitmproxy no está expuesto al exterior.
+
+== Despliegue desde cero
+
+=== Requisitos previos
+
+- Servidor Linux con Ubuntu 24.04 LTS
+- Docker 24+ y Docker Compose v2+
+- Acceso SSH con usuario root o sudo
+- Mínimo 2 vCPUs y 4 GB de RAM recomendados
+
+=== Pasos
+
+```bash
+# 1. Instalar Docker
+curl -fsSL https://get.docker.com | sh
+
+# 2. Clonar el repositorio
+git clone https://github.com/Feet-Lovers/Proyecto-Evolve.git
+cd Proyecto-Evolve
+
+# 3. Configurar variables de entorno
+cp .env.example .env
+# Editar .env con los valores del entorno
+
+# 4. Generar fichero htpasswd para autenticación Nginx
+apt-get install -y apache2-utils
+htpasswd -c infra/htpasswd hooksuite
+
+# 5. Construir y arrancar todos los contenedores
+docker compose up -d --build
+
+# 6. Verificar estado
+docker compose ps
+```
+
+== Operación y mantenimiento
+
+=== Ver estado de los contenedores
+
+```bash
+docker compose ps
+```
+
+=== Ver logs de un servicio
+
+```bash
+docker compose logs backend --tail=50
+docker compose logs frontend --tail=50
+```
+
+=== Reiniciar un servicio
+
+```bash
+docker compose restart backend
+```
+
+=== Actualizar el código y redesplegar
+
+```bash
+git pull origin main
+docker compose up -d --build backend
+# o para redesplegar todos los servicios:
+docker compose up -d --build
+```
+
+=== Parar el sistema completo
+
+```bash
+docker compose down
+```
+
+=== Verificar accesibilidad
+
+```bash
+curl -s -o /dev/null -w "%{http_code}" http://91.98.143.219
+```
 
 // ============================================================
 // 6. MANUAL DE USO
