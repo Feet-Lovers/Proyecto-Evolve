@@ -190,11 +190,24 @@
 
 = Resumen ejecutivo
 
-HookSuite es una herramienta de auditoría de seguridad web desarrollada íntegramente por el equipo en el marco de la Práctica 1 del Módulo de Ciberseguridad Avanzada. Su objetivo es automatizar el proceso de detección de vulnerabilidades web combinando análisis de tráfico HTTP en tiempo real, fuzzing automatizado de parámetros y análisis inteligente mediante inteligencia artificial.
+*HookSuite* es una herramienta de auditoría de seguridad web. Su objetivo es automatizar el proceso de detección de vulnerabilidades web combinando análisis de tráfico HTTP en tiempo real, fuzzing automatizado de parámetros y análisis inteligente mediante inteligencia artificial.
 
-Funcionalmente, HookSuite opera de forma similar a Burp Suite pero con tres diferencias clave: está construida desde cero, es accesible desde cualquier navegador sin instalación de software adicional en el cliente, e incorpora inteligencia artificial para clasificar y priorizar vulnerabilidades según el estándar OWASP.
+Funcionalmente, HookSuite opera de forma similar a Burp Suite pero con tres diferencias clave:
 
-El sistema está compuesto por cinco módulos integrados: un dashboard web en React que actúa como interfaz de control, un backend en FastAPI que gestiona las sesiones de auditoría y ejecuta las peticiones HTTP por el auditor, un motor de automatización con Playwright para la ejecución de ataques con navegador real, un módulo de captura de tráfico basado en Chrome DevTools Protocol, y un módulo de inteligencia artificial para el análisis y clasificación de vulnerabilidades. Los módulos de Playwright, DevTools e IA están integrados en la arquitectura del sistema y su activación completa está planificada para la Práctica 2.
+#pad(left: 1.5cm)[
+Está construida desde cero, es accesible desde cualquier navegador sin instalación de software adicional en el cliente, e incorpora inteligencia artificial para clasificar y priorizar vulnerabilidades según el estándar OWASP.
+
+El sistema está compuesto por *cinco módulos* integrados:
+#pad(left: 1.5cm)[
+un *dashboard web en React* que actúa como interfaz de control.\
+un *backend en FastAPI* que gestiona las sesiones de auditoría y ejecuta las peticiones HTTP por el auditor.\
+un *motor de automatización con Playwright* para la ejecución de ataques con navegador real.\
+un *módulo de captura de tráfico* basado en Chrome DevTools Protocol.\
+un *módulo de inteligencia artificial* para el análisis y clasificación de vulnerabilidades.
+]
+]
+
+Los módulos de Playwright, DevTools e IA están integrados en la arquitectura del sistema y su activación completa está planificada para la Práctica 2.
 
 La herramienta está desplegada en un servidor Hetzner Cloud CX22 y es accesible desde cualquier navegador a través de su URL pública. En su estado actual, el Spider, el Repeater, el Intruder y las Utilidades están completamente operativos y han sido validados contra DVWA (Damn Vulnerable Web Application). El desarrollo completo, incluyendo el historial de commits, está disponible en el repositorio público de la organización Feet-Lovers en GitHub.
 
@@ -268,11 +281,11 @@ Con esa premisa, el equipo evaluó cinco opciones para gestionar la interceptaci
   fill: (_, y) => if y == 0 { azul } else if calc.odd(y) { azul-claro } else { white },
   table.cell(fill: azul)[#text(fill: white, weight: "bold")[Opción]],
   table.cell(fill: azul)[#text(fill: white, weight: "bold")[Resultado]],
-  [Extensión de navegador], [No Descartada — rompe el concepto de web app],
-  [Certificado CA propio], [No Descartada — requiere instalar certificado en el cliente],
-  [Proxy SOCKS5], [No Descartada — configuración manual compleja],
-  [Electron híbrido], [No Descartada — requiere instalar aplicación de escritorio],
-  [Archivo PAC + WebSockets], [Sí Seleccionada],
+  [Extensión de navegador], [Descartada — rompe el concepto de web app],
+  [Certificado CA propio], [Descartada — requiere instalar certificado en el cliente],
+  [Proxy SOCKS5], [Descartada — configuración manual compleja],
+  [Electron híbrido], [Descartada — requiere instalar aplicación de escritorio],
+  [Archivo PAC + WebSockets], [Seleccionada],
 )
 
 La opción seleccionada combinaba dos elementos. Un archivo PAC (Proxy Auto-Configuration) alojado en el servidor — un fichero JavaScript que el navegador lee antes de cada petición para decidir si enrutar el tráfico a través del proxy. Y WebSockets como canal de comunicación bidireccional en tiempo real entre el frontend y el backend. Esta combinación ofrecía compatibilidad con todos los navegadores modernos, sin instalaciones en el cliente, y soporte nativo para múltiples usuarios simultáneos mediante tokens de sesión UUID.
@@ -293,7 +306,7 @@ Esta arquitectura inicial fue posteriormente descartada cuando al exponerla al e
   [Backend], [Python 3.11 + FastAPI + httpx + WebSockets], [P2 — Macarena],
   [Playwright], [Python + Playwright + httpx], [P3 — Nacho],
   [DevTools], [Python + WebSockets + httpx], [P4 — Carlos],
-  [IA], [Claude Code], [P5 — Jose María],
+  [IA], [Python + API Anthropic], [P5 — Jose María],
   [Infraestructura], [Docker + Hetzner Cloud CX22 + Nginx], [Todos],
 )
 
@@ -862,7 +875,7 @@ El sistema se compone de siete contenedores Docker orquestados con Docker Compos
   table.cell(fill: azul)[#text(fill: white, weight: "bold")[Servicio]],
   table.cell(fill: azul)[#text(fill: white, weight: "bold")[Imagen base]],
   table.cell(fill: azul)[#text(fill: white, weight: "bold")[Puerto externo]],
-  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Estado P1]],
+  table.cell(fill: azul)[#text(fill: white, weight: "bold")[Estado]],
   [nginx], [nginx:alpine], [80], [Activo],
   [frontend], [node:20-alpine + nginx:alpine], [—], [Activo],
   [backend], [python:3.11-slim], [8000], [Activo],
