@@ -656,13 +656,23 @@ Con el nuevo planteamiento definido, el equipo tomó también la decisión de co
 
 Con la decisión tomada, Jose María reconvirtió el sistema a la nueva arquitectura. Eliminó el modelo de proxy interceptor y lo sustituyó por el nuevo planteamiento: el servidor audita directamente por el auditor, realizando las peticiones HTTP de forma activa en lugar de interceptar el tráfico pasivamente. La pieza técnica central fue el cliente httpx persistente por sesión — un `AsyncClient` compartido por todos los módulos bajo el mismo token que acumula automáticamente las cookies de la sesión de auditoría. Esta decisión resolvió de raíz el problema de la autenticación compartida: el auditor hace login desde el Repeater y el Spider y el Intruder heredan automáticamente esa sesión sin configuración adicional. Sobre esa base completó el spider httpx, el motor de fuzzing del Intruder y los parsers de raw HTTP y cURL del Repeater. mitmproxy se mantuvo en el código sin eliminarlo, con vistas a su posible uso en auditorías de aplicaciones móviles en la Práctica 2.
 
-Macarena realizó en paralelo una mejora visual del Frontend — redistribución de ventanas y modo claro — que queda pendiente de subir al servidor y cuyas capturas se incorporarán al informe en cuanto esté desplegada.
+Macarena realizó en paralelo una mejora visual del Frontend — navegación horizontal en topbar en lugar del sidebar vertical, sistema de variables CSS con modo claro y modo oscuro, y nuevos componentes de UI con paneles redimensionables. El nuevo diseño se desplegó en el servidor manteniendo toda la lógica funcional intacta.
 
 Al cierre de esta fase el núcleo de HookSuite estaba operativo con la nueva arquitectura: el panel Proxy mostraba las peticiones que el servidor realizaba por el auditor en tiempo real, el Repeater reenviaba peticiones con gestión automática de cookies, el Intruder ejecutaba ataques con paralelismo controlado y el panel de Vulnerabilidades recibía alertas por WebSocket. El flujo completo de auditoría — spider sin autenticación, login desde el Repeater, spider autenticado, Intruder detectando SQLi — fue validado end-to-end contra DVWA antes de la entrega.
 
 #figure(
   image("../capturas/backend/backend_api_docs1.png", width: 90%),
   caption: "Swagger UI con todos los grupos de endpoints implementados — proxy, repeater, intruder, utils, network, playwright y vulnerabilities"
+)
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_proxy_autenticado.png", width: 90%),
+  caption: "Panel Proxy con sesión autenticada — spider navegando DVWA con cookie PHPSESSID activa y formularios detectados"
+)
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_intruder_resultados.png", width: 90%),
+  caption: "Intruder ejecutando 13 payloads SQLi contra DVWA — 12 vulnerables detectados en tiempo real"
 )
 
 // ============================================================
@@ -673,15 +683,67 @@ Al cierre de esta fase el núcleo de HookSuite estaba operativo con la nueva arq
 
 === Frontend (P1 — Ivan Medina Castro)
 
-El Frontend es la interfaz visual de HookSuite — un dashboard web accesible desde cualquier navegador sin instalación adicional. Construido sobre React 19, Vite y Tailwind CSS, con JetBrains Mono como tipografía de código y Syne para la interfaz, se comunica con el Backend exclusivamente mediante WebSocket para recibir eventos en tiempo real y REST para enviar las acciones del auditor. La gestión del estado compartido entre paneles se centraliza en un contexto global que mantiene la conexión WebSocket activa, el identificador de sesión UUID del auditor y los datos que fluyen entre los distintos módulos de la interfaz.
+El Frontend es la interfaz visual de HookSuite — un dashboard web accesible desde cualquier navegador sin instalación adicional. Construido sobre React 19, Vite y Tailwind CSS, con JetBrains Mono como tipografía de código, se comunica con el Backend exclusivamente mediante WebSocket para recibir eventos en tiempo real y REST para enviar las acciones del auditor. La gestión del estado compartido entre paneles se centraliza en un contexto global que mantiene la conexión WebSocket activa, el identificador de sesión UUID del auditor y los datos que fluyen entre los distintos módulos de la interfaz. El diseño incorpora un sistema de variables CSS con soporte de modo oscuro y modo claro, navegación horizontal en topbar y paneles redimensionables.
 
-El Frontend se organiza en seis paneles accesibles desde el sidebar:
+El Frontend se organiza en seis paneles accesibles desde el topbar:
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_proxy_vacio.png", width: 90%),
+  caption: "Panel Proxy con el nuevo diseño — topbar horizontal, WebSocket conectado y spider listo para lanzar"
+)
+
+El *panel Proxy* es el centro de operaciones de la auditoría. El auditor introduce la URL objetivo, selecciona la velocidad del análisis — rápido, normal o completo, que determina el número máximo de páginas que el spider visitará — y lanza el proceso. Las peticiones que el servidor realiza por el auditor aparecen en tiempo real agrupadas por URL. Los formularios detectados en cada página se muestran como subelementos desplegables bajo su URL correspondiente, lo que permite identificar de un vistazo los vectores de ataque disponibles. El panel de estado muestra las cookies de sesión activas en verde cuando el auditor está autenticado, y ofrece tres acciones: liberar la sesión activa sin perder el historial de peticiones, limpiar el panel manteniendo la sesión, o iniciar una nueva auditoría completa reseteando todo el estado.
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_proxy_interceptando.png", width: 90%),
+  caption: "Panel Proxy interceptando peticiones en tiempo real — petición de login de DVWA capturada con formulario detectado"
+)
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_proxy_formulario.png", width: 90%),
+  caption: "Formulario POST desplegado en el panel Proxy — botones de envío al Repeater y al Intruder visibles"
+)
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_proxy_headers.png", width: 90%),
+  caption: "Pestaña Headers del detalle de petición — headers de petición y respuesta con cookie PHPSESSID visible"
+)
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_proxy_autenticado.png", width: 90%),
+  caption: "Panel Proxy con sesión autenticada — spider navegando DVWA con todas las páginas descubiertas y formularios detectados"
+)
 
 El *panel Proxy* es el centro de operaciones de la auditoría. El auditor introduce la URL objetivo, selecciona la velocidad del análisis — rápido, normal o completo, que determina el número máximo de páginas que el spider visitará — y lanza el proceso. Las peticiones que el servidor realiza por el auditor aparecen en tiempo real agrupadas por URL. Los formularios detectados en cada página se muestran como subelementos desplegables bajo su URL correspondiente, lo que permite identificar de un vistazo los vectores de ataque disponibles. El panel de estado muestra las cookies de sesión activas en verde cuando el auditor está autenticado, y ofrece tres acciones: liberar la sesión activa sin perder el historial de peticiones, limpiar el panel manteniendo la sesión, o iniciar una nueva auditoría completa reseteando todo el estado.
 
 El *Repeater* permite modificar y reenviar cualquier petición manualmente. El auditor puede enviar al Repeater cualquier petición interceptada en el panel Proxy con un solo clic, y desde ahí modificar el método HTTP, la URL, los headers y el body antes de reenviarla. La respuesta se muestra en cuatro vistas: Raw muestra la respuesta tal como llega del servidor; Pretty formatea automáticamente el JSON para facilitar su lectura; Preview renderiza el HTML de la respuesta en un iframe reescribiendo las URLs relativas para que los recursos del objetivo se carguen correctamente; y Headers muestra los headers de respuesta con las cookies resaltadas en verde para identificarlas fácilmente.
 
+#figure(
+  image("../capturas/frontend/frontend_nuevo_repeater_raw.png", width: 90%),
+  caption: "Repeater — vista Raw con la respuesta de login exitoso en DVWA"
+)
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_repeater_preview.png", width: 90%),
+  caption: "Repeater — vista Preview con DVWA renderizado tras autenticación exitosa"
+)
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_repeater_headers.png", width: 90%),
+  caption: "Repeater — vista Headers con los headers de respuesta del servidor"
+)
+
 El *Intruder* automatiza el fuzzing de parámetros al estilo Burp Suite. Al recibir una petición detecta automáticamente todos los parámetros GET y POST presentes. El auditor selecciona el parámetro que quiere atacar marcándolo con el símbolo `*` — el marcado se resalta en naranja en tiempo real tanto en la URL como en el body. El sistema sustituye ese marcador por cada payload de la lista seleccionada y envía todas las peticiones de forma automatizada. Soporta cuatro tipos de ataque con sus respectivas listas de payloads: SQL Injection, Blind SQLi, XSS y fuzzing genérico. Los resultados se muestran en una tabla en tiempo real donde las peticiones que reciben una respuesta identificada como vulnerable se marcan en rojo.
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_intruder_configurado.png", width: 90%),
+  caption: "Intruder — parámetro id marcado con * y ataque SQL Injection configurado"
+)
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_intruder_resultados.png", width: 90%),
+  caption: "Intruder — 13 payloads ejecutados contra DVWA SQLi, 12 vulnerables detectados en tiempo real"
+)
 
 Las *Utilidades* agrupan cuatro herramientas auxiliares de uso frecuente en auditorías web. El Encoder/Decoder transforma texto entre los formatos más comunes — Base64, URL encoding, HTML encoding y decodificación de tokens JWT. El Hash Generator calcula los hashes MD5, SHA1, SHA256 y SHA512 de cualquier texto. El Regex Tester permite probar expresiones regulares contra texto de prueba con resaltado visual de los matches en tiempo real. El Payload Generator organiza colecciones de payloads por tipo de ataque — SQLi, Blind SQLi, XSS y fuzzing genérico — con opción de copiar payloads individuales o la lista completa.
 
