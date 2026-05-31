@@ -621,7 +621,7 @@ La integración fue fluida. Los contratos de API definidos al inicio del proyect
 
 Con el sistema validado en local, el equipo preparó el repositorio para producción y creó el servidor. Macarena generó los Dockerfiles de todos los módulos y el `docker-compose.yml` de producción, añadió el `.env.example` con todas las variables del sistema y configuró los endpoints de integración. Nacho adaptó el modo de arranque del contenedor de Playwright a polling pasivo para que el sistema pudiera desplegarse sin bloquear el arranque del resto de servicios. Ivan corrigió los nombres de ficheros con mayúsculas incorrectas en Linux y el bug de `crypto.randomUUID` no disponible en HTTP.
 
-Con el repositorio listo, se aprovisionó el servidor — un CX22 con Ubuntu 24.04 en Hetzner Cloud, IP `91.98.143.219` — se instaló Docker y se ejecutó `docker compose up -d --build`. El despliegue presentó cinco bugs que se resolvieron en tiempo real: `node_modules` subido al repositorio, el `docker-compose.yml` malformado, nombres de ficheros con mayúsculas incorrectas en Linux, `crypto.randomUUID` no disponible en HTTP y la URL del PAC apuntando a `localhost` en lugar de a la IP pública del servidor. Con los cinco resueltos, HookSuite quedó accesible desde internet en `http://91.98.143.219` con el dashboard funcionando y el proxy conectado.
+Con el repositorio listo, se aprovisionó el servidor — un CX22 con Ubuntu 24.04 en Hetzner Cloud, IP `www.hooksuite.de` — se instaló Docker y se ejecutó `docker compose up -d --build`. El despliegue presentó cinco bugs que se resolvieron en tiempo real: `node_modules` subido al repositorio, el `docker-compose.yml` malformado, nombres de ficheros con mayúsculas incorrectas en Linux, `crypto.randomUUID` no disponible en HTTP y la URL del PAC apuntando a `localhost` en lugar de a la IP pública del servidor. Con los cinco resueltos, HookSuite quedó accesible desde internet en `http://www.hooksuite.de` con el dashboard funcionando y el proxy conectado.
 
 #figure(
   image("../capturas/frontend/hooksuite_dashboard.png", width: 90%),
@@ -853,7 +853,7 @@ HookSuite está desplegado en un servidor Hetzner Cloud CX22 con las siguientes 
   [Tráfico incluido], [20 TB/mes],
   [Sistema operativo], [Ubuntu 24.04 LTS],
   [Kernel], [6.8.0-117-generic],
-  [IP pública], [91.98.143.219],
+  [IP pública], [www.hooksuite.de],
   [Docker], [29.5.0],
   [Docker Compose], [v5.1.3],
 )
@@ -907,7 +907,7 @@ mitmproxy está presente en la infraestructura aunque no forma parte del flujo d
 El contenedor de frontend usa un proceso de construcción multietapa. En la primera etapa, Node 20 Alpine compila la aplicación React con Vite inyectando la URL del backend como variable de entorno en tiempo de compilación:
 
 ```bash
-ARG VITE_API_URL=http://91.98.143.219:8000
+ARG VITE_API_URL=http://www.hooksuite.de:8000
 ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 ```
@@ -1010,7 +1010,7 @@ docker compose down
 === Verificar accesibilidad
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}" http://91.98.143.219
+curl -s -o /dev/null -w "%{http_code}" http://www.hooksuite.de
 ```
 
 // ============================================================
@@ -1021,7 +1021,7 @@ curl -s -o /dev/null -w "%{http_code}" http://91.98.143.219
 
 == Acceso a la herramienta
 
-HookSuite es accesible desde cualquier navegador sin instalación adicional. La herramienta está desplegada en `http://91.98.143.219`. Al acceder, Nginx solicita autenticación básica — introducir las credenciales proporcionadas para acceder al dashboard.
+HookSuite es accesible desde cualquier navegador sin instalación adicional. La herramienta está desplegada en `http://www.hooksuite.de`. Al acceder, Nginx solicita autenticación básica — introducir las credenciales proporcionadas para acceder al dashboard.
 
 #figure(
   image("../capturas/frontend/frontend_nuevo_login_nginx.png", width: 70%),
