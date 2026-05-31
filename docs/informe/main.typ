@@ -979,6 +979,11 @@ curl -s -o /dev/null -w "%{http_code}" http://91.98.143.219
 
 HookSuite es accesible desde cualquier navegador sin instalación adicional. La herramienta está desplegada en `http://91.98.143.219`. Al acceder, Nginx solicita autenticación básica — introducir las credenciales proporcionadas para acceder al dashboard.
 
+#figure(
+  image("../capturas/frontend/frontend_nuevo_login_nginx.png", width: 70%),
+  caption: "Diálogo de autenticación básica Nginx — credenciales requeridas para acceder al dashboard"
+)
+
 Una vez autenticado, el navegador muestra el panel Proxy directamente. La navegación entre los seis paneles se realiza desde el topbar superior. El indicador verde *conectado* en el panel Proxy confirma que el WebSocket con el Backend está activo y la herramienta lista para operar.
 
 #figure(
@@ -994,9 +999,27 @@ En el campo *URL objetivo* del panel Proxy, introducir la URL de la aplicación 
 
 El spider navega la aplicación de forma autónoma realizando peticiones HTTP por el auditor. Cada petición descubierta aparece en tiempo real en la tabla del panel Proxy con su método, URL, status code, tamaño y tiempo de respuesta. Los formularios detectados en cada página aparecen como subelementos desplegables bajo su URL correspondiente, identificados con el indicador *[N FORM ▼]*.
 
+El panel Proxy ofrece tres acciones en la esquina superior derecha:
+
+- *importar petición* — abre un modal para pegar una petición en formato raw HTTP o cURL y enviarla directamente al Repeater sin necesidad de interceptarla con el spider.
+- *limpiar* — borra el historial de peticiones del panel manteniendo la sesión activa y las cookies acumuladas.
+- *nueva auditoría* — reset completo del sistema: borra el historial, libera las cookies de sesión, resetea la URL activa y reinicia el WebSocket. Equivale a empezar una auditoría desde cero.
+
+Cuando hay una sesión autenticada activa, aparece adicionalmente el botón *liberar sesión* — cierra el cliente httpx y elimina las cookies acumuladas manteniendo el historial visible. Útil para cambiar de usuario sin perder lo interceptado.
+
 #figure(
   image("../capturas/frontend/frontend_nuevo_proxy_interceptando.png", width: 90%),
   caption: "Spider en ejecución — petición de login de DVWA capturada con formulario detectado"
+)
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_proxy_importar.png", width: 90%),
+  caption: "Modal importar petición — editor para pegar raw HTTP o cURL con botón parsear y enviar al repeater"
+)
+
+#figure(
+  image("../capturas/frontend/frontend_nuevo_proxy_liberar_sesion.png", width: 90%),
+  caption: "Panel Proxy con sesión autenticada — cookie PHPSESSID activa y botón liberar sesión visible"
 )
 
 === Paso 2 — Login desde el Repeater
