@@ -68,9 +68,9 @@ def parse_curl(text: str) -> dict:
 	if method_match:
 		method = method_match.group(1)
 
-	url_match = re.search(r"curl\s+(?:-[^\s]+\s+)*'?\"?([^'\"\\s]+)'?\"?", text)
+	url_match = re.search(r"https?://[^\s'\"]+", text)
 	if url_match:
-		url = url_match.group(1)
+		url = url_match.group(0)
 
 	header_matches = re.findall(r"-H\s+'([^']+)'|-H\s+\"([^\"]+)\"", text)
 	for match in header_matches:
