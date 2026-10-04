@@ -64,3 +64,9 @@ hooksuite/
 
 ## Módulo: Ciberseguridad Avanzada | Curso 2026  
 **Entrega:** 25 de Mayo de 2026
+
+---
+
+## Licencia
+
+Este proyecto se distribuye bajo licencia MIT. Ver el fichero [LICENSE](LICENSE).
