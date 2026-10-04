@@ -23,12 +23,12 @@ async def get_pac_file(request: Request):
 
 @router.get("/check/alive")
 async def check_proxy_alive():
-    return {{"status": "proxy_active", "message": "HookSuite proxy is running"}}
+    return {"status": "proxy_active", "message": "HookSuite proxy is running"}
 
 @router.post("/forward")
 async def forward_proxy_request(request: ProxyRequest):
     if should_filter(request.url):
-        return {{"filtered": True}}
+        return {"filtered": True}
     result = await forward_request(method=request.method, url=request.url, headers=request.headers, body=request.body)
     session = session_manager.get_session(request.session_token)
     session["requests"].append(result)
