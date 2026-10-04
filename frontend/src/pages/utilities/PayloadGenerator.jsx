@@ -14,26 +14,11 @@ export function PayloadGenerator() {
   const [type, setType] = useState('sqli')
   const [copied, setCopied] = useState(null)
 
-  const copyText = (text, key) => {
-    const doCopy = () => {
-      const el = document.createElement('textarea')
-      el.value = text
-      document.body.appendChild(el)
-      el.select()
-      document.execCommand('copy')
-      document.body.removeChild(el)
-      setCopied(key)
-      setTimeout(() => setCopied(null), 1500)
-    }
-    try {
-      navigator.clipboard.writeText(text).then(() => {
-        setCopied(key)
-        setTimeout(() => setCopied(null), 1500)
-      }).catch(doCopy)
-    } catch { doCopy() }
+  const copyAll = () => {
+    navigator.clipboard.writeText(PAYLOADS[type].join('\n'))
+    setCopied('all')
+    setTimeout(() => setCopied(null), 2000)
   }
-
-  const copyAll = () => copyText(PAYLOADS[type].join('\n'), 'all')
 
   return (
     <div className="space-y-4">
@@ -70,16 +55,11 @@ export function PayloadGenerator() {
               {payload}
             </code>
             <button
-              onClick={() => copyText(payload, i)}
-              className="text-[10px] whitespace-nowrap px-2 py-0.5 rounded border transition-colors"
-              style={{
-                fontFamily: 'var(--font-mono)',
-                color: copied === i ? '#6adf9a' : '#6aafef',
-                borderColor: copied === i ? '#1e3d2a' : 'var(--hs-border)',
-                background: copied === i ? '#0f1f17' : 'transparent',
-              }}
+              onClick={() => { navigator.clipboard.writeText(payload); setCopied(i); setTimeout(() => setCopied(null), 1500) }}
+              className="text-[10px] whitespace-nowrap"
+              style={{ fontFamily: 'var(--font-mono)', color: '#6aafef' }}
             >
-              {copied === i ? '✓ copiado' : 'copiar'}
+              {copied === i ? '✓' : 'copiar'}
             </button>
           </div>
         ))}

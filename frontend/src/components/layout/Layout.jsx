@@ -1,72 +1,284 @@
 import { Outlet, NavLink } from 'react-router-dom'
+import { useState, useEffect, useRef, createContext } from 'react'
+
+export const ThemeContext = createContext({ dark: true, toggle: () => {} })
 
 const navItems = [
-  { path: '/proxy',           label: 'Proxy',            icon: '⇄' },
-  { path: '/repeater',        label: 'Repeater',         icon: '↺' },
-  { path: '/intruder',        label: 'Intruder',         icon: '⚡' },
-  { path: '/utilities',       label: 'Utilidades',       icon: '#'  },
-  { path: '/vulnerabilities', label: 'Vulnerabilidades', icon: '!'  },
-  { path: '/network',         label: 'Red',              icon: '~'  },
+  { path: '/proxy',           label: 'Proxy' },
+  { path: '/repeater',        label: 'Repeater' },
+  { path: '/intruder',        label: 'Intruder' },
+  { path: '/utilities',       label: 'Utilidades' },
+  { path: '/vulnerabilities', label: 'Vulnerabilidades' },
+  { path: '/network',         label: 'Red' },
 ]
 
-export function Layout() {
+function SunIcon() {
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: 'var(--hs-bg)' }}>
-      <aside
-        className="w-[200px] flex-shrink-0 flex flex-col border-r"
-        style={{ background: 'var(--hs-surface)', borderColor: 'var(--hs-border)' }}
-      >
-        <div className="px-4 py-4 border-b" style={{ borderColor: 'var(--hs-border)' }}>
-          <h1
-            className="text-[16px] font-bold tracking-wide"
-            style={{ fontFamily: 'var(--font-sans)', color: 'var(--hs-text-primary)' }}
-          >
-            HookSuite
-          </h1>
-          <p
-            className="text-[9px] mt-0.5 tracking-widest uppercase"
-            style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-green)' }}
-          >
-            Web Security Toolkit
-          </p>
-        </div>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/>
+      <line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/>
+      <line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  )
+}
 
-        <nav className="flex-1 px-2 py-3 flex flex-col gap-0.5">
-          {navItems.map(item => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={({ isActive }) =>
-                `flex items-center gap-2.5 px-3 py-[7px] rounded text-[12px] transition-all border ${
-                  isActive
-                    ? 'border-[#1e3d2a] bg-[#0f1f17] text-[#a8e6bc]'
-                    : 'border-transparent text-[#5a6170] hover:bg-[#13161c] hover:text-[#9da8b5]'
-                }`
-              }
-              style={{ fontFamily: 'var(--font-sans)', fontWeight: 500 }}
-            >
-              <span
-                className="w-[18px] text-center text-[11px] opacity-80"
-                style={{ fontFamily: 'var(--font-mono)' }}
+function MoonIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  )
+}
+
+const DARK_VARS = `
+  --hs-bg:             #0a0c0f;
+  --hs-surface:        #0d0f13;
+  --hs-bar:            #0d0f13;
+  --hs-border:         #1e2128;
+  --hs-border-hover:   #2a3040;
+  --hs-text-primary:   #d0d8e0;
+  --hs-text-secondary: #8a9aab;
+  --hs-text-muted:     #5a6a7a;
+  --hs-text-dim:       #3a4455;
+  --hs-accent:         #6adf9a;
+  --hs-accent-bg:      #0d1f17;
+  --hs-accent-border:  #1e3d2a;
+  --font-mono:         'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --font-sans:         system-ui, -apple-system, sans-serif;
+`
+
+const LIGHT_VARS = `
+  --hs-bg:             #f2f3f5;
+  --hs-surface:        #ffffff;
+  --hs-bar:            #ffffff;
+  --hs-border:         #e0e4ea;
+  --hs-border-hover:   #c8cdd6;
+  --hs-text-primary:   #1a1f2a;
+  --hs-text-secondary: #4a5568;
+  --hs-text-muted:     #718096;
+  --hs-text-dim:       #a0aab8;
+  --hs-accent:         #1a7a45;
+  --hs-accent-bg:      #eaf7f0;
+  --hs-accent-border:  #b3e6cc;
+  --font-mono:         'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --font-sans:         system-ui, -apple-system, sans-serif;
+`
+
+export function Layout() {
+  const [dark, setDark] = useState(true)
+  const [showFlash, setShowFlash] = useState(false)
+  const flashShownRef = useRef(false)
+
+  const handleToggle = () => {
+    setDark(prev => {
+      const goingToLight = prev === true
+      if (goingToLight && !flashShownRef.current) {
+        flashShownRef.current = true
+        setShowFlash(true)
+        setTimeout(() => setShowFlash(false), 1250)
+        const audio = new Audio('/flashbang.mp3')
+        audio.play().catch(() => {})
+      }
+      return !prev
+    })
+  }
+
+  return (
+    <ThemeContext.Provider value={{ dark, toggle: handleToggle }}>
+      <style>{`
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        .hs-root {
+          ${dark ? DARK_VARS : LIGHT_VARS}
+          display: flex;
+          flex-direction: column;
+          height: 100vh;
+          width: 100vw;
+          background: var(--hs-bg);
+          color: var(--hs-text-primary);
+          font-family: var(--font-mono);
+          font-size: 13px;
+          overflow: hidden;
+        }
+
+        .hs-topbar {
+          display: flex;
+          align-items: center;
+          height: 46px;
+          background: var(--hs-bar);
+          border-bottom: 1px solid var(--hs-border);
+          flex-shrink: 0;
+          padding: 0 8px 0 16px;
+          gap: 0;
+        }
+
+        .hs-logo {
+          font-size: 12px;
+          font-weight: 700;
+          color: var(--hs-accent);
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          padding-right: 20px;
+          margin-right: 4px;
+          border-right: 1px solid var(--hs-border);
+          white-space: nowrap;
+          flex-shrink: 0;
+          font-family: var(--font-mono);
+        }
+
+        .hs-tabs {
+          display: flex;
+          align-items: stretch;
+          flex: 1;
+          height: 100%;
+          margin-left: 4px;
+        }
+
+        .hs-tab {
+          display: flex;
+          align-items: center;
+          padding: 0 18px;
+          height: 100%;
+          font-size: 11px;
+          font-weight: 500;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          color: var(--hs-text-muted);
+          text-decoration: none;
+          background: transparent;
+          border: none;
+          cursor: pointer;
+          white-space: nowrap;
+          position: relative;
+          transition: color 0.12s, background 0.12s;
+          font-family: var(--font-mono);
+        }
+
+        .hs-tab:hover {
+          color: var(--hs-text-secondary);
+          background: ${dark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)'};
+        }
+
+        .hs-tab.active {
+          color: var(--hs-text-primary);
+          background: ${dark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'};
+        }
+
+        .hs-tab.active::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: var(--hs-accent);
+        }
+
+        .hs-toggle {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border-radius: 6px;
+          background: transparent;
+          border: 1px solid var(--hs-border);
+          color: var(--hs-text-muted);
+          cursor: pointer;
+          flex-shrink: 0;
+          transition: border-color 0.12s, color 0.12s, background 0.12s;
+          margin-left: 12px;
+        }
+
+        .hs-toggle:hover {
+          color: var(--hs-text-primary);
+          border-color: var(--hs-border-hover);
+          background: ${dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'};
+        }
+
+        .hs-content {
+          flex: 1;
+          overflow: auto;
+          background: var(--hs-bg);
+          zoom: 1.2;
+          padding: 0 16px;
+        }
+
+        .hs-content::-webkit-scrollbar { width: 5px; height: 5px; }
+        .hs-content::-webkit-scrollbar-track { background: transparent; }
+        .hs-content::-webkit-scrollbar-thumb { background: var(--hs-border); border-radius: 3px; }
+        .hs-content::-webkit-scrollbar-thumb:hover { background: var(--hs-border-hover); }
+
+        .hs-flash-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 9999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0, 0, 0, 0.6);
+          animation: hs-flash-fade 1.25s ease-out forwards;
+          pointer-events: none;
+        }
+
+        .hs-flash-img {
+          width: 420px;
+          max-width: 70vw;
+          height: auto;
+          border-radius: 8px;
+        }
+
+        @keyframes hs-flash-fade {
+          0%   { opacity: 1; }
+          75%  { opacity: 1; }
+          100% { opacity: 0; }
+        }
+      `}</style>
+
+      <div className="hs-root">
+        <header className="hs-topbar">
+          <span className="hs-logo">HookSuite</span>
+
+          <nav className="hs-tabs">
+            {navItems.map(item => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) => isActive ? 'hs-tab active' : 'hs-tab'}
               >
-                {item.icon}
-              </span>
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
 
-        <div
-          className="px-4 py-3 border-t text-[9px] tracking-widest"
-          style={{ borderColor: 'var(--hs-border)', fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}
-        >
-          v1.0.0
-        </div>
-      </aside>
+          <button
+            className="hs-toggle"
+            onClick={handleToggle}
+            aria-label={dark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            title={dark ? 'Modo claro' : 'Modo oscuro'}
+          >
+            {dark ? <SunIcon /> : <MoonIcon />}
+          </button>
+        </header>
 
-      <main className="flex-1 overflow-auto">
-        <Outlet />
-      </main>
-    </div>
+        <main className="hs-content">
+          <Outlet />
+        </main>
+
+        {showFlash && (
+          <div className="hs-flash-overlay">
+            <img src="/flashbang.gif" alt="" className="hs-flash-img" />
+          </div>
+        )}
+      </div>
+    </ThemeContext.Provider>
   )
 }

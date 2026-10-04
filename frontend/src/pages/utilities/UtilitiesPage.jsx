@@ -51,7 +51,7 @@ export function UtilitiesPage() {
           ))}
         </div>
 
-        <div className="flex-1 overflow-auto p-6">
+        <div className="flex-1 overflow-auto pt-6 pr-6 pb-6 pl-10">
           {activeTool === 'encoder'  && <EncoderDecoder />}
           {activeTool === 'hash'     && <HashGenerator />}
           {activeTool === 'regex'    && <RegexTester />}
