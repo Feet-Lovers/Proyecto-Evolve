@@ -4,7 +4,10 @@ import asyncio
 import random
 import time
 from datetime import datetime
-from urllib.parse import urlparse, urljoin
+from urllib.parse import urlparse, urljoin, parse_qsl, urlencode, urlunparse
+import html as _html
+import ipaddress
+import socket
 from typing import Set, List
 from services.session_service import session_manager
 from services.proxy_service import is_suspicious, get_session_client
@@ -35,17 +38,53 @@ class SpiderService:
         self.visited: Set[str] = set()
         self.queue: List[str] = [base_url]
 
+    def _is_blocked_host(self, netloc: str) -> bool:
+        """SSRF: rechaza destinos que nunca son objetivo legítimo (metadata de cloud,
+        loopback, dirección no especificada). NO bloquea IPs privadas: HookSuite es una
+        herramienta ofensiva y auditar una red interna es un caso legítimo."""
+        host = netloc.split('@')[-1].rsplit(':', 1)[0].strip('[]').lower()
+        if not host:
+            return False
+        if host == 'localhost' or host.endswith('.localhost'):
+            return True
+        try:
+            ips = [ai[4][0] for ai in socket.getaddrinfo(host, None)]
+        except Exception:
+            ips = [host]  # tratar el literal como IP si no resuelve
+        for ip in ips:
+            try:
+                addr = ipaddress.ip_address(ip)
+            except ValueError:
+                continue
+            if addr.is_loopback or addr.is_link_local or addr.is_unspecified:
+                return True  # 127.0.0.0/8, ::1, 169.254.0.0/16 (metadata), 0.0.0.0, fe80::/10
+        return False
+
+    def _canonicalize(self, url: str) -> str:
+        """Colapsa variantes del mismo recurso: decodifica entidades HTML, ordena la query
+        y quita el fragmento -> cierra la trampa de araña."""
+        url = _html.unescape(url)
+        p = urlparse(url)
+        query = urlencode(sorted(parse_qsl(p.query, keep_blank_values=True)))
+        path = p.path or '/'
+        return urlunparse((p.scheme, p.netloc, path, p.params, query, ''))
+
     def is_same_domain(self, url: str) -> bool:
         parsed = urlparse(url)
+        if self._is_blocked_host(parsed.netloc):
+            return False
         return parsed.netloc == self.base_domain or parsed.netloc == ''
 
     def normalize_url(self, url: str, current_url: str) -> str:
+        url = _html.unescape(url)
         if url.startswith('http'):
-            return url.split('#')[0]
-        if url.startswith('/'):
+            absolute = url
+        elif url.startswith('/'):
             parsed = urlparse(current_url)
-            return f"{parsed.scheme}://{parsed.netloc}{url.split('#')[0]}"
-        return urljoin(current_url, url).split('#')[0]
+            absolute = f"{parsed.scheme}://{parsed.netloc}{url}"
+        else:
+            absolute = urljoin(current_url, url)
+        return self._canonicalize(absolute)
 
     def should_skip(self, url: str) -> bool:
         url_lower = url.lower()
