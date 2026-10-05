@@ -356,3 +356,13 @@
   credenciales. DESPUÉS: origen malicioso sin `access-control-allow-origin` (bloqueado), origen legítimo con el
   suyo. App viva (200). El frontend es mismo origen → el CORS solo afecta a cross-origin.
 - **Autoría:** Macarena (backend). **Requisito:** endurecimiento (apdo. 7). **Evidencia:** `evidencias/cors-05oct.md`. **Horas:** ~0,3 h.
+
+### Fase 1 (5-oct) · WebSocket: varios sockets por token — commit d87c86ab (Macarena)
+- **Qué:** `session_service` guardaba 1 socket/token (last-wins); el frontend abre dos consumidores con el
+  mismo token → uno dejaba de recibir. Ahora **lista de sockets por token**: register añade, emit manda a
+  todos (poda muertos), unregister quita solo el que se va; `main.py` pasa el socket al unregister.
+- **Verificado (R6):** unitario (2 registrados, ambos reciben, unregister selectivo) + **end-to-end** tras
+  rebuild (2 WS reales + `POST /api/vulnerabilities/{token}` → ambos reciben `vulnerability_detected`, 200).
+- **Nota Fase 2:** `emit_all` sigue difundiendo a todas las sesiones (fuga entre usuarios) → lo cierra el login.
+- **Autoría:** Macarena (backend; el fix resultó backend, no front como se pensó por el síntoma).
+- **Requisito:** RNF (tiempo real/WS). **Evidencia:** `evidencias/websocket-multisocket-05oct.md`. **Horas:** ~0,5 h.
