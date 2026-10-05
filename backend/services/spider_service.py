@@ -234,7 +234,12 @@ class SpiderService:
             'base_url': self.base_url,
             'max_pages': self.max_pages
         })
+        detenido = False
         while self.queue and len(self.visited) < self.max_pages:
+            session = session_manager.get_session(self.session_token)
+            if not session.get("spider_running", True):
+                detenido = True
+                break
             current_url = self.queue.pop(0)
             await self.crawl_page(current_url)
         limite_alcanzado = len(self.visited) >= self.max_pages and len(self.queue) > 0
@@ -242,8 +247,10 @@ class SpiderService:
             'base_url': self.base_url,
             'total': len(self.visited),
             'max_pages': self.max_pages,
-            'completo': not limite_alcanzado,
+            'completo': (not limite_alcanzado) and (not detenido),
             'mensaje': (
+                f"Spider detenido manualmente — {len(self.visited)} paginas analizadas antes de parar."
+                if detenido else
                 f"Spider detenido — limite de {self.max_pages} paginas alcanzado. Pueden existir paginas sin analizar."
                 if limite_alcanzado else
                 f"Spider completado — {len(self.visited)} paginas encontradas y analizadas. Auditoria completa."
