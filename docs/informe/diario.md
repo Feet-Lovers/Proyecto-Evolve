@@ -414,3 +414,25 @@ con JWT (RF-07). De ahí salieron tres arreglos:
   39 KB contra la web de pruebas) → fue un fallo puntual de resolución de nombres, no un defecto del producto.
   El flashbang salta una vez por carga: comportamiento de la P1, easter egg intencional.
 - **Requisitos:** RF-03 (Spider) · RF-05 (Repeater) · RNF-07. **Horas:** ~0,8 h.
+
+### Fase 1 (5-oct) · Endurecimiento del host de la caja: fail2ban + ufw + SSH solo por clave
+- **Qué:** instalado y activado **fail2ban** (cárcel del SSH), activado **ufw** (deny incoming; 22 y 80
+  permitidos antes de activar) y **desactivado el login por contraseña** del SSH mediante un fichero propio
+  en `sshd_config.d/`.
+- **Resultados verificados:** fail2ban registró 148 intentos fallidos y **baneó 2 IPs en el primer minuto**;
+  el `:80` siguió respondiendo tras activar ufw (Docker no se descolocó); y el mensaje del servidor pasó de
+  `Permission denied (publickey,password)` a **`Permission denied (publickey)`**, que es la prueba más limpia
+  de que la contraseña ya no se acepta. El acceso por clave y la web siguen funcionando.
+- **Decisión de orden (importante):** se desplegó ANTES de endurecer, porque **ufw no bloquea los puertos
+  publicados por Docker**; quien cerró de verdad `:8000` y `:3000` fue el despliegue. Endurecer primero habría
+  dado una falsa sensación de cierre.
+- **Red de seguridad en cada paso (R8):** tanto ufw como el cambio de SSH se aplicaron con un proceso que
+  revertía el cambio solo a los 5 minutos, por si el acceso se perdía.
+- **Matiz honesto para el apartado 7:** el login de **root** por contraseña ya estaba bloqueado por defecto
+  (`permitrootlogin without-password`), así que los ~127.000 intentos nunca tuvieron opción. Lo que se cerró
+  fue `PasswordAuthentication` a nivel general. Se contará con ese matiz, no como si se tapara un agujero.
+- **Detalle técnico que evita un falso «protegido»:** fail2ban necesita `backend = systemd` en Ubuntu 24.04,
+  porque no se instala `rsyslog` y puede no existir `/var/log/auth.log`.
+- **Hallazgos nuevos:** la caja corre el kernel 6.8.0-117 con el 6.8.0-142 instalado (+49 paquetes
+  pendientes); seguía habiendo una regla de ufw de la P1 que nunca se aplicó porque ufw estaba apagado.
+- **Requisito:** RNF-07 · apdo. 7. **Evidencia:** `evidencias/endurecimiento-caja-05oct.md`. **Horas:** ~1 h.
