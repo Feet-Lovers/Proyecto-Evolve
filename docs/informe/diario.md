@@ -335,3 +335,17 @@
   imagen aún tenía `{{...}}`. **Verificar end-to-end exige rebuild, no restart.**
 - **Push:** los 8 commits (Fase 0 + 5 bugs Fase 1 + higiene pycache) subidos a `origin/develop` (b4b4cc8c).
 - **Requisito:** RF-02/03/04/05/06 · RNF-07. **Evidencia:** `evidencias/pase-e2e-fase1-05oct.md`. **Horas:** ~0,4 h.
+
+### Fase 1 (5-oct) · Cerrados los puertos directos + laboratorio solo interno — commits abf5c0aa / (Ivan, Carlos)
+- **Qué:** el backend y el frontend se publicaban al exterior (API sin auth en su puerto; SPA saltando el
+  proxy). El frontend horneaba la IP:8000 del host y hablaba directo con el backend. Arreglado: `API_BASE` y
+  el WebSocket a **mismo origen** (vía el proxy inverso ya existente), IP fuera del Dockerfile, y retirados los
+  `ports` de backend y frontend del compose → **solo el proxy publica**. Además, el laboratorio vulnerable se
+  retira del proxy: queda **solo en la red interna**.
+- **Por qué:** quitar la exposición directa (bypass del proxy) y unificar la entrada. `ia`/`playwright` hablan
+  con el backend por la red interna, no les afecta.
+- **Verificado (R6):** antes puertos directos a 200 sin auth; después **conexión rechazada** en ambos, y todo
+  funciona por el proxy (`/api` 200, WebSocket 101, bundle sin la IP:8000). Evidencia: `evidencias/cierre-puertos-05oct.md`.
+- **Pendiente Fase 2:** `/api` y `/ws` aún sin autenticación (hoy accesibles por el proxy sin credencial) → lo
+  trae el login nuevo. El cierre de hoy es de **exposición**, no de auth.
+- **Autoría:** Ivan (cierre de puertos / same-origin), Carlos (laboratorio interno). **Horas:** ~0,9 h.
