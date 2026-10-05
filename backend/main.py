@@ -12,9 +12,18 @@ app = FastAPI(
     description="Backend del sistema de pentesting HookSuite",
     version="1.0.0",
 )
+# Orígenes permitidos: lista cerrada (config por env ALLOWED_ORIGINS, coma-separada).
+# Se quita el "*": con credenciales es inválido por spec y, de hecho, reflejaba cualquier
+# origen -> cualquier web hacía peticiones autenticadas. El frontend ya es mismo origen (via
+# proxy), así que el CORS solo aplica a llamadas cross-origin legítimas.
+_default_origins = (
+    "https://www.hooksuite.de,http://www.hooksuite.de,http://91.98.143.219,"
+    "http://localhost,http://localhost:8880,http://127.0.0.1:8880,http://localhost:5173"
+)
+ALLOWED_ORIGINS = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", _default_origins).split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
