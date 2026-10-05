@@ -325,3 +325,13 @@
   secuencial (una página cada ~0,3-0,8 s), así que el corte en la siguiente iteración ya es responsivo.
 - **Autoría:** Nacho (dueño de `spider_service.py`, coherencia con su fix de canonicalización/SSRF).
 - **Requisito:** RF-03 · RNF-07. **Horas:** ~0,3 h. **Evidencia:** `evidencias/intruder-spider-async-05oct.md`.
+
+### Fase 1 (5-oct) · Pase end-to-end completo sobre imagen reconstruida
+- **Qué:** tras `docker compose up -d --build backend`, verificados por HTTP los 5 arreglos de Fase 1:
+  Intruder `cancel` 500→**200** `{cancelled}`, proxy `check/alive` 500→**200**, proxy `/forward` 500→**200**
+  (reenvía a web propia autorizada, 39 KB), Spider `stop` **200**, parser `curl` **200** con URL `https` correcta.
+- **Por qué (lección):** un `restart` previo dio un end-to-end FALSO — recarga solo la capa de escritura del
+  contenedor, no la imagen. Intruder cancel iba a 200 (fichero copiado hoy) pero proxy seguía 500 porque la
+  imagen aún tenía `{{...}}`. **Verificar end-to-end exige rebuild, no restart.**
+- **Push:** los 8 commits (Fase 0 + 5 bugs Fase 1 + higiene pycache) subidos a `origin/develop` (b4b4cc8c).
+- **Requisito:** RF-02/03/04/05/06 · RNF-07. **Evidencia:** `evidencias/pase-e2e-fase1-05oct.md`. **Horas:** ~0,4 h.
