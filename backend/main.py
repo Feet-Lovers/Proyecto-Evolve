@@ -53,7 +53,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
     except Exception:
         pass
     finally:
-        session_manager.unregister_websocket(token)
+        session_manager.unregister_websocket(token, websocket)
 @app.on_event("startup")
 async def startup_event():
     asyncio.create_task(start_redis_consumer())
