@@ -462,3 +462,20 @@ con JWT (RF-07). De ahí salieron tres arreglos:
   (web, API y WebSocket). El agente marca **0 reinicios**: la carrera no llegó a producirse.
 - **Queda aparte:** 49 paquetes del sistema pendientes de actualizar, como cambio propio.
 - **Requisito:** RNF-07 · apdo. 7. **Evidencia:** `evidencias/endurecimiento-caja-05oct.md` §5. **Horas:** ~0,5 h.
+
+### Fase 1 (5-oct) · Memoria técnica puesta al día (incumplimiento de R3 corregido)
+- **Qué pasó:** el diario se mantuvo al día todo el día, pero la **fuente de la memoria técnica llevaba parada
+  desde las 10:09** mientras el diario llegaba a las 17:38. Lo detectó josemax preguntando si «memoria técnica»
+  se refería a los `.typ` y el artefacto. **No lo era**: lo que estaba al día era el diario y las evidencias.
+- **Por qué importa:** el apartado 7 describía en presente una API abierta sin autenticación **que ya habíamos
+  cerrado**. La memoria estaba afirmando algo falso del producto.
+- **Volcado (destilado del diario, no investigación nueva):** apartado 5 (enrutado y puntos ya corregidos),
+  6 (tabla de los doce defectos con causa y requisito), 7 (reescrito: exposición en pasado + endurecimiento
+  aplicado + dos matices honestos sobre lo que NO nos atribuimos), 8 (dos pares de capturas antes/después y la
+  condición de carrera del arranque), 9 (seis filas de la matriz).
+- **Fallo propio al generar y cómo se cazó:** la tabla nueva se escribió como `#tabla(3, …)` en vez de la forma
+  del dialecto `#tabla((anchos), …)`. Typst compilaba igual, pero **el generador del artefacto se comía los
+  apartados 7, 8 y 9** (13 → 10 apartados, 886 KB → 41 KB). Se detectó comparando el recuento del artefacto
+  con el de la fuente antes de publicar; se corrigió y se republicó.
+- **Salidas regeneradas en el mismo paso (R4):** PDF 825 KB y artefacto 886 KB con 9 imágenes incrustadas.
+- **Horas:** ~0,8 h.

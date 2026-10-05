@@ -187,7 +187,8 @@ Toda petición entra por Nginx, que reparte por ruta (`infra/nginx.conf`):
 - `/` → *frontend* (protegido con Basic Auth).
 - `/api/` y `/ws/` → *backend* (API y WebSocket).
 - `/check/` y `/proxy.pac` → *backend* (utilidades del proxy).
-- `/dvwa/` → *dvwa* (protegido con Basic Auth, solo interno).
+
+Desde la Fase 1, Nginx es además la *única* entrada: `backend` y `frontend` dejaron de publicar puerto propio, y la ruta hacia el laboratorio vulnerable se retiró del proxy (apartado 7).
 
 == Decisiones técnicas
 === Proxy del lado servidor: pivote PAC → httpx (RF-02)
@@ -197,9 +198,9 @@ La decisión arquitectónica de más peso heredada de la P1. En origen, HookSuit
 La interfaz que corría en producción (`www.hooksuite.de`) se había reescrito al framework de estilos *Tailwind*, abandonando el sistema de variables CSS propio de la P1. Esa versión —la desplegada y en uso— es la que se toma como *base del frontend en la P3*. En la Fase 0 se reconcilió al repositorio (vivía solo en la caja, sin commitear); el detalle del proceso está en el apartado 8.
 
 === Puntos a corregir, detectados al montar la cocina
-- *CORS abierto a cualquier origen* en el backend (FastAPI) → restringir a los orígenes propios (apartado 7).
+- *CORS abierto a cualquier origen* en el backend (FastAPI) → *corregido en la Fase 1*: lista cerrada de orígenes, configurable por entorno (apartado 7).
 - *Verificación SSL desactivada* en el cliente `httpx`: justificable en una herramienta de auditoría (objetivos con certificados autofirmados), pero se documenta expresamente como decisión, no como descuido.
-- *Acoplamiento Nginx ↔ DVWA*: `infra/nginx.conf` declara `upstream dvwa`, así que *Nginx no arranca si DVWA no está* (`host not found in upstream`). El laboratorio es, por diseño, requisito de arranque del proxy — a desacoplar o justificar.
+- *Acoplamiento Nginx ↔ DVWA*: `infra/nginx.conf` hacía del laboratorio un requisito de arranque del proxy (`host not found in upstream`) → *resuelto en la Fase 1* al retirar su ruta del proxy: el laboratorio queda solo en la red interna y Nginx ya no depende de él.
 - *Playwright fuera de la red*: en el `docker-compose.yml` el servicio `playwright` no declara `networks: hooksuite-net`, así que queda aislado y no habla con el backend (causa raíz de RF-10/RF-08 sin operar; se corrige con una línea).
 
 > *Nota de reproducibilidad (cocina).* En el mediaserver los puertos `80/3000/8000` ya los ocupan otros servicios, así que la cocina los remapea a `8880/8830/8800` mediante un override local que no toca el compose versionado. Es solo del entorno de pruebas; la arquitectura de producción es la de la tabla.
@@ -208,6 +209,30 @@ La interfaz que corría en producción (`www.hooksuite.de`) se había reescrito 
 = 6. Funcionalidades implementadas
 Cada funcionalidad con capturas: qué hace, cómo se usa y qué requisitos cubre.
 - Proxy interceptor, Repeater, Intruder, Utilidades (hash/encoder/regex), Vulnerabilidades, Red/DevTools, módulo IA.
+
+== Defectos corregidos en la Fase 1
+Diez defectos del prototipo, todos reproducidos antes de corregirlos y verificados después en producción. El detalle de cada uno (causa raíz, prueba y autoría) está en el diario del repositorio.
+
+#tabla(
+  (5fr, 6fr, auto),
+  "
+  Qué fallaba | Causa | Requisito
+  El Spider entraba en bucle y martilleaba el objetivo | No canonicalizaba las direcciones: el mismo recurso generaba variantes infinitas | RF-03
+  El Spider podía dirigirse a servicios internos del propio servidor | Faltaba filtrar destinos no legítimos | RNF-07
+  El botón de detener el Spider no existía en la interfaz | El servidor aceptaba la orden, pero la pantalla no ofrecía forma de darla | RF-03
+  Detener el Spider no detenía nada | El bucle de rastreo no consultaba la señal de parada | RF-03
+  Un mismo formulario aparecía decenas de veces | No se agrupaban: se emitía uno por página visitada | RF-03
+  Cancelar el Intruder devolvía un error del servidor | La operación invocaba un método inexistente | RF-06
+  Dos operaciones del proxy devolvían error del servidor | Un error de sintaxis construía un tipo de dato equivocado | RF-02
+  Importar un comando `curl` rompía las direcciones seguras | Una expresión regular mal escapada recortaba el esquema | RF-05
+  Los avisos de error no decían qué había fallado | Se mostraba el texto crudo de la librería de red | RF-05
+  Dos pantallas no recibían avisos en tiempo real | El servidor guardaba una sola conexión por sesión y la segunda desplazaba a la primera | RNF-04
+  El agente del cortafuegos era manipulable por cualquiera | Su canal se creaba con permisos para todo el sistema y no validaba lo recibido | RNF-08
+  El estado de sesión podía crecer sin límite | El recolector existía pero nunca se ejecutaba, y cualquier identificador nuevo creaba una sesión | RNF-07
+  "
+)
+
+*Nota sobre el último:* no era el defecto que teníamos anotado. El pendiente decía «las sesiones no se conservan al reiniciar»; al abrirlo resultó que el problema real era el contrario y más grave —podían crecer sin límite desde fuera—. La volatilidad se justifica en el apartado 10; lo que se corrigió fue el crecimiento.
 #hueco("José María + Claude", "Documentar cada funcionalidad (qué hace, cómo se usa, qué requisitos cubre) con capturas de producto; las de pantalla las saca José María (R6), tras la Fase 3, cuando el login nuevo cambie las pantallas. El commit de cada módulo se firma a nombre de su responsable cuando toque (R2): Ivan/frontend, Macarena/backend, Nacho/playwright, Carlos/DevTools, José María/IA.")
 
 = 7. Seguridad del producto
@@ -220,12 +245,40 @@ En el historial de git había claves de API de Anthropic. Verificado el 4-oct: *
 - Salvedad: GitHub conserva un tiempo los refs internos de los *pull requests* antiguos apuntando a los commits viejos; los purga por su cuenta. Como las claves están muertas, no supone riesgo.
 #estado("ok", "LIMPIEZA EJECUTADA Y VERIFICADA")
 
-== Exposición de la caja (antes de endurecer)
-- La API `:8000` *no tiene autenticación*: lo declara su propia `openapi.json` (40 operaciones sin seguridad) y `/health` responde sin credenciales.
-- El Basic Auth del `:80` se *evita* sirviendo el frontend directamente por `:3000`.
-- DVWA *no* está expuesto a internet (solo red interna) — corrige un supuesto previo.
-- Servidor: `nginx/1.31.0`.
-#estado("rojo", "A CORREGIR EN FASE 1")
+== Exposición de la caja: cómo estaba
+Estado de partida, verificado en vivo el 29-sep y el 4-oct (evidencia fotográfica en el apartado 8):
+- La API `:8000` *no tenía autenticación*: lo declaraba su propia `openapi.json` (40 operaciones sin seguridad) y `/health` respondía sin credenciales.
+- El Basic Auth del `:80` se *evitaba* sirviendo el frontend directamente por `:3000`.
+- El servidor *no tenía cortafuegos* (política de aceptación por defecto) ni protección contra fuerza bruta, y acumulaba unos *127.000 intentos de acceso en 7 días*.
+- DVWA *no* estaba expuesto a internet (solo red interna) — corrige un supuesto previo nuestro.
+
+== Endurecimiento aplicado en la Fase 1 (5-oct)
+=== Cierre de la exposición
+La API y el frontend dejaron de publicar puerto propio: *la única entrada es el proxy*. No bastaba con retirarlos del `docker-compose.yml`, porque el frontend llevaba la dirección del servidor incrustada en tiempo de compilación y hablaba directamente con la API; hubo que *reconstruirlo para que use el mismo origen* y que sus llamadas (incluido el WebSocket) pasen por el proxy.
+Comprobado desde fuera tras el despliegue: los puertos directos *rechazan la conexión*, el proxy responde, y el paquete del frontend ya no contiene ninguna referencia a la dirección antigua.
+
+=== Orígenes permitidos (CORS)
+El backend aceptaba *cualquier* origen con credenciales, combinación además inválida por especificación: en la práctica, el servidor *reflejaba el origen de quien preguntara*, de modo que cualquier web podía hacerle peticiones autenticadas. Se sustituyó por una *lista cerrada* configurable por entorno. Comprobado: un origen arbitrario ya no recibe permiso; uno legítimo sí.
+
+=== El laboratorio vulnerable, solo interno
+Se retiró del proxy la ruta que lo publicaba. Queda accesible únicamente desde la red interna, para las pruebas del propio producto.
+
+=== Endurecimiento del servidor
+- *Cortafuegos* activo, con política de denegación por defecto y únicamente el acceso remoto y el proxy permitidos.
+- *Bloqueo automático de fuerza bruta* contra el acceso remoto: en su primer minuto ya registraba 148 intentos fallidos y había bloqueado dos direcciones.
+- *Acceso remoto solo por clave*: se desactivó la autenticación por contraseña. La prueba más limpia es el propio mensaje del servidor, que pasó de ofrecer «clave o contraseña» a admitir *solo clave*.
+- *Limpieza de reglas abandonadas*: siete reglas heredadas de la P1 —una de ellas con la dirección pública de un integrante y otra con un valor de ejemplo— se retiraron tras comprobar que ningún servicio escuchaba en esos puertos.
+- *Agente de firewall duplicado*: se encontró un segundo proceso del agente, lanzado a mano en mayo y fuera del gestor de servicios, con permisos de administración del cortafuegos. Se terminó; queda uno solo, gestionado por el sistema.
+- *Sistema operativo*: se estrenó el núcleo ya instalado pero sin aplicar desde mayo. Antes de reiniciar se corrigió una condición de carrera en el arranque que habría dejado el agente del cortafuegos en bucle (ver apartado 8).
+
+=== Dos matices honestos, para no atribuirnos de más
+- *El acceso de administrador por contraseña ya estaba bloqueado* por la configuración por defecto del sistema: los 127.000 intentos registrados nunca tuvieron ninguna posibilidad. Lo que se cerró fue la autenticación por contraseña *a nivel general*. Se hizo igual porque deja de depender de un valor por defecto que una actualización podría cambiar, y porque cierra la puerta a cualquier usuario futuro.
+- *El cortafuegos del sistema no filtra los puertos que publica Docker*, cuyas reglas se evalúan antes. Quien cerró de verdad la API y el frontend fue el despliegue, al dejar de publicarlos. El cortafuegos protege el resto del servidor, no esos puertos.
+
+#estado("ok", "EXPOSICIÓN CERRADA Y SERVIDOR ENDURECIDO")
+
+== Lo que todavía no cubre
+La API y el WebSocket siguen *sin autenticación* por detrás del proxy: hoy el único control es el Basic Auth de la entrada, que además no distingue usuarios. Eso lo resuelve el sistema de acceso por usuario de la Fase 2, que es también lo que cierra el aislamiento entre sesiones.
 #hueco("José María", "Completar el modelo STRIDE, validación de entradas, dependencias y tratamiento de datos personales.")
 
 = 8. Pruebas y evidencias
@@ -244,10 +297,27 @@ La prueba PR-16 —llamar a la API sin credenciales— y la verificación del fr
 
 #imagen("../capturas/exposicion/RNF07-credencial-p1-no-abre.png", "RNF-07 — la credencial documentada en el informe de la P1 es rechazada con `401` por `nginx/1.31.0`: la credencial publicada ya no sirve, lo que refuerza el cambio de modelo de acceso en la Fase 2.")
 
+== Defectos corregidos: antes y después (RF-03)
+
+Dos pares de capturas tomadas sobre el producto desplegado, antes y después de corregir. El objetivo de las pruebas es una web propia del equipo, autorizada para ello.
+
+#imagen("../capturas/fase1/RF-03-antes-sin-boton-detener.png", "RF-03 — ANTES: el Spider está rastreando («Spider en ejecucion…») y el único botón del panel aparece bloqueado como «Ejecutando…». No existe ninguna forma de detener el rastreo desde la interfaz.")
+
+#imagen("../capturas/fase1/RF-03-despues-con-boton-detener.png", "RF-03 — DESPUÉS: en la misma situación aparece el botón «Detener» junto al de ejecución. Obsérvese además el contador «1 FORM» en cada petición, frente a las decenas de la captura siguiente.")
+
+#imagen("../capturas/fase1/RF-03-antes-formularios-repetidos.png", "RF-03 — ANTES: una sola petición (`/tienda?page=1&sort=newest`) arrastra *52 entradas de formulario idénticas*, que inundan el panel de resultados.")
+
+#imagen("../capturas/fase1/RF-03-despues-formularios-unicos.png", "RF-03 — DESPUÉS: la misma petición de la misma página queda en *una sola entrada*. Solo cambia el contador: 52 → 1.")
+
+> *Nota de tratamiento de las capturas (R7).* Las dos del estado anterior mostraban un identificador de sesión de la web de pruebas en la franja superior; se publican con esa franja tapada, y los originales no salen del almacén interno. Las del estado posterior no lo contienen porque la sesión no estaba autenticada.
+
+== Condición de carrera detectada antes de reiniciar el servidor
+El agente del cortafuegos y el servicio de contenedores no tenían orden de arranque entre sí. Si el segundo ganaba la carrera, *creaba una carpeta donde debía ir el canal de comunicación del agente* —comportamiento normal al montar un fichero que no existe— y el agente quedaba en un bucle de reinicios. El servidor llevaba sin reiniciarse desde mayo, así que nunca se había puesto a prueba. Se corrigió fijando el orden de arranque antes de reiniciar; tras el reinicio, el contador de reinicios del agente marcaba *cero*: la carrera no llegó a producirse.
+
 == Otras evidencias ya en mano
 - *Incidente de las claves y limpieza del historial:* ensayo de reescritura verificado antes/después (3 → 0 claves), detallado en el apartado 7.
-- *Salidas de terminal* (health sin login, `openapi.json` sin seguridad) guardadas como texto en el repo, no como foto (R7: así ninguna captura publica por error un secreto).
-#estado("ok", "EVIDENCIA DE EXPOSICIÓN COMPLETA")
+- *Salidas de terminal* (health sin login, `openapi.json` sin seguridad, cierre de puertos, mensajes de error) guardadas como texto en el repo, no como foto (R7: así ninguna captura publica por error un secreto).
+#estado("ok", "EVIDENCIA DE EXPOSICIÓN Y DE LA FASE 1 COMPLETA")
 #hueco("José María + Claude", "Plan de pruebas formal y capturas de PRODUCTO de los bugs (500 de `check/alive`, trampa del Spider) reproducidos en la cocina. Las de pantalla las saca José María (R6), tras la Fase 3, cuando el login nuevo cambie las pantallas. Las pruebas las hacen José María y Claude (R2).")
 
 = 9. Matriz de trazabilidad
@@ -257,11 +327,11 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
   "
   Req. | Descripción | Estado | Implementación (ruta) | Prueba | Evidencia
   RF-01 | Dashboard web sin instalación | Cumplido | `frontend/src/App.jsx` + `Layout.jsx` | PR-01 | fig. — · vídeo —:—
-  RF-02 | Proxy del lado servidor (`httpx`) | Modificado | `backend/services/proxy_service.py` | PR-19 | justif. apdo. 4
-  RF-03 | Spider / rastreo | Cumplido | `backend/services/spider_service.py` | PR-03 | fig. — · vídeo —:—
+  RF-02 | Proxy del lado servidor (`httpx`) | Modificado (2 errores de servidor corregidos en F1) | `backend/services/proxy_service.py` | PR-19 | justif. apdo. 4 · apdo. 6
+  RF-03 | Spider / rastreo | Cumplido (4 defectos corregidos en F1) | `backend/services/spider_service.py`, `frontend/.../ProxyPage.jsx` | PR-03 | figs. apdo. 8 · vídeo —:—
   RF-04 | Auditoría autenticada (sesión compartida) | Cumplido | `backend/services/session_service.py` | PR-04 | fig. — · vídeo —:—
-  RF-05 | Repeater | Cumplido | `backend/routes/repeater.py` | PR-05 | fig. — · vídeo —:—
-  RF-06 | Intruder / fuzzing | Cumplido | `backend/services/intruder_service.py` | PR-06 | fig. — · vídeo —:—
+  RF-05 | Repeater | Cumplido (parser y avisos de error corregidos en F1) | `backend/routes/repeater.py`, `backend/services/proxy_service.py` | PR-05 | apdo. 6 · vídeo —:—
+  RF-06 | Intruder / fuzzing | Cumplido (cancelación corregida en F1) | `backend/services/intruder_service.py` | PR-06 | apdo. 6 · vídeo —:—
   RF-07 | Utilidades (incl. JWT) | Cumplido | `frontend/src/pages/utilities/` | PR-07 | fig. — · vídeo —:—
   RF-08 | IA → panel Vulnerabilidades | según alcance | `ia/analyzers/vulnerability_classifier.py` + `backend/routes/vulnerabilities.py` | PR-08 | fig. — · vídeo —:—
   RF-09 | DevTools → panel Red | según alcance | `devtools/` + `backend/routes/network.py` | PR-09 | fig. — · vídeo —:—
@@ -271,8 +341,8 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
   RNF-02 | WebSocket en tiempo real | Cumplido | `backend/main.py` (`/ws/{token}`) | PR-17 | vídeo —:—
   RNF-03 | Despliegue Docker en Hetzner | Cumplido | `docker-compose.yml` + `infra/nginx.conf` | PR-13 | fig. — · vídeo —:—
   RNF-05 | Límite de concurrencia | Cumplido | `backend/services/intruder_service.py` (`asyncio.Semaphore`) | PR-20 | apdo. 8
-  RNF-07 | Seguridad del producto | a demostrar | ver apartado 7 | PR-14, PR-16 | apdo. 7-8
-  RNF-08 | Firewall dinámico por sesión | verificar | `firewall_agent.py` | PR-15 | apdo. 8
+  RNF-07 | Seguridad del producto | Cumplido en F1 (exposición cerrada y servidor endurecido); auth de API pendiente de F2 | ver apartado 7 | PR-14, PR-16 | apdo. 7-8
+  RNF-08 | Firewall dinámico por sesión | Operativo y endurecido en F1 (permisos del canal y validación de entradas) | `firewall_agent.py` | PR-15 | apdo. 7-8
   RNF-09 | TLS/HTTPS | Pendiente | (por configurar en Nginx) | PR-18 | apdo. 8
   ",
 )
