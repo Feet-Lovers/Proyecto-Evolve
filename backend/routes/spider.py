@@ -57,7 +57,7 @@ async def stop_spider(token: str):
 async def clear_spider(token: str):
     from services.session_service import session_manager
     session = session_manager.get_session(token)
-    session["requests"] = []
+    session["requests"].clear()  # vaciar EN EL SITIO: reasignar perdia el tope de memoria
     session["spider_running"] = False
     return {"status": "cleared"}
 
@@ -78,6 +78,6 @@ async def reset_session(token: str):
         await _session_clients[token].aclose()
         del _session_clients[token]
     session = session_manager.get_session(token)
-    session["requests"] = []
+    session["requests"].clear()  # vaciar EN EL SITIO: reasignar perdia el tope de memoria
     session["spider_running"] = False
     return {"status": "reset"}
