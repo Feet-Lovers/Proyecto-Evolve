@@ -37,6 +37,10 @@ class SpiderService:
         self.cookie = cookie
         self.visited: Set[str] = set()
         self.queue: List[str] = [base_url]
+        # Formularios ya emitidos (metodo+accion+campos). Sin esto, un formulario
+        # repetido en cada pagina (o uno por producto) genera decenas de entradas
+        # identicas en el panel: se vieron 104 iguales en una sola auditoria.
+        self.forms_emitidos: Set[tuple] = set()
 
     def _is_blocked_host(self, netloc: str) -> bool:
         """SSRF: rechaza destinos que nunca son objetivo legítimo (metadata de cloud,
@@ -195,6 +199,10 @@ class SpiderService:
             # Emitir peticiones de formularios como peticiones independientes
             for form in forms:
                 if form['body']:
+                    huella = (form['method'], form['action'], form['body'])
+                    if huella in self.forms_emitidos:
+                        continue
+                    self.forms_emitidos.add(huella)
                     form_result = {
                         'id': str(uuid.uuid4()),
                         'method': form['method'],

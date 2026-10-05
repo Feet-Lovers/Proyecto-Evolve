@@ -377,3 +377,62 @@
   modelo de usuarios.
 - **Salidas regeneradas en el mismo paso (R4):** PDF (406 KB) + artefacto republicado en la URL fija
   (13 apartados · 2 con evidencia · 4 pendientes, antes 5). **Evidencia:** `evidencias/topes-sesion-05oct.md`.
+
+### Fase 1 (5-oct) · DESPLIEGUE en la caja: la versión corregida ya está en producción
+- **Qué:** PR #4 (26 commits de Fase 0+1) mergeado a `main`; la caja pasa de `develop@7dfa6acf` + 32 ficheros
+  sin commitear (estado de mayo) a **`main@20728329`** limpio. Rebuild solo de backend y frontend.
+- **Por qué este orden (desplegar ANTES de endurecer):** `ufw` **no bloquea los puertos publicados por
+  Docker** (sus reglas se recorren antes), así que endurecer primero habría dejado los puertos abiertos de
+  verdad. Quien los cierra es el despliegue.
+- **Punto de retorno (R8):** imágenes etiquetadas `:pre-p3`, tar del árbol (3,1 MB) y la rama local con el
+  historial viejo intacta. Un fallo de build habría sido un no-evento (compose construye antes de recrear).
+- **Verificado en producción:** puertos directos **rechazan conexión**; `:80` 401; `/api` 200; **WebSocket 101**
+  a mismo origen; `check/alive`, `intruder/cancel` y `spider/stop` **200** (dos daban 500).
+- **Dos cosas que el despliegue NO aplicó** (mi primera verificación fue insuficiente): nginx no recargó su
+  config (bind-mount: compose no recreó el contenedor) y el `firewall_agent` corre en el host, no en
+  contenedor. Resueltos aparte; el agente y el backend hubo que tocarlos **juntos y en orden**, porque el
+  agente recrea el socket (inodo nuevo) y el backend lo monta como fichero.
+- **Hallazgo:** un `firewall_agent` **huérfano desde el 21-mayo** (root, con acceso a iptables, fuera de
+  systemd) → pendiente de terminar.
+- **Requisito:** RNF-07 · apdo. 7. **Evidencia:** `evidencias/despliegue-caja-05oct.md`. **Horas:** ~1,2 h.
+
+### Fase 1 (5-oct) · Tres arreglos salidos de las pruebas de josemax en producción
+Origen: josemax entró en la web desplegada y probó 9 cosas. Confirmó funcionando la canonicalización del
+Spider (de infinitas peticiones a 6), cancelar el Intruder, el Proxy sin el 500, importar `curl` y el Encoder
+con JWT (RF-07). De ahí salieron tres arreglos:
+- **Botón Detener del Spider** (commit `dd9dc3e4`, Ivan). El endpoint de parada estaba arreglado en el backend
+  pero **la interfaz no tenía forma de llamarlo**: solo había «Iniciar spider», deshabilitado mientras corría.
+  Se añade el botón (visible solo durante la ejecución) y se corta el sondeo de estado al salir de la pantalla.
+  **Sin esto, «parar el Spider» no era demostrable** ni en el vídeo ni en la memoria.
+- **Formularios duplicados** (commit `d4429e5b`, Nacho). Se emitía una entrada por formulario encontrado en
+  cada página: en la auditoría real salieron **104 entradas idénticas**. Ahora se descartan por huella
+  (método+acción+campos). Verificado: 20 formularios iguales en 2 páginas → **1 entrada** (antes 40).
+- **Mensajes de error legibles** (commit `61020468`, Macarena). Un fallo de red devolvía el texto crudo de la
+  librería (`[Errno -2] Name or service not known`), que no dice ni qué host falló. Ahora indica el host y la
+  causa (no resuelve / conexión rechazada / TLS / sin ruta) y conserva el detalle técnico.
+- **Lo que NO era un fallo:** el error del Repeater no se reprodujo y el envío funciona en producción (200,
+  39 KB contra la web de pruebas) → fue un fallo puntual de resolución de nombres, no un defecto del producto.
+  El flashbang salta una vez por carga: comportamiento de la P1, easter egg intencional.
+- **Requisitos:** RF-03 (Spider) · RF-05 (Repeater) · RNF-07. **Horas:** ~0,8 h.
+
+### Fase 1 (5-oct) · Endurecimiento del host de la caja: fail2ban + ufw + SSH solo por clave
+- **Qué:** instalado y activado **fail2ban** (cárcel del SSH), activado **ufw** (deny incoming; 22 y 80
+  permitidos antes de activar) y **desactivado el login por contraseña** del SSH mediante un fichero propio
+  en `sshd_config.d/`.
+- **Resultados verificados:** fail2ban registró 148 intentos fallidos y **baneó 2 IPs en el primer minuto**;
+  el `:80` siguió respondiendo tras activar ufw (Docker no se descolocó); y el mensaje del servidor pasó de
+  `Permission denied (publickey,password)` a **`Permission denied (publickey)`**, que es la prueba más limpia
+  de que la contraseña ya no se acepta. El acceso por clave y la web siguen funcionando.
+- **Decisión de orden (importante):** se desplegó ANTES de endurecer, porque **ufw no bloquea los puertos
+  publicados por Docker**; quien cerró de verdad `:8000` y `:3000` fue el despliegue. Endurecer primero habría
+  dado una falsa sensación de cierre.
+- **Red de seguridad en cada paso (R8):** tanto ufw como el cambio de SSH se aplicaron con un proceso que
+  revertía el cambio solo a los 5 minutos, por si el acceso se perdía.
+- **Matiz honesto para el apartado 7:** el login de **root** por contraseña ya estaba bloqueado por defecto
+  (`permitrootlogin without-password`), así que los ~127.000 intentos nunca tuvieron opción. Lo que se cerró
+  fue `PasswordAuthentication` a nivel general. Se contará con ese matiz, no como si se tapara un agujero.
+- **Detalle técnico que evita un falso «protegido»:** fail2ban necesita `backend = systemd` en Ubuntu 24.04,
+  porque no se instala `rsyslog` y puede no existir `/var/log/auth.log`.
+- **Hallazgos nuevos:** la caja corre el kernel 6.8.0-117 con el 6.8.0-142 instalado (+49 paquetes
+  pendientes); seguía habiendo una regla de ufw de la P1 que nunca se aplicó porque ufw estaba apagado.
+- **Requisito:** RNF-07 · apdo. 7. **Evidencia:** `evidencias/endurecimiento-caja-05oct.md`. **Horas:** ~1 h.
