@@ -395,3 +395,22 @@
 - **Hallazgo:** un `firewall_agent` **huérfano desde el 21-mayo** (root, con acceso a iptables, fuera de
   systemd) → pendiente de terminar.
 - **Requisito:** RNF-07 · apdo. 7. **Evidencia:** `evidencias/despliegue-caja-05oct.md`. **Horas:** ~1,2 h.
+
+### Fase 1 (5-oct) · Tres arreglos salidos de las pruebas de josemax en producción
+Origen: josemax entró en la web desplegada y probó 9 cosas. Confirmó funcionando la canonicalización del
+Spider (de infinitas peticiones a 6), cancelar el Intruder, el Proxy sin el 500, importar `curl` y el Encoder
+con JWT (RF-07). De ahí salieron tres arreglos:
+- **Botón Detener del Spider** (commit `dd9dc3e4`, Ivan). El endpoint de parada estaba arreglado en el backend
+  pero **la interfaz no tenía forma de llamarlo**: solo había «Iniciar spider», deshabilitado mientras corría.
+  Se añade el botón (visible solo durante la ejecución) y se corta el sondeo de estado al salir de la pantalla.
+  **Sin esto, «parar el Spider» no era demostrable** ni en el vídeo ni en la memoria.
+- **Formularios duplicados** (commit `d4429e5b`, Nacho). Se emitía una entrada por formulario encontrado en
+  cada página: en la auditoría real salieron **104 entradas idénticas**. Ahora se descartan por huella
+  (método+acción+campos). Verificado: 20 formularios iguales en 2 páginas → **1 entrada** (antes 40).
+- **Mensajes de error legibles** (commit `61020468`, Macarena). Un fallo de red devolvía el texto crudo de la
+  librería (`[Errno -2] Name or service not known`), que no dice ni qué host falló. Ahora indica el host y la
+  causa (no resuelve / conexión rechazada / TLS / sin ruta) y conserva el detalle técnico.
+- **Lo que NO era un fallo:** el error del Repeater no se reprodujo y el envío funciona en producción (200,
+  39 KB contra la web de pruebas) → fue un fallo puntual de resolución de nombres, no un defecto del producto.
+  El flashbang salta una vez por carga: comportamiento de la P1, easter egg intencional.
+- **Requisitos:** RF-03 (Spider) · RF-05 (Repeater) · RNF-07. **Horas:** ~0,8 h.
