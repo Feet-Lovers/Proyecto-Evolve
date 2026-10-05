@@ -1,4 +1,5 @@
 import httpx
+from urllib.parse import urlparse
 import uuid
 import time
 from datetime import datetime
@@ -46,6 +47,26 @@ def get_session_client(session_token: str) -> httpx.AsyncClient:
             timeout=30,
         )
     return _session_clients[session_token]
+
+def _mensaje_de_error(exc: Exception, url: str) -> str:
+    """Traduce el fallo de red a algo que el operador pueda leer.
+
+    El mensaje crudo de la libreria no dice ni que host fallo: un
+    "[Errno -2] Name or service not known" deja al usuario sin pista.
+    """
+    host = urlparse(url).hostname or url
+    detalle = str(exc).strip() or exc.__class__.__name__
+    texto = detalle.lower()
+    if "name or service not known" in texto or "nodename nor servname" in texto or "temporary failure in name resolution" in texto:
+        return f"Error: no se pudo resolver el host '{host}'. Comprueba el dominio (o si hay DNS disponible). Detalle: {detalle}"
+    if "connection refused" in texto:
+        return f"Error: '{host}' rechazo la conexion (puerto cerrado o servicio caido). Detalle: {detalle}"
+    if "certificate" in texto or "ssl" in texto:
+        return f"Error: fallo de TLS al conectar con '{host}'. Detalle: {detalle}"
+    if "network is unreachable" in texto or "no route to host" in texto:
+        return f"Error: no hay ruta hasta '{host}'. Detalle: {detalle}"
+    return f"Error al conectar con '{host}': {detalle}"
+
 
 async def forward_request(
     method: str,
@@ -140,7 +161,7 @@ async def forward_request(
             "request_headers": dict(headers),
             "request_body": body,
             "response_headers": {},
-            "response_body": f"Error: {str(e)}",
+            "response_body": _mensaje_de_error(e, url),
             "suspicious": False,
             "vulnerable": False,
         }
