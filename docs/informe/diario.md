@@ -235,3 +235,93 @@
   sin commitear → pendiente: resincronizar la cocina al GitHub nuevo (preservando lo untracked) y commitear la
   memoria a nombre de José María; el push necesitará un PAT temporal nuevo.
 - **Requisito:** R2 · R9. **Evidencia:** (no aplica). **Horas:** ~0,4 h.
+
+### Fase 0 (4-oct) · Resync de la cocina + memoria técnica commiteada
+- **Qué:** resincronizada la cocina al `develop` nuevo (`checkout -B develop origin/develop`; la memoria
+  untracked sobrevivió y estaba preservada). Commiteada la memoria técnica a `develop` a nombre de José María
+  (commit `68cc888b`): fuentes `.typ` + `tools/typ2html.py` + diario + PDF + capturas de exposición. El
+  artefacto HTML queda fuera (derivado, se publica en claude.ai).
+- **Por qué:** primer caso del «commit sobre la marcha» y del «resync» del `FLUJO-GITHUB.md`; la memoria técnica
+  llevaba la sesión sin commitear y la cocina estaba en el `main` viejo (pre-reescritura).
+- **Falta:** `git push origin develop` — necesita un PAT temporal nuevo de josemax (develop no está protegida).
+- **Requisito:** R2 · R4 · FLUJO-GITHUB.md. **Evidencia:** (no aplica). **Horas:** ~0,3 h.
+
+### Fase 0 (4-oct) · Memoria técnica empujada a develop + cabo cerrado
+- **Qué:** `git push origin develop` del commit `68cc888b` (memoria técnica). Verificado en GitHub: develop =
+  68cc888b con las fuentes `.typ`, `typ2html.py`, diario, PDF y las 5 capturas. Credencial `~/.git-credentials`
+  borrada tras el push.
+- **Pendiente [humano]:** josemax revoca el PAT temporal nuevo en GitHub.
+- **Requisito:** R2 · R7 · FLUJO-GITHUB.md. **Evidencia:** (no aplica). **Horas:** ~0,2 h.
+
+### Fase 1 (4-oct) · Evidencia del bug del Spider (trampa de araña + SSRF), ANTES de arreglar
+- **Qué:** capturada como texto la lógica defectuosa de `spider_service.py` (normalize_url no decodifica `&amp;`
+  ni ordena la query → trampa de araña; is_same_domain acepta destinos internos → SSRF). `evidencias/spider-trampa-ssrf-04oct.md`.
+- **Por qué:** R6 — la evidencia del fallo se captura antes de arreglarlo (el arreglo la destruye). Hecho de
+  forma ética (RNF-07): demostración unitaria, sin lanzar el Spider contra nadie.
+- **Requisito:** RF-03 (Spider) · RNF-07 (SSRF). **Evidencia:** `evidencias/spider-trampa-ssrf-04oct.md`. **Horas:** ~0,2 h.
+
+### Fase 1 (4-oct) · Spider ARREGLADO (trampa de araña + SSRF) — commit 28b356d8
+- **Qué:** `normalize_url` canonicaliza (decodifica `&amp;`, ordena query, quita fragmento) → el mismo recurso
+  da UNA URL; `is_same_domain` bloquea metadata de cloud/loopback/0.0.0.0 (SSRF), permite privadas (lab).
+- **Verificado (DESPUÉS):** las variantes colapsan a `?id=1&page=2`; 127.0.0.1/169.254.169.254/localhost → False,
+  dvwa → True. Probado copiando el fichero al contenedor en caliente (sin rebuild), sin lanzar el Spider (RNF-07).
+- **Decisión (SSRF para herramienta final):** bloquear solo lo catastrófico (metadata/loopback/0.0.0.0), no las
+  privadas — una herramienta ofensiva audita redes internas legítimamente; el abuso externo lo corta la auth.
+  El «modo configurable» queda como trabajo futuro (apartado 10).
+- **Commit:** `28b356d8` a nombre de Macarena (backend), local; push por lotes al cerrar la Fase 1.
+- **Requisito:** RF-03 · RNF-07. **Evidencia:** `evidencias/spider-trampa-ssrf-04oct.md` (antes/después). **Horas:** ~0,6 h.
+
+### Fase 1 (4-oct) · 500 del proxy ARREGLADO — commit 54bf4243
+- **Qué:** `return {{...}}` en `proxy.py` (líneas 26, 31) construía un set de un dict (unhashable) → 500 en
+  `/api/proxy/check/alive` y `/forward`. Cambiados a dicts normales.
+- **Evidencia ANTES:** `GET /api/proxy/check/alive` → HTTP 500 (capturado). `evidencias/proxy-500-check-alive-04oct.md`.
+- **Endpoint duplicado:** `/check/alive` está en main.py (raíz, correcto) y en proxy.py (router, era el roto).
+  Se deja el de main.py (inofensivo); limpiarlo es cosmético.
+- **Commit:** `54bf4243` (Macarena), local. Verificación end-to-end (200) en el pase de arranque al cerrar la Fase 1.
+- **Requisito:** RF-02. **Horas:** ~0,3 h.
+
+### Fase 1 (4-oct) · Parser curl ARREGLADO — commit d0d31beb (Ivan)
+- **Qué:** la regex del parser curl (`repeater.py`) tenía doble backslash (`\\s`) → excluía la letra `s`
+  literal, no los espacios. `https://` se capturaba como `http`. Reescrita para extraer la URL por su esquema
+  (`https?://[^\s'\"]+`), robusta frente a flags (`-X POST`, `-d`). Evidencia antes/después: `evidencias/curl-parser-04oct.md`.
+- **Autoría:** Ivan (reparto equilibrado del plan; todos participan en todas las fases).
+- **Requisito:** RF-05. **Horas:** ~0,2 h.
+
+### Fase 1 (4-oct) · Reatribución de commits según el plan-p3
+- josemax recordó que el reparto NO sigue el rol de la P1 (plan-p3: todos participan en todas las fases).
+  Reatribuidos los commits locales: Spider → **Nacho** (`c7293957`), 500 proxy → **Macarena** (`c207a256`).
+  Identidades git reales documentadas en `FLUJO-GITHUB.md`. Los commits de Fase 0 ya pusheados no se reescriben.
+
+### Fase 1 (4-oct) · firewall_agent.py ENDURECIDO — commit becbcf69 (Nacho)
+- **Qué:** el socket `/tmp/firewall.sock` se creaba con `0o777` (world-writable → escalada: cualquier proceso
+  del host/contenedor manipulaba el firewall) y pasaba `ip`/`port` a `iptables` sin validar. Fix: socket `0o660`,
+  puerto validado (1-65535) e IP de host única (ipaddress, sin rangos); malformado → ERROR.
+- **Verificado:** validación probada aislada (`'80; rm'`, `99999`, `'0.0.0.0/0'`, `'-j DROP'` → rechazados).
+  `evidencias/firewall-agent-04oct.md`.
+- **Nota:** el agente corre en el host de la caja (RNF-08); el impacto runtime del cambio de permisos del socket
+  se valida al desplegar (verificar que backend↔agente siguen comunicando). Reglas iptables huérfanas: pendiente.
+- **Autoría:** Nacho. **Requisito:** RNF-07 · RNF-08. **Horas:** ~0,3 h.
+
+### Fase 1 (5-oct) · Intruder `cancel()` ARREGLADO — commit 479bec43 (Carlos)
+- **Qué:** `POST /api/intruder/cancel/{token}` devolvía 500. La ruta (`routes/intruder.py:38`) llamaba a
+  `intruder_engine.cancel()`, método que `IntruderEngine` no tenía (solo `pause`/`resume`). Añadido `cancel()`
+  simétrico a `pause()`: marca la sesión como `cancelled`; el bucle de payloads ya corta lo que no esté
+  `running` (`intruder_service.py:43`), así que los pendientes abortan y la corrida no se marca `complete`.
+- **Por qué (R6):** evidencia del 500 capturada antes de arreglar (traceback `AttributeError`), prueba
+  ética (RNF-07): la llamada de cancel no ataca a nadie, solo invocaba un método ausente.
+- **Verificado:** importación fresca en el contenedor → `cancel()` existe, deja `intruder_status='cancelled'`
+  sin error. El `200` real por HTTP va en el pase end-to-end (requiere reiniciar backend; imagen sin reload).
+- **Autoría:** Carlos (reparto equilibrado; participa en Fase 1). **Requisito:** RF-06 · RNF-07. **Horas:** ~0,3 h.
+- **Evidencia:** `evidencias/intruder-spider-async-05oct.md`.
+
+### Fase 1 (5-oct) · Spider `stop` ahora detiene el crawl — commit fa7aab61 (Nacho)
+- **Qué:** `POST /api/spider/stop/{token}` ponía `spider_running=False` (`routes/spider.py:53`) pero
+  `SpiderService.run()` nunca leía esa bandera → el crawl seguía hasta agotar la cola o el máximo. Ahora
+  `run()` consulta `spider_running` en cada iteración y rompe; el evento `spider_completed` distingue
+  «detenido manualmente» de «límite»/«completado».
+- **Por qué (R6/RNF-07):** reproducción unitaria con `crawl_page` stubbeado → ni una petición de red; se
+  demuestra el fallo (sigue de 3 a 20 páginas tras el stop) y el arreglo (3 → 3) sin lanzar el Spider.
+- **Descartado:** comprobar la bandera dentro de `crawl_page` además del bucle — redundante; el bucle es
+  secuencial (una página cada ~0,3-0,8 s), así que el corte en la siguiente iteración ya es responsivo.
+- **Autoría:** Nacho (dueño de `spider_service.py`, coherencia con su fix de canonicalización/SSRF).
+- **Requisito:** RF-03 · RNF-07. **Horas:** ~0,3 h. **Evidencia:** `evidencias/intruder-spider-async-05oct.md`.
