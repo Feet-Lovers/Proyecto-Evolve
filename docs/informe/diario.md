@@ -349,3 +349,10 @@
 - **Pendiente Fase 2:** `/api` y `/ws` aún sin autenticación (hoy accesibles por el proxy sin credencial) → lo
   trae el login nuevo. El cierre de hoy es de **exposición**, no de auth.
 - **Autoría:** Ivan (cierre de puertos / same-origin), Carlos (laboratorio interno). **Horas:** ~0,9 h.
+
+### Fase 1 (5-oct) · CORS restringido — commit 29522db2 (Macarena)
+- **Qué:** `allow_origins=["*"]` + `allow_credentials=True` → lista cerrada vía env `ALLOWED_ORIGINS`.
+- **Por qué (R6):** evidencia ANTES — el preflight reflejaba cualquier Origin (`https://evil.example`) con
+  credenciales. DESPUÉS: origen malicioso sin `access-control-allow-origin` (bloqueado), origen legítimo con el
+  suyo. App viva (200). El frontend es mismo origen → el CORS solo afecta a cross-origin.
+- **Autoría:** Macarena (backend). **Requisito:** endurecimiento (apdo. 7). **Evidencia:** `evidencias/cors-05oct.md`. **Horas:** ~0,3 h.
