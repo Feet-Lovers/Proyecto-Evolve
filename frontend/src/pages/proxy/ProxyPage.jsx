@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppContext } from '@/AppContext'
 import { RequestsTable } from './RequestsTable'
@@ -14,6 +14,7 @@ export function ProxyPage() {
   const [targetUrl, setTargetUrl] = useState('')
   const [speed, setSpeed] = useState('normal')
   const [spiderRunning, setSpiderRunning] = useState(false)
+  const pollRef = useRef(null)
   const [spiderMessage, setSpiderMessage] = useState('')
   const navigate = useNavigate()
 
@@ -41,14 +42,33 @@ export function ProxyPage() {
           const s = await r.json()
           if (!s.running) {
             clearInterval(poll)
+            pollRef.current = null
             setSpiderRunning(false)
-            setSpiderMessage('Spider completado')
+            setSpiderMessage(prev => prev === 'Deteniendo el spider...' ? 'Spider detenido' : 'Spider completado')
           }
         }, 2000)
+        pollRef.current = poll
       }
     } catch (e) {
       setSpiderRunning(false)
       setSpiderMessage('Error al iniciar el spider')
+    }
+  }
+
+  // Al salir de la pantalla, cortar el sondeo de estado: si no, sigue pidiendo
+  // /spider/status cada 2 s aunque ya no haya nadie mirando.
+  useEffect(() => () => {
+    if (pollRef.current) clearInterval(pollRef.current)
+  }, [])
+
+  // Detener el rastreo en curso. El backend corta el bucle en la siguiente
+  // iteracion; el sondeo de estado confirma la parada y pone el mensaje final.
+  const handleStopSpider = async () => {
+    setSpiderMessage('Deteniendo el spider...')
+    try {
+      await fetch(`${config.API_BASE}/api/spider/stop/${sessionToken}`, { method: 'POST' })
+    } catch (e) {
+      setSpiderMessage('Error al detener el spider')
     }
   }
 
@@ -170,6 +190,11 @@ export function ProxyPage() {
           >
             {spiderRunning ? 'Ejecutando...' : 'Iniciar spider'}
           </Button>
+          {spiderRunning && (
+            <Button size="sm" variant="danger" onClick={handleStopSpider}>
+              Detener
+            </Button>
+          )}
         </div>
 
         {spiderMessage && (
