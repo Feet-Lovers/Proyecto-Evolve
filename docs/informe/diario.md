@@ -377,3 +377,21 @@
   modelo de usuarios.
 - **Salidas regeneradas en el mismo paso (R4):** PDF (406 KB) + artefacto republicado en la URL fija
   (13 apartados · 2 con evidencia · 4 pendientes, antes 5). **Evidencia:** `evidencias/topes-sesion-05oct.md`.
+
+### Fase 1 (5-oct) · DESPLIEGUE en la caja: la versión corregida ya está en producción
+- **Qué:** PR #4 (26 commits de Fase 0+1) mergeado a `main`; la caja pasa de `develop@7dfa6acf` + 32 ficheros
+  sin commitear (estado de mayo) a **`main@20728329`** limpio. Rebuild solo de backend y frontend.
+- **Por qué este orden (desplegar ANTES de endurecer):** `ufw` **no bloquea los puertos publicados por
+  Docker** (sus reglas se recorren antes), así que endurecer primero habría dejado los puertos abiertos de
+  verdad. Quien los cierra es el despliegue.
+- **Punto de retorno (R8):** imágenes etiquetadas `:pre-p3`, tar del árbol (3,1 MB) y la rama local con el
+  historial viejo intacta. Un fallo de build habría sido un no-evento (compose construye antes de recrear).
+- **Verificado en producción:** puertos directos **rechazan conexión**; `:80` 401; `/api` 200; **WebSocket 101**
+  a mismo origen; `check/alive`, `intruder/cancel` y `spider/stop` **200** (dos daban 500).
+- **Dos cosas que el despliegue NO aplicó** (mi primera verificación fue insuficiente): nginx no recargó su
+  config (bind-mount: compose no recreó el contenedor) y el `firewall_agent` corre en el host, no en
+  contenedor. Resueltos aparte; el agente y el backend hubo que tocarlos **juntos y en orden**, porque el
+  agente recrea el socket (inodo nuevo) y el backend lo monta como fichero.
+- **Hallazgo:** un `firewall_agent` **huérfano desde el 21-mayo** (root, con acceso a iptables, fuera de
+  systemd) → pendiente de terminar.
+- **Requisito:** RNF-07 · apdo. 7. **Evidencia:** `evidencias/despliegue-caja-05oct.md`. **Horas:** ~1,2 h.
