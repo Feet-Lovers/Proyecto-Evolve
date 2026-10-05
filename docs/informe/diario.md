@@ -366,3 +366,14 @@
 - **Nota Fase 2:** `emit_all` sigue difundiendo a todas las sesiones (fuga entre usuarios) → lo cierra el login.
 - **Autoría:** Macarena (backend; el fix resultó backend, no front como se pensó por el síntoma).
 - **Requisito:** RNF (tiempo real/WS). **Evidencia:** `evidencias/websocket-multisocket-05oct.md`. **Horas:** ~0,5 h.
+
+### Fase 1 (5-oct) · Decisión: las sesiones NO se persisten, se justifica (apartado 10 escrito)
+- **Decisión de josemax:** justificar la volatilidad del estado de sesión en lugar de persistirlo.
+- **Motivos escritos en el apartado 10:** (1) ~una treintena de puntos del backend mutan el dict de sesión en
+  memoria → persistir obliga a escritura-a-través en todo el backend a días de la entrega; (2) la Fase 2 ata
+  sesiones a usuarios → lo persistido se rehace; (3) una sesión de auditoría es un espacio de trabajo efímero.
+- **Lo que SÍ se hizo** (era el riesgo real): topes de memoria + recolector real (commit a3b6253a, Nacho).
+- **Trabajo futuro declarado:** persistencia con Redis (ya desplegado y usado por otro flujo) DESPUÉS del
+  modelo de usuarios.
+- **Salidas regeneradas en el mismo paso (R4):** PDF (406 KB) + artefacto republicado en la URL fija
+  (13 apartados · 2 con evidencia · 4 pendientes, antes 5). **Evidencia:** `evidencias/topes-sesion-05oct.md`.
