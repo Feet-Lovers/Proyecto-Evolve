@@ -446,3 +446,19 @@ con JWT (RF-07). De ahí salieron tres arreglos:
   la misma página** pasando de `[52 FORM]` a `[1 FORM]`; el del botón, el panel en marcha sin y con «Detener».
   Las del defecto llevaban un token de sesión visible y van censuradas; las del arreglo no lo llevan.
 - **Requisito:** RF-03 · RF-05. **Evidencia:** `evidencias/arreglos-tras-pruebas-05oct.md`. **Horas:** ~0,4 h.
+
+### Fase 1 (5-oct) · Reinicio del servidor para estrenar el kernel — Fase 1 cerrada
+- **Qué:** reinicio de la caja de producción para pasar del kernel 6.8.0-117 al 6.8.0-142, ya instalado pero
+  sin estrenar. La máquina llevaba sin reiniciarse desde mayo.
+- **Riesgo detectado antes y corregido:** el agente del firewall dinámico no declaraba ninguna orden respecto
+  a Docker. Si Docker levantaba el backend primero, habría creado un **directorio** donde debe ir el socket
+  del agente (comportamiento normal de un bind-mount cuando el origen no existe), y el agente habría entrado
+  en bucle de reinicio. Se añadió una orden de arranque (`Before`) y una limpieza previa tolerante a fallos.
+- **Verificación previa imprescindible:** `ssh.service` aparece como *disabled* en Ubuntu 24.04, lo que
+  asusta, pero quien arranca el acceso es `ssh.socket`, que sí está habilitado. Sin comprobarlo, el reinicio
+  podía haber dejado el servidor sin acceso remoto.
+- **Resultado:** kernel nuevo corriendo, los 7 contenedores de vuelta solos, todo el endurecimiento
+  persistido (cortafuegos, bloqueo de fuerza bruta, acceso solo por clave) y el servicio respondiendo
+  (web, API y WebSocket). El agente marca **0 reinicios**: la carrera no llegó a producirse.
+- **Queda aparte:** 49 paquetes del sistema pendientes de actualizar, como cambio propio.
+- **Requisito:** RNF-07 · apdo. 7. **Evidencia:** `evidencias/endurecimiento-caja-05oct.md` §5. **Horas:** ~0,5 h.
