@@ -1,4 +1,3 @@
-version: '3.8'
 
 networks:
   hooksuite-net:
@@ -7,8 +6,8 @@ networks:
 services:
   backend:
     build: ./backend
-    ports:
-      - "8000:8000"
+    # Sin 'ports': el backend NO se publica a internet. Nginx lo proxea (/api, /ws) y
+    # ia/playwright le hablan por la red interna (http://backend:8000). Cierra el :8000 abierto.
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - HOST=0.0.0.0
@@ -61,8 +60,7 @@ services:
 
   frontend:
     build: ./frontend
-    ports:
-      - "3000:80"
+    # Sin 'ports': el frontend NO se publica directo (saltaba el Basic Auth). Se sirve por Nginx.
     depends_on:
       - backend
     restart: unless-stopped

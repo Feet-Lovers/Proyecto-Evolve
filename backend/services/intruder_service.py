@@ -117,5 +117,9 @@ class IntruderEngine:
         session = session_manager.get_session(session_token)
         session["intruder_status"] = "running"
 
+    def cancel(self, session_token: str):
+        session = session_manager.get_session(session_token)
+        session["intruder_status"] = "cancelled"
+
 
 intruder_engine = IntruderEngine()

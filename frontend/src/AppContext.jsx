@@ -2,7 +2,9 @@ import { createContext, useContext, useState, useEffect, useRef, useCallback } f
 import { config } from '@/services/api'
 import { mockRequests, mockVulnerabilities } from '@/services/mockData'
 
-const WS_URL = `ws://${(config.API_BASE || 'http://localhost:8000').replace('http://', '').replace('https://', '')}/ws`
+const WS_URL = config.API_BASE
+  ? `${config.API_BASE.replace(/^http/, 'ws')}/ws`
+  : `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws`  // '' = mismo origen (Nginx /ws)
 
 function generateUUID() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {

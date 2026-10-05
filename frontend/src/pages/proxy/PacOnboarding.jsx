@@ -72,11 +72,28 @@ export function PacOnboarding({ onComplete }) {
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50" style={{ background: 'rgba(0,0,0,0.7)' }}>
       <div
-        className="w-full max-w-lg p-6 rounded-xl border"
+        className="w-full max-w-lg p-6 rounded-xl border relative"
         style={{ background: 'var(--hs-surface)', borderColor: 'var(--hs-border)' }}
       >
+        <button
+          onClick={onComplete}
+          aria-label="cerrar"
+          className="absolute top-3 right-3 flex items-center justify-center w-7 h-7 rounded transition-colors"
+          style={{
+            fontFamily: 'var(--font-mono)',
+            color: 'var(--hs-text-muted)',
+            background: 'transparent',
+            border: '1px solid var(--hs-border)',
+            cursor: 'pointer',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.color = 'var(--hs-text-primary)'; e.currentTarget.style.borderColor = 'var(--hs-border-hover)' }}
+          onMouseLeave={e => { e.currentTarget.style.color = 'var(--hs-text-muted)'; e.currentTarget.style.borderColor = 'var(--hs-border)' }}
+        >
+          ✕
+        </button>
+
         <h2
-          className="text-[14px] font-bold mb-1"
+          className="text-[14px] font-bold mb-1 pr-8"
           style={{ fontFamily: 'var(--font-sans)', color: 'var(--hs-text-primary)' }}
         >
           Configura el proxy
@@ -125,17 +142,20 @@ export function PacOnboarding({ onComplete }) {
           ))}
         </ol>
 
-        {proxyActive ? (
-          <p className="text-[11px]" style={{ fontFamily: 'var(--font-mono)', color: '#4a9a5a' }}>
-            ✓ proxy activo. cerrando...
-          </p>
-        ) : checking ? (
-          <p className="text-[11px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-muted)' }}>
-            verificando que el proxy está activo...
-          </p>
-        ) : (
+        <div className="flex items-center justify-between">
+          {proxyActive ? (
+            <p className="text-[11px]" style={{ fontFamily: 'var(--font-mono)', color: '#4a9a5a' }}>
+              ✓ proxy activo. cerrando...
+            </p>
+          ) : checking ? (
+            <p className="text-[11px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-muted)' }}>
+              verificando que el proxy está activo...
+            </p>
+          ) : (
+            <span />
+          )}
           <Button onClick={onComplete} variant="ghost" size="sm">omitir por ahora</Button>
-        )}
+        </div>
       </div>
     </div>
   )
