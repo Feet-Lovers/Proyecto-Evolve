@@ -436,3 +436,13 @@ con JWT (RF-07). De ahí salieron tres arreglos:
 - **Hallazgos nuevos:** la caja corre el kernel 6.8.0-117 con el 6.8.0-142 instalado (+49 paquetes
   pendientes); seguía habiendo una regla de ufw de la P1 que nunca se aplicó porque ufw estaba apagado.
 - **Requisito:** RNF-07 · apdo. 7. **Evidencia:** `evidencias/endurecimiento-caja-05oct.md`. **Horas:** ~1 h.
+
+### Fase 1 (5-oct) · Despliegue de los tres arreglos y par antes/después cerrado
+- **Desplegado:** `main` = `485a22ec` (PR #5). Punto de retorno: imágenes `:pre-fase1b`, que devuelven al
+  estado bueno del día, no al de mayo. Rebuild de backend y frontend; Nginx no hizo falta tocarlo.
+- **Verificado en producción:** la cadena «Detener» está en el bundle desplegado; `:80` 401; `/api` 200; y los
+  mensajes de error legibles probados en vivo («no se pudo resolver el host *X*…» frente al `Errno -2` pelado).
+- **Evidencia visual cerrada (R6):** dos pares antes/después. El de los formularios es **la misma petición de
+  la misma página** pasando de `[52 FORM]` a `[1 FORM]`; el del botón, el panel en marcha sin y con «Detener».
+  Las del defecto llevaban un token de sesión visible y van censuradas; las del arreglo no lo llevan.
+- **Requisito:** RF-03 · RF-05. **Evidencia:** `evidencias/arreglos-tras-pruebas-05oct.md`. **Horas:** ~0,4 h.
