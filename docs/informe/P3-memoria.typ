@@ -157,8 +157,11 @@ El enunciado pide que todo requisito modificado o descartado lleve su versión o
 - *Original:* enunciado como principio en la P1, sin demostrar.
 - *Nuevo:* se demostrará con un umbral sobre el campo `confianza` que devuelve el clasificador de IA: por debajo del umbral, el hallazgo se marca como no concluyente en vez de descartarse. Encaja con el criterio P3 «se comporta razonablemente ante errores».
 
-=== RF-12 — login individual con JWT (*mejora, no requisito P1*)
-- No era requisito de la P1 (venía del road map de mejoras). En la P3 cuenta como *mejora*: suma, pero no compensa un requisito original sin cumplir. Se abordará por su valor de seguridad (cierra la fuga de datos entre sesiones).
+=== RF-12 — *registro* y login individual con JWT (*mejora, no requisito P1*)
+- No era requisito de la P1 (venía del road map de mejoras). En la P3 cuenta como *mejora*: suma, pero no compensa un requisito original sin cumplir. Se aborda por su valor de seguridad: es lo que cierra la fuga de datos entre usuarios documentada en los apartados 7 y 8.
+- *Corrección de este documento (6-oct).* Este apartado se titulaba «login individual con JWT», sin la palabra *registro*. El requisito, tal como está escrito, pide las dos cosas: que cada persona *se cree su cuenta* y que entre con ella. Al redactar se estrechó el requisito a la mitad sin declararlo; se deja constancia porque un requisito recortado en silencio es peor que un requisito incumplido y explicado.
+- *Cómo se resuelve el registro, y por qué no es abierto.* La persona se da de alta ella misma y elige su propia contraseña —nadie más la conoce, ni quien administra, que es el punto del requisito—, pero necesita un *código de invitación* que reparte el grupo. La razón es el propio producto: HookSuite lanza tráfico contra terceros, así que con altas anónimas cualquiera podría usar el Spider y el Intruder contra quien quisiera desde nuestra infraestructura. El código es obligatorio por configuración: si faltara, el servicio no arranca, en lugar de arrancar con el registro abierto sin que nadie lo note.
+- *Lo que obliga a persistir, y lo que no.* Las *cuentas* se guardan en un volumen, porque el despliegue reconstruye los contenedores y unas cuentas que se evaporasen en cada despliegue harían inútil el registro. El *estado de sesión* sigue siendo volátil a propósito, por las razones del apartado 10: son cosas distintas y conviene no confundirlas.
 
 > *Descartados:* ninguno por ahora. El enunciado pide que sean la excepción; si alguno se descarta (candidato: RF-09/DevTools si aprieta el tiempo) se justificará aquí por escrito.
 
