@@ -479,3 +479,37 @@ con JWT (RF-07). De ahí salieron tres arreglos:
   con el de la fuente antes de publicar; se corrigió y se republicó.
 - **Salidas regeneradas en el mismo paso (R4):** PDF 825 KB y artefacto 886 KB con 9 imágenes incrustadas.
 - **Horas:** ~0,8 h.
+
+### Fase 2 (6-oct) · Evidencia de las tres fugas de aislamiento, capturada ANTES de arreglar nada
+- **Qué:** cuatro pruebas contra la cocina (a través de Nginx, como un cliente real) que demuestran que el
+  modelo de sesión actual **no aísla a los usuarios entre sí**. Ninguna línea de código tocada todavía.
+- **Por qué AHORA y no después:** R6 — los arreglos de la Fase 2 destruyen esta evidencia y el momento es
+  irrepetible. El apartado 8 exige «pruebas que han fallado, con su explicación», y nuestros propios
+  arreglos son lo que la borra.
+- **Lo encontrado:**
+  1. *La API entera responde sin credencial.* Asimetría delatora: `GET /health` da **401** (Basic Auth de
+     Nginx) pero `GET /api/session/new` da **200** y entrega un token. Nginx protege unas rutas y deja `/api`
+     abierta de par en par.
+  2. *El token no es una credencial.* `get_session()` **crea** una sesión para cualquier cadena inventada
+     (`session_service.py:60-66`), así que no hay frontera que violar: basta inventarse un token.
+  3. *Fuga de cookies entre usuarios.* `session_cookies` es un dict **global indexado solo por host**
+     (`network.py:12`). El usuario B leyó la cookie de sesión que había guardado el usuario A — y también se
+     obtiene **sin token alguno**. Es un secuestro de sesión de la víctima auditada.
+  4. *Fuga de broadcast.* Una vulnerabilidad publicada **sin token** apareció en la sesión de dos auditores
+     distintos. Para una herramienta de auditoría es una fuga de datos de cliente.
+- **Corrección a la hoja de ruta (R9):** la fuga de broadcast es **más amplia** de lo que teníamos anotado.
+  No son solo las dos llamadas a `emit_all` (`redis_consumer.py:15`, `mitm_proxy.py:49`): los dos endpoints
+  **sin token** (`POST /api/vulnerabilities`, `POST /api/network/packet`) recorren todas las sesiones y
+  **escriben además de emitir**, que es peor. Son **cuatro** puntos de difusión, no dos.
+- **Qué se descartó:** demostrar la fuga de broadcast con dos WebSockets y Redis. Se descartó porque los dos
+  endpoints sin token la prueban con un solo `curl`, de forma determinista y reproducible por cualquiera del
+  grupo; montar clientes WebSocket habría añadido piezas móviles sin añadir fuerza probatoria.
+- **Qué falló:** nada en la captura. Sí falló mi arranque de la sesión: entré a preparar RF-08 (módulo de IA)
+  guiándome por el hito del 9-oct, cuando RF-08 es **Fase 3** y la Fase 3 tiene puerta («no se toca hasta que
+  0-2 estén verdes»). Lo paró josemax preguntando. Queda anotado porque es un fallo de método, no de dedo:
+  leí el calendario y no el plan de fases.
+- **Sin secretos (R7):** los valores de cookie usados son inventados a propósito; no se ha movido ninguna
+  credencial real ni aparece ninguna en la captura.
+- **Requisito:** **RF-12** (login JWT + aislamiento por usuario); respalda apartados 7 y 8.
+  **Evidencia:** `evidencias/fugas-aislamiento-06oct.md` (captura íntegra + tabla causa/fichero/línea).
+  **Horas:** ~0,5 h (Claude).

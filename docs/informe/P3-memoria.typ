@@ -279,6 +279,15 @@ Se retiró del proxy la ruta que lo publicaba. Queda accesible únicamente desde
 
 == Lo que todavía no cubre
 La API y el WebSocket siguen *sin autenticación* por detrás del proxy: hoy el único control es el Basic Auth de la entrada, que además no distingue usuarios. Eso lo resuelve el sistema de acceso por usuario de la Fase 2, que es también lo que cierra el aislamiento entre sesiones.
+
+Conviene ser concretos, porque «sin autenticación» suena a una sola carencia y en realidad son cuatro fallos distintos, los cuatro medidos en la cocina el 6-oct antes de tocar código:
+
+- *La API entera responde sin credencial.* La asimetría lo delata: `GET /health` devuelve `401` por el Basic Auth de la entrada, pero `GET /api/session/new` devuelve `200` y entrega un token. El proxy protege unas rutas y deja `/api` abierta.
+- *El token de sesión no es una credencial, es un nombre.* El backend *crea* una sesión para cualquier cadena inventada, así que no existe frontera que un atacante tenga que violar: basta con escribir un token cualquiera en la URL.
+- *La cookie de sesión de la web auditada se comparte entre todos.* Se guarda en una tabla global indexada *solo por el dominio*, sin dueño. En la prueba, un segundo usuario leyó la cookie que había capturado el primero, y también se obtiene sin presentar token alguno. Dicho sin rodeos: la herramienta filtra el identificador de sesión de la víctima a cualquiera que alcance la API.
+- *Los hallazgos se difunden a todos los paneles.* Una vulnerabilidad publicada sin token apareció en la sesión de dos auditores distintos. En una herramienta de auditoría eso es una fuga de datos del cliente de otro.
+
+Los dos últimos son los que convierten la falta de login en algo más que una incomodidad, y son la razón por la que la Fase 2 figura como innegociable. La evidencia completa está en el apartado 8.
 #hueco("José María", "Completar el modelo STRIDE, validación de entradas, dependencias y tratamiento de datos personales.")
 
 = 8. Pruebas y evidencias
@@ -317,6 +326,15 @@ El agente del cortafuegos y el servicio de contenedores no tenían orden de arra
 == Otras evidencias ya en mano
 - *Incidente de las claves y limpieza del historial:* ensayo de reescritura verificado antes/después (3 → 0 claves), detallado en el apartado 7.
 - *Salidas de terminal* (health sin login, `openapi.json` sin seguridad, cierre de puertos, mensajes de error) guardadas como texto en el repo, no como foto (R7: así ninguna captura publica por error un secreto).
+
+== Evidencia de las fugas de aislamiento (RF-12), capturada el 6-oct
+Cuatro pruebas lanzadas contra la cocina a través del proxy, como las haría un cliente, *antes de tocar una sola línea de código de la Fase 2*: el propio arreglo borra esta evidencia, y el apartado pide las pruebas que fallaron con su explicación. Los valores de cookie empleados son inventados a propósito, de modo que la captura no contiene ningún identificador real (R7).
+
+Las cuatro confirmaron el fallo: la API responde `200` sin credencial mientras `/health` responde `401`; un token inventado obtiene sesión propia; un segundo usuario lee la cookie de sesión capturada por el primero —y también se obtiene sin token—; y una vulnerabilidad publicada sin token aparece en la sesión de dos auditores distintos.
+
+La captura íntegra, con la causa en fichero y línea de cada una, está en `evidencias/fugas-aislamiento-06oct.md`. Una corrección respecto a lo que teníamos anotado: la difusión no ocurre solo en las dos llamadas que emiten a todas las sesiones, sino también en los dos endpoints que admiten peticiones sin token, que además *persisten* el dato en la sesión de todos los usuarios. Son cuatro puntos de difusión, no dos.
+
+#estado("rojo", "FUGAS DE AISLAMIENTO DOCUMENTADAS Y ABIERTAS — LAS CIERRA LA FASE 2")
 #estado("ok", "EVIDENCIA DE EXPOSICIÓN Y DE LA FASE 1 COMPLETA")
 #hueco("José María + Claude", "Plan de pruebas formal y capturas de PRODUCTO de los bugs (500 de `check/alive`, trampa del Spider) reproducidos en la cocina. Las de pantalla las saca José María (R6), tras la Fase 3, cuando el login nuevo cambie las pantallas. Las pruebas las hacen José María y Claude (R2).")
 
