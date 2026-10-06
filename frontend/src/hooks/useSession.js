@@ -1,24 +1,18 @@
-import { useState, useEffect } from 'react'
+import { useAuth } from '@/AuthContext'
 
-function generateUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0
-    const v = c === 'x' ? r : (r & 0x3 | 0x8)
-    return v.toString(16)
-  })
-}
-
+/** Espacio de datos del usuario autenticado.
+ *
+ *  Antes este hook FABRICABA el identificador en el navegador con `Math.random()` y lo
+ *  guardaba en localStorage, y el servidor abría una sesión para cualquier cadena que
+ *  recibiera. Dos problemas de distinta gravedad: `Math.random()` no es
+ *  criptográficamente seguro, y —lo serio— el cliente no debería poder elegir en qué
+ *  espacio de datos escribe.
+ *
+ *  Se conserva el hook, en vez de borrarlo y tocar sus dos usos, porque así hay un
+ *  único sitio que decide esto. Si mañana el espacio deja de ser el nombre del usuario,
+ *  se cambia aquí y en `AppContext`, no en cada pantalla.
+ */
 export function useSession() {
-  const [sessionToken, setSessionToken] = useState(null)
-
-  useEffect(() => {
-    let stored = localStorage.getItem('hooksuite_session')
-    if (!stored) {
-      stored = generateUUID()
-      localStorage.setItem('hooksuite_session', stored)
-    }
-    setSessionToken(stored)
-  }, [])
-
-  return sessionToken
+  const { usuario } = useAuth()
+  return usuario
 }

@@ -5,7 +5,7 @@ import { RequestsTable } from './RequestsTable'
 import { RequestDetail } from './RequestDetail'
 import { ImportRequest } from './ImportRequest'
 import { Button } from '@/components/ui'
-import { config } from '@/services/api'
+import { config, apiFetch } from '@/services/api'
 
 export function ProxyPage() {
   const { sessionToken, requests, connected, clearRequests, resetWs, activeUrl, setActiveUrl, sessionCookies, setSessionCookies } = useAppContext()
@@ -30,7 +30,7 @@ export function ProxyPage() {
         session_token: sessionToken,
         speed: speed,
       }
-      const res = await fetch(`${config.API_BASE}/api/spider/start`, {
+      const res = await apiFetch(`/api/spider/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -38,7 +38,7 @@ export function ProxyPage() {
       const data = await res.json()
       if (data.status === 'started') {
         const poll = setInterval(async () => {
-          const r = await fetch(`${config.API_BASE}/api/spider/status/${sessionToken}`)
+          const r = await apiFetch(`/api/spider/status/${sessionToken}`)
           const s = await r.json()
           if (!s.running) {
             clearInterval(poll)
@@ -66,7 +66,7 @@ export function ProxyPage() {
   const handleStopSpider = async () => {
     setSpiderMessage('Deteniendo el spider...')
     try {
-      await fetch(`${config.API_BASE}/api/spider/stop/${sessionToken}`, { method: 'POST' })
+      await apiFetch(`/api/spider/stop/${sessionToken}`, { method: 'POST' })
     } catch (e) {
       setSpiderMessage('Error al detener el spider')
     }
@@ -74,7 +74,7 @@ export function ProxyPage() {
 
   const handleNewAudit = async () => {
     try {
-      await fetch(`${config.API_BASE}/api/spider/reset/${sessionToken}`, {
+      await apiFetch(`/api/spider/reset/${sessionToken}`, {
         method: 'POST',
       })
       clearRequests()
@@ -91,7 +91,7 @@ export function ProxyPage() {
 
   const handleReleaseSession = async () => {
     try {
-      await fetch(`${config.API_BASE}/api/spider/release-session/${sessionToken}`, {
+      await apiFetch(`/api/spider/release-session/${sessionToken}`, {
         method: 'POST',
       })
       setSessionCookies({})
@@ -143,7 +143,7 @@ export function ProxyPage() {
           <div className="flex gap-2">
             <Button size="sm" variant="ghost" onClick={() => setShowImport(true)}>importar peticion</Button>
             <Button size="sm" variant="ghost" onClick={async () => {
-              await fetch(`${config.API_BASE}/api/spider/clear/${sessionToken}`, { method: 'POST' })
+              await apiFetch(`/api/spider/clear/${sessionToken}`, { method: 'POST' })
               clearRequests()
               setSelectedRequest(null)
               setSpiderMessage('')

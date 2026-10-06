@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { RequestEditor } from './RequestEditor'
 import { ResponsePanel } from './ResponsePanel'
-import axios from 'axios'
-import { config } from '@/services/api'
+import { api, config } from '@/services/api'
 import { useAppContext } from '@/AppContext'
 
 function normalizeResponse(data) {
@@ -36,7 +35,7 @@ export function RepeaterPage() {
     setLoading(true)
     setLastUrl(request.url || '')
     try {
-      const res = await axios.post(`${config.API_BASE}/api/repeater/send`, {
+      const res = await api.post(`/api/repeater/send`, {
         ...request,
         session_token: sessionToken,
       })

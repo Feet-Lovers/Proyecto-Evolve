@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui'
-import axios from 'axios'
-import { config } from '@/services/api'
+import { api, config } from '@/services/api'
 
 const MOCK_HASHES = {
   md5:    '5f4dcc3b5aa765d61d8327deb882cf99',
@@ -24,7 +23,7 @@ export function HashGenerator() {
         setHashes(MOCK_HASHES)
         return
       }
-      const res = await axios.post(`${config.API_BASE}/api/utils/hash`, { text: input })
+      const res = await api.post(`/api/utils/hash`, { text: input })
       setHashes(res.data)
     } finally {
       setLoading(false)

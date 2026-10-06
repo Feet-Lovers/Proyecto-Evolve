@@ -1,5 +1,6 @@
 import { Outlet, NavLink } from 'react-router-dom'
 import { useState, useEffect, useRef, createContext } from 'react'
+import { useAuth } from '@/AuthContext'
 
 export const ThemeContext = createContext({ dark: true, toggle: () => {} })
 
@@ -76,6 +77,21 @@ export function Layout() {
   const [dark, setDark] = useState(true)
   const [showFlash, setShowFlash] = useState(false)
   const flashShownRef = useRef(false)
+
+  const { usuario, cerrarSesion } = useAuth()
+  const [saliendo, setSaliendo] = useState(false)
+
+  // Se deshabilita el botón mientras sale para que un doble clic no lance dos
+  // peticiones; y el token local se borra pase lo que pase (lo hace `cerrarSesion`),
+  // porque si el servidor no responde el usuario igualmente quiere quedarse fuera.
+  const salir = async () => {
+    setSaliendo(true)
+    try {
+      await cerrarSesion()
+    } finally {
+      setSaliendo(false)
+    }
+  }
 
   const handleToggle = () => {
     setDark(prev => {
@@ -204,6 +220,52 @@ export function Layout() {
           background: ${dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'};
         }
 
+        /* Sesión actual: quién eres y cómo salir. Usa las mismas variables de tema que
+           el resto de la barra, así que acompaña al modo claro y al oscuro sin tocar
+           nada más. */
+        .hs-sesion {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin-left: 12px;
+          flex-shrink: 0;
+        }
+
+        .hs-sesion-usuario {
+          font-family: var(--font-mono);
+          font-size: 10px;
+          letter-spacing: 0.04em;
+          color: var(--hs-text-muted);
+          max-width: 14ch;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .hs-salir {
+          font-family: var(--font-mono);
+          font-size: 10px;
+          letter-spacing: 0.06em;
+          padding: 5px 10px;
+          border-radius: 6px;
+          background: transparent;
+          border: 1px solid var(--hs-border);
+          color: var(--hs-text-muted);
+          cursor: pointer;
+          transition: border-color 0.12s, color 0.12s, background 0.12s;
+        }
+
+        .hs-salir:hover:not(:disabled) {
+          color: var(--hs-text-primary);
+          border-color: var(--hs-border-hover);
+          background: ${dark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)'};
+        }
+
+        .hs-salir:disabled {
+          opacity: 0.45;
+          cursor: default;
+        }
+
         .hs-content {
           flex: 1;
           overflow: auto;
@@ -267,6 +329,23 @@ export function Layout() {
           >
             {dark ? <SunIcon /> : <MoonIcon />}
           </button>
+
+          {/* Quién eres y cómo salir. Faltaba: la aplicación quedó tras el login sin
+              ninguna forma de cerrar sesión, así que no se podía ni cambiar de usuario.
+              El nombre va al lado del botón a propósito: un «salir» sin decir de quién
+              es tan incómodo como no tenerlo, y en una herramienta donde cada usuario
+              ve solo lo suyo, saber con qué cuenta estás trabajando importa. */}
+          <div className="hs-sesion">
+            <span className="hs-sesion-usuario" title="Sesión actual">{usuario}</span>
+            <button
+              className="hs-salir"
+              onClick={salir}
+              disabled={saliendo}
+              title="Cerrar sesión"
+            >
+              {saliendo ? 'saliendo…' : 'salir'}
+            </button>
+          </div>
         </header>
 
         <main className="hs-content">
