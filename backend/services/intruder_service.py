@@ -5,7 +5,10 @@ from typing import Optional
 from services.payloads import get_payloads
 from services.session_service import session_manager
 from services.proxy_service import is_suspicious, get_session_client
-from routes.network import session_cookies
+# Aqui se importaba `session_cookies` de routes.network: el diccionario global de cookies
+# que era la fuga de la prueba 3. El import estaba HUERFANO —no se usaba en ninguna parte
+# del cuerpo—, asi que el Intruder nunca llego a leer cookies de otro usuario: la fuga
+# solo era alcanzable por el endpoint HTTP. Se retira junto con el diccionario.
 
 
 class IntruderEngine:

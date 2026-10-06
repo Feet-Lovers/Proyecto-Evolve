@@ -7,7 +7,9 @@ class ProxyRequest(BaseModel):
 	url: str
 	headers: Dict[str, str] = {}
 	body: Optional[str] = None
-	session_token: str
+	# IGNORADO: el espacio de datos sale del token firmado, no del cuerpo.
+	# Se conserva para no romper al frontend, que lo sigue enviando.
+	session_token: str = ''
 
 class ProxyResponse(BaseModel):
 	id: str
@@ -38,7 +40,9 @@ class IntruderConfig(BaseModel):
 	url: str
 	injection_point: str
 	attack_type: str
-	session_token: str
+	# IGNORADO: el espacio de datos sale del token firmado, no del cuerpo.
+	# Se conserva para no romper al frontend, que lo sigue enviando.
+	session_token: str = ''
 	concurrency: int = 5
 	delay_ms: int = 0
 	method: str = "GET"
