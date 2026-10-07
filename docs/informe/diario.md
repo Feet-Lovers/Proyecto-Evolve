@@ -679,3 +679,32 @@ con JWT (RF-07). De ahí salieron tres arreglos:
   marcha), pero la Fase 3 tendrá que darles una **credencial de servicio**.
 - **Lo que quedó sin hacer y se arrastró al 7-oct:** el diario y la memoria técnica, parados desde mediodía.
 - **Requisito:** (no aplica — método). **Evidencia:** (no aplica). **Horas:** ~0,3 h estimadas (Claude).
+
+### Fase 2 (7-oct) · Reconocimiento previo al despliegue, y una corrección a la entrada de ayer
+- **Qué:** lectura del estado de la caja antes de desplegar (solo lectura, R1) y del estado real de GitHub
+  leído del remoto con `ls-remote`, no de refs locales (R9, que esta línea ya se tragó rancios una vez).
+- **Lo desplegado coincide con `main`:** la caja corre `main@485a22ec`, igual que `origin/main` real, y con
+  **cero ficheros sin commitear**. Eso **cierra el pendiente «reconciliar los 32 ficheros sin commitear»**:
+  el `reset --hard` del 5-oct se los llevó, que es el comportamiento deliberado de R1.
+- **Y confirma lo que había que confirmar antes de desplegar:** las cuatro fugas del apartado 7 **siguen
+  vivas en producción**. Comprobado con peticiones de solo lectura al dominio público: la ruta retirada
+  responde `200` con token, la API responde `200` **sin challenge de autenticación**, el endpoint de cookies
+  responde `200` sin token, y la entrada sigue con el Basic Auth viejo. No se escribió ni se atacó nada.
+- 🔧 **CORRECCIÓN (R9) a la entrada «Cierre del día» de ayer.** Escribí que el pendiente de la credencial de
+  servicio «hoy no rompe nada porque **ninguno de los dos contenedores está en marcha**». **Es falso en
+  producción:** `ia` y `playwright` llevan 45 h arriba en la caja. La frase valía para la cocina, donde no se
+  levantan, y la di por buena **sin mirar la caja**. Es el mismo defecto que R9 persigue: afirmar sobre un
+  entorno mirando otro.
+- **El estado real de los dos, y por qué la conclusión aguanta aunque el motivo fuera falso:**
+  - `ia` está **conectada** al backend y **ociosa** («Esperando instrucciones del backend…»): solo publica
+    cuando se le pide, y RF-08 no tiene disparador. No llamará a las rutas protegidas → la Fase 2 no la rompe.
+    En la Fase 3, en cuanto tenga disparador, recibirá `401` sin credencial de servicio: el pendiente sigue.
+  - `playwright` está **ya roto** desde hace 45 h: no resuelve `dvwa` ni `backend` porque el servicio no
+    declara `networks: hooksuite-net`. **Es prueba en vivo del bug que el apartado 5 documentaba** como
+    pendiente de una línea del compose. No puede publicar nada → la Fase 2 tampoco lo rompe.
+- **Qué se descartó:** arreglar la red de Playwright de paso. Tocaría el `docker-compose.yml` en el mismo
+  despliegue que estrena la autenticación, y mezclar dos cambios hace que un fallo no diga cuál lo causó.
+  Va a la Fase 3, que es donde el plan lo tenía.
+- **Requisito:** RF-12, RNF-03, y evidencia para RF-10. **Evidencia:**
+  `evidencias/caja-estado-previo-despliegue-07oct.md` y `evidencias/fugas-vivas-en-produccion-07oct.md`.
+  **Horas:** ~0,4 h (Claude).
