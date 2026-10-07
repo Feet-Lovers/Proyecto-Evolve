@@ -708,3 +708,39 @@ con JWT (RF-07). De ahí salieron tres arreglos:
 - **Requisito:** RF-12, RNF-03, y evidencia para RF-10. **Evidencia:**
   `evidencias/caja-estado-previo-despliegue-07oct.md` y `evidencias/fugas-vivas-en-produccion-07oct.md`.
   **Horas:** ~0,4 h (Claude).
+
+### Fase 2 (7-oct, tarde) · El despliegue no habría aplicado la configuración de Nginx, y el plan decía que sí
+- **Qué:** comprobación previa al despliegue de la Fase 2, antes de tocar la caja. Salió un defecto en el
+  propio plan de despliegue escrito el 5-oct.
+- **El defecto:** el plan manda «rebuild **solo de backend, frontend y nginx**», pero el servicio `nginx` usa
+  una imagen descargada (`nginx:alpine`), no se construye, y **su bloque del compose no cambia ni un byte**
+  entre `origin/main` y `develop` — el diff del `docker-compose.yml` solo toca el volumen `usuarios` y el
+  servicio `backend`. Compose lo ve idéntico a lo que ya corre y **no lo recrea**. Como Nginx lee su
+  configuración una sola vez al arrancar, y el contenedor de producción lleva vivo desde el 5-oct 15:35, el
+  despliegue habría terminado «en verde» **sin aplicar** la retirada de la autenticación básica compartida ni
+  la de las rutas `/proxy.pac` y `/check/`: el panel de entrada nuevo seguiría detrás de la contraseña
+  compartida y las dos rutas retiradas seguirían publicadas.
+- **Por qué importa más que un detalle:** es **exactamente el fallo del 5-oct** (Nginx no recreado sirviendo
+  la configuración vieja en memoria), que ya costó entonces una verificación insuficiente. Un plan que
+  nombra el servicio da la impresión de cubrirlo.
+- **Arreglo:** `--force-recreate nginx` explícito. Cuesta segundos, no construye nada.
+- **Qué se descartó, y por qué:** (a) `nginx -s reload`, que sí bastaría, pero depende de un detalle del
+  sistema de ficheros en vez de ser incondicional; (b) añadir algo al bloque `nginx` del compose para que
+  Compose lo detecte como cambiado — sería tocar la configuración para engañar a la herramienta.
+- 🔬 **Hipótesis propia probada y DESCARTADA, dicha porque casi la escribo como peligro:** sospeché que la
+  «trampa del inodo» de los bind-mounts de fichero —ya documentada dos veces en esta línea— afectaría al
+  `nginx.conf`, y que entonces ni un `reload` valdría. **Probado en un repositorio de usar y tirar:
+  `git reset --hard` reescribe el fichero en el sitio y conserva el inodo** (el mismo número en los tres
+  estados). Y contrastado contra producción: el `sha256` del fichero en el host coincide con el de dentro del
+  contenedor. Conclusión: **la conclusión del 5-oct («Nginx recargado») se sostiene** y hoy no hay
+  configuración fantasma sirviendo. Se usa `--force-recreate` igual, por lo dicho arriba.
+- **Segundo hallazgo, de orden:** el `.env` de la caja tiene 6 claves y **no están** `JWT_SECRET` ni
+  `REGISTRO_CODIGO`. Los validadores corren a nivel de módulo (`auth_service.py:116-117`) y tratan una
+  variable **vacía** como ausente — que es lo correcto, porque Compose pasa vacío lo que no encuentra. Los
+  secretos entran en el `.env` **antes** de arrancar los contenedores; al revés, el backend queda en bucle de
+  reinicio con el panel visible y toda la API en 502.
+- **Requisito:** RF-12, RNF-03. **Evidencia:** `evidencias/pre-despliegue-fase2-nginx-07oct.md`.
+  **Horas:** ~0,6 h (Claude).
+- **¿Cambia la memoria técnica?** Evaluado (R3): **no todavía**. Es un defecto del *procedimiento* de
+  despliegue, no del producto; los apartados 5 y 7 describen el estado de producción, que no ha cambiado
+  porque aún no se ha desplegado. Se volcará con el despliegue, junto al resultado.
