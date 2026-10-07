@@ -152,6 +152,8 @@ El enunciado pide que todo requisito modificado o descartado lleve su versión o
 - *Versión original (P1):* interceptación del tráfico del navegador mediante archivo de autoconfiguración de proxy (PAC) + WebSockets.
 - *Versión nueva:* el servidor ejecuta las peticiones directamente con `httpx`, sin interponerse en el navegador del auditor.
 - *Motivo:* en la P1, el modelo PAC quedó expuesto y se saturó con tráfico de bots. El pivote a `httpx` directo elimina esa superficie y simplifica el flujo. Es el caso de libro de «requisito reformulado con justificación».
+- *Cierre en la Fase 2 (6-oct): el PAC se retiró del código.* Hasta entonces el producto seguía sirviendo el fichero de autoconfiguración aunque el modelo estuviera abandonado desde la P1. Se comprobó que estaba muerto antes de tocarlo: su único consumidor en la interfaz era un componente *que ningún otro fichero importaba*, y el segundo (el lanzador de navegador de RF-09) no está integrado y además apunta a un puerto que la Fase 1 había cerrado, así que ya estaba roto por su cuenta. Se retiraron la ruta del backend, sus dos bloques en Nginx y el componente.
+- *Ganancia de seguridad no buscada.* El PAC era la *única* ruta que tenía que quedar sin autenticar, porque un navegador no envía credenciales al pedirlo, y por eso llevaba una excepción expresa en el guardián de la Fase 2. Al jubilarlo, *toda* `/api` exige token sin excepciones: no queda ningún hueco que mantener ni que explicar. Una excepción de seguridad que se puede eliminar vale más que una excepción bien documentada.
 
 === RNF-06 — operación degradada (*a revisar*)
 - *Original:* enunciado como principio en la P1, sin demostrar.
@@ -168,14 +170,14 @@ El enunciado pide que todo requisito modificado o descartado lleve su versión o
 = 5. Arquitectura y decisiones técnicas
 HookSuite se despliega como un conjunto de contenedores Docker coordinados por `docker-compose`, todos en una red interna `hooksuite-net`, con Nginx como única puerta de entrada. Arquitectura verificada fichero a fichero en la cocina local el 4-oct (`docker-compose.yml` + `infra/nginx.conf`).
 
-#imagen("../capturas/arquitectura-p3.svg", "Arquitectura de contenedores de HookSuite: Nginx es la única entrada (Basic Auth); el backend FastAPI orquesta Spider/Repeater/Intruder/IA/Playwright y sale al objetivo auditado con `httpx`. En rojo, el estado actual a corregir (apartado 7).")
+#imagen("../capturas/arquitectura-p3.svg", "Arquitectura de contenedores de HookSuite: Nginx es la única entrada; el backend FastAPI orquesta Spider/Repeater/Intruder/IA/Playwright y sale al objetivo auditado con `httpx`. Desde la Fase 2 la autenticación ya no está en Nginx sino en el backend, que exige token en toda `/api` y `/ws/` (apartado 7).")
 
 == Componentes
 #tabla(
   (auto, 3fr, 5fr, auto),
   "
   Componente | Tecnología | Rol | Puerto (prod.)
-  *nginx* | `nginx:alpine` | Proxy inverso y único punto de entrada; Basic Auth; enruta a frontend, backend y DVWA | `80→80`
+  *nginx* | `nginx:alpine` | Proxy inverso y único punto de entrada; enruta a frontend y backend (el laboratorio salió del proxy en la Fase 1 y el control de acceso pasó al backend en la Fase 2) | `80→80`
   *frontend* | React + Vite (build propio) | Dashboard web (SPA) servido como estático | `3000→80`
   *backend* | FastAPI + uvicorn (build propio) | API de auditoría: proxy `httpx`, Spider, Repeater, Intruder, utilidades, vulnerabilidades y WebSocket | `8000→8000`
   *redis* | `redis:7-alpine` | Bus de eventos y estado efímero entre servicios | interno
@@ -187,11 +189,13 @@ HookSuite se despliega como un conjunto de contenedores Docker coordinados por `
 
 == Enrutado (Nginx)
 Toda petición entra por Nginx, que reparte por ruta (`infra/nginx.conf`):
-- `/` → *frontend* (protegido con Basic Auth).
-- `/api/` y `/ws/` → *backend* (API y WebSocket).
-- `/check/` y `/proxy.pac` → *backend* (utilidades del proxy).
+- `/` → *frontend*: sirve el panel de acceso propio del producto. Hasta la Fase 2 iba protegido con Basic Auth; ya no.
+- `/api/` y `/ws/` → *backend* (API y WebSocket). Desde la Fase 2, *ambas exigen token*; sin él responden `401`.
+- `/check/` y `/proxy.pac` → *retiradas en la Fase 2*, al jubilar el fichero de autoconfiguración de proxy (apartado 4, RF-02).
 
 Desde la Fase 1, Nginx es además la *única* entrada: `backend` y `frontend` dejaron de publicar puerto propio, y la ruta hacia el laboratorio vulnerable se retiró del proxy (apartado 7).
+
+*El reparto de responsabilidades cambió con la Fase 2*, y conviene decirlo porque es una decisión de arquitectura, no un detalle: antes Nginx era quien autenticaba (una contraseña única, igual para todos, que no distinguía personas) y el backend no pedía nada. Ahora Nginx solo reparte, y *quien autentica y autoriza es el backend*, que es el único que puede saber de quién es cada dato.
 
 == Decisiones técnicas
 === Proxy del lado servidor: pivote PAC → httpx (RF-02)
@@ -234,6 +238,14 @@ Diez defectos del prototipo, todos reproducidos antes de corregirlos y verificad
   El estado de sesión podía crecer sin límite | El recolector existía pero nunca se ejecutaba, y cualquier identificador nuevo creaba una sesión | RNF-07
   "
 )
+
+== Sistema de acceso por usuario (Fase 2)
+Funcionalidad nueva, no un defecto corregido: cada persona se crea su cuenta, entra con ella y *solo ve sus propias auditorías*. Cubre RF-12 y es lo que cierra las cuatro fugas del apartado 7.
+
+- *Registro con código de invitación.* La persona elige su contraseña y nadie más la conoce —ni quien administra—, pero necesita un código que reparte el grupo. No es abierto a propósito: HookSuite lanza tráfico contra terceros, así que con altas anónimas cualquiera podría usar el Spider o el Intruder contra quien quisiera desde nuestra infraestructura. El código es obligatorio por configuración: si falta, *el servicio no arranca*, en vez de arrancar con el registro abierto sin que nadie lo note.
+- *Entrada con token firmado por el servidor.* Las contraseñas se guardan como hash, nunca en claro. El algoritmo de firma está fijado en el servidor y no se lee del propio token, porque aceptarlo del token permite presentar uno sin firma y que el servidor lo dé por bueno.
+- *Cada usuario, su espacio.* El historial, las cookies capturadas y los hallazgos cuelgan de la cuenta de quien los generó. El identificador de ese espacio *sale siempre del token*: ni de la URL ni del cuerpo de la petición, para que el cliente no pueda elegir dónde escribe.
+- *Cuentas persistentes.* Se guardan en un volumen propio, porque el despliegue reconstruye los contenedores y unas cuentas que se evaporasen en cada despliegue harían inútil el registro. El estado de sesión, en cambio, sigue siendo volátil a propósito (apartado 10): son cosas distintas.
 
 *Nota sobre el último:* no era el defecto que teníamos anotado. El pendiente decía «las sesiones no se conservan al reiniciar»; al abrirlo resultó que el problema real era el contrario y más grave —podían crecer sin límite desde fuera—. La volatilidad se justifica en el apartado 10; lo que se corrigió fue el crecimiento.
 #hueco("José María + Claude", "Documentar cada funcionalidad (qué hace, cómo se usa, qué requisitos cubre) con capturas de producto; las de pantalla las saca José María (R6), tras la Fase 3, cuando el login nuevo cambie las pantallas. El commit de cada módulo se firma a nombre de su responsable cuando toque (R2): Ivan/frontend, Macarena/backend, Nacho/playwright, Carlos/DevTools, José María/IA.")
@@ -280,17 +292,35 @@ Se retiró del proxy la ruta que lo publicaba. Queda accesible únicamente desde
 
 #estado("ok", "EXPOSICIÓN CERRADA Y SERVIDOR ENDURECIDO")
 
-== Lo que todavía no cubre
-La API y el WebSocket siguen *sin autenticación* por detrás del proxy: hoy el único control es el Basic Auth de la entrada, que además no distingue usuarios. Eso lo resuelve el sistema de acceso por usuario de la Fase 2, que es también lo que cierra el aislamiento entre sesiones.
+== Autenticación y aislamiento: de cuatro fugas a cero (Fase 2)
+Hasta la Fase 2, la API y el WebSocket *no tenían autenticación* por detrás del proxy: el único control era el Basic Auth de la entrada, que además no distinguía personas. Eso no era una carencia, sino *cuatro fallos distintos*, los cuatro medidos en la cocina el 6-oct antes de tocar una línea de código. La tabla enfrenta cada uno con lo que lo cierra; la evidencia de los dos lados está en el apartado 8.
 
-Conviene ser concretos, porque «sin autenticación» suena a una sola carencia y en realidad son cuatro fallos distintos, los cuatro medidos en la cocina el 6-oct antes de tocar código:
+#tabla(
+  (5fr, 6fr),
+  "
+  Cómo estaba (medido el 6-oct) | Cómo queda (Fase 2)
+  *La API entera respondía sin credencial.* La asimetría lo delataba: `GET /health` devolvía `401` por el Basic Auth de la entrada, pero `GET /api/session/new` devolvía `200` y entregaba un token. El proxy protegía unas rutas y dejaba `/api` abierta. | Un guardián aplicado *por router*, no ruta por ruta, para que una ruta nueva nazca protegida. Toda `/api` y `/ws/` exigen token: sin él, `401` con cabecera `WWW-Authenticate`. El Basic Auth de la entrada se retiró, porque la credencial la pide ahora quien debe.
+  *El token de sesión no era una credencial, era un nombre.* El backend *creaba* sesión para cualquier cadena inventada, así que no había frontera que violar: bastaba escribir un token cualquiera en la URL. | El token lo *firma el servidor* y el espacio de datos se deduce del token, nunca de la URL ni del cuerpo. El navegador dejó de inventarse su identificador. La ruta que repartía identificadores sin valor de credencial se retiró.
+  *La cookie de sesión de la web auditada se compartía entre todos.* Se guardaba en una tabla global indexada solo por dominio, sin dueño; un segundo usuario leía la cookie capturada por el primero, y se obtenía además sin token. | Las cookies viven dentro de la sesión de cada usuario y la tabla global desapareció. Verificado: el segundo usuario ya no obtiene la cookie del primero.
+  *Los hallazgos se difundían a todos los paneles.* Una vulnerabilidad publicada sin token aparecía en la sesión de dos auditores distintos: en una herramienta de auditoría, eso es una fuga de datos del cliente de otro. | Los dos endpoints que admitían peticiones sin token escriben ahora solo en el espacio de quien llama. Verificado: el segundo usuario no ve el hallazgo del primero.
+  ",
+)
 
-- *La API entera responde sin credencial.* La asimetría lo delata: `GET /health` devuelve `401` por el Basic Auth de la entrada, pero `GET /api/session/new` devuelve `200` y entrega un token. El proxy protege unas rutas y deja `/api` abierta.
-- *El token de sesión no es una credencial, es un nombre.* El backend *crea* una sesión para cualquier cadena inventada, así que no existe frontera que un atacante tenga que violar: basta con escribir un token cualquiera en la URL.
-- *La cookie de sesión de la web auditada se comparte entre todos.* Se guarda en una tabla global indexada *solo por el dominio*, sin dueño. En la prueba, un segundo usuario leyó la cookie que había capturado el primero, y también se obtiene sin presentar token alguno. Dicho sin rodeos: la herramienta filtra el identificador de sesión de la víctima a cualquiera que alcance la API.
-- *Los hallazgos se difunden a todos los paneles.* Una vulnerabilidad publicada sin token apareció en la sesión de dos auditores distintos. En una herramienta de auditoría eso es una fuga de datos del cliente de otro.
+=== Un quinto fallo, que introdujo la propia corrección
+Se documenta porque el enunciado pide las pruebas que fallaron, y porque la lección vale más que el acierto. El guardián comprobaba que el espacio de datos nombrado *en la ruta* fuera el tuyo, pero *cinco rutas reciben ese nombre en el cuerpo de la petición*, y ahí no miraba nadie: un usuario autenticado podía escribir en el espacio de otro con solo ponerlo en el cuerpo. Es el mismo error que este documento le reprocha al código anterior —dejar que el cliente elija dónde escribe— un nivel más abajo.
 
-Los dos últimos son los que convierten la falta de login en algo más que una incomodidad, y son la razón por la que la Fase 2 figura como innegociable. La evidencia completa está en el apartado 8.
+La peor de las cinco fue el Repeater, y se escapó del primer inventario por buscarla con el nombre de modelo equivocado. Ahí el daño no era ensuciar el historial ajeno: el Repeater mantiene *un cliente HTTP persistente por usuario* que acumula las cookies del objetivo auditado —el mecanismo que da servicio a RF-04—, de modo que nombrar a otro en el cuerpo reutilizaba *su sesión ya autenticada contra la web auditada*.
+
+Se descartó la corrección evidente, que era validar ese campo contra el token: funciona, pero deja el dato en manos del cliente y obliga a acordarse en cada modelo nuevo. Las rutas toman el espacio del token y *descartan* lo que venga en el cuerpo: lo que no se lee no se puede falsear. Comprobado como ataque real (apartado 8).
+
+=== Lo que este apartado todavía no puede afirmar
+Todo lo anterior está *verificado en la cocina*, el entorno de pruebas, no en producción. Mientras el despliegue no se haga y se verifique allí, la instalación pública sigue sirviendo la versión de la Fase 1 y, por tanto, *sigue teniendo abiertas las cuatro fugas de la columna izquierda*. Se dice expresamente porque la tentación de escribir una mejora en presente antes de que llegue a producción es exactamente como una memoria acaba describiendo un producto que no existe.
+#estado("curso", "FUGAS CERRADAS Y VERIFICADAS EN LA COCINA · PENDIENTE DE DESPLEGAR Y VERIFICAR EN PRODUCCIÓN")
+
+=== Lo que sigue sin cubrir
+- *Sin TLS* (RNF-09): el acceso viaja en claro, así que el token de sesión es interceptable por quien esté en el camino. Pendiente de configurar en el proxy.
+- *Credencial de servicio para los módulos internos* (Fase 3): el clasificador de IA y el agente de Playwright publican sus hallazgos en rutas que ahora exigen token. Hoy no rompe nada porque ninguno de los dos está en marcha, pero la Fase 3 tendrá que dárselas.
+- *Modelo STRIDE, validación de entradas, dependencias y datos personales*, abajo.
 #hueco("José María", "Completar el modelo STRIDE, validación de entradas, dependencias y tratamiento de datos personales.")
 
 = 8. Pruebas y evidencias
@@ -337,7 +367,26 @@ Las cuatro confirmaron el fallo: la API responde `200` sin credencial mientras `
 
 La captura íntegra, con la causa en fichero y línea de cada una, está en `evidencias/fugas-aislamiento-06oct.md`. Una corrección respecto a lo que teníamos anotado: la difusión no ocurre solo en las dos llamadas que emiten a todas las sesiones, sino también en los dos endpoints que admiten peticiones sin token, que además *persisten* el dato en la sesión de todos los usuarios. Son cuatro puntos de difusión, no dos.
 
-#estado("rojo", "FUGAS DE AISLAMIENTO DOCUMENTADAS Y ABIERTAS — LAS CIERRA LA FASE 2")
+== El aislamiento, verificado después de cerrarlo (RF-12)
+Con el sistema de acceso puesto, se repitieron las mismas pruebas contra la cocina. *Once comprobaciones, once en verde*: alta de dos usuarios distintos; entrada de ambos; contraseña incorrecta rechazada con `401` y no con un error del servidor; la identidad del portador del token resuelta correctamente; la API respondiendo con token; `403` al intentar tocar el espacio de otro con token propio —es decir, autenticación *y* autorización, que son cosas distintas—; el segundo usuario sin ver el hallazgo del primero; y el segundo usuario sin ver la cookie de sesión del primero, que era la tercera fuga.
+
+Se probó además *como ataque*, no solo como comprobación: un usuario autenticado intentó dirigir el Spider al espacio de otro nombrándolo en el cuerpo de la petición, que era el quinto fallo del apartado 7. El espacio de la víctima quedó vacío y el rastreo fue a parar al del atacante.
+
+Ni el código de invitación ni las contraseñas aparecen en ninguna salida: el guion de pruebas los mantiene en variables (R7).
+
+#imagen("../capturas/fase2/RF-12-panel-login.png", "RF-12 — la entrada del producto tras retirar el Basic Auth de Nginx: un panel de acceso propio, con pestañas «Entrar» y «Crear cuenta». Antes, la raíz devolvía `401` pidiendo una credencial que ningún integrante del grupo conocía.")
+
+#imagen("../capturas/fase2/RF-12-panel-registro.png", "RF-12 — el alta exige *código de invitación*. El registro no es abierto a propósito: la herramienta lanza tráfico contra terceros, así que con altas anónimas cualquiera podría atacar desde la infraestructura del grupo. La contraseña la elige el usuario y solo la conoce él.")
+
+#imagen("../capturas/fase2/RF-12-registro-cuenta-creada.png", "RF-12 — alta completada: la interfaz confirma la creación de la cuenta y devuelve al formulario de entrada. Cubre la mitad «registro» del requisito, que el enunciado pide junto al login.")
+
+#imagen("../capturas/fase2/RF-12-aislamiento-usuarioA-con-datos.png", "RF-12 — ANTES de la Fase 2 este panel era común a todos. Ahora el usuario A, autenticado, ve las trece peticiones que su propio Spider capturó del objetivo autorizado. Compárese con la captura siguiente, tomada al mismo tiempo.")
+
+#imagen("../capturas/fase2/RF-12-aislamiento-usuarioB-sin-datos.png", "RF-12 — DESPUÉS, el contraste: el usuario B, autenticado a la vez y en otro navegador, ve su panel *vacío*. Antes de la Fase 2 habría visto exactamente lo mismo que el usuario A. Este par es la prueba del aislamiento por usuario.")
+
+> *Nota de tratamiento de las capturas (R7).* La del usuario A mostraba el valor íntegro de la cabecera `XSRF-TOKEN`, que es el identificador de sesión capturado *de la web auditada*: justo el dato que este requisito existe para no compartir. Se publica con ese valor tapado y la etiqueta a la vista, para que se vea qué se redactó; el original no sale del almacén interno. La del usuario B lleva tapada la barra de marcadores del navegador, ajena al proyecto.
+
+#estado("ok", "AISLAMIENTO POR USUARIO VERIFICADO EN LA COCINA (11/11) · PENDIENTE DE VERIFICAR EN PRODUCCIÓN")
 #estado("ok", "EVIDENCIA DE EXPOSICIÓN Y DE LA FASE 1 COMPLETA")
 #hueco("José María + Claude", "Plan de pruebas formal y capturas de PRODUCTO de los bugs (500 de `check/alive`, trampa del Spider) reproducidos en la cocina. Las de pantalla las saca José María (R6), tras la Fase 3, cuando el login nuevo cambie las pantallas. Las pruebas las hacen José María y Claude (R2).")
 
@@ -357,17 +406,19 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
   RF-08 | IA → panel Vulnerabilidades | según alcance | `ia/analyzers/vulnerability_classifier.py` + `backend/routes/vulnerabilities.py` | PR-08 | fig. — · vídeo —:—
   RF-09 | DevTools → panel Red | según alcance | `devtools/` + `backend/routes/network.py` | PR-09 | fig. — · vídeo —:—
   RF-10 | Playwright | según alcance | `playwright/` + `backend/routes/playwright.py` | PR-10 | fig. — · vídeo —:—
-  RF-11 | Multi-usuario (tokens UUID) | Cumplido | `backend/main.py` (`/api/session/new`) | PR-11 | fig. — · vídeo —:—
-  RF-12 | Login JWT + aislamiento | mejora opcional | (por implementar, Fase 2) | PR-12 | fig. — · vídeo —:—
-  RNF-02 | WebSocket en tiempo real | Cumplido | `backend/main.py` (`/ws/{token}`) | PR-17 | vídeo —:—
+  RF-11 | Multi-usuario | Cumplido (reimplementado en F2) | `backend/services/guardia.py` + `services/auth_service.py` | PR-11 | apdo. 7 · figs. apdo. 8
+  RF-12 | Registro y login por usuario + aislamiento | Cumplido en F2 (verificado en cocina 11/11; pendiente de producción) | `backend/services/auth_service.py`, `guardia.py`, `usuarios_store.py`, `frontend/.../LoginPage.jsx` | PR-12 | apdo. 7 · figs. apdo. 8
+  RNF-02 | WebSocket en tiempo real | Cumplido (autenticado en F2: el token viaja en el primer mensaje, no en la URL) | `backend/main.py` (`/ws/`) | PR-17 | apdo. 7 · vídeo —:—
   RNF-03 | Despliegue Docker en Hetzner | Cumplido | `docker-compose.yml` + `infra/nginx.conf` | PR-13 | fig. — · vídeo —:—
   RNF-05 | Límite de concurrencia | Cumplido | `backend/services/intruder_service.py` (`asyncio.Semaphore`) | PR-20 | apdo. 8
-  RNF-07 | Seguridad del producto | Cumplido en F1 (exposición cerrada y servidor endurecido); auth de API pendiente de F2 | ver apartado 7 | PR-14, PR-16 | apdo. 7-8
+  RNF-07 | Seguridad del producto | Cumplido en F1 (exposición cerrada y servidor endurecido) y F2 (autenticación y aislamiento, verificados en cocina) | ver apartado 7 | PR-14, PR-16 | apdo. 7-8
   RNF-08 | Firewall dinámico por sesión | Operativo y endurecido en F1 (permisos del canal y validación de entradas) | `firewall_agent.py` | PR-15 | apdo. 7-8
   RNF-09 | TLS/HTTPS | Pendiente | (por configurar en Nginx) | PR-18 | apdo. 8
   ",
 )
 #estado("curso", "RUTAS VERIFICADAS EN CÓDIGO · PRUEBAS Y MINUTOS DE VÍDEO POR COMPLETAR")
+
+> *Corrección declarada de este documento (7-oct), por R9.* La fila de RF-11 citaba como implementación la ruta `/api/session/new`. Esa ruta *se retiró en la Fase 2*: repartía identificadores que no eran credenciales, y la interfaz no la llamaba desde hacía tiempo. Citar como prueba de un requisito una ruta que ya no existe es el tipo de error que una memoria arrastra hasta la defensa, así que se deja dicho en lugar de corregirlo en silencio. Quien cumple hoy RF-11 es el sistema de acceso por usuario.
 
 El estado de cada prueba (PR-xx) y su resultado detallado están en el apartado 8. Al arreglar cada fallo se reejecuta la prueba y se actualiza la fila. La numeración RF/RNF es la fijada en el apartado 4 y #estado("curso", "PENDIENTE DE VALIDAR POR EL GRUPO").
 #hueco("José María + Claude", "Al revisar el vídeo grabado, anotar el minuto exacto donde se demuestra cada requisito y el número de figura de su captura (R6: el nombre de la captura va atado al ID del requisito, p. ej. `RF-08-panel-ia.png`, para que esta columna se rellene sola).")
