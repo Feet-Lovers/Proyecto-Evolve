@@ -706,7 +706,10 @@ con JWT (RF-07). De ahí salieron tres arreglos:
   despliegue que estrena la autenticación, y mezclar dos cambios hace que un fallo no diga cuál lo causó.
   Va a la Fase 3, que es donde el plan lo tenía.
 - **Requisito:** RF-12, RNF-03, y evidencia para RF-10. **Evidencia:**
-  `evidencias/caja-estado-previo-despliegue-07oct.md` y `evidencias/fugas-vivas-en-produccion-07oct.md`.
+  `evidencias/pre-despliegue-fase2-nginx-07oct.md` (estado de la caja) y
+  `evidencias/fugas-vivas-en-produccion-07oct.md`.
+  ⚠️ **Cita reapuntada el 7-oct a las 17:40** — ver la entrada «Las fugas, confirmadas vivas»: los dos
+  nombres que había aquí **no existían**, la sesión se cortó antes de escribirlos.
   **Horas:** ~0,4 h (Claude).
 
 ### Fase 2 (7-oct, tarde) · El despliegue no habría aplicado la configuración de Nginx, y el plan decía que sí
@@ -744,3 +747,35 @@ con JWT (RF-07). De ahí salieron tres arreglos:
 - **¿Cambia la memoria técnica?** Evaluado (R3): **no todavía**. Es un defecto del *procedimiento* de
   despliegue, no del producto; los apartados 5 y 7 describen el estado de producción, que no ha cambiado
   porque aún no se ha desplegado. Se volcará con el despliegue, junto al resultado.
+
+### Fase 2 (7-oct, 17:30) · Las fugas, confirmadas vivas en producción — y dos cuentas pendientes del diario
+- **Qué:** antes de arrancar el despliegue, josemax pidió confirmar en vivo que las fugas de aislamiento
+  siguen abiertas en `www.hooksuite.de`. Hecho con **peticiones GET exclusivamente**.
+- **Resultado:** **fugas 1 y 2 COMPROBADAS en vivo** (`/` y `/health` → 401 pero `/api/…` → 200; y un token
+  jamás emitido obtiene `200` en dos routers distintos, o sea `get_session()` se lo crea). **Fuga 3, parcial:**
+  el endpoint de lectura de cookies responde `200` **sin token**, que es la puerta, pero el trasvase A→B no se
+  reprodujo. **Fuga 4, no sondeada.**
+- **Por qué no se comprobaron enteras, que es la parte que importa:** el guion del 6-oct necesita dos `POST`
+  (guardar una cookie, publicar una vulnerabilidad) y **R1 prohíbe los comandos de prueba en la caja**. Se
+  podía haber hecho «solo por esta vez»; no se hizo, y lo que un `POST` habría demostrado queda escrito como
+  **inferido del código desplegado**. La inferencia es sólida —los tres commits del arreglo no son ancestros
+  de `main@485a22ec` ni están en ninguna rama remota, así que lo que atiende hoy es el código de antes— pero
+  **inferido no es comprobado y no se mezclan**.
+- 🔧 **CORRECCIÓN (R9) a la entrada «Reconocimiento previo al despliegue» de esta misma tarde.** Dos cosas:
+  1. Escribí que **las cuatro** fugas estaban «comprobadas con peticiones de solo lectura». **Es un
+     redondeo:** con GET se comprueban dos y media. Las otras no se podían comprobar sin escribir en
+     producción. Queda arriba el reparto exacto.
+  2. Citaba como evidencia `caja-estado-previo-despliegue-07oct.md` y `fugas-vivas-en-produccion-07oct.md`,
+     y **ninguno de los dos existía** —ni en disco ni en ninguna rama—: la sesión se cortó antes de
+     escribirlos. Es la tercera cita muerta de esta línea. El primero se ha **reapuntado** al fichero real
+     que sí cubre el estado de la caja; el segundo **se ha escrito ahora**, con el alcance honesto.
+- **Lo que esto cambia del despliegue:** nada del procedimiento, pero sí de la prioridad. La API de
+  producción es alcanzable sin credencial **ahora mismo**, y HookSuite lanza tráfico contra terceros: el
+  despliegue deja de ser papeleo de fin de fase.
+- **Efecto secundario declarado:** las sondas crearon **dos sesiones vacías** en la memoria del backend de
+  producción — que es justamente el defecto que demuestran. Nada en disco; las recoge `cleanup_old_sessions()`.
+- **Requisito:** RF-12, apartado 8. **Evidencia:** `evidencias/fugas-vivas-en-produccion-07oct.md`.
+  **Horas:** ~0,3 h (Claude).
+- **¿Cambia la memoria técnica?** Evaluado (R3): **sí, el apartado 8** — es una prueba con resultado, no un
+  detalle de procedimiento. Se vuelca junto al resultado del despliegue, que ocurre a continuación y toca el
+  mismo apartado; si el despliegue se interrumpiera, este volcado se hace igual antes de cerrar.
