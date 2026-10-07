@@ -779,3 +779,29 @@ con JWT (RF-07). De ahí salieron tres arreglos:
 - **¿Cambia la memoria técnica?** Evaluado (R3): **sí, el apartado 8** — es una prueba con resultado, no un
   detalle de procedimiento. Se vuelca junto al resultado del despliegue, que ocurre a continuación y toca el
   mismo apartado; si el despliegue se interrumpiera, este volcado se hace igual antes de cerrar.
+
+### Fase 2 (7-oct, 17:45) · La Fase 2 sale de la cocina: 12 commits empujados y PR #6 abierto
+- **Qué:** la mitad que no necesita manos en la caja. Cerco de la línea en verde (es el que vigila que no se
+  cuele un secreto en lo compartible, y el repo es **público**) → `git push origin develop` → **PR #6**
+  `develop`→`main`: 15 commits, 80 ficheros, `mergeable: true`.
+- **Por qué el PR sale `blocked` y no es un problema:** es la regla de **1 revisión aprobatoria** de `main`,
+  con `enforce_admins: false` → josemax mergea como admin. Igual que el PR #4 de la Fase 1.
+- **El cuerpo del PR lleva las tres cosas propias de este despliegue**, para que quien lo lea no las deduzca:
+  los secretos **antes** de arrancar los contenedores, el `--force-recreate nginx`, y el volumen `usuarios`.
+- **Autenticación:** la credencial de push almacenada **seguía siendo válida**; no hizo falta un PAT nuevo, al
+  contrario de lo que daba por supuesto `FLUJO-GITHUB.md`. Token leído a variable, **sin mostrar su valor**
+  (R7), y comprobado antes con un `push --dry-run`.
+- **Estado del remoto leído con `ls-remote`** (R9, no de refs locales): `develop` en el commit nuevo, `main`
+  aún en `485a22ec`.
+- **Lo que queda y no se hizo:** el bloque del **punto de retorno (R8) se entregó a josemax y no se ejecutó**;
+  tuvo que cerrar la sesión. **La caja no se ha tocado: sigue sirviendo la Fase 1 con las fugas abiertas.** El
+  punto de retoma exacto, con los cuatro pasos en orden, está en el pendiente del despliegue de la `LINEA.md`
+  de la línea.
+- **Decisión del punto de retorno, por si se retoma con otra cabeza:** tres capas (fallo de build = no-evento ·
+  imágenes etiquetadas `prefase2/*:07oct` · commit `485a22ec` + copia del `.env` en modo 600) y **sin `tar` del
+  árbol**, a diferencia del 5-oct: la caja tiene 0 ficheros sin commitear, así que `reset --hard` lo
+  reconstruye exacto. El `.env` sí se copia porque git no lo guarda y el despliegue lo va a modificar.
+- **Requisito:** RF-12, RNF-03. **Evidencia:** `(no aplica)` — el PR y el estado del remoto son el rastro.
+  **Horas:** ~0,2 h (Claude).
+- **¿Cambia la memoria técnica?** Evaluado (R3): **no**. Nada del producto ha cambiado todavía; la memoria ya
+  dice que la Fase 2 no está en producción, y eso sigue siendo cierto.
