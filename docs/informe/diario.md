@@ -1229,3 +1229,29 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
 - **A qué requisito toca:** RF-08 y RNF-06; apartados 3, 8 y 10 de la memoria.
 - **Evidencia:** `evidencias/gasto-api-origen-y-topes-08oct.md`
 - **Horas:** ~0,6 h (Claude).
+
+### Fase 3 (8-oct, 16:00) · El artefacto local queda al día; el PUBLICADO no, y la causa es nueva
+
+- **Qué pasó:** regeneradas las tres salidas (`.typ` 15:51, artefacto 15:51, PDF 15:52) y verificado el
+  cerco (22/22), **la republicación del artefacto en su URL fija falló**: el clasificador del auto-mode
+  bloqueó la subida.
+- **Qué descarta el diagnóstico:** no es la ruta ni los parámetros. El primer intento llegó a **validar**
+  (falló solo por faltarle el favicon, que estaba anotado en `LINEA.md:512`: 📋); el segundo, idéntico
+  salvo ese dato, fue bloqueado. El freno salta **al ir a subir el contenido**, que es un documento de
+  auditoría de seguridad de 1,4 MB con capturas embebidas.
+- **Comprobado antes de intentarlo (R7):** el artefacto no contiene ninguna cadena `sk-ant-`, ni material
+  de clave privada. La única coincidencia de `XSRF` es **prosa** de la propia memoria explicando el
+  incidente de la captura del usuario A, no un valor; se verificó mirando solo el texto *anterior* a la
+  coincidencia para no volcar un token si lo hubiera.
+- **Consecuencia honesta:** la pestaña que josemax tiene abierta **sigue mostrando la versión de las
+  14:14**, sin los apartados 3, 8 y 10 de esta tarde. Local y publicado están desparejados, y el cerco de
+  R4 **no lo ve** porque compara HTML local contra `.typ` local — exactamente el agujero que ya estaba
+  anotado esta mañana, ahora con una causa concreta detrás.
+- **Qué se descartó:** copiar el artefacto al directorio de trabajo para publicarlo desde allí. Si el
+  freno mira el contenido, la copia no cambia nada, y dejaría una tercera copia del artefacto que puede
+  desfasarse (contra R4: una sola fuente, dos salidas).
+- **A qué requisito toca:** R4 del protocolo de la línea; apartado 11 (proceso).
+- **Evidencia:** `(no aplica)` — el bloqueo es una respuesta de herramienta, no hay salida de terminal
+  que capturar. ⚠️ FALTA: si josemax quiere dejarlo documentado, captura de la pestaña del artefacto
+  mostrando la fecha de regeneración desfasada [pantalla].
+- **Horas:** ~0,2 h (Claude).
