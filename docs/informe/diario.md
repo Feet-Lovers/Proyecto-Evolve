@@ -37,7 +37,7 @@
   clasificador de permisos además lo bloqueó). La ausencia de auth queda probada por la `openapi.json` + `/health`.
 - **Requisito:** RNF autenticación en /api · RNF-08 · RNF-07 · apartado 8 (lo que falla).
 - **Evidencia:** `evidencias/exposicion-caja-04oct.md`, `evidencias/openapi-caja-04oct.json`, 5 capturas en
-  `evidencias/capturas/` (health sin login · Swagger abierto · frontend :3000 sin auth · :80 pide auth ·
+  `capturas/exposicion/` (health sin login · Swagger abierto · frontend :3000 sin auth · :80 pide auth ·
   credencial P1 → 401). **Horas:** ~1 h.
 
 ### Montaje de la cocina (este repo, en local, R1)
@@ -570,7 +570,7 @@ con JWT (RF-07). De ahí salieron tres arreglos:
   `location /proxy.pac` no (`nginx.conf:33-35`), así que el PAC servido por la URL corta —la que un usuario
   pega en el navegador— anunciaba `PROXY backend:8080`, un nombre interno de Docker que su máquina no resuelve.
   Toca RF-02. Quedó resuelto al jubilar el PAC entero (entrada siguiente).
-- **Requisito:** RF-12, RF-02. **Evidencia:** `evidencias/capturas/RF-12-panel-login.png` y
+- **Requisito:** RF-12, RF-02. **Evidencia:** `capturas/fase2/RF-12-panel-login.png` y
   `RF-12-panel-registro.png`. **Horas:** ~1 h estimada (Claude) + ~0,3 h (josemax: credenciales y recreado).
 
 ### Fase 2 (6-oct) · El PAC jubilado, y una ganancia de seguridad no buscada
@@ -630,7 +630,7 @@ con JWT (RF-07). De ahí salieron tres arreglos:
   paso 0, cerrada y verificada.
 - **Sin secretos (R7):** el código de invitación y las contraseñas se quedaron en variables del script; no
   aparecen en ninguna salida.
-- **Requisito:** RF-12, RNF-07. **Evidencia:** `evidencias/capturas/RF-12-registro-cuenta-creada.png`,
+- **Requisito:** RF-12, RNF-07. **Evidencia:** `capturas/fase2/RF-12-registro-cuenta-creada.png`,
   `RF-12-aislamiento-usuarioA-con-datos.png`, `RF-12-aislamiento-usuarioB-sin-datos.png`.
   **Horas:** ~1,5 h estimadas (Claude) + ~0,5 h (josemax: retirada del Basic Auth y pruebas en el navegador).
 
@@ -805,3 +805,46 @@ con JWT (RF-07). De ahí salieron tres arreglos:
   **Horas:** ~0,2 h (Claude).
 - **¿Cambia la memoria técnica?** Evaluado (R3): **no**. Nada del producto ha cambiado todavía; la memoria ya
   dice que la Fase 2 no está en producción, y eso sigue siendo cierto.
+
+### Fase 2 (8-oct, 08:17) · El punto de retorno, ejecutado por fin — y dos citas que apuntaban mal, no muertas
+
+- **Qué se hizo:** josemax lanzó el **bloque 1 del despliegue de la Fase 2**, el punto de retorno (R8) que
+  quedó entregado y sin ejecutar al cerrar la sesión de ayer. Salida completa en
+  `evidencias/punto-retorno-fase2-08oct.md`. Resultado: `485a22ec` escrito en
+  `/root/VUELTA-ATRAS-fase1.txt`, `.env.pre-fase2` creada en modo 600, y las **4 imágenes etiquetadas**
+  `prefase2/{backend,frontend,playwright,ia}:07oct`.
+- **Por qué se relanzó tal cual y no reescrito:** el bloque se guardó literal en
+  `bloques-despliegue-fase2/01-punto-de-retorno.sh` precisamente para que al retomar con otra sesión fuera
+  **el mismo** y no una reconstrucción de memoria. Se verificó por `sha256` que no había cambiado.
+- **Qué falló (menor, pero anotado):** el **paso 4 del propio bloque listó cero líneas**. `docker images`
+  recorta los espacios del `--format`, así que el `grep '^   prefase2/'` no casaba nunca. El hecho quedó
+  probado igualmente por el contador siguiente —un comando independiente, `4 de 4`— y por el paso 3, que
+  nombra las cuatro con su ID. **Se anota en vez de pasarlo por alto** porque un listado vacío junto a un
+  «4 de 4» es la misma clase de contradicción que el cerco en verde del 5-oct (R4). Arreglo para la próxima:
+  `docker images --filter=reference='prefase2/*'`.
+- **Corrección a lo que yo mismo afirmé esta mañana (R9), declarada y no cambiada en silencio:** al correr a
+  mano el cerco de citas del diario dije que había **dos citas muertas** (`RF-12-panel-login.png` y
+  `RF-12-registro-cuenta-creada.png`) y lo apunté como «cuarto incidente». **Era falso.** Los cinco PNG
+  existen desde el commit `3f3b0b25`, en `docs/capturas/fase2/`. Lo que estaba mal era **el prefijo de la
+  cita** (`evidencias/capturas/` en lugar de `capturas/fase2/`): 3 ocurrencias, corregidas. No se había
+  perdido material; apuntaba a un sitio inexistente.
+- **Qué se descartó:** reescribir el bloque 1 para arreglar el `grep` antes de lanzarlo. Habría roto la razón
+  de haberlo guardado literal (dejaría de ser el bloque que josemax aprobó ayer) y el fallo no afecta a lo
+  que hace, solo a cómo lo muestra.
+- **Lo que esto deja aprendido para el cerco de citas pendiente:** tiene que (a) resolver las rutas contra
+  `docs/`, **no** `docs/informe/` —mi primera pasada dio un falso **25 de 25 muertas** por esa base—,
+  (b) aceptar **comodines** (`RNF07-*.png` cita 5 ficheros de golpe) y (c) **distinguir «el fichero no
+  existe» de «la ruta apunta mal»**, porque el arreglo es distinto: capturar en un caso, corregir el texto
+  en el otro. Tras la corrección: **27 citas a fichero verificadas, 2 a carpeta, 0 inexistentes**.
+- **Dos defectos más, encontrados por equivocarme en vivo y que ningún diseño de sobremesa habría visto:**
+  (d) **un `test -e` da verde a un directorio.** Mi `sed` global mandó por error las 5 capturas de exposición
+  a `capturas/fase2/`, y el cerco **lo aprobó** porque esa carpeta existe — tapó justo el error que acababa de
+  cometer. Una cita a carpeta no prueba ningún fichero y tiene que contarse aparte, nunca sumarse a los
+  verdes. (e) **solo vale mirar el campo «Evidencia:», no la prosa:** esta misma entrada menciona
+  `evidencias/capturas/` al explicar la corrección, y un extractor que lea todo el texto la cuenta como cita
+  rota. Las explicaciones de los arreglos envenenan el cerco si no se acota el campo.
+- **Requisito:** apartado 8 (pruebas), RNF-03. **Evidencia:** `evidencias/punto-retorno-fase2-08oct.md`.
+  **Horas:** ~0,1 h (josemax: ejecutar el bloque) + ~0,4 h (Claude: verificación, evidencia y corrección de citas).
+- **¿Cambia la memoria técnica?** Evaluado (R3): **no todavía**. El producto en producción sigue siendo la
+  Fase 1 y la memoria ya lo dice. Cambiará en cuanto el bloque 3 recree los contenedores: ahí toca el
+  apartado 7 (deja de describir una API abierta) y el 8 (las pruebas de aislamiento pasan a producción).
