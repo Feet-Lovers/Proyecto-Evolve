@@ -1079,3 +1079,43 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
   hace al cerrar cada fase.
 - **Requisito:** RNF-04, apartado 11. **Evidencia:** `(no aplica)` — son decisiones, no hay nada que mostrar.
   **Horas:** ~0,3 h.
+
+### Fase 3 (8-oct, 11:00) · El módulo de IA, diagnosticado a fondo — y tres pendientes que estaban mal descritos
+
+- **Qué se hizo:** diagnóstico completo de RF-08 contra el código real y contra la referencia oficial de la
+  API (R9), y **plan de arreglo escrito entero y sin aplicar**. Decisión de josemax: «preparar, no
+  ejecutar» hasta tener una clave de API válida con la que probar. **El repo quedó intacto: 0 ficheros
+  tocados.** El plan vive en `lineas/practica3-hooksuite/PLAN-RF08-MODULO-IA.md` (fuera del repo del
+  producto) y trae el `client.py` entero reescrito, listo para pegar.
+- 🔎 **Tres pendientes del backlog estaban mal descritos, y corregirlos vale más que el código:**
+  1. **«Umbral sobre el campo `confianza`» — ya existía.** `CONFIDENCE_THRESHOLD = 60` lleva tiempo en
+     `vulnerability_classifier.py:4`, aplicado en los dos analizadores. Se iba a construir algo que ya
+     estaba.
+  2. **«Enredo `justificacion`→`descripcion`» — es UNA línea, no un enredo.** `ia/orchestrator.py:270`
+     es el único sitio del repo que lee `justificacion`; los cuatro prompts piden `descripcion` y el
+     clasificador lee `descripcion`.
+  3. **«SDK `anthropic 0.25` viejo»** ya se había corregido el 6-oct (es del backend, que no importa
+     `anthropic`).
+- 🔴 **El hallazgo que no estaba en ningún pendiente, y es el que de verdad toca RNF-06:** cuando la IA
+  falla, `client.analyze()` devuelve `{"error": …}`; el clasificador hace `result.get("vulnerable")` sobre
+  ese dict, obtiene `None` y devuelve `None` — **exactamente lo mismo que devuelve cuando ha analizado y no
+  hay vulnerabilidad**. Un fallo de la IA es hoy **indistinguible de «analizado, está limpio»**. Eso no es
+  operación degradada: es un fallo silencioso, y RNF-06 está precisamente en «A revisar». El plan lo
+  convierte en tres estados distinguibles (vulnerable / analizado-limpio / **no analizado + motivo**).
+- **Tres defectos que ROMPEN con Claude 5, no son mejoras:** `response.content[0].text` revienta con
+  `AttributeError` porque **el pensamiento viene activado por defecto** y el primer bloque puede ser
+  `thinking`; un **rechazo de las salvaguardas de ciberseguridad** llega como HTTP 200 con `content` vacío
+  → `IndexError` (y esto *va* a pasar: HookSuite analiza vulnerabilidades); y `max_tokens=1000` se queda
+  corto porque ese tope ahora cubre pensamiento **y** respuesta, truncando el JSON a media llave.
+- **Qué se descartó:** aplicar los cambios hoy. Sin clave válida no se pueden probar, y un cambio de
+  cliente de API sin una sola llamada real es exactamente la clase de «verde» que esta práctica lleva una
+  semana aprendiendo a desconfiar.
+- **Decisión de modelo:** `claude-sonnet-5`, **en variable de entorno** (`HOOKSUITE_IA_MODELO`). El clasificador
+  corre por paquete interceptado, así que el volumen manda y Sonnet 5 va sobrado para clasificar; dejarlo
+  configurable permite comparar con Opus 5 sobre los mismos paquetes antes de congelar, y esa comparación
+  es material del apartado de decisiones técnicas en vez de una elección sin justificar.
+- **Lo que el plan NO da por bueno:** si el SDK del contenedor soporta `output_config` (el pin es
+  `anthropic>=0.97.0` y las salidas estructuradas son posteriores). Queda escrito como «comprobar al
+  aplicar», con la salida alternativa, en vez de asumirlo.
+- **Requisito:** RF-08, RNF-06, apartados 6 y 10. **Evidencia:** `(no aplica)` — es diagnóstico y diseño,
+  no hay nada que capturar todavía. **Horas:** ~0,8 h (Claude).
