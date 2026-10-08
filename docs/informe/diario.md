@@ -975,3 +975,34 @@ con JWT (RF-07). De ahí salieron tres arreglos:
   y no por conteo, pero se deja dicho que no se miró en lugar de dar a entender que sí.
 - **Requisito:** RNF-07, apartado 7. **Evidencia:** `evidencias/cortafuegos-ipv6-caja-08oct.md`.
   **Horas:** ~0,1 h (josemax) + ~0,2 h (Claude).
+
+### Fase 2 (8-oct, 10:05) · La interfaz en móvil: capturada antes de decidir si se arregla
+
+- **Qué se hizo:** josemax abrió el panel de producción desde el móvil y sacó la captura del estado actual.
+  Evidencia: `evidencias/movil-layout-desbordado-08oct.md` + `capturas/fase2/RF-01-movil-layout-desbordado.jpeg`.
+- **Por qué se capturó antes de decidir nada (R6):** si se arregla el responsive, la imagen deja de poder
+  tomarse. Se sacó nada más detectar el problema, **sin esperar a saber si se iba a corregir**, porque el
+  coste es cero y la pérdida sería irreversible.
+- **Qué muestra:** el diseño de escritorio sin adaptar. La barra de secciones se corta tras `INTRUDER`
+  (UTILIDADES, VULNERABILIDADES y RED quedan fuera), el campo de URL aparece seccionado a media palabra, el
+  botón de añadir cabeceras queda cortado por el borde, y el layout de dos columnas **se mantiene en
+  vertical**: la derecha gasta media pantalla con un texto de ayuda mientras la izquierda va estrujada.
+- **Lo que esta evidencia NO resuelve, y de ello depende la clasificación:** no se sabe si la barra de
+  secciones **se puede desplazar con el dedo**. Si se desplaza es incomodidad y RF-01 sigue cumplido; si no,
+  **tres de las siete secciones son inalcanzables desde un móvil** y RF-01 —«accesible desde cualquier
+  navegador»— deja de estar limpiamente cumplido. Queda marcado como pendiente de comprobar en lugar de
+  suponer la respuesta cómoda: es el mismo criterio que con el 404 de IPv6, donde una hipótesis razonable
+  («Docker no publica en IPv6») resultó falsa.
+- **Corrección a una valoración propia del mismo día, declarada (R9):** al preguntar josemax si merecía la
+  pena retocar el móvil, se respondió que era mejora y no requisito, apoyándose en que los nueve RNF no
+  mencionan responsive ni usabilidad —lo cual es cierto y se verificó en `REQUISITOS.md`—. **Esa valoración
+  se dio antes de ver la captura** y daba por hecho que el problema era estético. Visto el desbordamiento,
+  queda condicionada a la comprobación de arriba.
+- **Qué se descartó, y por qué:** abordar el **rediseño** de la interfaz antes de la entrega. Tres motivos:
+  no lo pide ningún requisito; tocaría todas las pantallas e **invalidaría las capturas de producto ya
+  incorporadas** (las cuatro `RF-12-prod-*` de hoy), que es justo lo que R6 previene; y la congelación es el
+  **13-oct**, con RF-08, RNF-06 y los tests todavía abiertos, que puntúan más. El rediseño va al apartado 10
+  como trabajo futuro, con el razonamiento de por qué no se hizo — que es donde el enunciado busca criterio.
+- **Requisito:** RF-01, RNF-09, apartados 8 y 10.
+  **Evidencia:** `evidencias/movil-layout-desbordado-08oct.md`, `capturas/fase2/RF-01-movil-layout-desbordado.jpeg`.
+  **Horas:** ~0,1 h (josemax) + ~0,3 h (Claude).
