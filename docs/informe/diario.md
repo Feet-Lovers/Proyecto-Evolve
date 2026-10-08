@@ -954,3 +954,24 @@ con JWT (RF-07). De ahí salieron tres arreglos:
 - **Requisito:** RF-12, RNF-07, RNF-09 (sin TLS, visible en la barra «No seguro»), apartado 7 y 8.
   **Evidencia:** las 4 capturas citadas arriba + `evidencias/despliegue-fase2-produccion-08oct.md`.
   **Horas:** ~0,3 h (josemax: capturas y prueba desde datos móviles) + ~0,5 h (Claude).
+
+### Fase 2 (8-oct, 07:38) · Comprobar el cortafuegos IPv6 ANTES de tocar el DNS
+
+- **Qué se hizo:** antes de corregir el registro `AAAA`, se verificó que el cortafuegos de la caja cubre
+  IPv6. Evidencia: `evidencias/cortafuegos-ipv6-caja-08oct.md`.
+- **Por qué antes y no después:** el arreglo del 404 consiste en apuntar el `AAAA` a la caja. El
+  endurecimiento del 5-oct cerró el `:8000` y el `:3000`, pero **si esas reglas estuvieran solo en
+  `iptables` y no en `ip6tables`**, apuntar el dominio a la IPv6 habría expuesto por esa vía justo lo que
+  cerramos, y encima lo habría hecho fácil de encontrar. Comprobarlo después habría sido comprobarlo tarde.
+- **Resultado: cubre las dos familias.** `ufw` con `IPV6=yes` y cada regla duplicada en v6 · `ip6tables` con
+  la misma política `INPUT DROP` que `iptables` · por IPv6 solo escuchan `:80` y `:22` · los tres puertos
+  cerrados el 5-oct siguen cerrados también por IPv6 · y el `:80` responde `200` por
+  `2a01:4f8:1c1e:7714::1`, lo que prueba que el panel se servirá por IPv6 **sin tocar nada de la caja**.
+- **Decisión que habilita:** corregir el `AAAA` a la IPv6 de la caja, **en vez de retirarlo**. Retirarlo era
+  el plan mientras no se supiera si el cortafuegos aguantaba; sabiéndolo, corregirlo deja el servicio
+  disponible por las dos vías y cierra el riesgo de que un dominio nuestro apunte a una máquina ajena.
+- **Lo que se anota sin resolver:** `iptables` tiene 9 reglas en INPUT y `ip6tables` 7; **no se miró cuáles
+  son las dos de diferencia**. No cambia el veredicto, porque lo que importa se verificó por comportamiento
+  y no por conteo, pero se deja dicho que no se miró en lugar de dar a entender que sí.
+- **Requisito:** RNF-07, apartado 7. **Evidencia:** `evidencias/cortafuegos-ipv6-caja-08oct.md`.
+  **Horas:** ~0,1 h (josemax) + ~0,2 h (Claude).
