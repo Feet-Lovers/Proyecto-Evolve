@@ -922,5 +922,35 @@ con JWT (RF-07). De ahí salieron tres arreglos:
   en la plantilla (`#tabla2`). Habría roto la compilación. Se detectó antes de compilar comprobando que el
   nombre no aparecía en ninguna otra parte del documento, y se corrigió al formato real `#tabla(cols, datos)`.
 - **Requisito:** RF-12, RNF-07, apartado 7 y 8. **Evidencia:** `evidencias/despliegue-fase2-produccion-08oct.md`
-  + ⚠️ FALTA: **las 3 capturas del panel en producción (panel sin Basic Auth · registro pidiendo el código ·
-  sesión iniciada) [pantalla, josemax]**. **Horas:** ~0,2 h (josemax) + ~0,8 h (Claude).
+  + `capturas/fase2/RF-12-prod-panel-login-sin-basic-auth.png`, `capturas/fase2/RF-12-prod-registro-pide-codigo-invitacion.png`,
+  `capturas/fase2/RF-12-prod-cuenta-creada.png`, `capturas/fase2/RF-12-prod-sesion-iniciada.png` (sacadas por josemax ese mismo día; ya en la memoria con su pie). **Horas:** ~0,2 h (josemax) + ~0,8 h (Claude).
+
+### Fase 2 (8-oct, 09:30) · Cuatro capturas en vez de tres, y el 404 de IPv6 resuelto: era el DNS
+
+- **Las capturas del acceso en producción, hechas e incorporadas.** josemax sacó **cuatro** donde se pidieron
+  tres, y la cuarta mejora el conjunto: separó la pestaña «Entrar» de la de «Crear cuenta» y añadió la
+  confirmación del alta, de modo que la secuencia documenta **el flujo completo** (entrada sin Basic Auth →
+  alta pidiendo código → cuenta creada → sesión dentro) en vez de solo el antes y el después. Renombradas
+  con el requisito delante (`RF-12-prod-*`), llevadas a `docs/capturas/fase2/` y puestas en el apartado 7
+  con su pie, como exige el enunciado.
+- **Revisadas una a una antes de publicarlas (R7), y ninguna necesitó censura:** las contraseñas salen
+  enmascaradas y el campo del código de invitación muestra el *texto de ayuda*, no el valor. Se comprueba
+  siempre: una captura del Spider ya se coló en su día con un token entero a la vista.
+- **La cuarta prueba algo que las otras no:** el interceptor aparece como *conectado* con la sesión abierta,
+  o sea que **el WebSocket viaja autenticado también**, no solo la API. Toca RNF-07 además de RF-12.
+- 🟢 **El 404 por IPv6 queda diagnosticado, y no era lo que yo había supuesto.** Mi hipótesis era que Docker
+  no publicaba en IPv6. **Falsa:** `ss` muestra `docker-proxy` escuchando en `0.0.0.0:80` *y* en `[::]:80`,
+  y `docker port` confirma los dos. La causa real la delató la cabecera: por IPv4 responde
+  `Server: nginx/1.31.0` (el nuestro) y por IPv6 `Server: Apache`, **y en la caja no hay ningún Apache**.
+  Comparadas las direcciones: el dominio resuelve a `2a01:4f8:d0a:27bd::2`, pero la IPv6 de la caja es
+  `2a01:4f8:1c1e:7714::1`. **El registro `AAAA` apunta a otra máquina.** El registro `A` sí es correcto.
+- **Por qué importa más de lo que parece, y no es solo disponibilidad:** mientras el `AAAA` apunte a un
+  servidor ajeno, *cualquier contenido que esa máquina sirva se muestra bajo nuestro dominio* a quien llegue
+  por IPv6. Hoy es un 404 inofensivo; es, en esencia, un dominio apuntando a infraestructura que no
+  controlamos. Entra en el apartado 7 como hallazgo propio.
+- **Qué se descartó:** habilitar IPv6 en el daemon de Docker, que era el plan si la causa hubiera sido la
+  que supuse. Habría exigido reiniciar el daemon —parando todos los contenedores— a ocho días de la entrega,
+  y **no habría arreglado nada**, porque el tráfico ni siquiera llegaba a la caja.
+- **Requisito:** RF-12, RNF-07, RNF-09 (sin TLS, visible en la barra «No seguro»), apartado 7 y 8.
+  **Evidencia:** las 4 capturas citadas arriba + `evidencias/despliegue-fase2-produccion-08oct.md`.
+  **Horas:** ~0,3 h (josemax: capturas y prueba desde datos móviles) + ~0,5 h (Claude).

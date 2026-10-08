@@ -331,6 +331,16 @@ El despliegue se hizo el *8 de octubre a las 06:52 UTC*, en cuatro pasos con pun
 
 El dato de los *cero reinicios* no es decorativo: el acceso por usuario se diseñó para *no arrancar* si faltan el secreto de firma o el código de invitación, en lugar de arrancar sin autenticación pareciendo correcto. Que el contenedor esté sirviendo sin un solo reinicio es la prueba de que esa comprobación se superó.
 
+El flujo completo del acceso, capturado en la instalación pública el mismo día del despliegue:
+
+#imagen("../capturas/fase2/RF-12-prod-panel-login-sin-basic-auth.png", "RF-12 — la entrada de `www.hooksuite.de` carga *sin* el cuadro de Basic Auth que antes pedía una contraseña compartida por todo el grupo. La puerta la guarda ahora el acceso por usuario.")
+
+#imagen("../capturas/fase2/RF-12-prod-registro-pide-codigo-invitacion.png", "RF-12 — el alta exige un *código de invitación*. El registro no es abierto a propósito: la herramienta lanza tráfico contra terceros, y con altas anónimas cualquiera atacaría a quien quisiera desde nuestra infraestructura. El campo de la imagen muestra el texto de ayuda, no el código.")
+
+#imagen("../capturas/fase2/RF-12-prod-cuenta-creada.png", "RF-12 — confirmación del alta del primer usuario de producción, creado con el código de invitación. La instalación arrancó deliberadamente con cero usuarios.")
+
+#imagen("../capturas/fase2/RF-12-prod-sesion-iniciada.png", "RF-12 y RNF-07 — sesión iniciada: el usuario figura en la cabecera y el interceptor aparece como *conectado*, lo que prueba que el WebSocket viaja también autenticado y no solo la API.")
+
 *Lo que sigue sin poder afirmarse, y no se disfraza.* El dominio publica también una dirección IPv6, y por ese camino la comprobación devolvió `404` en lugar del panel. No está confirmado qué ve un visitante real que llegue por IPv6, porque desde el equipo de pruebas no hay salida por esa vía. Mientras no se compruebe desde una red con IPv6, la disponibilidad solo está demostrada por IPv4.
 #estado("ok", "CUATRO FUGAS CERRADAS Y VERIFICADAS EN PRODUCCIÓN (8-oct, 06:52 UTC) · PENDIENTE: COMPROBAR LA LLEGADA POR IPv6")
 
