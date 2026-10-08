@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Button, Badge } from '@/components/ui'
-import axios from 'axios'
-import { config } from '@/services/api'
+import { api, config } from '@/services/api'
 import { useAppContext } from '@/AppContext'
 
 const ATTACK_TYPES = [
@@ -160,7 +159,7 @@ export function IntruderPage() {
     while (!done) {
       await new Promise(r => setTimeout(r, 1000))
       try {
-        const res = await axios.get(`${config.API_BASE}/api/intruder/results/${token}`)
+        const res = await api.get(`/api/intruder/results/${token}`)
         const data = res.data
         setResults(data.results || [])
         setProgress((data.results || []).length)
@@ -180,7 +179,7 @@ export function IntruderPage() {
     setRunning(true)
     setProgress(0)
     try {
-      await axios.post(`${config.API_BASE}/api/intruder/start`, {
+      await api.post(`/api/intruder/start`, {
         url,
         method,
         body,
@@ -197,7 +196,7 @@ export function IntruderPage() {
   }
 
   const handleCancel = async () => {
-    await axios.post(`${config.API_BASE}/api/intruder/cancel/${sessionToken}`)
+    await api.post(`/api/intruder/cancel/${sessionToken}`)
     setRunning(false)
   }
 

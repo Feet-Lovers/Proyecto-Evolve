@@ -436,3 +436,372 @@ con JWT (RF-07). De ahí salieron tres arreglos:
 - **Hallazgos nuevos:** la caja corre el kernel 6.8.0-117 con el 6.8.0-142 instalado (+49 paquetes
   pendientes); seguía habiendo una regla de ufw de la P1 que nunca se aplicó porque ufw estaba apagado.
 - **Requisito:** RNF-07 · apdo. 7. **Evidencia:** `evidencias/endurecimiento-caja-05oct.md`. **Horas:** ~1 h.
+
+### Fase 1 (5-oct) · Despliegue de los tres arreglos y par antes/después cerrado
+- **Desplegado:** `main` = `485a22ec` (PR #5). Punto de retorno: imágenes `:pre-fase1b`, que devuelven al
+  estado bueno del día, no al de mayo. Rebuild de backend y frontend; Nginx no hizo falta tocarlo.
+- **Verificado en producción:** la cadena «Detener» está en el bundle desplegado; `:80` 401; `/api` 200; y los
+  mensajes de error legibles probados en vivo («no se pudo resolver el host *X*…» frente al `Errno -2` pelado).
+- **Evidencia visual cerrada (R6):** dos pares antes/después. El de los formularios es **la misma petición de
+  la misma página** pasando de `[52 FORM]` a `[1 FORM]`; el del botón, el panel en marcha sin y con «Detener».
+  Las del defecto llevaban un token de sesión visible y van censuradas; las del arreglo no lo llevan.
+- **Requisito:** RF-03 · RF-05. **Evidencia:** `evidencias/arreglos-tras-pruebas-05oct.md`. **Horas:** ~0,4 h.
+
+### Fase 1 (5-oct) · Reinicio del servidor para estrenar el kernel — Fase 1 cerrada
+- **Qué:** reinicio de la caja de producción para pasar del kernel 6.8.0-117 al 6.8.0-142, ya instalado pero
+  sin estrenar. La máquina llevaba sin reiniciarse desde mayo.
+- **Riesgo detectado antes y corregido:** el agente del firewall dinámico no declaraba ninguna orden respecto
+  a Docker. Si Docker levantaba el backend primero, habría creado un **directorio** donde debe ir el socket
+  del agente (comportamiento normal de un bind-mount cuando el origen no existe), y el agente habría entrado
+  en bucle de reinicio. Se añadió una orden de arranque (`Before`) y una limpieza previa tolerante a fallos.
+- **Verificación previa imprescindible:** `ssh.service` aparece como *disabled* en Ubuntu 24.04, lo que
+  asusta, pero quien arranca el acceso es `ssh.socket`, que sí está habilitado. Sin comprobarlo, el reinicio
+  podía haber dejado el servidor sin acceso remoto.
+- **Resultado:** kernel nuevo corriendo, los 7 contenedores de vuelta solos, todo el endurecimiento
+  persistido (cortafuegos, bloqueo de fuerza bruta, acceso solo por clave) y el servicio respondiendo
+  (web, API y WebSocket). El agente marca **0 reinicios**: la carrera no llegó a producirse.
+- **Queda aparte:** 49 paquetes del sistema pendientes de actualizar, como cambio propio.
+- **Requisito:** RNF-07 · apdo. 7. **Evidencia:** `evidencias/endurecimiento-caja-05oct.md` §5. **Horas:** ~0,5 h.
+
+### Fase 1 (5-oct) · Memoria técnica puesta al día (incumplimiento de R3 corregido)
+- **Qué pasó:** el diario se mantuvo al día todo el día, pero la **fuente de la memoria técnica llevaba parada
+  desde las 10:09** mientras el diario llegaba a las 17:38. Lo detectó josemax preguntando si «memoria técnica»
+  se refería a los `.typ` y el artefacto. **No lo era**: lo que estaba al día era el diario y las evidencias.
+- **Por qué importa:** el apartado 7 describía en presente una API abierta sin autenticación **que ya habíamos
+  cerrado**. La memoria estaba afirmando algo falso del producto.
+- **Volcado (destilado del diario, no investigación nueva):** apartado 5 (enrutado y puntos ya corregidos),
+  6 (tabla de los doce defectos con causa y requisito), 7 (reescrito: exposición en pasado + endurecimiento
+  aplicado + dos matices honestos sobre lo que NO nos atribuimos), 8 (dos pares de capturas antes/después y la
+  condición de carrera del arranque), 9 (seis filas de la matriz).
+- **Fallo propio al generar y cómo se cazó:** la tabla nueva se escribió como `#tabla(3, …)` en vez de la forma
+  del dialecto `#tabla((anchos), …)`. Typst compilaba igual, pero **el generador del artefacto se comía los
+  apartados 7, 8 y 9** (13 → 10 apartados, 886 KB → 41 KB). Se detectó comparando el recuento del artefacto
+  con el de la fuente antes de publicar; se corrigió y se republicó.
+- **Salidas regeneradas en el mismo paso (R4):** PDF 825 KB y artefacto 886 KB con 9 imágenes incrustadas.
+- **Horas:** ~0,8 h.
+
+### Fase 2 (6-oct) · Evidencia de las tres fugas de aislamiento, capturada ANTES de arreglar nada
+- **Qué:** cuatro pruebas contra la cocina (a través de Nginx, como un cliente real) que demuestran que el
+  modelo de sesión actual **no aísla a los usuarios entre sí**. Ninguna línea de código tocada todavía.
+- **Por qué AHORA y no después:** R6 — los arreglos de la Fase 2 destruyen esta evidencia y el momento es
+  irrepetible. El apartado 8 exige «pruebas que han fallado, con su explicación», y nuestros propios
+  arreglos son lo que la borra.
+- **Lo encontrado:**
+  1. *La API entera responde sin credencial.* Asimetría delatora: `GET /health` da **401** (Basic Auth de
+     Nginx) pero `GET /api/session/new` da **200** y entrega un token. Nginx protege unas rutas y deja `/api`
+     abierta de par en par.
+  2. *El token no es una credencial.* `get_session()` **crea** una sesión para cualquier cadena inventada
+     (`session_service.py:60-66`), así que no hay frontera que violar: basta inventarse un token.
+  3. *Fuga de cookies entre usuarios.* `session_cookies` es un dict **global indexado solo por host**
+     (`network.py:12`). El usuario B leyó la cookie de sesión que había guardado el usuario A — y también se
+     obtiene **sin token alguno**. Es un secuestro de sesión de la víctima auditada.
+  4. *Fuga de broadcast.* Una vulnerabilidad publicada **sin token** apareció en la sesión de dos auditores
+     distintos. Para una herramienta de auditoría es una fuga de datos de cliente.
+- **Corrección a la hoja de ruta (R9):** la fuga de broadcast es **más amplia** de lo que teníamos anotado.
+  No son solo las dos llamadas a `emit_all` (`redis_consumer.py:15`, `mitm_proxy.py:49`): los dos endpoints
+  **sin token** (`POST /api/vulnerabilities`, `POST /api/network/packet`) recorren todas las sesiones y
+  **escriben además de emitir**, que es peor. Son **cuatro** puntos de difusión, no dos.
+- **Qué se descartó:** demostrar la fuga de broadcast con dos WebSockets y Redis. Se descartó porque los dos
+  endpoints sin token la prueban con un solo `curl`, de forma determinista y reproducible por cualquiera del
+  grupo; montar clientes WebSocket habría añadido piezas móviles sin añadir fuerza probatoria.
+- **Qué falló:** nada en la captura. Sí falló mi arranque de la sesión: entré a preparar RF-08 (módulo de IA)
+  guiándome por el hito del 9-oct, cuando RF-08 es **Fase 3** y la Fase 3 tiene puerta («no se toca hasta que
+  0-2 estén verdes»). Lo paró josemax preguntando. Queda anotado porque es un fallo de método, no de dedo:
+  leí el calendario y no el plan de fases.
+- **Sin secretos (R7):** los valores de cookie usados son inventados a propósito; no se ha movido ninguna
+  credencial real ni aparece ninguna en la captura.
+- **Requisito:** **RF-12** (login JWT + aislamiento por usuario); respalda apartados 7 y 8.
+  **Evidencia:** `evidencias/fugas-aislamiento-06oct.md` (captura íntegra + tabla causa/fichero/línea).
+  **Horas:** ~0,5 h (Claude).
+
+> ⚠️ **Las siete entradas que siguen se escribieron el 7-oct, no en el momento. Incumplimiento de R3.**
+> El diario se quedó parado a las 10:57 del 6-oct y la jornada siguió hasta las 20:11. Se deja dicho en vez
+> de disimularlo con fechas: lo reconstruido pierde precisión en las horas, que van marcadas como estimadas.
+> Lo detectó josemax el 7-oct preguntando qué cierra de verdad la Fase 2. Consecuencia doble: ni el diario ni
+> la memoria técnica recogían nueve horas de trabajo, y **el apartado 7 siguió describiendo en presente cuatro
+> fugas que ya estaban cerradas**. Es el mismo fallo del 5-oct, en dirección contraria. Ver el cierre del día.
+
+### Fase 2 (6-oct) · Pasos 1-5: el sistema de acceso por usuario, escrito y probado en frío
+- **Qué:** `auth_service.py` (nuevo) con contraseñas contra hash bcrypt y token firmado por el servidor;
+  `routes/auth.py` reescrito; `usuarios_store.py` como almacén persistente; `guardia.py` como guardián;
+  panel de login/registro en el frontend y un cliente HTTP único (`services/api.js`).
+- **Por qué cada decisión, que es lo que no se reconstruye después:**
+  - **Algoritmo de firma fijado**, no leído de la cabecera del token: aceptar el que diga el token permite el
+    ataque `alg=none`, en el que el atacante presenta un token sin firma y el servidor lo valida.
+  - **Verificación en tiempo constante aunque el usuario no exista.** Si se responde antes cuando el nombre no
+    existe, el retardo delata qué cuentas hay: es un oráculo de enumeración.
+  - **Registro con código de invitación, obligatorio por configuración.** El requisito pide «registro», pero
+    abierto no vale: HookSuite lanza tráfico contra terceros y con altas anónimas cualquiera atacaría desde la
+    infraestructura del grupo. Si falta el código en el entorno, **el backend no arranca** — lo contrario
+    (arrancar con el registro abierto) es un fallo que nadie nota hasta que es tarde.
+  - **Guardián aplicado por router, no ruta por ruta**, para que una ruta nueva **nazca protegida**. Acordarse
+    de proteger cada ruta es exactamente cómo se colaron los dos endpoints sin token que documenta el paso 0.
+  - **El guardián comprueba dos cosas distintas:** que estás autenticado y que el espacio que nombra la URL es
+    tuyo. Solo lo primero dejaría a un usuario legítimo leer lo de otro cambiando el nombre en la ruta.
+  - **El token del WebSocket viaja en el primer mensaje, no en la URL.** Un WebSocket de navegador no admite
+    cabeceras, y en la ruta el token quedaría escrito en los logs de acceso de Nginx.
+  - **Almacén en volumen propio con cerrojo de fichero.** El despliegue es `reset --hard` + rebuild: una cuenta
+    creada en caliente se evaporaría. El cerrojo es porque sin él dos registros simultáneos del mismo nombre
+    pasan los dos y el segundo pisa al primero. Un fichero corrupto **no** se trata como almacén vacío: eso
+    permitiría re-registrar un nombre que ya existe.
+- **Qué se descartó:** dejar el `uid = username + id(objeto)` que había (`auth.py:24`). Es la dirección de
+  memoria del cuerpo de la petición: no es aleatoria y CPython **recicla** esos valores, así que dos usuarios
+  distintos pueden acabar con el mismo identificador.
+- **Qué falló:** nada en esta tanda; 35 pruebas en verde, incluidos firma alterada, token firmado con otro
+  secreto, `alg=none`, caducado y segundo registro del mismo nombre. **Pero las pruebas eran de piezas
+  sueltas**, no del ensamblaje — y eso se pagó por la tarde (ver la entrada del 500 en el login).
+- **Hallazgo colateral:** `grep` de `jwt` y de `Depends(` en todo el backend devolvía **cero**. ~35 endpoints
+  sin un solo guardián, y credenciales en claro en `auth.py:7-10`.
+- **Requisito:** RF-12. **Evidencia:** (no aplica — es construcción; la verificación va en las entradas
+  siguientes). **Horas:** ~3 h estimadas (Claude).
+
+### Fase 2 (6-oct) · Arranque en la cocina y verificación en vivo del guardián
+- **Qué:** josemax generó las credenciales con `tools/generar-credenciales.py` (R7: las pone él), se recrearon
+  `backend` y `frontend` y se creó el volumen `usuarios`. `JWT_SECRET` de 64 caracteres, `REGISTRO_CODIGO` de
+  24, **cero usuarios de arranque** a propósito: se registra por el panel.
+- **Verificado en vivo:** `GET /api/spider/status/x` → **401** (antes 200) · `session_cookie` → **401** ·
+  `POST /api/vulnerabilities` → **401** · cabecera `www-authenticate: Bearer` · registro con código falso →
+  **403** · `/api/session/new` → **404** (retirado).
+- **Qué falló, y era mío:** al mover la ruta del PAC escribí `async def get_pac_file(request)` **sin la
+  anotación `: Request`**. FastAPI lo tomó por parámetro de consulta obligatorio y devolvía **422 a todo el
+  mundo** — habría roto la configuración del proxy, que es justo lo que la excepción del PAC pretendía evitar.
+  **Lección:** en FastAPI la anotación de tipo no es decorativa; sin ella el parámetro cambia de naturaleza.
+- **Bug preexistente encontrado (no mío):** `location /api/` pasa `proxy_set_header Host $host` pero
+  `location /proxy.pac` no (`nginx.conf:33-35`), así que el PAC servido por la URL corta —la que un usuario
+  pega en el navegador— anunciaba `PROXY backend:8080`, un nombre interno de Docker que su máquina no resuelve.
+  Toca RF-02. Quedó resuelto al jubilar el PAC entero (entrada siguiente).
+- **Requisito:** RF-12, RF-02. **Evidencia:** `evidencias/capturas/RF-12-panel-login.png` y
+  `RF-12-panel-registro.png`. **Horas:** ~1 h estimada (Claude) + ~0,3 h (josemax: credenciales y recreado).
+
+### Fase 2 (6-oct) · El PAC jubilado, y una ganancia de seguridad no buscada
+- **Qué:** retirada completa del fichero de autoconfiguración de proxy (PAC): la ruta de `main.py`, los bloques
+  `/proxy.pac` y `/check/` de `nginx.conf`, y el componente `PacOnboarding.jsx`.
+- **Por qué:** josemax recordaba que el PAC era de fases tempranas de la P1 y que se había sustituido. **Se
+  contrastó antes de actuar (R9)** y la memoria técnica lo confirma literalmente en RF-02: el modelo PAC quedó
+  expuesto, se saturó con tráfico de bots y se pivotó a que el servidor ejecute las peticiones con `httpx`.
+  **Prueba de que estaba muerto:** su único consumidor en el frontend era un componente **que nadie
+  importaba**; el otro (`devtools/core/chrome_launcher.py:39`) no está integrado y apunta a la IP de
+  producción fija y al puerto `:8000` **que la Fase 1 cerró** — roto por su cuenta.
+- **Ganancia no buscada:** el PAC era la **única** ruta que tenía que quedar sin autenticar (un navegador no
+  manda credenciales al pedirlo) y por eso le había hecho una excepción en el guardián. Al jubilarlo,
+  **todas las rutas de `/api` exigen token, sin excepciones**: no hay excepción que mantener ni que explicar.
+- **Qué se descartó:** arreglar el `Host` del PAC (una línea). Arreglar algo que íbamos a borrar.
+- **Requisito:** RF-02. **Evidencia:** (no aplica — retirada de código). **Horas:** ~0,5 h estimada (Claude).
+
+### Fase 2 (6-oct) · El cliente central estaba a medias, y era mío
+- **Qué falló:** había creado el cliente HTTP único pero **no convertí los sitios de llamada**. El Spider (6
+  `fetch` crudos), el Intruder (3), el Repeater, el importador de peticiones y el generador de hashes seguían
+  llamando por su cuenta, **sin mandar el token** → josemax habría pulsado un botón y recibido un **401**.
+  Convertidas las 11 llamadas. Y había un **segundo WebSocket** (`hooks/useWebSocket.js`, el que usan
+  Vulnerabilidades y Red) todavía con el protocolo viejo: adaptado.
+- **Lección:** crear el punto único no sirve de nada si no se migran los sitios que lo esquivan. **La pieza
+  nueva no es el trabajo; la migración sí.**
+- **Dos fallos de método en los `sed`, los dos silenciosos:** (1) usé `|` a la vez como delimitador y como
+  alternancia (`\|`), así que el patrón no casó —pero el borrado del import sí iba a aplicarse, lo que habría
+  dejado el build roto—; (2) los ficheros del frontend tienen **finales de línea de Windows** (`^M`), así que
+  el ancla `$` no casaba y el `sed` no borraba nada **sin avisar**. Encaja con las «rutas de Windows» que la
+  memoria anota en RF-09: el grupo desarrolla en Windows. Verificado después con recuentos antes/después,
+  en vez de dar por hecho que el `sed` había hecho algo.
+- **Requisito:** RF-12. **Evidencia:** (no aplica). **Horas:** ~1 h estimada (Claude).
+
+### Fase 2 (6-oct) · Basic Auth retirada, el 500 del login, y la prueba de extremo a extremo
+- **Qué:** se retiró el `auth_basic` de la raíz en `nginx.conf` (lo aplicó josemax: tocar seguridad me lo frenan
+  las dos capas, de acuerdo con la norma). Raíz **401 → 200** sirviendo el panel; la API sigue en **401**.
+  Respaldo en `infra/nginx.conf.bak-20261006-basicauth`.
+- **Por qué:** es la inversión que buscaba la Fase 2. Antes la puerta pedía una contraseña **que nadie del
+  grupo conocía** y la API no pedía nada. Ahora la puerta está abierta al panel de login y **la API es la que
+  pide credencial**. Cierra además el punto rojo «averiguar la credencial de Nginx»: ya no aplica.
+- **Qué falló (1) — tres intentos por un clásico:** `sed -i` **rompe los bind-mounts de un fichero**. Cambia el
+  inodo y el contenedor sigue sujetando el viejo, así que dentro seguía la configuración original — **y todo
+  decía «ok»**: el `diff` del host, el `nginx -t` de dentro (validando la vieja) y el `reload`. Lo delató que
+  `/proxy.pac` diera 404 donde debía dar 200. **Prueba limpia: comparar sumas de verificación dentro y fuera**
+  (`2218f62b…` vs `145569f5…`). Cura: recrear el contenedor.
+- **Qué falló (2) — 500 en CADA inicio de sesión** (`KeyError: 'sub'`). En `routes/auth.py` pasaba la
+  **respuesta** de `crear_token` a `espacio_de_datos`, que espera los **claims decodificados** del JWT. El
+  registro funcionaba (no pasa por ahí), así que todo *parecía* bien hasta que josemax intentó entrar.
+  **Por qué no lo cacé:** probé las piezas en frío (35 comprobaciones) pero **nunca la ruta de login completa**,
+  porque `fastapi` no se puede instalar fuera del contenedor y me conformé con las partes. **Las piezas estaban
+  bien; el ensamblaje, no.** Arreglado, y además `espacio_de_datos` ahora falla con un mensaje que explica el
+  error en vez de un `KeyError` enterrado, y el login normaliza el nombre con `strip()` igual que el registro.
+- **Prueba de extremo a extremo contra la cocina: 11 de 11.** Registro de dos usuarios (201) · login de ambos ·
+  contraseña mala **401** (no 500) · `/auth/yo` identifica al portador · la API responde 200 con token ·
+  **403 al tocar el espacio de otro con token propio** (autenticación *y* autorización) · **el usuario 2 no ve
+  el hallazgo del 1** ← esto es RF-12 · **el usuario 2 no ve la cookie de sesión del 1** ← la fuga nº 3 del
+  paso 0, cerrada y verificada.
+- **Sin secretos (R7):** el código de invitación y las contraseñas se quedaron en variables del script; no
+  aparecen en ninguna salida.
+- **Requisito:** RF-12, RNF-07. **Evidencia:** `evidencias/capturas/RF-12-registro-cuenta-creada.png`,
+  `RF-12-aislamiento-usuarioA-con-datos.png`, `RF-12-aislamiento-usuarioB-sin-datos.png`.
+  **Horas:** ~1,5 h estimadas (Claude) + ~0,5 h (josemax: retirada del Basic Auth y pruebas en el navegador).
+
+### Fase 2 (6-oct) · Un hueco de autorización que dejé yo, cerrado y probado como ataque
+- **Qué falló:** mi guardián validaba el espacio de datos cuando viaja **en la ruta**, pero **cinco rutas lo
+  reciben en el CUERPO** de la petición y ahí no miraba nadie. Un usuario autenticado podía escribir en el
+  espacio de otro poniendo su nombre en el cuerpo. **Es el mismo error que critiqué en el código viejo**
+  —dejar que el cliente elija dónde escribe— un nivel más abajo. Rutas: `/spider/start`, `/proxy/forward`,
+  `/intruder/start`, `/repeater/send` y los modelos de `schemas.py`.
+- **La peor se me escapó del primer inventario** porque usa otro nombre de modelo: **el Repeater**. Y ahí el
+  daño no era ensuciar el historial ajeno: `get_session_client` mantiene **un cliente HTTP persistente por
+  token** que acumula las cookies del objetivo auditado (el mecanismo de RF-04), así que con el nombre de otro
+  en el cuerpo se reutilizaba **su sesión ya autenticada contra la web auditada**.
+- **Qué se descartó:** que el guardián leyera el JSON y **validara** el campo. Funciona, pero deja el dato en
+  manos del cliente y obliga a acordarse en cada modelo nuevo. Se eligió que las rutas **tomen el espacio del
+  token y descarten lo que venga en el cuerpo**: *lo que no se lee no se puede falsear.*
+- **Probado como ataque:** un usuario autenticado intentó dirigir el Spider al espacio de otro poniendo su
+  nombre en el cuerpo. El espacio de la víctima **siguió vacío** y el rastreo fue al del atacante. Más el 403
+  al leer el historial ajeno por la ruta.
+- **«El Spider no muestra nada» resuelto, y era un fallo, no dos.** El Spider **sí** corría y guardaba (2
+  peticiones almacenadas contra DVWA). El problema: la interfaz arrancaba con la lista vacía y solo se llenaba
+  con eventos en vivo, así que al recargar parecía que no había hecho nada. **El endpoint del historial ya
+  existía** (`GET /api/repeater/history/{usuario}`, que lee donde el Spider escribe) y nadie lo llamaba; ahora
+  `AppContext` lo carga al entrar. **Misma causa que el «historial vacío del Repeater»**, que teníamos anotado
+  como bug aparte: cerrado también.
+- **Lo destapó josemax preguntando** «entiendo que ese comportamiento es correcto». No lo era. Si lo hubiera
+  dado por bueno, se entregaba con el historial inservible **y** con el agujero de autorización abierto.
+  **Lección doble:** (1) un control que vigila un solo canal no es un control — la pregunta no es «¿valido este
+  parámetro?» sino «¿por cuántas vías puede llegarme este dato?»; (2) mi inventario se dejó 1 de 5 porque
+  busqué por el nombre del modelo que ya conocía: **buscar por el patrón que esperas sesga el resultado**.
+- **Requisito:** RF-12, RF-04. **Evidencia:** (no aplica — la prueba de ataque es salida de terminal, recogida
+  en la entrada de la prueba de extremo a extremo). **Horas:** ~1,2 h estimadas (Claude).
+
+### Fase 2 (6-oct) · Cierre del día: cuatro commits y una norma que incumplí
+- **Qué:** cuatro commits coherentes en vez de un bloque — registro+login con token · guardián en `/api` y `/ws`
+  más el cierre de las fugas · panel, cliente único y carga del historial · memoria técnica. Árbol limpio.
+- **Incumplimiento de R2, señalado por josemax.** La norma dice «después de CADA acción con enjundia se evalúa
+  si merece commit y **se hace en el momento**… no se acumulan cambios sin commitear». Me inventé una regla
+  propia —«commiteo cuando esté probado en vivo»— que suena prudente y **contradice la norma acordada**; y su
+  razón de ser es justo lo que pasó: llegar a la noche con 36 ficheros en un solo diff. **A partir de ahora:
+  commit por plato terminado, aunque la verificación en vivo venga después** — commitear es local y no
+  compromete nada.
+- **Pendiente que esto crea para la Fase 3**, anotado también en `main.py` para que no aparezca como un 401
+  misterioso: `ia/orchestrator.py` y `playwright/utils/reporter.py` publican en `/api/vulnerabilities` y
+  `/api/network/packet/...` **sin credencial**. Hoy no rompe nada (ninguno de los dos contenedores está en
+  marcha), pero la Fase 3 tendrá que darles una **credencial de servicio**.
+- **Lo que quedó sin hacer y se arrastró al 7-oct:** el diario y la memoria técnica, parados desde mediodía.
+- **Requisito:** (no aplica — método). **Evidencia:** (no aplica). **Horas:** ~0,3 h estimadas (Claude).
+
+### Fase 2 (7-oct) · Reconocimiento previo al despliegue, y una corrección a la entrada de ayer
+- **Qué:** lectura del estado de la caja antes de desplegar (solo lectura, R1) y del estado real de GitHub
+  leído del remoto con `ls-remote`, no de refs locales (R9, que esta línea ya se tragó rancios una vez).
+- **Lo desplegado coincide con `main`:** la caja corre `main@485a22ec`, igual que `origin/main` real, y con
+  **cero ficheros sin commitear**. Eso **cierra el pendiente «reconciliar los 32 ficheros sin commitear»**:
+  el `reset --hard` del 5-oct se los llevó, que es el comportamiento deliberado de R1.
+- **Y confirma lo que había que confirmar antes de desplegar:** las cuatro fugas del apartado 7 **siguen
+  vivas en producción**. Comprobado con peticiones de solo lectura al dominio público: la ruta retirada
+  responde `200` con token, la API responde `200` **sin challenge de autenticación**, el endpoint de cookies
+  responde `200` sin token, y la entrada sigue con el Basic Auth viejo. No se escribió ni se atacó nada.
+- 🔧 **CORRECCIÓN (R9) a la entrada «Cierre del día» de ayer.** Escribí que el pendiente de la credencial de
+  servicio «hoy no rompe nada porque **ninguno de los dos contenedores está en marcha**». **Es falso en
+  producción:** `ia` y `playwright` llevan 45 h arriba en la caja. La frase valía para la cocina, donde no se
+  levantan, y la di por buena **sin mirar la caja**. Es el mismo defecto que R9 persigue: afirmar sobre un
+  entorno mirando otro.
+- **El estado real de los dos, y por qué la conclusión aguanta aunque el motivo fuera falso:**
+  - `ia` está **conectada** al backend y **ociosa** («Esperando instrucciones del backend…»): solo publica
+    cuando se le pide, y RF-08 no tiene disparador. No llamará a las rutas protegidas → la Fase 2 no la rompe.
+    En la Fase 3, en cuanto tenga disparador, recibirá `401` sin credencial de servicio: el pendiente sigue.
+  - `playwright` está **ya roto** desde hace 45 h: no resuelve `dvwa` ni `backend` porque el servicio no
+    declara `networks: hooksuite-net`. **Es prueba en vivo del bug que el apartado 5 documentaba** como
+    pendiente de una línea del compose. No puede publicar nada → la Fase 2 tampoco lo rompe.
+- **Qué se descartó:** arreglar la red de Playwright de paso. Tocaría el `docker-compose.yml` en el mismo
+  despliegue que estrena la autenticación, y mezclar dos cambios hace que un fallo no diga cuál lo causó.
+  Va a la Fase 3, que es donde el plan lo tenía.
+- **Requisito:** RF-12, RNF-03, y evidencia para RF-10. **Evidencia:**
+  `evidencias/pre-despliegue-fase2-nginx-07oct.md` (estado de la caja) y
+  `evidencias/fugas-vivas-en-produccion-07oct.md`.
+  ⚠️ **Cita reapuntada el 7-oct a las 17:40** — ver la entrada «Las fugas, confirmadas vivas»: los dos
+  nombres que había aquí **no existían**, la sesión se cortó antes de escribirlos.
+  **Horas:** ~0,4 h (Claude).
+
+### Fase 2 (7-oct, tarde) · El despliegue no habría aplicado la configuración de Nginx, y el plan decía que sí
+- **Qué:** comprobación previa al despliegue de la Fase 2, antes de tocar la caja. Salió un defecto en el
+  propio plan de despliegue escrito el 5-oct.
+- **El defecto:** el plan manda «rebuild **solo de backend, frontend y nginx**», pero el servicio `nginx` usa
+  una imagen descargada (`nginx:alpine`), no se construye, y **su bloque del compose no cambia ni un byte**
+  entre `origin/main` y `develop` — el diff del `docker-compose.yml` solo toca el volumen `usuarios` y el
+  servicio `backend`. Compose lo ve idéntico a lo que ya corre y **no lo recrea**. Como Nginx lee su
+  configuración una sola vez al arrancar, y el contenedor de producción lleva vivo desde el 5-oct 15:35, el
+  despliegue habría terminado «en verde» **sin aplicar** la retirada de la autenticación básica compartida ni
+  la de las rutas `/proxy.pac` y `/check/`: el panel de entrada nuevo seguiría detrás de la contraseña
+  compartida y las dos rutas retiradas seguirían publicadas.
+- **Por qué importa más que un detalle:** es **exactamente el fallo del 5-oct** (Nginx no recreado sirviendo
+  la configuración vieja en memoria), que ya costó entonces una verificación insuficiente. Un plan que
+  nombra el servicio da la impresión de cubrirlo.
+- **Arreglo:** `--force-recreate nginx` explícito. Cuesta segundos, no construye nada.
+- **Qué se descartó, y por qué:** (a) `nginx -s reload`, que sí bastaría, pero depende de un detalle del
+  sistema de ficheros en vez de ser incondicional; (b) añadir algo al bloque `nginx` del compose para que
+  Compose lo detecte como cambiado — sería tocar la configuración para engañar a la herramienta.
+- 🔬 **Hipótesis propia probada y DESCARTADA, dicha porque casi la escribo como peligro:** sospeché que la
+  «trampa del inodo» de los bind-mounts de fichero —ya documentada dos veces en esta línea— afectaría al
+  `nginx.conf`, y que entonces ni un `reload` valdría. **Probado en un repositorio de usar y tirar:
+  `git reset --hard` reescribe el fichero en el sitio y conserva el inodo** (el mismo número en los tres
+  estados). Y contrastado contra producción: el `sha256` del fichero en el host coincide con el de dentro del
+  contenedor. Conclusión: **la conclusión del 5-oct («Nginx recargado») se sostiene** y hoy no hay
+  configuración fantasma sirviendo. Se usa `--force-recreate` igual, por lo dicho arriba.
+- **Segundo hallazgo, de orden:** el `.env` de la caja tiene 6 claves y **no están** `JWT_SECRET` ni
+  `REGISTRO_CODIGO`. Los validadores corren a nivel de módulo (`auth_service.py:116-117`) y tratan una
+  variable **vacía** como ausente — que es lo correcto, porque Compose pasa vacío lo que no encuentra. Los
+  secretos entran en el `.env` **antes** de arrancar los contenedores; al revés, el backend queda en bucle de
+  reinicio con el panel visible y toda la API en 502.
+- **Requisito:** RF-12, RNF-03. **Evidencia:** `evidencias/pre-despliegue-fase2-nginx-07oct.md`.
+  **Horas:** ~0,6 h (Claude).
+- **¿Cambia la memoria técnica?** Evaluado (R3): **no todavía**. Es un defecto del *procedimiento* de
+  despliegue, no del producto; los apartados 5 y 7 describen el estado de producción, que no ha cambiado
+  porque aún no se ha desplegado. Se volcará con el despliegue, junto al resultado.
+
+### Fase 2 (7-oct, 17:30) · Las fugas, confirmadas vivas en producción — y dos cuentas pendientes del diario
+- **Qué:** antes de arrancar el despliegue, josemax pidió confirmar en vivo que las fugas de aislamiento
+  siguen abiertas en `www.hooksuite.de`. Hecho con **peticiones GET exclusivamente**.
+- **Resultado:** **fugas 1 y 2 COMPROBADAS en vivo** (`/` y `/health` → 401 pero `/api/…` → 200; y un token
+  jamás emitido obtiene `200` en dos routers distintos, o sea `get_session()` se lo crea). **Fuga 3, parcial:**
+  el endpoint de lectura de cookies responde `200` **sin token**, que es la puerta, pero el trasvase A→B no se
+  reprodujo. **Fuga 4, no sondeada.**
+- **Por qué no se comprobaron enteras, que es la parte que importa:** el guion del 6-oct necesita dos `POST`
+  (guardar una cookie, publicar una vulnerabilidad) y **R1 prohíbe los comandos de prueba en la caja**. Se
+  podía haber hecho «solo por esta vez»; no se hizo, y lo que un `POST` habría demostrado queda escrito como
+  **inferido del código desplegado**. La inferencia es sólida —los tres commits del arreglo no son ancestros
+  de `main@485a22ec` ni están en ninguna rama remota, así que lo que atiende hoy es el código de antes— pero
+  **inferido no es comprobado y no se mezclan**.
+- 🔧 **CORRECCIÓN (R9) a la entrada «Reconocimiento previo al despliegue» de esta misma tarde.** Dos cosas:
+  1. Escribí que **las cuatro** fugas estaban «comprobadas con peticiones de solo lectura». **Es un
+     redondeo:** con GET se comprueban dos y media. Las otras no se podían comprobar sin escribir en
+     producción. Queda arriba el reparto exacto.
+  2. Citaba como evidencia `caja-estado-previo-despliegue-07oct.md` y `fugas-vivas-en-produccion-07oct.md`,
+     y **ninguno de los dos existía** —ni en disco ni en ninguna rama—: la sesión se cortó antes de
+     escribirlos. Es la tercera cita muerta de esta línea. El primero se ha **reapuntado** al fichero real
+     que sí cubre el estado de la caja; el segundo **se ha escrito ahora**, con el alcance honesto.
+- **Lo que esto cambia del despliegue:** nada del procedimiento, pero sí de la prioridad. La API de
+  producción es alcanzable sin credencial **ahora mismo**, y HookSuite lanza tráfico contra terceros: el
+  despliegue deja de ser papeleo de fin de fase.
+- **Efecto secundario declarado:** las sondas crearon **dos sesiones vacías** en la memoria del backend de
+  producción — que es justamente el defecto que demuestran. Nada en disco; las recoge `cleanup_old_sessions()`.
+- **Requisito:** RF-12, apartado 8. **Evidencia:** `evidencias/fugas-vivas-en-produccion-07oct.md`.
+  **Horas:** ~0,3 h (Claude).
+- **¿Cambia la memoria técnica?** Evaluado (R3): **sí, el apartado 8** — es una prueba con resultado, no un
+  detalle de procedimiento. Se vuelca junto al resultado del despliegue, que ocurre a continuación y toca el
+  mismo apartado; si el despliegue se interrumpiera, este volcado se hace igual antes de cerrar.
+
+### Fase 2 (7-oct, 17:45) · La Fase 2 sale de la cocina: 12 commits empujados y PR #6 abierto
+- **Qué:** la mitad que no necesita manos en la caja. Cerco de la línea en verde (es el que vigila que no se
+  cuele un secreto en lo compartible, y el repo es **público**) → `git push origin develop` → **PR #6**
+  `develop`→`main`: 15 commits, 80 ficheros, `mergeable: true`.
+- **Por qué el PR sale `blocked` y no es un problema:** es la regla de **1 revisión aprobatoria** de `main`,
+  con `enforce_admins: false` → josemax mergea como admin. Igual que el PR #4 de la Fase 1.
+- **El cuerpo del PR lleva las tres cosas propias de este despliegue**, para que quien lo lea no las deduzca:
+  los secretos **antes** de arrancar los contenedores, el `--force-recreate nginx`, y el volumen `usuarios`.
+- **Autenticación:** la credencial de push almacenada **seguía siendo válida**; no hizo falta un PAT nuevo, al
+  contrario de lo que daba por supuesto `FLUJO-GITHUB.md`. Token leído a variable, **sin mostrar su valor**
+  (R7), y comprobado antes con un `push --dry-run`.
+- **Estado del remoto leído con `ls-remote`** (R9, no de refs locales): `develop` en el commit nuevo, `main`
+  aún en `485a22ec`.
+- **Lo que queda y no se hizo:** el bloque del **punto de retorno (R8) se entregó a josemax y no se ejecutó**;
+  tuvo que cerrar la sesión. **La caja no se ha tocado: sigue sirviendo la Fase 1 con las fugas abiertas.** El
+  punto de retoma exacto, con los cuatro pasos en orden, está en el pendiente del despliegue de la `LINEA.md`
+  de la línea.
+- **Decisión del punto de retorno, por si se retoma con otra cabeza:** tres capas (fallo de build = no-evento ·
+  imágenes etiquetadas `prefase2/*:07oct` · commit `485a22ec` + copia del `.env` en modo 600) y **sin `tar` del
+  árbol**, a diferencia del 5-oct: la caja tiene 0 ficheros sin commitear, así que `reset --hard` lo
+  reconstruye exacto. El `.env` sí se copia porque git no lo guarda y el despliegue lo va a modificar.
+- **Requisito:** RF-12, RNF-03. **Evidencia:** `(no aplica)` — el PR y el estado del remoto son el rastro.
+  **Horas:** ~0,2 h (Claude).
+- **¿Cambia la memoria técnica?** Evaluado (R3): **no**. Nada del producto ha cambiado todavía; la memoria ya
+  dice que la Fase 2 no está en producción, y eso sigue siendo cierto.

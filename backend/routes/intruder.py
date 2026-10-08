@@ -1,16 +1,29 @@
-from fastapi import APIRouter, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends
 from models.schemas import IntruderConfig
 from services.intruder_service import intruder_engine
 from services.payloads import get_payloads
 from services.session_service import session_manager
+from services.guardia import usuario_actual
 
 router = APIRouter()
 
 @router.post("/start")
-async def start_attack(config: IntruderConfig, background_tasks: BackgroundTasks):
+async def start_attack(
+	config: IntruderConfig,
+	background_tasks: BackgroundTasks,
+	espacio: str = Depends(usuario_actual),
+):
+	"""Lanza el ataque y deja los resultados en el espacio de QUIEN LLAMA.
+
+	HUECO DE AUTORIZACION CERRADO (6-oct): el espacio salia de `config.session_token`,
+	o sea del CUERPO de la peticion, y el guardian del router solo valida los parametros
+	de la RUTA. Un usuario autenticado podia dirigir los resultados de un ataque al
+	espacio de otro poniendo su nombre en el cuerpo. Ahora sale del token firmado y lo
+	que llegue en el cuerpo se descarta.
+	"""
 	background_tasks.add_task(
 		intruder_engine.run_attack,
-		session_token=config.session_token,
+		session_token=espacio,
 		url=config.url,
 		injection_point=config.injection_point,
 		attack_type=config.attack_type,

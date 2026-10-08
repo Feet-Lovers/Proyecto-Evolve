@@ -3,6 +3,14 @@ networks:
   hooksuite-net:
     driver: bridge
 
+volumes:
+  # Cuentas de usuario (RF-12). Tiene que ser un volumen y no un directorio del
+  # arbol de trabajo: el despliegue es `git reset --hard` + reconstruccion, asi que
+  # cualquier cosa dentro del repositorio se perderia y el registro no serviria de
+  # nada. El estado de SESION sigue siendo volatil a proposito (apartado 10): lo que
+  # se persiste aqui son solo las cuentas.
+  usuarios:
+
 services:
   backend:
     build: ./backend
@@ -14,11 +22,25 @@ services:
       - PORT=8000
       - PROXY_PORT=8080
       - MOCK_PLAYWRIGHT=false
+      # Autenticacion por usuario (Fase 2). Sin valor por defecto: si faltan, el
+      # backend no arranca, en vez de arrancar sin autenticacion pareciendo correcto.
+      # Se generan con: python3 tools/generar-credenciales.py
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_HORAS_VALIDEZ=${JWT_HORAS_VALIDEZ:-8}
+      # Codigo de invitacion del registro. Tampoco tiene valor por defecto: si
+      # faltara, el registro quedaria abierto y esta herramienta lanza trafico
+      # contra terceros. Preferimos que no arranque.
+      - REGISTRO_CODIGO=${REGISTRO_CODIGO}
+      # Usuarios de arranque (OPCIONAL desde que existe el registro): se siembran en
+      # el almacen si no estan, para tener con quien entrar en un despliegue nuevo.
+      - HOOKSUITE_USERS=${HOOKSUITE_USERS:-}
+      - USUARIOS_FICHERO=/data/usuarios.json
     restart: unless-stopped
     cap_add:
       - NET_ADMIN
     volumes:
       - /tmp/firewall.sock:/tmp/firewall.sock
+      - usuarios:/data
     networks:
       - hooksuite-net
 

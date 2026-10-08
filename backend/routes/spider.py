@@ -1,30 +1,45 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from services.spider_service import SpiderService
 from services.session_service import session_manager
+from services.guardia import usuario_actual
 import asyncio
 
 router = APIRouter()
 
 class SpiderRequest(BaseModel):
     url: str
-    session_token: str
+    # IGNORADO a proposito: se conserva porque el frontend lo sigue enviando, pero el
+    # espacio de datos NO sale de aqui. Ver la nota de la ruta.
+    session_token: str = ''
     speed: str = 'normal'
     cookie: str = ''
 
 @router.post("/start")
-async def start_spider(request: SpiderRequest):
-    session = session_manager.get_session(request.session_token)
+async def start_spider(request: SpiderRequest, espacio: str = Depends(usuario_actual)):
+    """Arranca el rastreo en el espacio de datos de QUIEN LLAMA.
+
+    HUECO DE AUTORIZACION CERRADO (6-oct). El espacio salia de `request.session_token`,
+    es decir del CUERPO de la peticion, y el guardian del router solo valida los
+    parametros de la RUTA. Un usuario autenticado podia escribir en el espacio de otro
+    poniendo su nombre en el cuerpo: la autenticacion estaba, la autorizacion se
+    escapaba por ahi.
+
+    Es el mismo error que tenia el codigo anterior y que esta Fase vino a corregir
+    —dejar que el cliente elija donde escribe— solo que escondido un nivel mas abajo.
+    Ahora el espacio viene del token firmado y lo que llegue en el cuerpo se descarta.
+    """
+    session = session_manager.get_session(espacio)
     if session.get("spider_running"):
         return {"status": "error", "message": "Ya hay un spider en ejecución para esta sesión"}
-    
+
     session["spider_running"] = True
-    
+
     async def run_spider():
         try:
             spider = SpiderService(
                 base_url=request.url,
-                session_token=request.session_token,
+                session_token=espacio,
                 speed=request.speed,
                 cookie=request.cookie
             )

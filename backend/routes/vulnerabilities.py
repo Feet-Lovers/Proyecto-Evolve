@@ -1,7 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import Optional
 from services.session_service import session_manager
+from services.guardia import usuario_actual
 
 router = APIRouter()
 
@@ -19,12 +20,22 @@ class VulnerabilityReport(BaseModel):
     timestamp: str
 
 @router.post("")
-async def receive_vulnerability(vulnerability: VulnerabilityReport):
+async def receive_vulnerability(
+    vulnerability: VulnerabilityReport,
+    espacio: str = Depends(usuario_actual),
+):
+    """Registra un hallazgo en la sesion de QUIEN LLAMA.
+
+    FUGA CERRADA (Fase 2, 6-oct). Esto recorria `session_manager.sessions` y escribia y
+    emitia el hallazgo en TODAS las sesiones. Verificado antes de arreglarlo: una
+    vulnerabilidad publicada sin token aparecia en el panel de dos auditores distintos
+    (`docs/evidencias/fugas-aislamiento-06oct.md`, prueba 4). En una herramienta de
+    auditoria eso es filtrar los datos del cliente de otro.
+    """
     vuln_dict = vulnerability.model_dump()
-    for token in session_manager.sessions:
-        session = session_manager.get_session(token)
-        session.setdefault("vulnerabilities", []).append(vuln_dict)
-        await session_manager.emit(token, "vulnerability_detected", vuln_dict)
+    session = session_manager.get_session(espacio)
+    session.setdefault("vulnerabilities", []).append(vuln_dict)
+    await session_manager.emit(espacio, "vulnerability_detected", vuln_dict)
     return {"received": True, "id": vulnerability.id}
 
 @router.post("/{session_token}")

@@ -1,18 +1,19 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react'
-import { config } from '@/services/api'
+import { api, config, leerToken } from '@/services/api'
+import { useAuth } from '@/AuthContext'
 import { mockRequests, mockVulnerabilities } from '@/services/mockData'
 
 const WS_URL = config.API_BASE
   ? `${config.API_BASE.replace(/^http/, 'ws')}/ws`
   : `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/ws`  // '' = mismo origen (Nginx /ws)
 
-function generateUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0
-    const v = c === 'x' ? r : (r & 0x3 | 0x8)
-    return v.toString(16)
-  })
-}
+// Aqui vivia un generador de UUID con Math.random() que fabricaba el identificador de
+// sesion EN EL NAVEGADOR y lo guardaba en localStorage; el servidor se lo creia y
+// abria una sesion para cualquier cadena que llegara. Dos problemas de distinta
+// gravedad: Math.random() no es criptograficamente seguro, y —lo serio— el cliente no
+// deberia poder elegir en que espacio de datos escribe. Ahora el espacio lo determina
+// el usuario del token, que emite y firma el servidor.
+const CLAVE_SESION_ANTIGUA = 'hooksuite_session'
 
 function normalizePacket(p) {
   return {
@@ -27,7 +28,10 @@ function normalizePacket(p) {
 const AppContext = createContext(null)
 
 export function AppProvider({ children }) {
-  const [sessionToken, setSessionToken] = useState(null)
+  const { usuario } = useAuth()
+  // El espacio de datos es el usuario autenticado. No se guarda en localStorage ni se
+  // genera aqui: viene del token, asi que el navegador no puede elegirlo.
+  const sessionToken = usuario
   const [requests, setRequests] = useState(config.USE_MOCKS ? mockRequests : [])
   const [networkPackets, setNetworkPackets] = useState([])
   const [vulnerabilities, setVulnerabilities] = useState(config.USE_MOCKS ? mockVulnerabilities : [])
@@ -37,20 +41,47 @@ export function AppProvider({ children }) {
   const [wsKey, setWsKey] = useState(0)
   const wsRef = useRef(null)
 
+  // Limpieza del identificador que el navegador se inventaba antes: si se queda, no
+  // hace daño, pero confunde a quien depure y es una pista falsa de como funciona esto.
+  useEffect(() => { localStorage.removeItem(CLAVE_SESION_ANTIGUA) }, [])
+
+  // Carga el historial YA GUARDADO al entrar.
+  //
+  // Sin esto, la lista arrancaba vacía y solo se llenaba con los eventos que llegaban
+  // en vivo por el WebSocket: el Spider guardaba sus resultados en el servidor, pero al
+  // recargar la página o volver a entrar el panel aparecía vacío y parecía que no había
+  // hecho nada. El endpoint ya existía (`/api/repeater/history/...`, que lee el mismo
+  // sitio donde el Spider escribe); simplemente nadie lo llamaba. Es también la causa
+  // del «historial vacío del Repeater» que teníamos anotado como bug aparte: era el
+  // mismo fallo visto desde otra pantalla.
   useEffect(() => {
-    let stored = localStorage.getItem('hooksuite_session')
-    if (!stored) {
-      stored = generateUUID()
-      localStorage.setItem('hooksuite_session', stored)
-    }
-    setSessionToken(stored)
-  }, [])
+    if (config.USE_MOCKS || !sessionToken) return
+    let cancelado = false
+    api.get(`/api/repeater/history/${encodeURIComponent(sessionToken)}`)
+      .then(({ data }) => {
+        if (cancelado || !Array.isArray(data)) return
+        // El servidor las guarda de más antigua a más reciente y la interfaz las muestra
+        // al revés (los eventos nuevos se insertan por delante), así que se invierte.
+        setRequests(data.map(normalizePacket).reverse())
+      })
+      .catch(() => { /* sin historial no se rompe nada: se sigue con la lista vacía */ })
+    return () => { cancelado = true }
+  }, [sessionToken])
 
   useEffect(() => {
     if (config.USE_MOCKS || !sessionToken) return
-    const ws = new WebSocket(`${WS_URL}/${sessionToken}`)
+    // El token va en el PRIMER MENSAJE, no en la URL. Un WebSocket del navegador no
+    // admite cabeceras, y meter el token en la ruta lo dejaria escrito en los registros
+    // de acceso de Nginx: un token en un log es un token regalado. El servidor acepta
+    // la conexion, espera esta credencial y cierra si no llega o no vale.
+    // La barra final es obligatoria: Nginx proxea `location /ws/`, y `/ws` sin barra
+    // no casaria con ese bloque y acabaria en el frontend.
+    const ws = new WebSocket(`${WS_URL}/`)
     wsRef.current = ws
-    ws.onopen = () => setConnected(true)
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ type: 'auth', token: leerToken() }))
+      setConnected(true)
+    }
     ws.onclose = () => setConnected(false)
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data)

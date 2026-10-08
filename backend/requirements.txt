@@ -8,3 +8,6 @@ python-multipart==0.0.9
 anthropic==0.25.0
 mitmproxy==10.2.4
 redis==5.0.1
+# Autenticacion por usuario (Fase 2): token firmado y contrasenas con hash.
+PyJWT==2.8.0
+bcrypt==4.1.3

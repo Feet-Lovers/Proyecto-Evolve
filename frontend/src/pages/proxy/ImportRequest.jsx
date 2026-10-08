@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui'
-import axios from 'axios'
-import { config } from '@/services/api'
+import { api, config } from '@/services/api'
 
 export function ImportRequest({ onClose, onImport }) {
   const [text, setText] = useState('')
@@ -17,7 +16,7 @@ export function ImportRequest({ onClose, onImport }) {
         onImport({ method: 'GET', url: 'http://example.com', requestHeaders: {}, requestBody: null })
         return
       }
-      const res = await axios.post(`${config.API_BASE}/api/repeater/parse`, { text })
+      const res = await api.post(`/api/repeater/parse`, { text })
       onImport(res.data)
     } catch {
       setError('no se pudo parsear la petición. verifica el formato.')
