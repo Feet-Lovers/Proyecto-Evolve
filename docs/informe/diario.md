@@ -1052,3 +1052,30 @@ con JWT (RF-07). De ahí salieron tres arreglos:
   plan-p3 dice que lo no detallado se reparte **equilibrando la carga**.
 - **Requisito:** RF-01, apartados 8 y 10. **Evidencia:** `evidencias/movil-layout-desbordado-08oct.md`
   (el estado previo; el posterior se ve en el propio código). **Horas:** ~0,2 h.
+
+### Fase 2 (8-oct, 10:50) · Decisiones de proceso que alimentan el apartado 11
+
+Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del trabajo» tendrá que contar.
+
+- **La autoría de cada commit se sortea al azar entre los cinco.** Cualquier commit, sin excepciones, y el
+  rol **no** interviene: los roles (Ivan/front, Macarena/back, Nacho/playwright, Carlos/devtools, José
+  María/IA+GitHub) se mantienen **solo de cara al informe**, como reparto de áreas. El sorteo se hace con
+  `shuf`, no a ojo, para no colar un sesgo sin querer.
+- **Única excepción: la memoria técnica** (`docs/informe/*.typ`, su PDF y su artefacto) va **siempre a
+  nombre de José María**, que figura como redactor. **El diario NO cuenta como memoria** —R3: es el almacén
+  y no sale en el artefacto—, así que entra en el sorteo como las evidencias, las capturas y el código.
+- **Punto de partida que esto corrige:** a 8-oct, **34 de los 51 commits de octubre eran de José María
+  (67 %)**, con Nacho 5, Macarena 6, Ivan 3 y Carlos 3. RNF-04 está en «Parcial» y el reparto lo mira el
+  evaluador. No se corrige hacia atrás —sería reescribir historial, descartado el 4-oct— sino de aquí en
+  adelante.
+- **Ya no se exige que la persona lea su `git diff` antes de commitear** (decisión de josemax). La regla
+  queda **tachada, no borrada**, en `PROTOCOLO-TRABAJO.md` y `FLUJO-GITHUB.md`, con fecha y motivo, para que
+  nadie la reinstaure creyendo que se estaba incumpliendo.
+- **Logística cerrada:** vídeo → lo graban todos la semana del 13 · portavoz → José María · redactor de la
+  memoria → José María · numeración RF/RNF → validada, se mantiene la derivada del informe P1.
+- **Un pendiente retirado por obsoleto:** «día del force-push». Venía del guion de la reunión del 29-sep,
+  **y el force-push se ejecutó el 4-oct** (7 ramas, 0 claves en GitHub, protección de `main` restaurada).
+  Llevaba cuatro días pidiendo fecha para algo ya hecho. No confundirlo con el despliegue, que es lo que se
+  hace al cerrar cada fase.
+- **Requisito:** RNF-04, apartado 11. **Evidencia:** `(no aplica)` — son decisiones, no hay nada que mostrar.
+  **Horas:** ~0,3 h.
