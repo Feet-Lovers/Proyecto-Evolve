@@ -156,6 +156,17 @@ export function Layout() {
           flex: 1;
           height: 100%;
           margin-left: 4px;
+          /* En pantallas estrechas las ultimas secciones no caben y el
+             contenedor raiz las recortaba (overflow:hidden), dejandolas
+             inalcanzables: ni scroll, ni flecha, ni aviso de que existen.
+             Con esto la barra se desliza, que es el gesto esperado en movil.
+             En escritorio no cambia nada: si todo cabe, no aparece scroll. */
+          overflow-x: auto;
+          scrollbar-width: none;
+        }
+
+        .hs-tabs::-webkit-scrollbar {
+          display: none;
         }
 
         .hs-tab {
@@ -173,6 +184,9 @@ export function Layout() {
           border: none;
           cursor: pointer;
           white-space: nowrap;
+          /* Sin esto las pestanas se comprimen hasta su minimo antes de
+             desbordar, y el contenedor las corta en vez de dejar desplazarlas. */
+          flex-shrink: 0;
           position: relative;
           transition: color 0.12s, background 0.12s;
           font-family: var(--font-mono);

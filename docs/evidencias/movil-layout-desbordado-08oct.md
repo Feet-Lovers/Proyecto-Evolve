@@ -25,20 +25,32 @@ nada más detectarlo, sin esperar a decidir si se corrige.
 | 4 | El layout de **dos columnas se mantiene en vertical**: la derecha gasta media pantalla con «envía una petición para ver la respuesta aquí» mientras la izquierda va estrujada | debería apilarse en vertical |
 | 5 | Aviso **«No seguro»** junto al dominio | es RNF-09 (sin TLS), ya conocido y pendiente |
 
-## ⚠️ Lo que esta evidencia NO resuelve todavía
+## Resuelto: comprobado por josemax el mismo día
 
-**No se sabe si la barra de secciones se puede desplazar con el dedo.** De eso depende cómo se clasifica
-el hallazgo, y la diferencia no es menor:
+Se preguntó si la barra de secciones se podía desplazar con el dedo, porque de eso dependía la
+clasificación. Respuesta, con tres comprobaciones:
 
-- **Si se desplaza** → es incomodidad de uso. RF-01 sigue cumplido y el arreglo es una mejora.
-- **Si no se desplaza** → **tres de las siete secciones del producto son inalcanzables desde un móvil**, y
-  RF-01 («dashboard web de control accesible desde cualquier navegador, sin instalar nada en el cliente»)
-  deja de estar limpiamente cumplido: se accede al panel, pero no a un tercio de sus funciones.
+| Cómo se mira | Qué pasa |
+|---|---|
+| Vertical, deslizando la barra | **No hace nada.** No hay scroll horizontal |
+| Girando el móvil a horizontal | Se ven **más** secciones, no necesariamente todas |
+| Activando «modo escritorio» del navegador | Se ve **la herramienta completa** |
 
-⚠️ **FALTA: confirmar si la barra de secciones se desplaza en el móvil [pantalla, josemax]**
+**Clasificación: RF-01 cumplido, con limitación documentada.** No se baja a «Parcial» porque se puede
+llegar a todas las funciones **sin instalar nada** —girando el aparato o pidiendo el modo escritorio—, que
+es literalmente lo que el requisito exige. Pero en el uso normal (vertical, navegador tal cual) **tres de
+las seis secciones no son alcanzables y nada indica que existan**: no hay flecha, ni scroll, ni menú. La
+salvedad se declara en la matriz de trazabilidad y en el apartado 10 en vez de dejar un «Cumplido» liso.
 
-Se deja escrito sin resolver en lugar de suponer la respuesta cómoda. Es el mismo criterio que con el 404
-de IPv6: una hipótesis razonable no es una comprobación.
+## Causa, localizada en el código
+
+`frontend/src/components/layout/Layout.jsx`:
+
+- `.hs-tabs` es un contenedor `flex` **sin `overflow-x`**, y el contenedor raíz tiene `overflow: hidden`:
+  lo que no cabe se recorta, sin posibilidad de desplazarlo.
+- `.hs-tab` lleva `white-space: nowrap` pero **no `flex-shrink: 0`**, así que las pestañas se comprimen
+  hasta su mínimo antes de desaparecer.
+- **El fichero no tiene ninguna `@media`.** No es un responsive mal ajustado: es que no existe.
 
 ## Contexto de la decisión (8-oct)
 

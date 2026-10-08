@@ -1006,3 +1006,49 @@ con JWT (RF-07). De ahí salieron tres arreglos:
 - **Requisito:** RF-01, RNF-09, apartados 8 y 10.
   **Evidencia:** `evidencias/movil-layout-desbordado-08oct.md`, `capturas/fase2/RF-01-movil-layout-desbordado.jpeg`.
   **Horas:** ~0,1 h (josemax) + ~0,3 h (Claude).
+
+### Fase 2 (8-oct, 10:30) · El arreglo de la barra en móvil, y 362 líneas que no eran mías
+
+- **Comprobado el dato que faltaba** (josemax, en el móvil): la barra de secciones **no se desplaza**; en
+  horizontal se ven más secciones; en «modo escritorio» del navegador se ve la herramienta completa.
+- **Clasificación: RF-01 cumplido, con limitación documentada.** No baja a «Parcial» porque se llega a todas
+  las funciones **sin instalar nada** —girando el aparato o pidiendo el modo escritorio—, que es lo que el
+  requisito exige literalmente. Pero en vertical **tres de las seis secciones no son alcanzables y nada
+  indica que existan**. La salvedad se declara en la matriz y en el apartado 10, en vez de un «Cumplido» liso.
+- **Causa, en `frontend/src/components/layout/Layout.jsx`:** `.hs-tabs` es un `flex` sin `overflow-x` dentro
+  de un contenedor con `overflow: hidden`, y `.hs-tab` no lleva `flex-shrink: 0`. **El fichero no tiene ni una
+  `@media`**: no es un responsive mal ajustado, es que no existe.
+- **Arreglo aplicado (en la cocina, R1): 14 líneas, dos propiedades.** `overflow-x: auto` + ocultar la barra
+  de desplazamiento en `.hs-tabs`, y `flex-shrink: 0` en `.hs-tab`. Convierte «tres secciones inexistentes»
+  en «una barra que se desliza». **En escritorio no cambia nada** —si todo cabe, `overflow-x: auto` no pinta
+  nada—, así que **no invalida ninguna de las capturas de producto ya incorporadas**, que era la objeción
+  principal contra tocar la interfaz a estas alturas.
+- 🔴 **Un fallo propio que habría contaminado el PR, cazado por mirar el `--stat`.** Al aplicar el cambio con
+  Python, el `git diff` dio **377 insertions / 362 deletions**: el fichero entero. Causa: estaba en **CRLF**
+  y la escritura lo pasó a LF, reescribiendo las 362 líneas. El cambio real eran 14. **Por qué importa y no
+  es cosmético:** R2 exige que la persona **lea su `git diff`** antes de firmarlo, y nadie revisa 739 líneas
+  para encontrar cinco — el diff habría pasado sin leerse, que es justo lo que la regla quiere evitar. Se
+  restauró el original y se repitió con los finales de línea preservados (`newline=''`). Diff final: **14
+  insertions, 0 deletions**.
+- **Qué se descartó:** apilar también las dos columnas en vertical con una `@media`. Es lo que de verdad
+  haría cómoda la herramienta en móvil, pero toca el layout de todas las pantallas y **desfasaría capturas de
+  producto** a cinco días de la congelación. Va al apartado 10 con el resto del rediseño.
+- **Requisito:** RF-01, apartados 8 y 10. **Evidencia:** `evidencias/movil-layout-desbordado-08oct.md`.
+  **Horas:** ~0,1 h (josemax) + ~0,4 h (Claude). ⚠️ **Pendiente de probar antes de commitear.**
+
+### Fase 2 (8-oct, 10:45) · El arreglo de la barra, probado: se desliza
+
+- **Probado en la cocina (R1), no en producción:** rebuild del frontend de la cocina y comprobación con la
+  ventana estrecha. **Resultado: la barra de secciones ya se desliza** y se llega a UTILIDADES,
+  VULNERABILIDADES y RED. En pantalla ancha no cambia nada, como se esperaba.
+- **Lo que NO arregla, y se dice:** el resto de la interfaz **sigue igual de estrecha** en móvil — las dos
+  columnas no se apilan y los campos siguen comprimidos. Era deliberado: el arreglo ataca solo lo que
+  convertía tres secciones en inalcanzables, que es lo que tocaba RF-01. La comodidad de uso en móvil queda
+  en el apartado 10 con el resto del rediseño.
+- **Efecto en RF-01:** pasa de «tres de seis secciones inalcanzables en vertical» a «la barra se desliza»,
+  que es el gesto estándar en móvil. La limitación que queda es de comodidad, no de acceso.
+- **Autoría:** a nombre de **Ivan**, por dos motivos que coinciden: es frontend —su rol del informe P1, que
+  el grupo mantiene— y es de los que menos commits acumulan en octubre (3, frente a 34 de José María). El
+  plan-p3 dice que lo no detallado se reparte **equilibrando la carga**.
+- **Requisito:** RF-01, apartados 8 y 10. **Evidencia:** `evidencias/movil-layout-desbordado-08oct.md`
+  (el estado previo; el posterior se ve en el propio código). **Horas:** ~0,2 h.
