@@ -848,3 +848,36 @@ con JWT (RF-07). De ahí salieron tres arreglos:
 - **¿Cambia la memoria técnica?** Evaluado (R3): **no todavía**. El producto en producción sigue siendo la
   Fase 1 y la memoria ya lo dice. Cambiará en cuanto el bloque 3 recree los contenedores: ahí toca el
   apartado 7 (deja de describir una API abierta) y el 8 (las pruebas de aislamiento pasan a producción).
+
+### Fase 2 (8-oct, 08:35) · El PR #6 mergeado, y un ModuleNotFoundError que era la pregunta correcta
+
+- **Qué se hizo:** josemax mergeó el **PR #6** (`develop`→`main`, 16 commits) → `main` pasa de `485a22ec` a
+  **`3d3baba8`**. Antes se lanzó el bloque **2a**, de solo lectura, para saber si la caja podía generar las
+  credenciales. Evidencia: `evidencias/preflight-credenciales-fase2-08oct.md`.
+- **Por qué existió el 2a:** `tools/generar-credenciales.py` aborta al arrancar si falta `bcrypt`, y falta de
+  saberlo habría dejado el bloque 2 fallando a mitad. Resultado: el **host sí lo tiene** (3.2.2), así que el
+  script corre tal cual.
+- **El hallazgo que obligó a parar y mirar:** dentro del contenedor del backend de la caja, `import bcrypt`
+  da **ModuleNotFoundError**. Parecía que el despliegue iba a dejar el backend en bucle de reinicio y la API
+  en 502. **No es el caso, y se comprobó en vez de suponerse:** ese contenedor corre la **imagen vieja de la
+  Fase 1**, que no necesitaba bcrypt; `backend/requirements.txt:13` de `main` pide `bcrypt==4.1.3`, y el
+  contenedor equivalente **de la cocina** —que ya sirve la Fase 2— lo tiene instalado. El `--build` del
+  bloque 3 lo resuelve. **Lo que habría sido un error es cualquiera de los dos extremos:** ignorar el aviso,
+  o abortar el despliegue por él.
+- **Qué se descartó:** lanzar el generador dentro del heredoc del `ssh` sin más. Usa `input()` en bucle, así
+  que con stdin consumido habría muerto con `EOFError`. Se le pasa una **línea vacía** (`printf '\n' |`), que
+  es su respuesta documentada para «ningún usuario de arranque» — y producción arranca con **cero usuarios**
+  a propósito, porque el código de invitación es la única puerta de alta.
+- **Probado en la cocina antes de tocar la caja (R1), con un `.env` de usar y tirar:** el generador **añade**
+  (modo append) y deja intactas las líneas previas · con una línea vacía crea las 4 claves y **0 usuarios** ·
+  **aborta con código 1** si las claves ya existen, así que un relanzamiento no las duplica · y no imprime
+  ningún valor, solo longitud y `sha256` truncado (R7). Los secretos de la prueba se truncaron después.
+- **Protección añadida al bloque 2, por la lección del nginx del 7-oct:** si el `fetch` falla, un
+  `reset --hard origin/main` contra un ref rancio **saldría «en verde» sin desplegar nada**. El bloque compara
+  `origin/main` con el SHA esperado (`3d3baba8…`) y **aborta sin tocar nada** si no coinciden.
+- **Verificado también que el `reset --hard` no se lleva el `.env`:** está en `.gitignore:5` y **no hay ningún
+  `.env` trackeado** en el repo; `.env.pre-fase2` es untracked y sobrevive igual.
+- **Requisito:** RF-12, RNF-03, apartado 8. **Evidencia:** `evidencias/preflight-credenciales-fase2-08oct.md`.
+  **Horas:** ~0,1 h (josemax) + ~0,5 h (Claude).
+- **¿Cambia la memoria técnica?** Evaluado (R3): **no todavía**, por lo mismo que la entrada anterior — nada
+  del producto en producción ha cambiado aún. **Cambia con el bloque 3**, y se regenera en ese mismo paso.
