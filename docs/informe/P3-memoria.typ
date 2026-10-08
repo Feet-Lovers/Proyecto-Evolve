@@ -87,6 +87,13 @@ HookSuite nació en la Práctica 1 como prototipo funcional de una suite de audi
 - En el historial de git había claves de API reales (secretos expuestos).
 - El módulo de IA (RF-08), que es lo que da sentido al «con IA» del producto, *nunca llegó a operar* salvo pruebas muy iniciales de la P1: panel construido pero inactivo.
 
+== Lo que la P1 nos enseñó a su costa: el saldo de la API
+En las primeras pruebas del módulo de IA se cargaron 5 € de saldo en la API y se agotaron en muy poco tiempo. La causa está *reconstruida del historial de git* para esta memoria, no de lo que nadie recordara: el módulo ejecutaba una auditoría completa *en el arranque*, y el servicio está declarado con `restart: unless-stopped`, de modo que cuando el proceso terminaba Docker lo relanzaba y empezaba otra auditoría. Un bucle de auditorías mientras el contenedor estuviera levantado.
+
+Se corrigió el 17 de mayo de 2026 con dos cambios: el módulo pasó a *esperar instrucciones* en lugar de auditar al arrancar —lo que además impide que el proceso termine, y con ello que Docker lo reinicie— y se dejó el análisis en modo simulado por defecto, como freno de mano.
+
+*Por qué figura en el punto de partida y no como anécdota:* es el único incidente de la P1 con coste económico directo, y la P3 lo hereda a medias. El disparo automático está curado, pero el *tamaño* de una auditoría nunca se acotó (apartados 8 y 10). Es además una de las razones por las que el módulo de IA llegó a la P3 sin haber operado.
+
 == Numeración de requisitos
 La P1 *no numeraba* los requisitos. El enunciado de la P3 (apartado 3) obliga a numerarlos ahora (RF-xx / RNF-xx) y a usar esa numeración en toda la práctica. La lista de abajo (apartado 4) está *derivada del informe de la P1* —de lo que el producto prometía y hace— y #estado("curso", "PENDIENTE DE VALIDAR POR EL GRUPO") en la reunión antes de darla por firme.
 
@@ -417,6 +424,15 @@ Ni el código de invitación ni las contraseñas aparecen en ninguna salida: el 
 
 > *Nota de tratamiento de las capturas (R7).* La del usuario A mostraba el valor íntegro de la cabecera `XSRF-TOKEN`, que es el identificador de sesión capturado *de la web auditada*: justo el dato que este requisito existe para no compartir. Se publica con ese valor tapado y la etiqueta a la vista, para que se vea qué se redactó; el original no sale del almacén interno. La del usuario B lleva tapada la barra de marcadores del navegador, ajena al proyecto.
 
+
+== Prueba preparada y NO ejecutada: el techo de gasto del módulo de IA (RF-08)
+El plan de pruebas incluye un caso que *no se ha podido ejecutar*, y se declara en lugar de omitirse. Una auditoría del módulo de IA no tiene límite de consultas al modelo: el recorrido anida páginas × tipos de prueba × cargas, y cada carga es una consulta. Con el disparador de la interfaz construido, cada pulsación arrancaría ese recorrido completo.
+
+El caso está diseñado para costar *cero*: fijando el techo en 0 por variable de entorno, ninguna consulta debe salir y la auditoría debe quedar marcada como truncada; con el techo en 1 debe pasar una sola y el resto quedar como «no analizado», con el motivo del techo. Reutiliza la vía degradada de RNF-06, de modo que el recorte *se ve* en el panel en lugar de pasar por «sin hallazgos».
+
+*Por qué no está ejecutada:* exige aplicar antes la reescritura del cliente del modelo, y esa reescritura no se aplica sin una clave de API válida con la que probarla de verdad (decisión del 8-oct: preparar, no ejecutar). El plan completo, con el código listo para aplicar, está en el repositorio de la línea.
+
+#hueco("José María + Claude", "Ejecutar el caso del techo de gasto en cuanto haya clave válida: captura de terminal con techo 0 y con techo 1, y captura de pantalla del panel mostrando la auditoría marcada como truncada. Coste previsto: 0 € la primera, una consulta la segunda.")
 #estado("ok", "AISLAMIENTO POR USUARIO VERIFICADO EN LA COCINA (11/11) · PENDIENTE DE VERIFICAR EN PRODUCCIÓN")
 #estado("ok", "EVIDENCIA DE EXPOSICIÓN Y DE LA FASE 1 COMPLETA")
 #hueco("José María + Claude", "Plan de pruebas formal y capturas de PRODUCTO de los bugs (500 de `check/alive`, trampa del Spider) reproducidos en la cocina. Las de pantalla las saca José María (R6), tras la Fase 3, cuando el login nuevo cambie las pantallas. Las pruebas las hacen José María y Claude (R2).")
@@ -467,6 +483,13 @@ El estado de una sesión de auditoría —tráfico capturado, resultados del Int
 Lo que *sí* se hizo, porque era el riesgo real detrás de «todo en memoria»: *poner topes*. El recolector de sesiones existía en el código pero nunca se invocaba, y cualquier llamada a la API con un identificador nuevo creaba una sesión más —con la API sin autenticación, eso permitía agotar la memoria del servidor desde fuera—. Ahora hay un tope de sesiones y de peticiones por sesión (configurables por entorno), el recolector se ejecuta de verdad y, al desalojar, *prefiere las sesiones que no tienen conexión en tiempo real abierta*, para no interrumpir a quien está trabajando. Verificado con prueba de abuso: 120 identificadores inventados dejan el número de sesiones en el tope, y la sesión con conexión viva sobrevive.
 
 *Trabajo futuro.* La persistencia es viable sin cambiar la arquitectura: el despliegue ya incluye Redis y el backend ya lo usa para otro flujo. El momento correcto es *después* del modelo de usuarios, para persistir sesiones ya asociadas a su propietario.
+
+== El coste de una auditoría con IA no está acotado
+El módulo de IA no limita cuántas veces consulta al modelo durante una auditoría: el recorrido anida páginas × tipos de prueba × cargas, y cada carga es una consulta. Hoy es inocuo, porque el módulo no se puede disparar desde la interfaz; deja de serlo en el momento en que exista el disparador, que es trabajo en curso. El antecedente está en el apartado 3: en la P1, un disparo involuntario de este mismo recorrido agotó el saldo de la API.
+
+*Trabajo futuro, diseñado y no aplicado.* Un techo de consultas por auditoría, configurable por entorno y situado en el *cliente* del modelo —por donde pasan las cuatro vías de análisis, de modo que ninguna se escapa—, que al agotarse devuelva la vía degradada de RNF-06 para que la auditoría quede marcada como truncada en vez de parecer completa. Un techo silencioso sería peor que no tenerlo: dejaría el informe diciendo «sin hallazgos» sobre una auditoría a medias.
+
+El valor por defecto se fijará *con el dato* de la primera auditoría real —el resultado llevará el número de consultas consumidas— y no a ojo, que es lo que permite defenderlo.
 
 #hueco("José María + Claude", "Acumular el resto de limitaciones conforme aparezcan durante las Fases 1-4; este apartado recibe material hasta el último día.")
 

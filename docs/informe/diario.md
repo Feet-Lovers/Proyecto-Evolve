@@ -1193,3 +1193,39 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
   salido de un fallo real de la P1).
 - **Evidencia:** `evidencias/gasto-api-origen-y-topes-08oct.md`
 - **Horas:** ~0,5 h (Claude).
+
+### Fase 3 (8-oct, 15:50) · El techo de gasto del módulo de IA: preparado (no aplicado) y volcado a la memoria
+
+- **Qué se hizo:** con las tres decisiones de josemax de las 15:30 —*techo primero*, el freno de mano se
+  queda como está, y el hallazgo entra ya en la memoria— se añadió el **apartado 3b** al
+  `PLAN-RF08-MODULO-IA.md` y se volcaron los apartados **3, 8 y 10** del `.typ`, regenerando PDF y
+  artefacto en la misma pasada (R4).
+- **Por qué el techo va en el cliente y no en el orquestador:** las cuatro vías de análisis
+  (`analyze_packet`, `analyze_intruder`, `analyze_console`, `fingerprint`) pasan **todas** por
+  `self.client.analyze` (`vulnerability_classifier.py:21, 44, 68, 91`). Un tope por bucle en el
+  orquestador dejaría fuera el fingerprint y la consola. Y como el apartado 1 del plan ya reescribe
+  `client.py` entero, el techo entra **en la misma pasada**, no en una segunda.
+- **Por qué reutiliza la vía degradada de RNF-06:** al agotarse el techo se devuelve
+  `RespuestaIA(None, "degradado", motivo)` **sin llamar a la API**. El panel ya sabrá pintarlo como «no
+  analizado» con su motivo, así que el recorte **se ve**. Un techo silencioso sería peor que no tenerlo:
+  dejaría el informe diciendo «sin hallazgos» sobre una auditoría a medias — el mismo patrón de fallo que
+  esta línea lleva una semana encontrando.
+- **El 40 por defecto se declara como provisional, a propósito.** Lo que importa no es el número, es que
+  exista techo y que se vea al alcanzarse. El resultado de la auditoría llevará `ia_llamadas`, y con ese
+  dato se fija el valor por defecto: así el número es defendible en vez de elegido a ojo.
+- **NO se tocó ni una línea del repo del módulo de IA**, respetando la decisión de las 11:00 (*preparar,
+  no ejecutar*): sin clave válida, un cliente reescrito que nunca ha hecho una petición es «verde» sin
+  probar. El techo es la única parte del plan que **se podrá probar sin gastar saldo** (techo a 0 → cero
+  llamadas, 0 €), y por eso su prueba se coló como paso **4b** del apartado 5, *antes* de la primera
+  auditoría real.
+- **Qué se descartó:** implementar el techo en el código hoy mismo, que es lo que parecía pedir «el techo
+  primero». Habría sido el cuarto cambio sin probar sobre el mismo fichero. El orden que queda es
+  1 → 2 → 3b → 3, aplicado todo junto cuando haya clave.
+- **Qué falló:** el primer `typst compile` **no generó el PDF**. Typst rechaza las rutas que salen de
+  `docs/informe/` (las capturas están en `../capturas/`) si no se le pasa `--root`. El artefacto sí se
+  regeneró, así que durante un minuto las dos salidas estuvieron **desparejadas**, que es exactamente lo
+  que R4 prohíbe. Corregido con `--root .` y verificado con el cerco (22/22). Queda apuntado porque el
+  comando de regeneración es el que más se repite en esta línea.
+- **A qué requisito toca:** RF-08 y RNF-06; apartados 3, 8 y 10 de la memoria.
+- **Evidencia:** `evidencias/gasto-api-origen-y-topes-08oct.md`
+- **Horas:** ~0,6 h (Claude).
