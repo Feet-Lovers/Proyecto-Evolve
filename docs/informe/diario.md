@@ -1156,3 +1156,40 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
 - **Evidencia:** `(no aplica)` — es lectura de código; las líneas citadas son la evidencia y están en el
   repo. La captura llegará cuando el camino degradado se pueda enseñar en el panel.
 - **Horas:** ~0,4 h (Claude).
+
+### Fase 3 (8-oct, 15:25) · De dónde salieron los 5 € de la P1, y el tope que sigue sin existir
+
+- **Qué se hizo:** reconstruir del historial de git el incidente de gasto de la API de la P1 (josemax
+  recordaba que se metieron 5 € y «volaron en muy poco tiempo», pero no qué código se tocó para
+  arreglarlo) y comprobar qué queda hoy de ese arreglo.
+- **La causa, localizada:** antes del 17-may, `ia/main.py` llamaba a `run_full_audit()` **en el arranque**.
+  Con `restart: unless-stopped` en el servicio `ia`, `main()` terminaba al acabar la auditoría, el
+  contenedor salía y **Docker lo relevantaba** → auditoría completa otra vez. Un bucle de auditorías
+  contra la API mientras el contenedor estuviera arriba.
+- **Los arreglos (los dos del 17-may, autor JoSeMhack):** `99b656a2` cambió el arranque por **modo
+  polling** (`while True` consultando `GET /api/playwright/instruction/<token>`, solo audita si recibe
+  una instrucción `full_audit`) — ése es el arreglo de raíz, porque además el proceso ya no termina y
+  Docker deja de reiniciarlo. `058e9763` puso `MOCK_PLAYWRIGHT=true` como freno de mano.
+- **Qué queda hoy:** el polling **sigue puesto** (arrancar no gasta API), pero el freno de mano **está
+  quitado** (`docker-compose.yml:24` y `:74` → `MOCK_PLAYWRIGHT=false`). Topes vivos en `client.py`:
+  `max_tokens=1000`, `MAX_RETRIES=3` con espera exponencial.
+- 🔴 **Hallazgo nuevo: una auditoría no tiene techo de llamadas.** `run_full_audit`
+  (`orchestrator.py:299`) anida tres bucles — páginas (`:323`, hasta 5) × tipos de ataque (`:194`) ×
+  payloads (`:198`) — y cada payload es **una llamada a la API** (`:221`). El arreglo de mayo quitó el
+  *disparo automático*; nunca puso límite al *tamaño* de una auditoría.
+- **Por qué importa ahora:** el pendiente de RF-08 es «disparador en la UI» + «subir el modelo a
+  Claude 5». Ese botón pone el triple bucle a un clic, en producción, tras un login de usuarios y con un
+  modelo más caro. Es la misma aritmética que vació los 5 €, solo que ahora hay que pulsar.
+- **Qué se descartó:** buscar el incidente en los logs de conversación de `bitacora/`, que era el plan
+  inicial de josemax. El historial de git es fuente mejor para esto (mensajes de commit, diffs, fechas y
+  autoría) y además la consulta sobre los logs crudos disparaba el clasificador de safeguards y le
+  rompía la sesión. Lección de método: para «qué cambiamos y por qué», se le pregunta al **código**, no
+  al chat.
+- **Qué falló:** una afirmación mía a medio camino. Al ver el diff de mayo (`data.get("instruction")`,
+  singular) di por hecho que el contrato con el backend estaba roto, porque el backend devuelve
+  `{"instructions": [...]}`. **Falso:** `main.py:23` ya lee `instructions` en plural y toma el primero;
+  se arregló después del commit de mayo. Se verificó antes de escribirlo (R9) y no se afirmó como bug.
+- **A qué requisito toca:** RF-08 y RNF-06; apartados 8 y 10 de la memoria (y el 3, por ser aprendizaje
+  salido de un fallo real de la P1).
+- **Evidencia:** `evidencias/gasto-api-origen-y-topes-08oct.md`
+- **Horas:** ~0,5 h (Claude).
