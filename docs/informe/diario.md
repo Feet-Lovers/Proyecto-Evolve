@@ -1119,3 +1119,40 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
   aplicar», con la salida alternativa, en vez de asumirlo.
 - **Requisito:** RF-08, RNF-06, apartados 6 y 10. **Evidencia:** `(no aplica)` — es diagnóstico y diseño,
   no hay nada que capturar todavía. **Horas:** ~0,8 h (Claude).
+
+### Fase 3 (8-oct, 14:10) · Al releer el código, el fallo de la IA es PEOR que «silencioso» — y el arreglo diseñado se perdía por el camino
+
+- **Qué se hizo:** antes de aplicar el plan de RF-08 se releyó el código que el plan toca, en vez de darlo
+  por descrito. Aparecieron dos cosas que no estaban en ningún pendiente ni en el plan, y las dos cambian
+  el orden de los cambios.
+- 🔴 **CORRECCIÓN de lo que este diario afirmó a las 11:00 (R9: se declara, no se reescribe).** Allí quedó
+  escrito que «cuando la IA falla, `client.analyze()` devuelve `{"error": …}`» y que el clasificador lo
+  convierte en `None`, indistinguible de «limpio». **Eso solo es cierto para una de las ramas de fallo:**
+  la de `JSONDecodeError` (`ia/client.py:38`). En el camino de fallo de la API —el que provoca una clave
+  inválida— `client.py:45` y `:51` hacen **`raise`** al agotar los 3 reintentos. No devuelven nada.
+- **Y entonces no hay fallo silencioso, hay fase caída.** `ia/orchestrator.py:221` llama al clasificador
+  dentro de `run_attack_phase` (línea 179), y esa función **no tiene `try`**: los únicos del fichero están
+  en las líneas 52, 67 y 97. La excepción sube sin que nadie la capture y **se lleva por delante la fase
+  de ataque completa**. Es peor que lo diagnosticado por la mañana, no mejor: no es que el panel diga
+  «limpio» cuando no lo sabe, es que la auditoría se interrumpe.
+- 📌 **Consecuencia para el plan: §3 no se puede aplicar sin §1.** El arreglo de RNF-06 está escrito como
+  `if not respuesta.ok`, que presupone que el cliente **siempre devuelve** un resultado. Mientras el
+  cliente lance excepciones, ese `if` no se ejecuta nunca. Los tres cambios del plan no son
+  independientes: el cliente va primero, y el plan los presentaba como una lista.
+- 🔴 **Segundo hallazgo: un umbral duplicado y mal escalado que tiraría el arreglo a la basura.**
+  `ia/orchestrator.py:223` filtra con `analysis.get("confianza", 0) >= 0.6`, pero `confianza` viaja en
+  escala **0-100** (el clasificador compara contra `CONFIDENCE_THRESHOLD = 60`). Es el único sitio del
+  repo con esa comparación. **Hoy es inofensivo** —el clasificador ya ha filtrado antes, así que cualquier
+  valor que llegue pasa de sobra ese `0.6`— pero el dict `{"estado": "no_analizado"}` que introduce §3
+  **no lleva campo `confianza`** → `0 >= 0.6` es falso → el estado degradado **se descarta justo ahí** y
+  RNF-06 no se vería en el panel. Se habría aplicado el arreglo, habría parecido correcto, y no habría
+  hecho nada.
+- **Por qué apareció ahora y no esta mañana:** el plan se escribió leyendo `client.py` y el clasificador,
+  que es donde está el arreglo; este segundo filtro está en quien *consume* el resultado. La lección
+  repetida: al implementar un pendiente hay que leer también el código que recibe lo que devuelves, no
+  solo el que cambias.
+- **Qué se descartó:** aplicar §3 tal como está escrito. Habría pasado la revisión y no habría funcionado.
+- **A qué requisito toca:** RNF-06 y RF-08; apartados 6, 8 y 10 de la memoria.
+- **Evidencia:** `(no aplica)` — es lectura de código; las líneas citadas son la evidencia y están en el
+  repo. La captura llegará cuando el camino degradado se pueda enseñar en el panel.
+- **Horas:** ~0,4 h (Claude).
