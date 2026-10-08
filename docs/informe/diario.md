@@ -881,3 +881,46 @@ con JWT (RF-07). De ahí salieron tres arreglos:
   **Horas:** ~0,1 h (josemax) + ~0,5 h (Claude).
 - **¿Cambia la memoria técnica?** Evaluado (R3): **no todavía**, por lo mismo que la entrada anterior — nada
   del producto en producción ha cambiado aún. **Cambia con el bloque 3**, y se regenera en ese mismo paso.
+
+### Fase 2 (8-oct, 06:52 UTC) · LA FASE 2, EN PRODUCCIÓN — y el artefacto llevaba dos días mintiendo
+
+- **Qué se hizo:** se desplegó la Fase 2 en la caja. `chmod 600` al `.env` (acababa de recibir el
+  `JWT_SECRET` y estaba en 644), `up -d --build backend frontend` y `up -d --force-recreate nginx`.
+  Verificado con un bloque aparte de solo lectura. Evidencia: `evidencias/despliegue-fase2-produccion-08oct.md`.
+- **Resultado, con los datos:** `/` → **200** (el panel carga **sin Basic Auth**) · `/api/auth/yo` → **401**
+  (la API **exige token**) · backend, frontend y nginx recreados a las 06:52 con **0 reinicios** · los otros
+  cuatro contenedores intactos de mayo · `bcrypt 4.1.3` dentro del backend · volumen de usuarios creado.
+  **Las cuatro fugas que el 7-oct se comprobaron VIVAS en esta misma instalación están cerradas.**
+- **Por qué los `0 reinicios` son la prueba que importa:** el código de la Fase 2 **se niega a arrancar** si
+  faltan `JWT_SECRET` o `REGISTRO_CODIGO` —sin valor por defecto, a propósito: preferimos no arrancar a
+  arrancar sin autenticación pareciendo correcto—. Un contenedor `running` sin un solo reinicio prueba que los
+  secretos llegaron de verdad al entorno.
+- **Por qué `--force-recreate` y no solo `--build`:** nginx usa `image: nginx:alpine`, una imagen descargada.
+  `--build` no habría tocado su contenedor y el `nginx.conf` nuevo —el que retira el Basic Auth— no se habría
+  aplicado: el despliegue habría salido «en verde» sin desplegar lo que importaba (lección del 7-oct).
+- 🔴 **Lo que NO está comprobado, y se dice en vez de redondearlo:** el dominio publica también `AAAA`
+  (IPv6) y por ese camino la petición devolvió **404**, no un rechazo: algo responde ahí y **no es nuestro
+  nginx**. Desde el equipo de pruebas no hay salida IPv6, así que **no se sabe qué ve un visitante real que
+  llegue por IPv6** — y muchas redes móviles lo prefieren. La disponibilidad solo está demostrada **por IPv4**.
+  Pendiente de comprobar desde una red con IPv6 antes de darla por buena.
+- 🔴 **Hallazgo de R4 encontrado al regenerar: el artefacto publicado llevaba DOS DÍAS desfasado.** La página
+  que josemax tiene abierta decía «regenerado el 2026-10-05» mientras el `.typ` se había editado el 7-oct:
+  el HTML se regeneraba en local pero **no se republicaba**. Es decir, la pestaña mostraba una memoria sin el
+  trabajo del 6 ni del 7 de octubre. **Y el cerco de R4 daba verde todo ese tiempo**, porque compara el HTML
+  *local* contra el `.typ` *local* y nunca mira si lo **publicado** coincide. Es el mismo patrón que ya nos
+  mordió dos veces hoy: una comprobación que mide lo que es fácil de medir en lugar de lo que importa.
+  **Arreglo propuesto:** que el cerco lea la fecha incrustada en la página publicada (es dinámica, la pone
+  `typ2html.py`) y la compare con el `.typ`; y que publicar sea parte del mismo paso que regenerar, no un acto
+  aparte que se olvida.
+- **Memoria técnica actualizada EN EL MISMO PASO (R3b), no después.** El apartado 7 tenía una sección titulada
+  «Lo que este apartado todavía no puede afirmar», que declaraba las fugas cerradas *solo en la cocina* y la
+  instalación pública *sirviendo todavía la Fase 1 con las cuatro fugas abiertas*. Eso dejó de ser cierto a las
+  06:52. Se reescribió como «Desplegado y verificado en producción (8-oct)», conservando **lo que se dijo antes
+  y por qué** (no se borra la cautela: se cuenta que se mantuvo a propósito), con la tabla de las cuatro
+  medidas y el estado pasado de `curso` a `ok`. PDF y artefacto regenerados y **republicado en la URL fija**.
+- **Un error propio por el camino, declarado:** al escribir esa sección usé una función de tabla que no existe
+  en la plantilla (`#tabla2`). Habría roto la compilación. Se detectó antes de compilar comprobando que el
+  nombre no aparecía en ninguna otra parte del documento, y se corrigió al formato real `#tabla(cols, datos)`.
+- **Requisito:** RF-12, RNF-07, apartado 7 y 8. **Evidencia:** `evidencias/despliegue-fase2-produccion-08oct.md`
+  + ⚠️ FALTA: **las 3 capturas del panel en producción (panel sin Basic Auth · registro pidiendo el código ·
+  sesión iniciada) [pantalla, josemax]**. **Horas:** ~0,2 h (josemax) + ~0,8 h (Claude).

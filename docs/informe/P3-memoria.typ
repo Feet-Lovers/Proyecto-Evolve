@@ -313,9 +313,26 @@ La peor de las cinco fue el Repeater, y se escapó del primer inventario por bus
 
 Se descartó la corrección evidente, que era validar ese campo contra el token: funciona, pero deja el dato en manos del cliente y obliga a acordarse en cada modelo nuevo. Las rutas toman el espacio del token y *descartan* lo que venga en el cuerpo: lo que no se lee no se puede falsear. Comprobado como ataque real (apartado 8).
 
-=== Lo que este apartado todavía no puede afirmar
-Todo lo anterior está *verificado en la cocina*, el entorno de pruebas, no en producción. Mientras el despliegue no se haga y se verifique allí, la instalación pública sigue sirviendo la versión de la Fase 1 y, por tanto, *sigue teniendo abiertas las cuatro fugas de la columna izquierda*. Se dice expresamente porque la tentación de escribir una mejora en presente antes de que llegue a producción es exactamente como una memoria acaba describiendo un producto que no existe.
-#estado("curso", "FUGAS CERRADAS Y VERIFICADAS EN LA COCINA · PENDIENTE DE DESPLEGAR Y VERIFICAR EN PRODUCCIÓN")
+=== Desplegado y verificado en producción (8-oct)
+Hasta esta fecha, este apartado decía expresamente que no podía afirmar nada de la instalación pública: todo estaba *verificado en la cocina*, y la caja seguía sirviendo la Fase 1 con las cuatro fugas abiertas. Se dejó escrito así a propósito, porque la tentación de contar una mejora en presente antes de que llegue a producción es justo como una memoria acaba describiendo un producto que no existe. El 7 de octubre se comprobó además *en vivo y en la propia instalación pública* que las fugas no eran teóricas: la API respondía sin credencial a cualquiera.
+
+El despliegue se hizo el *8 de octubre a las 06:52 UTC*, en cuatro pasos con punto de retorno previo: se etiquetaron las imágenes en servicio y se copió la configuración, se mergeó el cambio a la rama principal, se trajo el código a la caja con `git reset --hard` y se generaron los secretos, y se reconstruyeron los contenedores. La verificación inmediata, con el sistema ya en marcha:
+
+#tabla(
+  (4fr, 7fr),
+  "
+  Qué se midió | Resultado
+  Entrada del panel (`/`) | `200` — carga *sin pedir Basic Auth*: la contraseña compartida está retirada
+  API (`/api/auth/yo`) | `401` — *exige token*; la fuga nº 1 de la columna izquierda, cerrada
+  Reinicios del backend | `0` — prueba que los secretos llegaron: el código se niega a arrancar sin ellos
+  Contenedores recreados | backend, frontend y nginx; los otros cuatro, intactos a propósito
+  ",
+)
+
+El dato de los *cero reinicios* no es decorativo: el acceso por usuario se diseñó para *no arrancar* si faltan el secreto de firma o el código de invitación, en lugar de arrancar sin autenticación pareciendo correcto. Que el contenedor esté sirviendo sin un solo reinicio es la prueba de que esa comprobación se superó.
+
+*Lo que sigue sin poder afirmarse, y no se disfraza.* El dominio publica también una dirección IPv6, y por ese camino la comprobación devolvió `404` en lugar del panel. No está confirmado qué ve un visitante real que llegue por IPv6, porque desde el equipo de pruebas no hay salida por esa vía. Mientras no se compruebe desde una red con IPv6, la disponibilidad solo está demostrada por IPv4.
+#estado("ok", "CUATRO FUGAS CERRADAS Y VERIFICADAS EN PRODUCCIÓN (8-oct, 06:52 UTC) · PENDIENTE: COMPROBAR LA LLEGADA POR IPv6")
 
 === Lo que sigue sin cubrir
 - *Sin TLS* (RNF-09): el acceso viaja en claro, así que el token de sesión es interceptable por quien esté en el camino. Pendiente de configurar en el proxy.
