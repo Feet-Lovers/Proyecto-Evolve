@@ -1255,3 +1255,41 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
   que capturar. ⚠️ FALTA: si josemax quiere dejarlo documentado, captura de la pestaña del artefacto
   mostrando la fecha de regeneración desfasada [pantalla].
 - **Horas:** ~0,2 h (Claude).
+
+### Fase 3 (9-oct, 09:05) · Un tramo de trabajo borrado del contexto por un rebobinado, y el cerco que cazó lo que había dejado hecho
+
+- **Qué pasó:** a media mañana la **salvaguarda de seguridad del modelo** se disparó y el menú de pausa
+  ofreció, entre otras opciones, «volver a un mensaje anterior de la conversación». Al elegirla, el contexto
+  de Claude **perdió el tramo 08:40–08:48:49**, en el que se había leído el protocolo de la línea, corrido
+  `bin/cerco.sh practica3-hooksuite`, leído `PLAN-RF08-MODULO-IA.md`, inspeccionado `ia/client.py`,
+  `ia/orchestrator.py` y `vulnerability_classifier.py`, y **construido la imagen `proyecto-evolve-ia`**.
+  La conversación volvió atrás; **el cambio en el servidor se quedó hecho**. Es la segunda vez en dos días
+  que esa opción del menú cuesta trabajo (la primera, el 8-oct por la tarde).
+- **Quién lo detectó:** el **CERCO 2** del mediaserver (hook `Stop`), que a las 09:01 bloqueó el cierre
+  señalando el comando exacto: `docker compose build ia`. Sin ese aviso, el cambio no habría quedado
+  registrado en ninguna parte, porque **quien lo hizo perdió la memoria de haberlo hecho**.
+- **Qué quedó hecho de verdad (verificado en vivo, R9):** solo la imagen —`proyecto-evolve-ia:latest`,
+  creada a las **08:48:03**, 719 MB—. `git status` de la cocina **vacío**, **ningún contenedor `ia`**,
+  **ningún commit** (HEAD sigue en `335eb27e`, del 8-oct 15:58) y **ningún gasto de API** (no se llegó a
+  llamar a Anthropic).
+- **Lo que NO quedó hecho, y conviene no confundir:** el log muestra el rótulo *«client.py actual (el que se
+  reescribe)»*, pero `ia/client.py` **sigue intacto** del 4-oct y con `MODEL = "claude-sonnet-4-20250514"`.
+  O sea: **la imagen se construyó con el código viejo**, y el pendiente de subir el modelo a Claude 5 sigue
+  abierto. Quien lea «se construyó la imagen `ia`» y deduzca que el módulo quedó al día, se equivoca.
+- **Por qué:** el motivo exacto de ese tramo **no consta y no se reconstruye** (R9). Se puede afirmar qué
+  ficheros se miraron y qué se construyó, porque está en el log; **por qué en ese orden, se perdió con el
+  contexto.** Se deja dicho así en vez de inventar una intención verosímil.
+- **Qué se descartó:** (a) rehacer de memoria el tramo perdido dando por hecho lo que pretendía — se
+  descarta por R9, no hay fuente; (b) borrar la imagen para «dejarlo limpio» — es un cambio irreversible
+  sobre algo que quizá se quiera reutilizar, y correspondería a josemax (R8); (c) dar el aviso del cerco por
+  falso positivo, que era el error natural después de dos falsos positivos esa misma mañana.
+- **Qué falló, como lección de proceso:** una hora antes, en esa misma sesión, el CERCO 2 había dado **dos
+  falsos positivos** (un ` > ` dentro de unas comillas) y Claude había propuesto **aflojar su detector**.
+  Acto seguido el cerco cazó la única mutación real del día. **Moraleja: el arreglo del cerco no puede
+  tocar su capacidad de ver mutaciones reales**, solo la de no confundirse con texto citado. Material directo
+  para el apartado 11 (proceso) y hermano de la lección del 5-oct sobre el cerco de R4 en verde perpetuo.
+- **A qué requisito toca:** RF-08 (estado real del módulo de IA); R3 y R10 del protocolo de la línea;
+  apartado 11 de la memoria (proceso) y apartado 8 (lo que falló).
+- **Evidencia:** `evidencias/tramo-perdido-rewind-09oct.md` (tabla de las 7
+  comprobaciones en vivo y el extracto del log, capturado como texto).
+- **Horas:** ~0,4 h (Claude), de investigación y registro; 0 h de producto.
