@@ -66,3 +66,24 @@ que los 719 MB no aprietan.
    falsos positivos y Claude había propuesto **aflojarlo**. Acto seguido cazó la única mutación real del día,
    que además nadie habría registrado porque quien la hizo perdió la memoria de haberla hecho. Cualquier
    arreglo del cerco tiene que seguir cazando esto.
+
+---
+
+## ⚠️ CORRECCIÓN DECLARADA (9-oct, 09:30) — este documento contaba mal el mecanismo
+
+Lo de arriba dice que «la salvaguarda se disparó y josemax eligió en el menú de pausa volver a un mensaje
+anterior». **Eso es inexacto y se corrige en vez de reescribirse (R9).** Con las cinco capturas que sacó
+josemax en el momento delante:
+
+- La salvaguarda **no ofrece menú**: devuelve un **error de API** («*Opus 5's safeguards flagged this
+  message … Claude Code can't respond to this message with Opus 5*») y sugiere editar el último mensaje
+  o cambiar de modelo. Confirma además que `CLAUDE_CODE_DISABLE_REFUSAL_FALLBACK=1` **funciona**: no hubo
+  cambio automático a Opus 4.8.
+- El **Rewind es otra función de Claude Code** (doble `Esc`) que josemax abrió para desatascarse, con
+  **cuatro** opciones. Eligió la 1 (`Restore conversation`), que descarta lo posterior. Las opciones 2 y 3
+  habrían conservado el trabajo.
+- Y el dato que más importa: el turno del build figuraba en el Rewind como **«No code changes»**, porque
+  **cuenta ficheros, no efectos en el servidor**.
+
+**Transcripción completa de las capturas y qué hacer la próxima vez:**
+`salvaguarda-y-rebobinado-09oct.md` (en el repo: `evidencias/salvaguarda-y-rebobinado-09oct.md`).

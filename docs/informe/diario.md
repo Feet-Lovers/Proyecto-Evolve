@@ -1287,9 +1287,52 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
   falsos positivos** (un ` > ` dentro de unas comillas) y Claude había propuesto **aflojar su detector**.
   Acto seguido el cerco cazó la única mutación real del día. **Moraleja: el arreglo del cerco no puede
   tocar su capacidad de ver mutaciones reales**, solo la de no confundirse con texto citado. Material directo
-  para el apartado 11 (proceso) y hermano de la lección del 5-oct sobre el cerco de R4 en verde perpetuo.
+  para el apartado 12 (uso de herramientas de IA) ⚠️[corregido 9-oct: hoy se escribió «apartado 11 (proceso)» cinco veces y el 11 es «Reparto del trabajo»; verificado en `P3-memoria.typ:496`] y hermano de la lección del 5-oct sobre el cerco de R4 en verde perpetuo.
 - **A qué requisito toca:** RF-08 (estado real del módulo de IA); R3 y R10 del protocolo de la línea;
-  apartado 11 de la memoria (proceso) y apartado 8 (lo que falló).
+  apartado 12 de la memoria (uso de herramientas de IA) y apartado 8 (lo que falló). ⚠️[corregido: el 11 es «Reparto del trabajo»]
 - **Evidencia:** `evidencias/tramo-perdido-rewind-09oct.md` (tabla de las 7
   comprobaciones en vivo y el extracto del log, capturado como texto).
 - **Horas:** ~0,4 h (Claude), de investigación y registro; 0 h de producto.
+
+### Fase 3 (9-oct, 09:30) · Cinco capturas de josemax devuelven parte del tramo perdido — y corrigen cómo lo conté
+
+- **Qué pasó:** josemax había fotografiado el momento exacto del bloqueo (5 capturas) y las entregó para
+  decidir el protocolo de la próxima vez. Transcritas a texto y borradas después (R3: el texto es buscable,
+  la imagen no). **Sin secretos a la vista** (R7).
+- ⚠️ **CORRECCIÓN DECLARADA de la entrada de las 09:05 (R9):** allí se dijo que «la salvaguarda se disparó y
+  el menú de pausa ofreció, entre otras opciones, volver a un mensaje anterior». **Es inexacto.** La
+  salvaguarda **no ofrece menú**: devuelve un **error de API** (*«Opus 5's safeguards flagged this message …
+  Claude Code can't respond to this message with Opus 5»*) y sugiere editar el último mensaje o cambiar de
+  modelo. El **Rewind es otra función** de Claude Code (doble `Esc`) que josemax abrió para desatascarse, con
+  **cuatro** opciones; eligió la 1 (`Restore conversation`), que descarta lo posterior. **Las opciones 2 y 3
+  habrían conservado el trabajo.** Se corrige en vez de reescribirse, como obliga R9.
+- 🔴 **Hallazgo de proceso con consecuencias:** en la lista del Rewind, el turno que **construyó la imagen
+  Docker** figuraba como **«No code changes»**. El Rewind **contabiliza ficheros, no efectos en el servidor**
+  → su promesa «*The code will be unchanged*» tranquiliza de más: no deshace, ni conoce, imágenes
+  construidas, contenedores levantados ni llamadas a la API ya pagadas. **El único testigo de esos efectos
+  es un cerco que mire el servidor.**
+- ✅ **Lo recuperado, que vuelve al plan de RF-08:** la captura conserva el último hallazgo del tramo
+  perdido — *«los cuatro prompts leídos. Un matiz que corrige el plan (R9): el plan dice «los cuatro prompts
+  piden `descripcion`» — **`fingerprint` no tiene ese campo**; devuelve un informe de stack. No afecta al
+  arreglo de `orchestrator.py:270` (que construye vulnerabilidades, no fingerprints), pero se anota porque la
+  afirmación era inexacta»*. Queda incorporado: **el plan afirmaba de los cuatro prompts algo que solo vale
+  para tres.**
+- **Y explica el misterio del log:** el build salió «sin salida» porque se lanzó **en segundo plano**
+  (*«Background command "Construir la imagen del módulo ia en la cocina" completed (exit code 0)»*), de ahí
+  que la imagen quedara fechada a las 08:48:03 y el comando a las 08:47:31.
+- **Qué se decidió para la próxima vez:** en el momento del aviso **no se ha perdido nada todavía**; lo que
+  cuesta trabajo son las prisas. Orden: (1) mandar un mensaje nuevo y corriente para que Claude escriba la
+  memoria —el disco es lo único que ningún rebobinado toca—; (2) si hay que seguir sin perder nada, opción
+  **3** (`Summarize up to here`, te deja al final); (3) si hay que volver atrás, opción **2**
+  (`Summarize from here`, conserva el resumen, con el campo «add context»); (4) la **1** solo para tirar algo
+  a propósito; (5) avisar siempre a Claude de que ha habido rebobinado, porque el servidor puede haber
+  quedado por delante de la conversación.
+- **Qué falló:** que la confianza en «*The code will be unchanged*» es justificada para ficheros y engañosa
+  para el servidor. Es el mismo patrón que el cerco de R4 en verde perpetuo (5-oct): **una comprobación que
+  mide una cosa y se lee como si midiera otra.**
+- **A qué requisito toca:** RF-08 (el matiz de los prompts corrige el plan); apartado 12 (uso de herramientas de IA) y
+  apartado 8 (lo que falló) de la memoria.
+- **Evidencia:** `evidencias/salvaguarda-y-rebobinado-09oct.md` (transcripción literal de las 5 capturas,
+  las 4 opciones y el protocolo decidido) + corrección declarada al pie de
+  `evidencias/tramo-perdido-rewind-09oct.md`.
+- **Horas:** ~0,3 h (Claude) + las capturas de josemax.
