@@ -1466,3 +1466,48 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
 - **A qué requisito toca:** RNF-06 (operación degradada) y RF-08; apartados 8 y 10 de la memoria técnica.
 - **Evidencia:** `evidencias/rf08-filtro-confianza-09oct.md`.
 - **Horas:** ~0,3 h (Claude).
+
+### Fase 3 (9-oct, 13:30) · El primer rescate real, y el cerco de contexto falla por los dos lados
+
+- **Qué se hizo:** la salvaguarda del modelo partió la sesión de tarde (tercera vez en dos días). Se usó por
+  **primera vez de verdad** el protocolo de rescate instalado esta mañana: `/rescate` volcó a disco un
+  borrador neutro de 9 campos y `/destilar` lo verificó contra el servidor antes de escribir memoria.
+- **Por qué el destilado verifica en vivo en lugar de creerse el borrador:** por el incidente de esta
+  mañana. Un rebobinado borró del contexto el tramo que había construido una imagen Docker de 719 MB, y el
+  Rewind la listaba como «sin cambios de código» **mientras la imagen seguía existiendo**. Un borrador es un
+  testimonio, no un hecho.
+- **Resultado de la verificación:** esta vez el servidor **no** iba por delante. Cero ficheros tocados tras
+  las 13:20 en el repo y en el workspace, ninguna imagen ni contenedor nuevo, y `origin/develop` =
+  `88f8d99e` leído con `git ls-remote` (R9) frente a HEAD `ea317969` → **15 commits sin empujar, ni uno
+  más**. La sesión de tarde fue de solo lectura.
+- **🔴 Fallo nº 1 encontrado — el cerco de contexto limpio tiene un falso NEGATIVO de mecanismo:** la
+  detección compara una **cadena fija contra el texto crudo del comando**
+  (`contexto-limpio.sh:62`) y salta el segmento si ninguna ruta de la lista aparece escrita (`:108`). Por
+  tanto un `grep -rn … .` lanzado desde un directorio padre **no se bloquea** —la ruta la resuelve el `-r`—
+  y volcó 4 líneas de un fichero de la lista al contexto. El comando siguiente, que **sí** nombraba el
+  fichero, fue bloqueado correctamente. **Es distinto del falso negativo cerrado a las 12:58**, que era de
+  inventario: ampliar la lista no arregla este.
+- **🔴 Fallo nº 2, cazado durante el propio destilado — falso POSITIVO:** un `find … | grep -v
+  '^./bitacora/'` de solo lectura, que *excluía* la bitácora, quedó bloqueado por contener esa cadena.
+  **Misma raíz que el nº 1:** el hook no distingue lo que un comando **lee** de lo que **filtra o rotula**.
+- **Qué se decidió, y qué se descartó:** los dos arreglos van **juntos** —son el mismo sitio del código— y
+  **el hook no se toca sin el visto bueno de josemax**: endurecerlo sin arreglar el falso positivo lo vuelve
+  inservible, y aflojarlo sin cerrar el negativo lo vuelve decorativo. Se descartó ampliar la lista de rutas
+  sensibles, que fue el arreglo correcto a las 12:58 pero aquí no toca la causa.
+- **🔎 Hallazgo del producto, confirmado al destilar:** `analyze_intruder` y `analyze_console` **no tienen
+  ningún llamador en código** (solo aparecen donde se definen y en tres documentos); el orquestador invoca
+  únicamente `fingerprint` (`:158`) y `analyze_packet` (`:222`). Como el umbral de RNF-06 está aplicado en
+  `analyze_packet` **y en `analyze_intruder`**, esa segunda mitad es **código muerto hoy** → la prueba del
+  apartado 8 (apagar la clave y capturar «no analizado») debe recorrer `analyze_packet` o `fingerprint`.
+  **No estaba en ningún pendiente ni en el plan.**
+- **Qué NO se tocó, y por qué:** la memoria técnica. `P3-memoria.typ:490` dice que el techo se sitúa en el
+  cliente «por donde pasan las cuatro vías de análisis»; se leyó la frase antes de corregirla (R9) y es
+  **exacta**: habla de por dónde *pasan*, no de que las cuatro se *invoquen*. Corregirla habría sido ruido y
+  habría obligado a regenerar PDF + artefacto para nada. **R3b sigue en verde** (el `.typ` es de hoy).
+- **Qué queda sin demostrar:** si los slash commands cargan en una sesión arrancada **antes** de crearlos
+  (la duda anotada a las 13:20). No consta a qué hora arrancó la sesión que escribió el borrador, así que la
+  prueba en frío sigue pendiente. Lo que sí está probado es que el ciclo completo entrega.
+- **A qué requisito toca:** RNF-06 y RF-08 (hallazgo de las vías muertas); apartados 8 y 12 de la memoria
+  técnica (el apartado 12 ya cuenta los límites de la herramienta de IA, y este es el tercer bloqueo).
+- **Evidencia:** `evidencias/rescate-destilado-y-cerco-contexto-09oct.md`.
+- **Horas:** ~0,5 h (Claude).
