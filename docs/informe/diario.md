@@ -1416,3 +1416,25 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
 - **Evidencia:** `evidencias/rf08-red-playwright-09oct.md` (el antes y el después como texto, con los
   comandos exactos).
 - **Horas:** ~0,3 h (Claude).
+
+### Fase 3 (9-oct, 12:50) · RF-08 paso 2: el campo «descripcion» de las vulnerabilidades leía una clave que nadie escribía
+
+- **Qué se hizo:** una línea en `ia/orchestrator.py:270`. `_build_vulnerability()` rellenaba
+  `"descripcion"` con `analysis.get("justificacion", "")`, y **ningún prompt produce `justificacion`**: cada
+  vulnerabilidad salía sin descripción.
+- **Por qué llevaba meses sin verse:** el defecto `""` del `.get()`. No lanza excepción ni deja rastro en los
+  logs; entrega el campo vacío y sigue. **Mismo patrón que RNF-06** (apartado 3, pendiente): un fallo que es
+  indistinguible de un resultado legítimo. Dos de los tres defectos de esta tanda son de esa familia.
+- **Cómo se comprobó el alcance, en vez de suponerlo:** era la **única** ocurrencia de `justificacion` en
+  todo el repositorio (`grep -rn … --include='*.py'`), y tras el arreglo quedan **cero**.
+- **Por qué `descripcion` es la clave correcta:** se verificó **quién la produce** — la escriben
+  `network_packet`, `intruder` y `console`; `fingerprint` **no**, porque devuelve un informe de stack y no
+  una vulnerabilidad. No afecta, porque las tres vías que llaman a `_build_vulnerability()` son las tres
+  primeras. Corrige de paso una frase del plan que decía «ningún prompt» a secas.
+- **Qué se descartó:** tocar `fingerprint` para que también devuelva `descripcion`. No procede: su salida no
+  es una vulnerabilidad y forzarlo mezclaría dos esquemas distintos.
+- **Qué queda sin demostrar:** que el campo llegue **relleno al panel**. Eso exige una auditoría real, aún
+  bloqueada por la clave de API inválida. Lo probado hoy es que se lee la clave que los prompts escriben.
+- **A qué requisito toca:** RF-08; apartado 8 de la memoria técnica (defectos encontrados y corregidos).
+- **Evidencia:** `evidencias/rf08-paso2-descripcion-09oct.md`.
+- **Horas:** ~0,2 h (Claude).

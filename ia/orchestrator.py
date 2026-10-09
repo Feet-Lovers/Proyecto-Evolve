@@ -267,7 +267,7 @@ class AttackOrchestrator:
             "tipo": analysis.get("tipo", "Unknown"),
             "severidad": analysis.get("severidad", "medium"),
             "titulo": f"{analysis.get('tipo', 'Vulnerabilidad')} en {source.get('url', '')[:60]}",
-            "descripcion": analysis.get("justificacion", ""),
+            "descripcion": analysis.get("descripcion", ""),
             "url": source.get("url", ""),
             "payload": source.get("request_body", ""),
             "recomendacion": analysis.get("recomendacion", ""),
