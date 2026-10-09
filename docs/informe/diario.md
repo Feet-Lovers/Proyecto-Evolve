@@ -1336,3 +1336,48 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
   las 4 opciones y el protocolo decidido) + corrección declarada al pie de
   `evidencias/tramo-perdido-rewind-09oct.md`.
 - **Horas:** ~0,3 h (Claude) + las capturas de josemax.
+
+### Fase 3 (9-oct, 09:45) · RF-08 paso 1: el cliente de IA reescrito, con el techo de gasto dentro y probado a 0 €
+
+- **Qué se hizo:** aplicado en la **cocina** (R1) el **paso 1 del `PLAN-RF08-MODULO-IA.md` junto con su
+  apartado 3b**, que es como el plan lo exige —el techo de llamadas vive en el cliente porque las **cuatro**
+  vías de análisis pasan todas por `client.analyze`, así que un tope por bucle en el orquestador dejaría
+  fuera el fingerprint y la consola—. `ia/client.py` pasa de 52 a 188 líneas (diff: +163 −23).
+- **Por qué así:** el cliente viejo tenía cinco defectos y **tres rompen con Claude 5**, no son mejoras:
+  `content[0].text` revienta con `AttributeError` si el primer bloque es de pensamiento; un rechazo de
+  seguridad llega como **HTTP 200** con `content` vacío y da `IndexError`; y `except anthropic.APIError`
+  reintentaba también 400 y 404, gastando 3 intentos y 3 segundos en una petición mal formada. Además
+  **lanzaba** la excepción hacia arriba, y `run_attack_phase` no tiene `try`: un fallo de la IA **tumbaba la
+  fase de ataque entera**. Ahora todo camino de error devuelve `RespuestaIA(..., "degradado", motivo)`.
+- **Antes de escribir una línea se cerró la puerta que el plan dejaba abierta** (*«`output_config` puede no
+  existir en la versión del SDK instalada … no se deja asumido: se mira»*): el SDK de la imagen es **1.12.1**
+  y soporta `output_config` con `effort` (los cinco niveles) y `format: json_schema`, y `Message` trae
+  `stop_details`. **Se aplica la vía principal; el plan B del plan —subir el pin o mantener el parseo manual
+  de JSON— no hace falta.**
+- 🔴 **Dos correcciones al código del plan, salidas de contrastar la referencia oficial de la API (R9).** El
+  plan se escribió ayer y nunca se ejecutó. (a) `max_tokens=4000` era arriesgado: en Claude 5 el pensamiento
+  está **activado por defecto** y `max_tokens` cubre **pensamiento + respuesta**, así que un tope corto
+  trunca el JSON a media llave → ahora es configurable (`HOOKSUITE_IA_MAX_TOKENS`, 8000 por defecto).
+  (b) **Faltaba tratar `stop_reason == "max_tokens"`**: sin eso una respuesta truncada caía en la rama «no
+  era JSON pese al esquema» y el panel mostraría un motivo **engañoso** — el mismo patrón de «una
+  comprobación que mide una cosa y se lee como si midiera otra» que ya salió dos veces hoy.
+- 🧪 **Probado a mordida y a 0 €**, que es el paso 4b del plan y lo único de la tanda que no cuesta saldo.
+  Con `docker run --network none` queda **demostrado** que no salió ninguna petición: **techo a 0** → ninguna
+  llamada sale, `llamadas=0`, degradado con el motivo del techo y `techo_alcanzado=True`; **techo a 1** → la
+  primera suma contador y degrada por conexión tras **6,9 s** (el `1 s + 2 s` del reintento exponencial), y
+  las siguientes las corta el techo **sin gastar contador**; y los **tres estados de RNF-06** (vulnerable /
+  analizado-limpio / **no analizado**) ya son **distinguibles** en el cliente, que era el fallo silencioso.
+- **Qué se descartó:** (a) el parámetro `fallbacks` para que un rechazo de las salvaguardas se reintente
+  solo en otro modelo — es beta, solo de la API de Anthropic, y el camino degradado **es** lo que RNF-06
+  pide demostrar: que el recorte se vea; (b) desactivar el pensamiento para ahorrar: con `thinking` apagado
+  el modelo es **menos propenso a usar herramientas** y puede escribir etiquetas internas en la respuesta
+  visible — se deja adaptativo con `effort: "low"`, que es la recomendación y ya recorta coste.
+- ⚠️ **Qué queda roto a propósito:** `analyze()` exige ahora `schema` y devuelve `RespuestaIA`, así que los
+  **cuatro llamadores** (`vulnerability_classifier.py:21, 44, 68, 91` — exactamente los que el plan
+  predecía) esperan los pasos 2, 3 y 4. **Nada en marcha se rompe**: no hay contenedor `ia` levantado, nada
+  lo invoca, y la clave de la caja sigue inválida. Vuelta atrás: `git show HEAD~1:ia/client.py`.
+- **A qué requisito toca:** RF-08 (cliente y techo) y RNF-06 (operación degradada); apartados 3, 8 y 10 de
+  la memoria técnica.
+- **Evidencia:** `evidencias/rf08-paso1-cliente-y-techo-09oct.md` (la tabla de comprobación del SDK y las
+  dos salidas de prueba completas, como texto).
+- **Horas:** ~0,7 h (Claude).
