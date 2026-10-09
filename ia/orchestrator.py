@@ -7,7 +7,7 @@ from typing import Dict, List, Optional
 from dotenv import load_dotenv
 from datetime import datetime
 
-from analyzers.vulnerability_classifier import VulnerabilityClassifier
+from analyzers.vulnerability_classifier import VulnerabilityClassifier, CONFIDENCE_THRESHOLD
 
 load_dotenv()
 
@@ -45,6 +45,7 @@ class AttackOrchestrator:
         self.confirmed_vulnerabilities = []
         self.vulnerabilities_found = []
         self.analyses_count = 0
+        self.no_analizados = []          # RNF-06: lo que la IA no pudo analizar, con su motivo
 
     # ─── Conexión con backend ────────────────────────────────────────────────
 
@@ -220,7 +221,17 @@ class AttackOrchestrator:
                 self.analyses_count += 1
                 analysis = self.classifier.analyze_packet(fake_packet)
 
-                if analysis and analysis.get("confianza", 0) >= 0.6:
+                # Tres estados distinguibles (RNF-06). "No analizado" NO es una vulnerabilidad
+                # candidata: no hay nada que confirmar, asi que se registra con su motivo y se
+                # sigue. Antes este if comparaba contra 0.6 teniendo la escala en 0-100, con dos
+                # consecuencias: (a) no filtraba nada (pasaba cualquier confianza >= 1) y (b)
+                # habria descartado el degradado en silencio, porque ese dict no lleva el campo
+                # "confianza" -> .get(..., 0) daba 0 y RNF-06 no se veria nunca.
+                if analysis and analysis.get("estado") == "no_analizado":
+                    self.no_analizados.append(analysis)
+                    print(f"  ⚠️  sin analizar — {analysis.get('motivo', 'motivo no indicado')}")
+
+                elif analysis and analysis.get("confianza", 0) >= CONFIDENCE_THRESHOLD:
                     confirmed = await self._confirm_vulnerability(
                         target_url, field_selector, payload, analysis
                     )
@@ -287,6 +298,8 @@ class AttackOrchestrator:
                     "total_analyses": self.analyses_count,
                     "vulnerabilities_found": len(self.vulnerabilities_found),
                     "vulnerabilities": self.vulnerabilities_found,
+                    "no_analizados": len(self.no_analizados),
+                    "no_analizados_detalle": self.no_analizados,
                 },
                 f,
                 indent=2,

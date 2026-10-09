@@ -1438,3 +1438,31 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
 - **A qué requisito toca:** RF-08; apartado 8 de la memoria técnica (defectos encontrados y corregidos).
 - **Evidencia:** `evidencias/rf08-paso2-descripcion-09oct.md`.
 - **Horas:** ~0,2 h (Claude).
+
+### Fase 3 (9-oct, 13:10) · El orquestador anulaba el umbral de RNF-06 — y habría tapado el estado degradado
+
+- **Qué se hizo:** arreglado el filtro de confianza de `ia/orchestrator.py:223`. Comparaba
+  `analysis.get("confianza", 0) >= 0.6` teniendo la escala en **0-100** (el clasificador declara
+  `CONFIDENCE_THRESHOLD = 60`).
+- **Por qué era bloqueante, y no un detalle:** dos efectos. (a) El filtro **no filtraba** — pasaba cualquier
+  confianza ≥ 1, así que el umbral de RNF-06 existía en el clasificador y el orquestador lo anulaba.
+  (b) 🔴 Habría **descartado el estado degradado en silencio**: el dict `no_analizado` no lleva `confianza`,
+  luego `.get(…, 0)` da 0 y `0 >= 0.6` es falso → RNF-06 habría seguido invisible **aunque se arreglase el
+  clasificador**. Confirma con el código delante el punto (b) anotado el 8-oct, y es la razón de que el
+  orden del plan sea obligado: orquestador primero.
+- **Cómo se arregló, y por qué así:** importando `CONFIDENCE_THRESHOLD` del clasificador en vez de escribir
+  `60` aquí. **El umbral duplicado con dos escalas ES la causa**; cambiar el número habría curado el síntoma
+  dejando la causa en pie. Y tres ramas en lugar de una: «no analizado» se registra con su motivo y la fase
+  sigue, sin pasar por `_confirm_vulnerability` (que gastaría llamadas a la API para confirmar algo que
+  nadie analizó). `save_results` publica ahora `no_analizados` y `no_analizados_detalle` — RNF-06 pide que
+  el recorte **se vea**.
+- **Qué se descartó:** sustituir `0.6` por `60` y seguir. Deja dos declaraciones del mismo umbral en dos
+  ficheros, que es el patrón que produjo el fallo.
+- **Qué queda sin demostrar:** el camino de punta a punta. El clasificador aún no produce el dict
+  `no_analizado` (apartado 3, a la espera del visto bueno de josemax para leer ese fichero, que está en la
+  lista de rutas sensibles). Lo probado hoy es que el camino ya no lo descarta.
+- **Nota de método:** el valor del umbral se verificó con `grep -c` **sin volcar** el fichero sensible, y su
+  esqueleto con `bin/estructura.sh`. El protocolo de contexto limpio no estorbó el trabajo.
+- **A qué requisito toca:** RNF-06 (operación degradada) y RF-08; apartados 8 y 10 de la memoria técnica.
+- **Evidencia:** `evidencias/rf08-filtro-confianza-09oct.md`.
+- **Horas:** ~0,3 h (Claude).
