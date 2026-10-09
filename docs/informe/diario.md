@@ -1596,10 +1596,14 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
   la receta prohíbe en su regla 2. Se repitió partido en tres comandos simples y pasó a la primera. El
   mismo error que había matado el intento del experimento a las 14:06: **el tercer cerco castiga los
   comandos que parecen un rodeo**, y encadenar lo parece.
-- **Qué NO se tocó, y por qué:** el filtro `confianza >= 0.6` del orquestador (`orchestrator.py:223`),
-  que está en escala 0-100 y **descartaría el estado degradado** antes de que llegue al panel. Es el
-  defecto (b) ya documentado el 8-oct; pertenece al orquestador, no al apartado 3, y va en su propio
-  commit. **Mientras no se arregle, RNF-06 funciona en el clasificador pero no se vería en la interfaz.**
+- **Qué NO se tocó, y por qué:** el commit `8ebea124` no toca el orquestador, porque el apartado 3 es
+  el clasificador y cada cosa va en su commit.
+  🔴 **CORRECCIÓN DECLARADA (R9), escrita a las 17:40 del mismo día.** Este punto decía que el filtro
+  `confianza >= 0.6` del orquestador seguía sin arreglar y que «mientras no se arregle, RNF-06 no se
+  vería en la interfaz». **Era falso cuando se escribió:** ese filtro se había arreglado a las 13:03 de
+  ese mismo día (commit `ea317969`, el defecto (b)), cuatro horas antes, y está registrado más arriba en
+  este propio diario. Se arrastró el enunciado viejo de los tres defectos al cerrar (c). No se borra la
+  frase: se corrige a la vista, porque el fallo —y cómo se detectó— es parte de lo aprendido.
 - **Lo que sigue sin demostrarse:** que a la API le gusten los esquemas generados. No hay clave válida,
   así que eso lo dirá la primera auditoría real. El test cubre el comportamiento, no el contrato con la API.
 - **A qué requisito toca:** RNF-06 (que pasa de «A revisar» a implementado y probado) y RF-08; apartados
@@ -1607,3 +1611,43 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
 - **Evidencia:** `docs/evidencias/rnf06-tres-estados-antes-y-despues-09oct.md` y el propio test
   (`python3 ia/tests/test_tres_estados.py`, reproducible y a coste cero).
 - **Horas:** ~0,4 h (Claude).
+
+### Fase 3 (9-oct, 17:37) · Destilado del 2º rescate: cuatro sitios afirmaban un pendiente ya cerrado
+
+- **Qué se hizo:** destilar el volcado de urgencia del 2º corte de la salvaguarda del día (17:31),
+  contrastando contra el servidor **antes** de escribir nada en la memoria. El borrador había anotado como
+  «algo raro, sin resolver» que el código del orquestador ya usaba el umbral importado y llevaba un
+  comentario en pasado. Verificado: el defecto (b) estaba **arreglado desde las 13:03** (`ea317969`), y a
+  las 17:15-17:19 se escribieron **cuatro** afirmaciones de que seguía abierto — `memoria/ESTADO.md`,
+  `memoria/HOJA-DE-RUTA.md`, el pendiente de `LINEA.md` y **este diario**. Las cuatro, corregidas; más una
+  quinta en la memoria técnica (abajo).
+- **Por qué pasó:** al cerrar (c) se arrastró el enunciado de los tres defectos (a)(b)(c) tal como estaba
+  escrito el 8-oct, sin volver a mirar si alguno se había cerrado por el camino ese mismo día.
+- **Lo que de verdad falta, y no estaba en ningún pendiente:** RNF-06 no llega al panel porque **nadie
+  consume el estado degradado**. La marca `no_analizado` aparece solo en los tres ficheros de `ia/` y
+  **cero veces** en `frontend/src` y en `backend`: el orquestador publica `no_analizados` y
+  `no_analizados_detalle`, y no hay nadie al otro lado. Es la **tercera vez** en esta línea que lo que
+  falta de verdad no figura en el backlog.
+- **Qué falló, y es la lección de fondo:** la **memoria técnica** (`P3-memoria.typ:171`) afirmaba en
+  presente algo falso del producto —el mismo fallo del 5-oct que hizo nacer R3b—, pero esta vez **R3b
+  estaba en verde**: el `.typ` era de hace dos minutos. Frescura no es veracidad. Corregido con la
+  corrección declarada a la vista (R9) y **las dos salidas regeneradas en la misma pasada** (R4): PDF con
+  `typst compile --root .` y artefacto con el Python del venv. El artefacto **publicado** sigue sin
+  actualizarse porque subirlo se lo bloquea el auto-mode a Claude.
+- **Y el coste no fue cero:** ese pendiente falso **provocó el propio rescate**. La sesión de las 17:2x
+  abrió `ia/orchestrator.py` para rearreglar algo ya arreglado, y leyéndolo saltó la salvaguarda. Una
+  memoria desactualizada no solo informa mal: manda trabajo inútil hacia el fichero más caro de tocar.
+- **Qué se descartó:** (1) **añadir `ia/orchestrator.py` a la lista de ficheros que no se vuelcan**, que
+  es lo que el protocolo manda tras un disparo — se descarta *por ahora* porque el disparador nunca se
+  estableció (el borrador dice «no identificado por archivo único»), encarecería el fichero que más se
+  toca de `ia/` y contradiría el experimento en frío que existe justo para resolver esa duda: queda como
+  decisión de josemax. (2) **Tocar la fila de RNF-06 de la matriz de trazabilidad**, que sigue en «A
+  revisar»: pasarla a «cumplido con limitación» depende de una decisión de producto que no es nuestra.
+- **Qué NO se verificó:** que el tramo completo cliente → clasificador → orquestador funcione de punta a
+  punta en ejecución real. Lo medido es estructura y conteo, no una auditoría ejecutada; sigue sin clave
+  de API válida.
+- **A qué requisito toca:** RNF-06 y RF-08; apartados 8 (pruebas que fallan y por qué), 10 (limitaciones)
+  y 12 (uso de IA: este fallo lo cometió y lo cazó la propia herramienta).
+- **Evidencia:** `docs/evidencias/rnf06-destilado-nadie-consume-09oct.md` (las tres mediciones, con sus
+  comandos y su lectura).
+- **Horas:** ~0,5 h (Claude).
