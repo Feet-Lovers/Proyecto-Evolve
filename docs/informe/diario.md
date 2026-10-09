@@ -1542,3 +1542,37 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
   bloqueo registrado) y, de rebote, apartado 8.
 - **Evidencia:** `docs/evidencias/salvaguarda-salta-y-sigue-09oct.md` (transcripción y cuentas).
 - **Horas:** ~0,3 h (Claude).
+
+### Fase 3 (9-oct, 15:10) · El apartado 3, listo para aplicarse a ciegas — y el plan daba por supuesto un esquema que no existe
+
+- **Qué se hizo:** preparar el apartado 3 de RF-08 (los tres estados de RNF-06) como una **receta
+  ejecutable** en vez de como una edición a mano: un guion en disco, dos scripts y un test, todo probado
+  sobre una copia. No se ha tocado todavía el código del repo.
+- **Por qué en forma de receta:** el clasificador está en la lista de ficheros que no se vuelcan a la
+  conversación, así que hay que editarlo **sin leerlo**. Y porque la salvaguarda del modelo puede matar un
+  turno en cualquier momento: con la receta y su registro en disco, un turno perdido no se lleva el
+  trabajo. La forma viene del guion del experimento de lectura en frío, de hoy mismo.
+- **🔴 Hallazgo que corrige el plan (R9):** el §3 del plan usa `network_packet.ESQUEMA`, y **ninguno de los
+  cuatro módulos de prompts define un `ESQUEMA`** (`grep -c` = 0 en los cuatro). Como `client.analyze()`
+  pide `schema` sin valor por defecto, aplicar el plan literalmente habría dado `TypeError` en la primera
+  llamada. **Se declara aquí en vez de corregirlo en silencio.**
+- **🔴 Segundo hallazgo, medido y no supuesto:** el test sobre el código de hoy da **0/8**, y los fallos son
+  `AttributeError: 'RespuestaIA' object has no attribute 'get'`. O sea que hoy el problema no es que el
+  fallo de la IA sea silencioso: **es que la fase de análisis se cae entera** en cuanto llama al modelo.
+  Era el efecto esperado de dejar el apartado 1 a media secuencia, pero ahora está medido.
+- **Qué se decidió, y qué se descartó:** los esquemas van en un módulo nuevo `ia/esquemas.py`, **generado**
+  a partir de las claves que el clasificador lee de verdad. Se descartó escribirlos dentro de los prompts
+  (son ficheros que no se pueden editar con los ojos) y se descartó darle un valor por defecto a `schema`
+  en el cliente, que es una línea pero anula la garantía de formato que se montó en el apartado 1.
+- **Cómo se hace sin conocer el cuerpo de los métodos:** tras la llamada se inserta el camino degradado y
+  una línea puente, `result = respuesta.datos`; a partir de ahí el resto del método se encuentra su
+  `result` de siempre. No hay que leer ni tocar nada más.
+- **Qué falló al prepararlo:** el primer intento de insertar el argumento `schema` **no compilaba** — el
+  último argumento de la llamada no lleva coma final, así que añadir una línea detrás la rompía. Lo cazó
+  la comprobación de sintaxis del propio script, que **aborta sin escribir** y solo dice el número de
+  línea. Corregido insertándolo al principio de la llamada.
+- **El test se vio fallar a propósito** (0/8 sobre el fichero sin tocar, 8/8 sobre la copia transformada),
+  que es la condición que esta línea exige antes de dar por bueno cualquier cerco o prueba.
+- **A qué requisito toca:** RNF-06 y RF-08; apartados 8 (pruebas que fallan, con su explicación) y 10.
+- **Evidencia:** `docs/evidencias/rnf06-tres-estados-antes-y-despues-09oct.md`.
+- **Horas:** ~0,7 h (Claude).
