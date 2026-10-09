@@ -1381,3 +1381,38 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
 - **Evidencia:** `evidencias/rf08-paso1-cliente-y-techo-09oct.md` (la tabla de comprobación del SDK y las
   dos salidas de prueba completas, como texto).
 - **Horas:** ~0,7 h (Claude).
+
+### Fase 3 (9-oct, 12:30) · RF-08 paso 2a: Playwright entra en la red interna, y la memoria técnica se contradecía a sí misma
+
+- **Qué se hizo:** una línea en `docker-compose.yml` — `networks: [hooksuite-net]` en el servicio
+  `playwright`, que era **el único de los siete sin declararla**. Sin ella, Compose lo pondría en la red
+  `default` y no resolvería `backend` ni `dvwa`, pese a tener ambos configurados por entorno. Punto de
+  retorno previo: `docker-compose.yml.bak-20261009-122912`.
+- **Por qué primero esto:** es prerequisito de todo lo demás de RF-08/RF-10. Sin red no hay forma de
+  *probar* nada de verdad, así que arreglarlo después habría sido construir sobre algo que no se puede
+  verificar.
+- **Cómo se comprobó, y por qué así:** con `docker compose config`, que es **lo que Docker entiende**, no lo
+  que el YAML parece decir — los siete servicios salen en `hooksuite-net` y el YAML valida. Leer el fichero
+  y darlo por bueno es el error que R9 persigue.
+- **Qué apareció al contrastar, y el backlog no decía:** `playwright` e `ia` **no están levantados** (solo
+  frontend, backend, nginx, dvwa y redis), y **no existe ninguna red `default`**, coherente con que
+  playwright nunca haya arrancado en este stack. Además **tres pendientes estaban mal descritos**: el
+  apartado 1 del plan y el **modelo a Claude 5 ya estaban aplicados** (`ia/client.py:39` →
+  `claude-sonnet-5`), aunque el backlog seguía diciendo «sigue intacto del 4-oct con `claude-sonnet-4`».
+  Mismo patrón del 8-oct: un pendiente describe lo que alguien entendió al escribirlo, no lo que el código
+  hace hoy.
+- 🔴 **Qué falló, y es lo más serio de esta entrada:** el apartado 5 de la memoria técnica afirmaba que los
+  contenedores estaban «todos en una red interna `hooksuite-net`» mientras el **mismo documento**, en
+  «Puntos a corregir», decía que `playwright` **no** la declaraba. **El documento se contradecía a sí
+  mismo**, y una de las dos frases llevaba días siendo falsa. Corregido en la misma pasada y **declarado
+  dentro del propio documento** en vez de reescrito en silencio (R9). Para que no vuelva: añadido el patrón
+  `no +declara +.networks` al `.memoria-sunset.txt`, de modo que el cerco **R4b** salte si la frase reaparece
+  en presente.
+- **Qué se descartó:** levantar el servicio en esta pasada. Implica un `build` de imagen y la verificación
+  funcional (resolver el nombre desde dentro del contenedor) es otra tarea con su propio coste; se deja
+  explícito que un «en verde» **declarativo** no es un «en verde» **funcional** — la lección del nginx del
+  7-oct, donde nombrar un servicio no probó que el comando lo tocara.
+- **A qué requisito toca:** RF-08 y RF-10 (prerequisito de ambos); apartados 5 y 8 de la memoria técnica.
+- **Evidencia:** `evidencias/rf08-red-playwright-09oct.md` (el antes y el después como texto, con los
+  comandos exactos).
+- **Horas:** ~0,3 h (Claude).

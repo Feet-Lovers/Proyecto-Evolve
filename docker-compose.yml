@@ -54,6 +54,8 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+    networks:
+      - hooksuite-net
   redis:
     image: redis:7-alpine
     container_name: hooksuite-redis-1
