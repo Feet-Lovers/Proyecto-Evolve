@@ -1576,3 +1576,34 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
 - **A qué requisito toca:** RNF-06 y RF-08; apartados 8 (pruebas que fallan, con su explicación) y 10.
 - **Evidencia:** `docs/evidencias/rnf06-tres-estados-antes-y-despues-09oct.md`.
 - **Horas:** ~0,7 h (Claude).
+
+### Fase 3 (9-oct, 17:15) · Apartado 3 APLICADO: RNF-06 ya distingue «no analizado» de «limpio»
+
+- **Qué se hizo:** aplicar el apartado 3 del plan de RF-08 siguiendo la receta escrita una hora antes
+  (`GUION-APARTADO3-CLASIFICADOR.md`), sin leer el clasificador en ningún momento. Commit `8ebea124`
+  (Carlos Bañuelos, por sorteo): clasificador transformado, `ia/esquemas.py` nuevo y
+  `ia/tests/test_tres_estados.py`.
+- **Resultado medido:** el test pasa **8/8** sobre el fichero real (sobre el anterior daba 0/8). Las
+  marcas del cambio cuadran una a una (4 caminos degradados, 4 llamadas renombradas, 4 esquemas, 3
+  puentes, 1 import) y la estructura del fichero es la misma de antes: misma clase, mismos cuatro
+  métodos, mismas firmas. 94 → 140 líneas; diff de +258/−5 en los tres ficheros.
+- **Por qué así y no editando a mano:** el fichero está en la lista de los que no se vuelcan a la
+  conversación. La receta permite trabajarlo **a ciegas y a prueba de cortes**: cada paso deja su rastro
+  en un registro en disco (`GUION-APARTADO3-REGISTRO.txt`), así que un turno perdido no se lleva el
+  trabajo. Es la forma que josemax pidió tras ver que la salvaguarda «salta y sigue».
+- **Qué falló por el camino, y es la lección:** el primer comando del paso 1 **lo bloqueó el clasificador
+  de permisos del auto-mode** — porque encadené tres órdenes en una sola línea, que es exactamente lo que
+  la receta prohíbe en su regla 2. Se repitió partido en tres comandos simples y pasó a la primera. El
+  mismo error que había matado el intento del experimento a las 14:06: **el tercer cerco castiga los
+  comandos que parecen un rodeo**, y encadenar lo parece.
+- **Qué NO se tocó, y por qué:** el filtro `confianza >= 0.6` del orquestador (`orchestrator.py:223`),
+  que está en escala 0-100 y **descartaría el estado degradado** antes de que llegue al panel. Es el
+  defecto (b) ya documentado el 8-oct; pertenece al orquestador, no al apartado 3, y va en su propio
+  commit. **Mientras no se arregle, RNF-06 funciona en el clasificador pero no se vería en la interfaz.**
+- **Lo que sigue sin demostrarse:** que a la API le gusten los esquemas generados. No hay clave válida,
+  así que eso lo dirá la primera auditoría real. El test cubre el comportamiento, no el contrato con la API.
+- **A qué requisito toca:** RNF-06 (que pasa de «A revisar» a implementado y probado) y RF-08; apartados
+  3, 8 y 10 de la memoria técnica.
+- **Evidencia:** `docs/evidencias/rnf06-tres-estados-antes-y-despues-09oct.md` y el propio test
+  (`python3 ia/tests/test_tres_estados.py`, reproducible y a coste cero).
+- **Horas:** ~0,4 h (Claude).
