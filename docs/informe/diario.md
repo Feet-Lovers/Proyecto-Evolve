@@ -1511,3 +1511,34 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
   técnica (el apartado 12 ya cuenta los límites de la herramienta de IA, y este es el tercer bloqueo).
 - **Evidencia:** `evidencias/rescate-destilado-y-cerco-contexto-09oct.md`.
 - **Horas:** ~0,5 h (Claude).
+
+### Fase 3 (9-oct, 14:20) · El experimento de lectura en frío no llegó a correr: lo frenó un tercer cerco, y la salvaguarda saltó con el fichero FUERA
+
+- **Qué se hizo:** revisar una captura de josemax (14:12) del intento de ejecutar
+  `EXPERIMENTO-LECTURA-EN-FRIO.md`, transcribirla a texto y escribir el registro del experimento. La
+  captura se borró después, por decisión suya y porque R3 pide la evidencia de terminal **como texto**.
+- **Qué pasó realmente:** tras el `/clear`, la sesión leyó el guion, confirmó la dispensa, lanzó la lectura
+  y recibió `API Error: … safeguards flagged this message`. **Pero siguió trabajando** dos turnos más, y
+  acabó frenada por un mensaje distinto: `Auto mode classifier requires confirmation … Blocked by classifier`.
+- **Por qué importa distinguirlos:** son **tres cercos diferentes** y hasta hoy se contaban como uno. El
+  nuestro (`contexto-limpio.sh`) no intervino —el patrón estaba retirado—; el que frenó los comandos fue el
+  **clasificador de permisos del auto-mode**; y la salvaguarda del modelo marcó **un mensaje**, no la sesión.
+- **El dato que cambia la lectura del experimento:** en el registro de esa sesión hay **0** `def `, **0**
+  `return` y **0** «No such file». Con el control de que el registro sí guarda la salida de los comandos
+  (verificado el mismo día contra otra sesión), eso prueba que **las 93 líneas del fichero nunca entraron en
+  la conversación**. La salvaguarda saltó **sin** el contenido sospechoso delante: solo había el guion, la
+  lista de rutas sensibles, el **nombre** del fichero y un comando con pinta de rodeo.
+- **Qué se concluye y qué NO:** el experimento **sigue sin ejecutarse**. No apoya relajar la regla de no
+  leer esos ficheros (no se ha probado nada en frío) ni la confirma (no se puede culpar a un contenido
+  ausente). Lo que sí demuestra es que el disparo **no necesita** ese fichero, que era justo la sospecha que
+  motivó el experimento.
+- **Causa probable del frenazo, en palabras de la propia sesión:** encadenó la lectura con un `find /` de
+  reserva y una ruta relativa torcida, **que parece un rodeo**. Lección operativa para el reintento: un solo
+  comando, ruta absoluta, sin alternativas encadenadas.
+- **Qué se descartó:** reintentar el experimento en esta misma sesión. Ya había leído el guion, la memoria y
+  la bitácora, así que la condición de «en frío» —la única variable que el experimento mide— estaba
+  arruinada. Reintentar aquí habría dado un resultado sin valor y gastado la dispensa.
+- **A qué requisito toca:** apartado 12 de la memoria técnica (límites de trabajar con IA; es el cuarto
+  bloqueo registrado) y, de rebote, apartado 8.
+- **Evidencia:** `docs/evidencias/salvaguarda-salta-y-sigue-09oct.md` (transcripción y cuentas).
+- **Horas:** ~0,3 h (Claude).
