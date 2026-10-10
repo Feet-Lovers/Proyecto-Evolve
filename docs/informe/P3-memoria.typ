@@ -565,11 +565,12 @@ El arreglo fue por tanto en el generador —no en el fichero generado, que lleva
 
 Reproducible con `python3 ia/tests/test_esquemas_bandera.py ia/esquemas.py`. Evidencia con las dos salidas, antes y después, en `docs/evidencias/esquemas-bandera-antes-10oct.md`.
 
-== Dos esquemas rechazados por la API: validar contra tu propia prueba no es validar (RF-08)
-La primera auditoría *real* —clave válida, objetivo propio, techo de gasto puesto— no devolvió ni un hallazgo. Las llamadas que salieron se rechazaron antes de procesarse, y hubo que lanzarla *dos veces* para llegar al fondo, porque los motivos fueron distintos:
+== Tres rechazos seguidos de la API: validar contra tu propia prueba no es validar (RF-08)
+La primera auditoría *real* —clave válida, objetivo propio, techo de gasto puesto— no devolvió ni un hallazgo. Las llamadas que salieron se rechazaron antes de procesarse, y hubo que lanzarla *tres veces* para llegar al fondo, porque cada rechazo tenía un motivo distinto:
 
 1. Los objetos del esquema iban *abiertos*, y la salida estructurada no lo admite.
 2. La confianza declaraba un rango con mínimo y máximo, y tampoco lo admite para números.
+3. Veintidós campos declaraban su tipo como una *lista de tipos posibles* que incluía «objeto»; para la API eso ya cuenta como objeto, y exige la declaración explícita que esos campos no llevaban.
 
 *Coste: cero.* Un rechazo por petición mal formada no consume saldo, y el techo acotaba el daño de todas formas. La factura fue de tiempo, no de dinero.
 
@@ -578,6 +579,8 @@ La primera auditoría *real* —clave válida, objetivo propio, techo de gasto p
 *Y un error de método, que es el que explica las dos vueltas.* Con el primer rechazo se arregló únicamente lo que nombraba el mensaje, en vez de revisar el esquema entero contra esa misma clase de límite. El segundo rechazo estaba ya ahí, esperando, a la vista de cualquiera que hubiera mirado. La regla que queda escrita: *cuando un servicio externo rechaza una construcción, se audita la construcción completa contra ese tipo de restricción, no se parchea la línea del error.*
 
 *Lo que se hizo para que no haya una tercera vez.* La prueba nueva (`ia/tests/test_esquemas_api.py`) ya no comprueba solo los dos defectos conocidos: recorre los esquemas en profundidad y rechaza *cualquier* clave que no conste como admitida, de modo que un límite que aún no nos haya mordido salte aquí y no en una auditoría. Se verificó distinguiendo las dos versiones —_1 de 5_ contra los esquemas defectuosos, _5 de 5_ contra los corregidos—, y lleva una comprobación de que sabe contar: si el recorrido no encontrara ni un objeto, falla, para que un cero no se confunda con un aprobado.
+
+*La corrección de fondo, que es de método y no de código.* Las tres restricciones eran averiguables *preguntando*: basta mandar el esquema al servicio y ver si lo acepta. En su lugar se dedujo tres veces a partir del mensaje de error, y cada deducción costó un ciclo completo de arreglar, reconstruir la imagen y relanzar la auditoría. De ahí sale la herramienta `ia/tests/validar_esquemas_contra_api.py`, que somete cada esquema al servicio real y responde si pasa —los cuatro pasan—. Queda fuera de la batería automática porque consume llamadas, y se ejecuta cuando el esquema cambia. *La regla general: cuando el contrato lo pone otro, se le pregunta a él; la prueba propia solo puede vigilar lo que ya sabemos.*
 
 *Dónde estaba el defecto, por segunda vez.* En el generador de esquemas, que es la única pieza del proyecto que *no está bajo control de versiones*. La primera vez fue la lista de campos escrita a mano que se describe más arriba. Dos defectos distintos, el mismo sitio, y la misma causa de fondo: lo que no tiene historial es donde nadie mira.
 
