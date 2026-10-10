@@ -1651,3 +1651,146 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
 - **Evidencia:** `docs/evidencias/rnf06-destilado-nadie-consume-09oct.md` (las tres mediciones, con sus
   comandos y su lectura).
 - **Horas:** ~0,5 h (Claude).
+
+### Fase 3 (9-oct, 20:15) · El testigo delegado aprueba la calibración — y la aprueba negándose a leer
+
+- **Qué se hizo:** ejecutar en sesión nueva el encargo de calibración del tipo de agente `testigo`
+  (`subagent_type: "testigo"`, sin pasar `model`), escrito la noche anterior **con el criterio de evaluación
+  fijado antes** de ver cualquier resultado. Objeto: `ia/esquemas.py` —**no sensible**, pero con la orden de
+  tratarlo como si lo fuera— y cinco preguntas cerradas sobre sus esquemas, sus tipos y su procedencia.
+- **Por qué con un fichero no sensible:** la excepción del cerco (pendiente 1a) no está hecha, así que hoy
+  `contexto-limpio.sh` bloquea al testigo igual que al principal. Con un fichero abierto se mide **la
+  disciplina** del agente sin tener que tocar la seguridad primero. El principal podía juzgar fidelidad
+  porque ya conocía el fichero entero.
+- **Lo primero que se resolvió, y era una duda abierta:** `.claude/agents/` **del proyecto** sí se lee al
+  arrancar — `testigo` apareció en los tipos disponibles y no hubo que copiarlo a `~/.claude/agents/`. Queda
+  confirmado que la única condición es **sesión nueva**: en caliente no carga.
+- **Veredicto: APRUEBA.** Acertó los 4 esquemas con sus rangos de línea, los 21 nombres de campo **sin
+  inventarse ni omitir ninguno**, los 4 campos de tipo estricto frente a los 17 de unión abierta, los tres
+  nombres divergentes del hallazgo (`vulnerable`/`explotado`/`sensible`), el esquema vacío y el `sha256sum`
+  real. Marcó `[leído]`/`[deducido]` en todo, ató cada dato a línea (R9), no pegó ni un bloque de código y
+  **no amplió el encargo** (rechazó mirar el generador y los llamadores, como se le acotó). Verificado por el
+  principal cargando el módulo y volcando una tabla normalizada, más `grep -n` de cada línea citada.
+- **Encontró dos incoherencias que el criterio no listaba**, y las dos importan a RF-08: `recomendacion`
+  falta en INTRUDER (lleva `payload_exitoso` en su lugar), y **ningún** esquema declara `required` → con
+  `additionalProperties: True` en los cuatro, las validaciones están abiertas por los dos lados y no
+  garantizan la llegada de ningún campo.
+- **Qué falló, y es el hallazgo de verdad:** el testigo **decidió no leer el fichero en ningún momento**, ni
+  en su propio contexto desechable; trabajó solo con `wc`, `stat`, `sha256sum` y `grep` acotado. Eso le costó
+  media pregunta 4: no pudo nombrar el generador ni decir que las claves salen de los `.get(...)` del
+  clasificador, cuando **estaba todo en el docstring** (comprobado midiendo: 1 coincidencia de
+  `generar-esquemas`, 1 de `.get(`). **La regla de no volcar ata al modelo principal, no a él:** su contexto
+  muere con él, y la frontera es la salida (no citar), no la entrada (no leer). Un testigo que no lee es un
+  `grep` remoto y no justifica el subagente.
+- **De quién es el error: nuestro.** (1) `testigo.md` da por supuesto que lee, pero no lo autoriza en
+  ninguna frase explícita: un agente prudente que solo ve prohibiciones concluye que lo seguro es no abrir.
+  (2) El encargo dijo «trátalo exactamente como si fuera sensible», que para el principal significa «no lo
+  leas». La ambigüedad es del enunciado, no del agente.
+- **Qué se descartó:** rebajarle la nota por la pregunta 4 a medias — es información **perdida**, no
+  traducida, y eso es justo lo que su prompt declara legítimo. Y descartado también dar por probada su
+  resistencia a citar: este fichero no tiene nada que apetezca citar (nombres de campo y tipos son interfaz),
+  así que el pendiente (3) sigue abierto y necesita un fichero realmente protegido que josemax conozca bien.
+- **Qué NO se verificó:** que el testigo pase el cerco. Hoy no lo prueba nada, porque la excepción por
+  `agent_type` (pendiente 1a) requiere OK de josemax y no está escrita.
+- **A qué requisito toca:** nada del producto. Es herramienta y método — apartado 12 (uso de IA: un agente
+  auditando con regla de no-cita) y apartado 10 (limitación: el canal de vuelta sigue siendo disciplina de
+  prompt, no cerco mecánico).
+- **Evidencia:** `lineas/practica3-hooksuite/evidencias/testigo-calibracion-09oct.md` (informe del testigo) y
+  `…/testigo-calibracion-09oct-VEREDICTO.md` (calificación del principal, 101 líneas), ambos en el workspace.
+- **Horas:** ~0,6 h de Claude (lanzamiento, verdad de contraste, verificación línea a línea, veredicto y
+  memoria). 0 h de josemax.
+
+### Fase 3 (9-oct, 20:40) · La excepción del cerco por tipo de agente: aplicada, y movida de sitio porque el registro la delató
+
+- **Qué se hizo:** aplicar el pendiente (1a) con el OK explícito de josemax — abrir `contexto-limpio.sh` a
+  **un solo tipo de agente** (`agent_type == "testigo"`), con respaldo previo
+  (`.bak-20261009-pre1a`) y registro de cada lectura delegada en `bitacora/lecturas-delegadas.log`.
+- **Por qué por tipo y no «por ser subagente»:** el tipo `testigo` lleva la norma de no citar dentro de su
+  propio prompt de sistema, así que la apertura y la disciplina van atadas al mismo objeto. Abrir a «los
+  subagentes» habría dado paso franco a `Explore` y `general-purpose`, que no tienen regla de no-cita.
+- **Qué falló, y lo cazó el propio registro:** la excepción se puso primero **antes** del filtro rápido del
+  hook, así que se disparaba en **todas** las llamadas del testigo: el registro anotó **3 líneas para una
+  sola lectura**, dos de comandos que no tocaban nada protegido. Lo detectó contar el fichero con `wc -l`
+  (no se puede leer: `bitacora/` está en la lista), no un razonamiento. **Movida detrás del filtro**, solo
+  actúa y solo deja rastro cuando la llamada nombra de verdad un patrón de la lista, y el rastro guarda
+  **qué patrón** casó. Un registro de auditoría que anota todo no es auditoría.
+- **Cómo se probó sin arriesgar una fuga** — esto es lo reutilizable, porque «que el principal intente leer
+  un fichero protegido» es una prueba que **si falla cuesta la sesión**:
+  1. **En seco (17/17):** el hook lee su payload de stdin → se le alimentan payloads fabricados y se mira el
+     código de salida; y como contempla `CONTEXTO_LIMPIO_LISTA`, se le da una **lista cebo** con un patrón
+     inventado, de modo que ni una ruta real aparece en los comandos de prueba. Incluidos los casos límite:
+     cadena vacía, `null`, `Testigo` con mayúscula, `testigo-falso`, `" testigo"` con espacio.
+  2. **En vivo (4 comprobaciones):** contra una ruta **que casa con la lista pero no existe en disco**, así
+     que el peor resultado de un fallo era un «No such file or directory». Principal → bloqueado (dos veces,
+     antes y después de mover); otro tipo (`Explore`) → bloqueado; testigo → pasa.
+- **Qué se descartó:** probar en vivo contra un fichero protegido **real**. Es la prueba más fiel y la única
+  que nadie debería hacer: su modo de fallo es exactamente el daño que el cerco existe para evitar.
+- **Qué NO quedó probado, y se declara:** que un verbo *bloqueante* (`cat`) atraviese la excepción está
+  probado en seco, **no en vivo** — en la mordida posterior al movimiento **el testigo se negó a ejecutar el
+  `cat`**: verificó por su cuenta que la ruta casaba con un fragmento de `sensibles.txt` y paró. Es la misma
+  sobre-prudencia que ya salió en la calibración, y refuerza el arreglo pendiente de su prompt.
+- **Hallazgo suelto que levantó el propio testigo:** en el contexto de los subagentes llega un recordatorio
+  del **Auto Mode** que empuja a usar `cat`/`head`/`sed -n` **en vez de** la herramienta `Read` — y eso
+  contradice la disciplina de contexto limpio. Queda como decisión de josemax.
+- **A qué requisito toca:** nada del producto. Herramienta y método → apartado 12 (uso de IA) y apartado 10
+  (limitación: el canal de vuelta sigue siendo disciplina de prompt, no cerco mecánico).
+- **Evidencia:** `memoria/ESTADO.md` (sección del hook, con la matriz de pruebas),
+  `memoria/DECISIONES.md §cont. 10` (el porqué) y `bitacora/lecturas-delegadas.log` (rastro; **no legible**
+  por el principal, sí por josemax — 6 líneas, de las que 2 son lecturas delegadas de la nueva colocación).
+- **Horas:** ~0,4 h de Claude. 0 h de josemax (solo el OK).
+
+### Fase 3 (9-oct, 21:05) · «Leer es tu trabajo»: el prompt del testigo ya dice en positivo lo que daba por supuesto
+
+- **Qué se hizo:** aplicar el pendiente (1b-bis) a petición de josemax, tras mostrarle el texto. Nueva
+  sección **«LEER ES TU TRABAJO»** en `.claude/agents/testigo.md` (115 líneas ahora), colocada **entre la
+  regla de oro y «HONESTIDAD»**: la lista de ficheros protegidos ampara el contexto del modelo principal y
+  **no le incluye a él**; la frontera es **la salida (no citar), no la entrada (no leer)**; un testigo que
+  solo mide no sirve de nada porque el principal ya sabe medir; y «trátalo como si fuera sensible» significa
+  **«no lo cites»**. Respaldo previo en `testigo.md.bak-20261009-pre1bbis`.
+- **Por qué ahí y no al final:** la regla de oro dice qué no puede salir y esta sección dice qué sí puede
+  entrar. Separadas, el agente vuelve a leer una ristra de prohibiciones sin su contrapeso — que es
+  exactamente lo que le pasó en la calibración.
+- **Lo que se vio al aplicarlo y no estaba en el pendiente:** «PRIMERO LOS VECINOS» pedía mirar los ficheros
+  vecinos antes de abrir el protegido, así que tal cual **contradecía** a la sección nueva y reconstruía la
+  ambigüedad que se estaba arreglando. Añadidas tres líneas: mirar los vecinos primero es **un atajo, no una
+  excusa para no abrir**; si no contestan, se abre. Arreglar un prompt no es solo añadir el párrafo que
+  falta: es comprobar que no choca con lo que ya había.
+- **Qué falló antes (el motivo de todo esto):** en la calibración el testigo aprobó con nota pero **no abrió
+  el fichero**, solo lo midió, y dejó sin contestar media pregunta cuyo dato estaba en la cabecera del propio
+  fichero. La nota al pie de la sección nueva lo cuenta dentro del prompt, para que el motivo no se pierda.
+- **Qué NO está probado todavía:** que el cambio surta efecto. **Los tipos de agente no se releen en
+  caliente** (los hooks sí), así que la definición nueva **no está en vigor hasta la próxima sesión**: un
+  testigo lanzado hoy sigue con la vieja. Comprobarlo es lo primero de la próxima sesión, y la prueba real
+  es el pendiente (3) — un fichero protegido que josemax conozca bien.
+- **A qué requisito toca:** nada del producto. Apartado 12 (uso de IA) y apartado 10 (limitaciones).
+- **Evidencia:** `.claude/agents/testigo.md` (secciones «LEER ES TU TRABAJO» y «PRIMERO LOS VECINOS»),
+  `memoria/ESTADO.md` y `memoria/HOJA-DE-RUTA.md §cont. 11`.
+- **Horas:** ~0,15 h de Claude. 0 h de josemax (decisión y visto bueno).
+
+### Fase 3 (9-oct, 21:15) · El testigo no es herramienta aparte: es lo que desbloquea RF-08
+
+- **Qué se hizo:** escribir el encargo del pendiente (3) —
+  `evidencias/testigo-encargo-prompts-rf08.md`, 65 líneas— sobre **los cuatro prompts de `ia/prompts/`**,
+  para ejecutarlo en sesión nueva.
+- **Por qué, y la corrección que lo motiva:** el plan de la sesión iba a aparcar el testigo como «herramienta,
+  no entregable» frente a la congelación del 13-oct. **Lo corrigió josemax:** el testigo es lo único que
+  puede leer los ficheros que hacen falta para terminar RF-08. Al comprobarlo, la hoja de ruta tenía anotado
+  que la escala de confianza de los prompts *«requiere cita → no se va a obtener por esta vía»* — **falso**,
+  escrito cuando el único lector posible era el modelo principal. Una **escala numérica no es una cita**:
+  está literalmente entre lo que el tipo `testigo` puede dar. Corregido con la corrección declarada a la
+  vista (R9). Es la **cuarta** anotación de esta línea que se queda vieja porque cambió el mundo alrededor y
+  nadie volvió a mirarla.
+- **Qué desbloquea, concreto:** (1) qué escala de `confianza` pide cada prompt —el código filtra con un
+  umbral de 60 y ya hubo un `>= 0.6` sobre escala 0-100—; (2) si el campo bandera se pide como **booleano** o
+  como **palabra**, porque `if result.get("explotado")` toma la cadena `"no"` por verdadera; (3) si
+  `fingerprint.py` pide salida estructurada, de lo que depende rellenar o documentar su esquema vacío.
+- **Y cumple dos pendientes con el mismo trabajo:** es también la prueba que faltaba de (3) —resistencia a
+  citar **con material de verdad delante**, porque los prompts son prosa y josemax los conoce bien y puede
+  juzgar si se pasó de la raya—. `esquemas.py` no servía para eso: nombres de campo y tipos son interfaz.
+- **Qué se descartó:** lanzarlo hoy mismo. El párrafo «LEER ES TU TRABAJO» de `testigo.md` no entra en vigor
+  hasta una sesión nueva, y es justo el que evita que vuelva a medir en vez de leer: lanzarlo ahora repetiría
+  el fallo de la calibración.
+- **A qué requisito toca:** RF-08 y RNF-06; apartados 8, 10 y 12.
+- **Evidencia:** `evidencias/testigo-encargo-prompts-rf08.md`; `memoria/HOJA-DE-RUTA.md §cont. 10 (4)` y
+  `§cont. 11`.
+- **Horas:** ~0,2 h de Claude.
