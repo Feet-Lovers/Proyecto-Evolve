@@ -86,8 +86,17 @@ def main():
          lambda: acepta(m.ESQUEMA_INTRUDER, {"explotado": True, "confianza": 0.85})),
         ("INTRUDER · 'confianza' acepta 85 (escala 0-100)",
          lambda: acepta(m.ESQUEMA_INTRUDER, {"explotado": True, "confianza": 85})),
-        ("PACKET  · 'confianza' rechaza 150 (fuera de rango)",
-         lambda: rechaza(m.ESQUEMA_PACKET, {"vulnerable": True, "confianza": 150})),
+        # 🔴 CAMBIADO EL 10-oct, y el cambio NO lo elegimos nosotros: hasta hoy este caso
+        # comprobaba que el esquema RECHAZA 150, porque declaraba `minimum: 0, maximum: 100`.
+        # La API no los admite en structured output ("For 'number' type, properties maximum,
+        # minimum are not supported") y tumbó la auditoría real entera, así que el rango tuvo
+        # que salir del esquema. Consecuencia honesta, escrita en vez de disimulada: para este
+        # campo el esquema YA NO es el control. Quien protege ahora es la guardia de escala
+        # del clasificador (test_escala_confianza.py, 19/19), que además es el único sitio
+        # donde se podía cazar la confusión 0-1 que el rango nunca cazó —ver el caso de
+        # arriba—. Si esa guardia se toca, aquí no queda red.
+        ("PACKET  · 'confianza' YA NO rechaza 150: el rango salió del esquema (lo prohíbe la API)",
+         lambda: acepta(m.ESQUEMA_PACKET, {"vulnerable": True, "confianza": 150})),
 
         # --- FINGERPRINT no puede declarar cero campos ---------------------------
         ("FINGERPRINT · declara los 9 campos que pide su prompt",

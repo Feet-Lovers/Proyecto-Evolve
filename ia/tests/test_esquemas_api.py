@@ -33,6 +33,16 @@ def cargar(ruta):
             if n.startswith("ESQUEMA_") and isinstance(v, dict)}
 
 
+# El subconjunto de JSON Schema que la API acepta es MÁS ESTRECHO de lo que parece, y
+# cada vez que se descubre un límite cuesta una vuelta entera: arreglar, reconstruir la
+# imagen y relanzar la auditoría. Por eso esta prueba no comprueba solo lo que ya nos
+# mordió: rechaza cualquier clave que no esté confirmada como admitida.
+CLAVES_ADMITIDAS = {"type", "properties", "required", "items", "additionalProperties",
+                    "description", "enum", "title"}
+# Confirmadas a base de 400 reales, no de suposiciones.
+CLAVES_RECHAZADAS = {"minimum", "maximum"}
+
+
 def objetos_abiertos(nodo, camino="raíz"):
     """Devuelve el camino de cada objeto que la API rechazaría (recursivo: los
     anidados cuentan igual, que es por donde se coló el de `vectores_prioritarios`)."""
@@ -48,6 +58,26 @@ def objetos_abiertos(nodo, camino="raíz"):
     return malos
 
 
+def claves_no_soportadas(nodo, camino="raíz", dentro_de_properties=False):
+    """Claves de esquema que la API rechaza o que no constan como admitidas.
+    No mira dentro de `properties`/`required` como si fueran esquema: ahí los nombres
+    los pone el modelo de datos, no JSON Schema."""
+    malas = []
+    if isinstance(nodo, dict):
+        for clave, valor in nodo.items():
+            if not dentro_de_properties:
+                if clave in CLAVES_RECHAZADAS:
+                    malas.append(f"{camino}.{clave} (rechazada por la API)")
+                elif clave not in CLAVES_ADMITIDAS:
+                    malas.append(f"{camino}.{clave} (no consta como admitida)")
+            malas += claves_no_soportadas(valor, f"{camino}.{clave}",
+                                          dentro_de_properties=(clave == "properties"))
+    elif isinstance(nodo, list):
+        for i, valor in enumerate(nodo):
+            malas += claves_no_soportadas(valor, f"{camino}[{i}]")
+    return malas
+
+
 def main():
     ruta = Path(sys.argv[1] if len(sys.argv) > 1 else "ia/esquemas.py")
     esquemas = cargar(ruta)
@@ -57,12 +87,13 @@ def main():
 
     fallos = 0
     for nombre, esquema in sorted(esquemas.items()):
-        abiertos = objetos_abiertos(esquema, nombre)
-        if abiertos:
-            print(f"FALLA  {nombre} · objeto(s) abierto(s): {', '.join(abiertos)}")
+        problemas = ([f"objeto abierto: {c}" for c in objetos_abiertos(esquema, nombre)]
+                     + claves_no_soportadas(esquema, nombre))
+        if problemas:
+            print(f"FALLA  {nombre} · {'; '.join(problemas)}")
             fallos += 1
         else:
-            print(f"PASA   {nombre} · ningún objeto abierto, ni anidado")
+            print(f"PASA   {nombre} · ningún objeto abierto y ninguna clave fuera del subconjunto")
 
     # Que la prueba sepa contar: si no encuentra objetos, no está mirando nada.
     total_objetos = sum(1 for n in esquemas.values()

@@ -21,7 +21,7 @@ añade campos, lo que toca es regenerar este fichero, que para eso existe.
 ESQUEMA_PACKET = {
     "type": "object",
     "properties": {
-        'confianza': {'type': 'number', 'minimum': 0, 'maximum': 100},
+        'confianza': {'type': 'number'},
         'vulnerable': {'type': 'boolean'},
         'tipo': {'type': ['string', 'number', 'boolean', 'object', 'array', 'null']},
         'severidad': {'type': ['string', 'number', 'boolean', 'object', 'array', 'null']},
@@ -35,7 +35,7 @@ ESQUEMA_PACKET = {
 ESQUEMA_INTRUDER = {
     "type": "object",
     "properties": {
-        'confianza': {'type': 'number', 'minimum': 0, 'maximum': 100},
+        'confianza': {'type': 'number'},
         'explotado': {'type': 'boolean'},
         'payload_exitoso': {'type': ['string', 'number', 'boolean', 'object', 'array', 'null']},
         'tipo': {'type': ['string', 'number', 'boolean', 'object', 'array', 'null']},
@@ -49,7 +49,7 @@ ESQUEMA_INTRUDER = {
 ESQUEMA_CONSOLE = {
     "type": "object",
     "properties": {
-        'confianza': {'type': 'number', 'minimum': 0, 'maximum': 100},
+        'confianza': {'type': 'number'},
         'sensible': {'type': 'boolean'},
         'tipo': {'type': ['string', 'number', 'boolean', 'object', 'array', 'null']},
         'severidad': {'type': ['string', 'number', 'boolean', 'object', 'array', 'null']},
@@ -71,7 +71,7 @@ ESQUEMA_FINGERPRINT = {
         'version_detectada': {'type': ['string', 'number', 'boolean', 'object', 'array', 'null']},
         'headers_seguridad_ausentes': {'type': 'array'},
         'vectores_prioritarios': {'type': 'array', 'items': {'type': 'object', 'properties': {'tipo': {'type': ['string', 'number', 'boolean', 'object', 'array', 'null']}, 'motivo': {'type': ['string', 'number', 'boolean', 'object', 'array', 'null']}, 'prioridad': {'type': ['string', 'number', 'boolean', 'object', 'array', 'null']}}, 'additionalProperties': False}},
-        'confianza': {'type': 'number', 'minimum': 0, 'maximum': 100},
+        'confianza': {'type': 'number'},
     },
     "additionalProperties": False,
 }
