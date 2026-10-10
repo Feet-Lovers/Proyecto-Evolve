@@ -2446,3 +2446,37 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
   **RNF-06** (la vía degradada aguantó las dos veces: nada se perdió en silencio).
 - **Evidencia:** `ia/tests/test_esquemas_api.py` (1/5 vs 5/5, reproducible). Commits `64e1b12f` y `ebd695bd`.
 - **Horas:** ~0,5 h de Claude. **0 € de API.**
+
+### Fase 3 (10-oct, 19:0x) · Tercer rechazo, y el cambio de método: preguntarle a la API en vez de deducirla
+
+- **De dónde salió:** tercera auditoría real, ya con usuario nuevo. **También rechazada**, y de nuevo por un
+  motivo distinto: `For 'object' type, 'additionalProperties' must be explicitly set to false`.
+- **La causa:** **22 campos** declaraban su tipo como una **lista** que incluía `"object"`. Para la API eso
+  ya cuenta como objeto y exige la declaración explícita. Era el comodín del generador para los campos que
+  el clasificador lee sin imponerles tipo. Arreglado quitando `object` y `array` de ese comodín: como el
+  esquema **gobierna** lo que el modelo puede devolver, no se pierden datos — se impide que meta una
+  estructura donde el código espera un escalar.
+- **Por qué la prueba local no lo vio:** trataba `type == "object"` como comparación exacta, así que los 22
+  campos de tipo-lista le pasaban por debajo. Ampliada y vista fallar: **1/2** contra un cebo con tipo-lista,
+  **5/5** contra el esquema real.
+- **🔴 Y el fallo de fondo es mío, declarado, y es el mismo las tres veces (R9):** con cada rechazo arreglé
+  **solo lo que nombraba el mensaje** y pedí reconstruir. Tres ciclos completos de arreglar → reconstruir la
+  imagen → relanzar, **todos de trabajo de josemax**, para descubrir algo que se podía preguntar en un
+  minuto.
+- **🏅 La corrección, que es de método y no de código:** `ia/tests/validar_esquemas_contra_api.py` manda cada
+  esquema al servicio real y responde si lo acepta. Ejecutado: **4/4 aceptados**. Cuesta cuatro llamadas
+  mínimas y queda fuera de la batería automática por eso; se lanza cuando el esquema cambia.
+- **La lección, más general que este caso:** ninguna prueba local podía cazar esto, porque **el requisito
+  incumplido no estaba escrito en ninguna parte nuestra** — vive en el servicio del otro lado. Por eso
+  `test_esquemas_bandera.py` daba 11/11 con el defecto dentro. Las dos pruebas son complementarias: la local
+  es gratis y vigila lo ya conocido; la de la API descubre lo que no sabíamos. *Cuando el contrato lo pone
+  otro, se le pregunta a él.*
+- **Qué se descartó:** ajustarse solo a la documentación del proveedor (puede ir por detrás del servicio, y
+  el que valida es el servicio); y ampliar la prueba local hasta cubrir todo el subconjunto, que es
+  perseguir una lista que no controlamos y que cambia sin avisar.
+- **A qué requisito toca:** **RF-08**, que sigue sin cerrar — la auditoría real aún no ha devuelto un
+  hallazgo. **RNF-06** aguantó las tres veces: nada se perdió en silencio.
+- **Evidencia:** salida de `validar_esquemas_contra_api.py` (4/4) y de `test_esquemas_api.py` (1/2 vs 5/5).
+  Commit `f53be239`.
+- **Horas:** ~0,4 h de Claude. **Coste:** los tres rechazos, 0 € (los 400 no facturan); la validación, cuatro
+  llamadas mínimas.
