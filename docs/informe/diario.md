@@ -2017,3 +2017,64 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
 - **Evidencia:** `(no aplica)` — la tabla corregida es su propia evidencia, y el commit `c93d93ae` prueba el
   origen del error.
 - **Horas:** ~0,2 h de Claude.
+
+### Fase 3 (10-oct) · El canal IA↔backend estaba muerto desde la Fase 2, y lo arreglamos con el bus interno
+
+- **De dónde salió:** josemax decidió meter el disparador de RF-08 dentro de la entrega, pese a la
+  recomendación contraria. Al ir a construirlo apareció que **no faltaba un botón: faltaba el canal.**
+- 🔴 **El hallazgo:** `ia/main.py` polleaba `GET /api/playwright/instruction/{token}` cada 5 s. Desde la
+  Fase 2 ese router lleva `dependencies=PROTEGIDO` (`backend/main.py:143`), así que el guardián lo cortaba
+  **por dos sitios**: **401** por no mandar Bearer, y **403 incluso con token válido**, porque
+  `session_token` está en `PARAMETROS_DE_ESPACIO` (`guardia.py:48-58`) y su `ia_session` fijo no es el
+  espacio de nadie. **Medido en vivo** contra la cocina: 401 en el GET, en el sondeo de arranque y en el POST.
+- **Y el modo de fallo era lo peor:** el código comprueba `status_code == 200`; un 401 **no lanza excepción**,
+  así que el bucle volvía a dormir. Y `wait_for_backend` **ignoraba su propio valor de retorno**, de modo que
+  tras 30 intentos fallidos arrancaba igual escribiendo «Esperando instrucciones del backend...».
+  **El módulo parecía sano sin poder hacer nada** — el mismo patrón que RNF-06 cerró dentro del clasificador,
+  un nivel más arriba. Llevaba así desde el 6-oct.
+- **Alcance real, medido sin leer el fichero protegido** (`bin/estructura.sh` + `grep -c`): el orquestador
+  usa `BACKEND_URL` **7 veces** y tiene al menos `check_backend` (:52), `send_instruction_to_playwright`
+  (:65) y `send_vulnerability_to_backend` (:94). **El camino de vuelta estaba igual de roto que el de ida.**
+- **Qué se hizo:** bus interno sobre el Redis que ya existía. `backend/services/bus_ia.py` (nuevo) publica
+  la orden; `ia/main.py` se suscribe en vez de pollear; `redis_consumer.py` reparte los hallazgos.
+  **El dueño viaja con la orden**, tomado del guardián → los resultados vuelven a la sesión de quien pidió la
+  auditoría. Eso deshace el enredo de los 4 tokens de raíz.
+- **Qué se descartó, y por qué:** (a) un **token de servicio** que el guardián aceptara — abre una excepción
+  en el único sitio del que el apartado 7 presume por lo contrario, que una ruta nueva nace protegida;
+  (b) **exentar** los endpoints de instrucción — peor: están bajo `/api`, que Nginx publica, así que
+  cualquiera desde internet encolaría auditorías contra cualquier objetivo, el riesgo exacto que el código de
+  invitación evita; (c) que **el backend llamara al módulo IA** por HTTP — igual de seguro, pero añade un
+  servidor donde no hay ninguno en vez de reusar un bus que ya estaba declarado en la arquitectura.
+- **Sin tocar el orquestador**, que está en la lista protegida: las dos listas se leen de
+  `get_vulnerabilities()` y del atributo `no_analizados` (medido con `grep -c`: 4 usos de `self.`). Se evitó
+  una edición a ciegas entera.
+- **RNF-06 por fin tiene superficie**, que era el pendiente (m): `no_analizado` va por su propio camino
+  —no encaja en `VulnerabilityReport`, que exige `severidad` y `confianza`—, con endpoint propio, evento
+  `ia_no_analizado` en el WebSocket y una tira **ámbar y arriba** en el panel. Y el mensaje de lista vacía
+  deja de mentir: con análisis incompletos dice «sin hallazgos — pero hay análisis que no se pudieron
+  completar» en lugar de «no se han detectado vulnerabilidades».
+- **Si la auditoría revienta** también se publica como `no_analizado` con motivo, en vez de dejar el panel
+  esperando. Y si el bus **no tiene oyentes**, el backend lo dice y la pantalla lo pinta en rojo.
+- **Pruebas: 18 casos nuevos en dos suites, 0 €** (dobles para redis, dotenv, el orquestador y el gestor de
+  sesiones; ni red ni clave ni contenedores). Las cinco suites: 9/9, 9/9, 19/19, 11/11, 8/8 = **56 casos**.
+  Lo que más importa de los nuevos: **un hallazgo sin dueño se descarta** y **dos auditores no ven lo del
+  otro** — el riesgo de un bus es el contrario al del guardián.
+- 🔴 **Qué falló de paso, y era mío: casi firmo un diff ilegible.** `VulnerabilitiesPage.jsx` estaba en
+  **CRLF** y lo dejé en LF: **513 líneas cambiadas para un cambio de 128**. Cazado con `git diff --stat`
+  (la norma de «que el diff tenga el tamaño del cambio») y devuelto a CRLF con `sed -i 's/$/\r/'`.
+  **Y la lección corrige lo que creíamos:** `newline=''` **solo al escribir no sirve**, porque `read_text()`
+  ya traduce CRLF→LF al leer. Va en **las dos** operaciones, o no se usa Python para editar.
+- ⚠️ **Qué NO está verificado, y conviene no confundirlo con «hecho»:** nada de esto corre. El código del
+  backend va **empotrado en la imagen** (`build: ./backend`, sin volumen), no hay contenedor `ia` levantado y
+  el frontend está **sin construir** — no hay `node_modules` en la cocina, así que **el JSX no lo ha validado
+  ningún build**; solo se comprobó el equilibrio de llaves a mano. Probarlo exige reconstruir en la cocina,
+  que son contenedores recreados y necesita el visto bueno de josemax.
+- **Propuesta para la primera prueba, a coste cero:** lanzarla con `HOOKSUITE_IA_MAX_LLAMADAS=0`. Con el
+  techo a cero el cliente no hace ninguna llamada y devuelve la vía degradada, así que **recorre la cadena
+  entera** (botón → bus → módulo IA → degradado → panel ámbar) y prueba RNF-06 de paso, **sin clave válida y
+  sin gastar un céntimo**.
+- **A qué requisito toca:** RF-08 (disparador), RNF-06 (superficie) y RF-12 (el aislamiento, que el bus no
+  podía reabrir); apartados 5, 6, 7, 8 y 10.
+- **Evidencia:** `docs/evidencias/canal-ia-backend-muerto-10oct.md` (el 401 en vivo, antes de arreglarlo);
+  commits `57f3ae6c` (bus y módulo IA) y `12dc4183` (frontend).
+- **Horas:** ~1,5 h de Claude. **0 € de API.**
