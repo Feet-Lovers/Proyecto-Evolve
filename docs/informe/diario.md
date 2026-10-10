@@ -1794,3 +1794,72 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
 - **Evidencia:** `evidencias/testigo-encargo-prompts-rf08.md`; `memoria/HOJA-DE-RUTA.md §cont. 10 (4)` y
   `§cont. 11`.
 - **Horas:** ~0,2 h de Claude.
+
+### Fase 3 (10-oct, mañana) · El encargo del testigo, lanzado: los cuatro prompts por fin tienen lector
+
+- **Qué se hizo:** lanzar el subagente `testigo` con el encargo escrito anoche
+  (`evidencias/testigo-encargo-prompts-rf08.md`), sobre los cuatro ficheros de `ia/prompts/`
+  (`network_packet.py` 35 líneas, `intruder.py` 34, `console.py` 27, `fingerprint.py` 35 — medidas, no
+  leídas). Cinco preguntas: escala de `confianza`, campos devueltos frente a `esquemas.py`, si el campo
+  bandera se pide booleano o palabra, qué formato pide `fingerprint.py`, y si algún prompt habla de umbral.
+- **Por qué ahora y no anoche:** los tipos de agente **no se releen en caliente**. El párrafo «LEER ES TU
+  TRABAJO» de `testigo.md` se aplicó a las ~21:05 del 9-oct y no entraba en vigor hasta una sesión nueva;
+  lanzarlo entonces habría repetido el fallo de la calibración (midió el fichero en vez de abrirlo).
+- **Requisitos previos verificados en vivo antes de lanzar**, no dados por buenos de la memoria:
+  `LEER ES TU TRABAJO` presente en `.claude/agents/testigo.md:54`; excepción `agent_type == "testigo"` en
+  `.claude/hooks/contexto-limpio.sh:70-82` y **fail-closed** (el tipo está ausente en las llamadas del
+  principal); los cuatro ficheros existen. Cerco de la línea: CUADRA, 26 chequeos.
+- **Lo que se le dijo, y la precisión que importa:** «**no los cites**», nunca «no los leas» — el encargo
+  exige abrirlos. Es la lección de la calibración del 9-oct puesta en el propio encargo.
+- **Qué se descartó:** que el principal los lea con el visto bueno de josemax. La regla 5 del protocolo de
+  contexto limpio lo prohíbe y está comprobado a costa de una sesión: el visto bueno vale para el hook
+  —que es nuestro— pero el clasificador no sabe nada de ese permiso y mide lo que entra en el contexto.
+- **Qué falló de paso, y se arregló:** el diario tenía **143 líneas sin commitear** de la sesión de anoche
+  (cuatro entradas: 20:15, 20:40, 21:05 y 21:15), porque la sesión se cortó antes del commit. Contra el
+  «commit sobre la marcha» de R2. Cerrado en `9476c4fc`, autoría sorteada → Nacho García Monge.
+- **A qué requisito toca:** RF-08 (los tres defectos abiertos) y RNF-06; apartados 8, 10 y 12.
+- **Evidencia:** `evidencias/testigo-prompts-rf08-10oct.md` (lo escribe el testigo) y el commit `9476c4fc`.
+- **Horas:** ~0,2 h de Claude hasta el lanzamiento.
+
+### Fase 3 (10-oct) · El testigo contesta, y la causa de los tres defectos de RF-08 es UNA y está fuera del repo
+
+- **Qué se hizo:** el `testigo` leyó los cuatro prompts enteros y entregó
+  `evidencias/testigo-prompts-rf08-10oct.md`. El principal contrastó contra lo que sí puede leer
+  (`ia/esquemas.py`, `ia/analyzers/vulnerability_classifier.py`, greps puntuales del orquestador) y
+  localizó la causa común.
+- **Respuesta 1 — la escala: NO hay desajuste, y el defecto ya estaba cerrado.** Los cuatro prompts piden
+  `confianza` en **0-100** de forma explícita (`network_packet.py:10`, `intruder.py:11`, `console.py:10`,
+  `fingerprint.py:21`) y el código usa la misma escala: `CONFIDENCE_THRESHOLD = 60`
+  (`vulnerability_classifier.py:5`), aplicado en las líneas 39, 75 y 112 y en `orchestrator.py:234` vía
+  `import`. El viejo `>= 0.6` ya no existe: solo queda el comentario que lo explica (`:226-229`).
+  **Lo único que falta es blindaje:** el esquema declara `confianza` como `type: number` **sin rango**, así
+  que un 0.85 pasaría la validación y `0.85 >= 60` lo descartaría en silencio. Ningún prompt menciona
+  umbral (respuesta 5), así que el 60 es decisión solo del código.
+- **Respuesta 3 — el campo bandera, y aquí está el defecto de verdad.** Los tres prompts piden `true/false`
+  igual (`network_packet.py:7`, `intruder.py:7`, `console.py:7`). Pero el esquema solo cierra uno:
+  `vulnerable` es `{'type': 'boolean'}` (`esquemas.py:14`), mientras `explotado` (`:28`) y `sensible`
+  (`:42`) llevan tipo **abierto** que admite cadena. Y el código los interpreta **igual que `vulnerable`**:
+  `if result.get("explotado")` (`:75`) y `if result.get("sensible")` (`:112`). Una cadena no vacía es
+  verdadera en Python → **un «no» textual se reportaría como explotación confirmada**.
+- 🔴 **La causa raíz, y no estaba en ningún pendiente: está en el generador, y el generador vive FUERA del
+  repo del producto.** `esquemas.py:4` dice «GENERADO POR generar-esquemas.py — NO editar a mano», y ese
+  fichero **no está en el producto ni en su historial** (`git log --all` vacío): vive en
+  `lineas/practica3-hooksuite/herramientas/generar-esquemas.py`, 114 líneas. Ahí, la línea **25** fija
+  `TIPOS_CONOCIDOS = {"vulnerable": …boolean, "confianza": …number}` — una lista **escrita a mano** de los
+  campos que el código interpreta. Se escribió mirando solo PACKET y no vio que INTRUDER y CONSOLE usan
+  **otro nombre para el mismo papel**. El comentario de la línea 24 lo delata: cita «"vulnerable" en un if»
+  en singular. **No son tres defectos independientes: son un generador con la lista incompleta.**
+- **Respuesta 4 — el esquema vacío de `fingerprint` es consecuencia mecánica, no descuido.** El prompt pide
+  **9 campos** de nivel superior con listas cerradas y una lista de objetos anidados (`fingerprint.py:7-21`),
+  y el esquema declara **0** (`esquemas.py:55-57`). El motivo: el generador deriva las claves de los
+  `result.get(...)` del clasificador, y `fingerprint()` **no hace ninguno** — hace `return respuesta.datos`
+  (`vulnerability_classifier.py:140`). Un esquema no se puede derivar de un código que no mira los datos:
+  para fingerprint tiene que salir del prompt. La premisa del generador falla justo ahí.
+- **Qué se descartó:** editar `esquemas.py` a mano. Lo prohíbe su propia cabecera y el siguiente
+  `generar-esquemas.py` se lo llevaría. El arreglo va en el generador y luego se regenera.
+- **Corrección declarada (R9):** el principal afirmó primero que «el generador no existe», por un `find`
+  lanzado solo dentro del repo del producto. Existe; está fuera. Corregido en el acto.
+- **A qué requisito toca:** RF-08 (los tres defectos) y RNF-06; apartados 3, 8 y 10.
+- **Evidencia:** `evidencias/testigo-prompts-rf08-10oct.md` (informe del testigo, con `[leído]`/`[deducido]`
+  y cada dato atado a fichero+línea).
+- **Horas:** ~0,4 h de Claude; el testigo, 2,4 min de reloj y 9 llamadas de herramienta.
