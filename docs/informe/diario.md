@@ -2900,3 +2900,36 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **Evidencia:** recuentos del módulo del 10-oct 21:5x (arranque 1, terminada 0, interrumpida 0) y las 54
   peticiones del proxy reportadas por josemax.
 - **Horas:** ~0,1 h de Claude.
+
+### Fase 3 (10-oct, 22:0x) · Indicador de progreso, y el hallazgo que esconde el «0 detectadas»
+
+- **🔴 LO MÁS IMPORTANTE DEL DÍA, y sale de la captura de josemax.** Las 4 entradas «sin analizar» no eran
+  por el techo de llamadas sino por **truncado de tokens** (*«agotado el tope de 8000 tokens (pensamiento +
+  respuesta)»*). Y las cuatro son **`/vulnerabilities/fi/`, `/vulnerabilities/xss_r/`,
+  `/vulnerabilities/sqli/` y la raíz**: exactamente **las páginas con más probabilidad de ser
+  vulnerables**. Por tanto **«0 detectadas» NO significa que el sitio esté limpio**: significa que lo
+  limpio es lo que se pudo mirar, y que las sospechosas se quedaron sin mirar.
+- **🏅 Y ahí RNF-06 demuestra su valor en su primer uso real, que es el mejor argumento para la memoria:**
+  sin el estado degradado, el panel habría dicho «0 detectadas» a secas y **el informe habría concluido
+  que la web es segura**. El requisito no es usabilidad: ha evitado una conclusión falsa.
+- **Causa técnica:** en Claude 5 el pensamiento va activado y `max_tokens` cubre **pensamiento + respuesta**,
+  así que 8000 se agota en páginas con contenido. Se corrige subiendo `HOOKSUITE_IA_MAX_TOKENS`.
+- **⚠️ Y casi se repite el error de la mañana:** `environment` del servicio `ia` es una **lista explícita**,
+  así que poner la variable en el `.env` **no habría llegado al contenedor** — exactamente lo que ya pasó
+  con `MAX_LLAMADAS`, según el comentario del propio fichero. Se añade al `docker-compose.yml` con defecto
+  8000 (el del código) para no cambiar comportamiento sin querer. **Lo cazó comprobar antes de entregar el
+  bloque**, no después.
+- **Indicador de progreso (lo pidió josemax: «para evitar la desesperación del que usa la herramienta»):**
+  la cabecera muestra **«auditando… Xm Ys»** mientras corre, y la señal de fin es **la llegada del
+  resumen** —que el módulo publica solo al terminar—, más fiable que un temporizador o que suponer una
+  duración. Solo se activa **si alguien recogió la orden**: un indicador girando para siempre porque nadie
+  escucha el bus sería peor que no tener ninguno.
+- **Y se corrige un texto que prometía de más:** «auditoría lanzada: los hallazgos irán apareciendo» →
+  **«auditoría en marcha: puede tardar varios minutos»**. Lo anterior sugería resultados inmediatos y la
+  realidad son minutos de silencio.
+- **Verificado:** bundle con el indicador y el texto nuevo, control positivo; `docker compose config`
+  valida el compose.
+- **A qué requisito toca:** **RF-08**, **RNF-06** y **apartado 8**.
+- **Evidencia:** `evidencias/capturas/RF-08-auditoria-completa-49-analisis.png` — cabecera con
+  «0 detectadas · 4 sin analizar · 49 analisis realizados» y los 4 motivos de truncado.
+- **Horas:** ~0,4 h de Claude.

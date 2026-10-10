@@ -88,6 +88,15 @@ services:
       # El defecto sigue siendo 40 y sigue declarado provisional: se fija con el dato de
       # la primera auditoria real, no a ojo.
       - HOOKSUITE_IA_MAX_LLAMADAS=${HOOKSUITE_IA_MAX_LLAMADAS:-40}
+      # Tope de tokens por llamada (client.py). En Claude 5 el pensamiento va activado y
+      # este tope cubre pensamiento Y respuesta, asi que 8000 se queda corto en paginas con
+      # contenido: la respuesta se trunca y el analisis sale como "no analizado" (RNF-06).
+      # Paso el 10-oct con las 4 paginas MAS sospechosas del objetivo (fi, xss_r, sqli y la
+      # raiz), que son justo las que no conviene dejar sin mirar.
+      #
+      # Se añade aqui porque `environment` es una lista EXPLICITA: ponerla solo en el .env
+      # no llega al contenedor. Mismo error que el de MAX_LLAMADAS de esta mañana.
+      - HOOKSUITE_IA_MAX_TOKENS=${HOOKSUITE_IA_MAX_TOKENS:-8000}
     depends_on:
       # Desde el 10-oct el modulo escucha el BUS, no al backend: su dependencia real es
       # redis. Dejarlo apuntando al backend hacia que arrancase antes que redis y muriese

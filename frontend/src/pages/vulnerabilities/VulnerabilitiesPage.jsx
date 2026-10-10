@@ -90,6 +90,28 @@ export function VulnerabilitiesPage() {
   }, [sessionToken])
   const resumen = wsResumen || resumenPrevio
 
+  // INDICADOR DE PROGRESO (10-oct). Mientras la auditoria corria, el panel enseñaba
+  // exactamente lo mismo que si no hubiera pasado nada: el aviso de "lanzada" y cero
+  // resultados. Con 54 elementos tarda 2-3 minutos, y en ese rato no habia forma de
+  // distinguir "trabajando" de "terminado sin encontrar nada". Lo pidio josemax con el
+  // motivo mejor escrito de todo el proyecto: "para evitar la desesperacion del que esta
+  // usando la herramienta".
+  //
+  // La señal de FIN es la llegada del resumen, que el modulo publica solo al terminar: es
+  // mas fiable que un temporizador o que suponer una duracion.
+  const [auditando, setAuditando] = useState(false)
+  const [desde, setDesde] = useState(null)
+  const [ahora, setAhora] = useState(Date.now())
+  useEffect(() => {
+    if (!auditando) return
+    const t = setInterval(() => setAhora(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [auditando])
+  useEffect(() => {
+    if (wsResumen) { setAuditando(false); setDesde(null) }
+  }, [wsResumen])
+  const transcurrido = auditando && desde ? Math.floor((ahora - desde) / 1000) : 0
+
   const [limpiando, setLimpiando] = useState(false)
 
   async function limpiar() {
@@ -99,6 +121,7 @@ export function VulnerabilitiesPage() {
       setPrevios([])
       setPreviasVulns([])
       setResumenPrevio(null)
+      setAuditando(false)
       setSelected(null)
       setAviso(`panel vaciado (${r?.borrados ?? 0} entradas)`)
     } catch (e) {
@@ -116,11 +139,17 @@ export function VulnerabilitiesPage() {
       // Que la orden se encole NO significa que alguien la vaya a atender. Si nadie
       // escucha el bus, se dice; callarlo dejaria al operador esperando un resultado
       // que no va a llegar, que es el fallo silencioso que RNF-06 persigue.
+      // "lanzada: los hallazgos iran apareciendo" prometia de mas: suena a que empiezan a
+      // caer enseguida, y la realidad son minutos de silencio. Se dice lo que de verdad pasa.
+      const recogida = r?.ia_avisada !== false
       setAviso(
-        r?.ia_avisada === false
-          ? { tipo: 'error', texto: r.motivo || 'el modulo de IA no recogio la orden' }
-          : { tipo: 'ok', texto: 'auditoria lanzada: los hallazgos iran apareciendo' },
+        recogida
+          ? { tipo: 'ok', texto: 'auditoria en marcha: puede tardar varios minutos' }
+          : { tipo: 'error', texto: r.motivo || 'el modulo de IA no recogio la orden' },
       )
+      // Solo se marca "auditando" si ALGUIEN recogio la orden. Un indicador girando para
+      // siempre porque nadie escucha el bus seria peor que no tener indicador.
+      if (recogida) { setAuditando(true); setDesde(Date.now()) }
     } catch (e) {
       setAviso({
         tipo: 'error',
@@ -322,7 +351,12 @@ export function VulnerabilitiesPage() {
             {/* El recibo: sin esto, "0 detectadas" no distingue "examino 48 y ninguna era
                 vulnerable" de "no examino nada". Se muestra SIEMPRE que haya habido
                 auditoria, tambien cuando el resultado es cero. */}
-            {resumen && (
+            {auditando && (
+              <span style={{ color: 'var(--hs-accent, #4ea1d3)' }}>
+                {' · '}auditando… {Math.floor(transcurrido / 60)}m {transcurrido % 60}s
+              </span>
+            )}
+            {resumen && !auditando && (
               <span style={{ color: 'var(--hs-text-muted)' }}>
                 {' · '}
                 {typeof resumen.analisis === 'number'
