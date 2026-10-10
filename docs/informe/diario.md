@@ -2953,3 +2953,28 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **Evidencia:** recuentos del log de nginx del 10-oct 22:1x (20× `upstream: "http://172.24.0.7:80`) frente
   a la IP real del contenedor (`172.24.0.2`).
 - **Horas:** ~0,1 h de Claude. **0 € de API.**
+
+### Fase 3 (10-oct, 22:1x) · El tope de 24000 rompió la auditoría, y el indicador se quedó girando
+
+- **🔴 La auditoría se interrumpió entera:** `ValueError: Streaming is required for operations that may
+  take longer than 10 minutes`. Con `max_tokens` alto el SDK de Anthropic **exige streaming** y rechaza la
+  llamada normal; el cliente (`ia/client.py`) **no usa streaming** (0 menciones).
+- **Causa de fondo: una recomendación mal comprobada.** Se propuso subir el tope de 8000 a **24000** para
+  que las 4 páginas sospechosas no se truncaran, **sin comprobar si el cliente estaba preparado para topes
+  altos**. El salto fue de ×3 de una vez. Es el mismo error de método del día: proponer sin verificar la
+  precondición.
+- **Coste: 0 €.** El `ValueError` lo lanza la librería **antes** de enviar la petición.
+- **🟠 Y destapó un defecto de mi propio indicador de progreso, estrenado hace media hora:** se apaga
+  cuando llega el resumen, pero **una auditoría interrumpida no publica resumen** → el contador se quedó
+  **girando en 3m30s sin nada ejecutándose**. Lo peor es que el aviso estaba escrito en el comentario del
+  propio indicador («girar para siempre sería peor que no tener indicador») y aun así se escapó ese camino:
+  **pensé el caso feliz y el caso «nadie recoge la orden», pero no el de «la auditoría revienta a mitad».**
+- **✅ Arreglado:** la rama de error publica también un `resumen_auditoria` con `interrumpida: true`.
+  Mientras no se despliegue, el apaño es pulsar **«limpiar»**, que apaga el indicador.
+- **Pendiente de decisión (josemax lo deja para la próxima sesión):** bajar el tope a ~16000 y probar, o
+  **implementar streaming** en el cliente —la solución definitiva, que quita el límite—, o volver a 8000 y
+  documentar las 4 páginas como limitación conocida.
+- **A qué requisito toca:** **RF-08**, **RNF-06** y **apartado 8**.
+- **Evidencia:** mensaje del módulo (`ValueError: Streaming is required…`) y el contador detenido en 3m30s
+  reportado por josemax.
+- **Horas:** ~0,2 h de Claude. **0 € de API.**

@@ -134,6 +134,18 @@ async def atender(r, mensaje: dict):
             "url": url,
             "motivo": f"la auditoria se interrumpio: {type(e).__name__}: {e}",
         })
+        # Resumen TAMBIEN al fallar (10-oct). El panel apaga su indicador «auditando…»
+        # cuando llega el resumen, y sin esto una auditoria interrumpida lo dejaba girando
+        # PARA SIEMPRE: josemax se encontro el contador en 3m30s con nada ejecutandose.
+        # El aviso estaba escrito en el propio comentario del indicador —«girar para
+        # siempre seria peor que no tener indicador»— y aun asi se escapo este camino.
+        await publicar(r, espacio, {
+            "estado": "resumen_auditoria",
+            "analisis": _analisis_hechos(orq),
+            "detectadas": 0,
+            "no_analizados": 1,
+            "interrumpida": True,
+        })
         return
 
     hallazgos, degradados = await publicar_resultados(r, espacio, orq)
