@@ -135,3 +135,12 @@ export async function obtenerVulnerabilidades(espacio) {
   const { data } = await api.get(`/api/vulnerabilities/${encodeURIComponent(espacio)}`)
   return data
 }
+
+// Vacia el panel de vulnerabilidades de la sesion (10-oct). Hace falta porque la limpieza
+// automatica al lanzar una auditoria no cubre el caso real: josemax limpio el proxy, el
+// campo de objetivo se vacio y los avisos de "no analizado" seguian ahi. Sin esto, limpiar
+// la pantalla obligaria a gastar una auditoria.
+export async function limpiarPanel(espacio) {
+  const { data } = await api.delete(`/api/vulnerabilities/${encodeURIComponent(espacio)}`)
+  return data
+}

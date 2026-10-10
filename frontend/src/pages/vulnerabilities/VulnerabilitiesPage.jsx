@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Badge } from '@/components/ui'
 import { mockVulnerabilities } from '@/services/mockData'
-import { config, lanzarAuditoria, obtenerNoAnalizados, obtenerVulnerabilidades } from '@/services/api'
+import { config, lanzarAuditoria, limpiarPanel, obtenerNoAnalizados, obtenerVulnerabilidades } from '@/services/api'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { useSession } from '@/hooks/useSession'
 import { useAppContext } from '@/AppContext'
@@ -33,7 +33,7 @@ export function VulnerabilitiesPage() {
 
   // Se deduplica por id, al contrario que los no analizados: aqui una entrada repetida
   // seria un hallazgo fantasma en el informe, no una linea de aviso de mas.
-  const vulnerabilities = config.USE_MOCKS
+  const vulnerabilitiesTodas = config.USE_MOCKS
     ? mockVulnerabilities
     : [...(wsVulnerabilities || []), ...previasVulns].filter(
         (v, i, todas) => todas.findIndex(o => (o?.id ?? o) === (v?.id ?? v)) === i,
@@ -67,7 +67,36 @@ export function VulnerabilitiesPage() {
     if (!sessionToken || config.USE_MOCKS) return
     obtenerNoAnalizados(sessionToken).then(setPrevios).catch(() => setPrevios([]))
   }, [sessionToken])
-  const noAnalizados = [...(wsNoAnalizados || []), ...previos]
+  // Filtro por OBJETIVO (10-oct). El backend sella cada hallazgo con el objetivo que se
+  // estaba auditando, y aqui se muestra solo lo del objetivo que hay en el campo. Antes el
+  // panel mezclaba la tirada de ahora con restos de otra auditoria contra otra web: josemax
+  // se encontro 39 avisos pegados que sobrevivian a limpiar el proxy, sin forma de saber de
+  // donde salian ni de quitarlos.
+  //
+  // Los que NO traen objetivo son anteriores a este cambio: se siguen mostrando para no
+  // esconder datos de golpe, y se quitan con el boton de limpiar.
+  const delObjetivo = lista =>
+    lista.filter(x => !x?.objetivo || !objetivo || x.objetivo === objetivo)
+
+  const vulnerabilities = delObjetivo(vulnerabilitiesTodas)
+  const noAnalizados = delObjetivo([...(wsNoAnalizados || []), ...previos])
+
+  const [limpiando, setLimpiando] = useState(false)
+
+  async function limpiar() {
+    setLimpiando(true)
+    try {
+      const r = await limpiarPanel(sessionToken)
+      setPrevios([])
+      setPreviasVulns([])
+      setSelected(null)
+      setAviso(`panel vaciado (${r?.borrados ?? 0} entradas)`)
+    } catch (e) {
+      setAviso(`no se pudo vaciar el panel: ${e?.message || e}`)
+    } finally {
+      setLimpiando(false)
+    }
+  }
 
   async function auditar() {
     setLanzando(true)
@@ -296,6 +325,21 @@ export function VulnerabilitiesPage() {
               color: 'var(--hs-text-muted)',
             }}
           />
+          <button
+            onClick={limpiar}
+            disabled={limpiando || (vulnerabilities.length === 0 && noAnalizados.length === 0)}
+            title="Vacia el panel sin lanzar ninguna auditoria"
+            className="px-3 py-1.5 rounded border text-[10px] disabled:opacity-50"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              background: 'var(--hs-bg)',
+              borderColor: 'var(--hs-border-hover)',
+              color: 'var(--hs-text-muted)',
+              cursor: limpiando ? 'wait' : 'pointer',
+            }}
+          >
+            {limpiando ? 'vaciando…' : 'limpiar'}
+          </button>
           <button
             onClick={auditar}
             disabled={lanzando || !objetivo}

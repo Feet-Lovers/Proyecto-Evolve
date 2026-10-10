@@ -47,6 +47,10 @@ export function useWebSocket(sessionToken) {
       if (data.type === 'request_intercepted') setRequests(prev => [normalizePacket(data.payload), ...prev])
       if (data.type === 'vulnerability_detected') setVulnerabilities(prev => [data.payload, ...prev])
       if (data.type === 'ia_no_analizado') setNoAnalizados(prev => [data.payload, ...prev])
+      // El backend avisa de que el panel se ha vaciado (boton limpiar o auditoria nueva).
+      // Sin esto el boton no serviria de nada: se borraria en el servidor y en el estado
+      // local, pero lo que llego por aqui seguiria en pantalla hasta recargar.
+      if (data.type === 'panel_limpiado') { setVulnerabilities([]); setNoAnalizados([]) }
       if (data.type === 'network_packet') setNetworkPackets(prev => [normalizePacket(data.payload), ...prev])
     }
     return () => ws.close()

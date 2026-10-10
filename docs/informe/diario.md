@@ -2804,3 +2804,26 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **Evidencia:** `evidencias/capturas/RNF-06-no-analizados-techo10-academyx.png` — el defecto, antes de
   arreglarlo: cabecera «0 detectadas · 39 sin analizar» con el campo de objetivo ya vacío.
 - **Horas:** ~0,3 h de Claude. **0 € de API.**
+
+### Fase 3 (10-oct, 21:4x) · El panel ya se puede vaciar y deja de mezclar objetivos (frontend)
+
+- **Tres piezas, 60 líneas:**
+  1. **Botón «limpiar»** junto a «auditar con IA», que llama al `DELETE` nuevo. Se deshabilita solo cuando
+     no hay nada que borrar.
+  2. **Filtro por objetivo:** se muestra solo lo sellado con el objetivo que hay en el campo. Lo anterior a
+     este cambio (sin sello) se sigue mostrando —para no esconder datos de golpe— y se quita con el botón.
+  3. **El hook del WebSocket atiende `panel_limpiado`** y vacía sus listas. **Sin esta tercera pieza el
+     botón habría sido decorativo:** se borraría en el servidor y en el estado local, pero lo que llegó por
+     el WebSocket seguiría en pantalla hasta recargar — el tipo de arreglo que parece funcionar en una
+     prueba rápida y falla en cuanto llega un dato nuevo.
+- **Detalle de orden que obligó a reestructurar:** el filtro necesita `objetivo`, que se declara **después**
+  de la lista de vulnerabilidades. Usarlo antes habría reventado por la zona muerta temporal de `const`.
+  Se renombró la lista cruda a `vulnerabilitiesTodas` y las filtradas se derivan más abajo, sin tocar el
+  render.
+- **Verificado en el bundle construido**, con control positivo: `panel_limpiado` **1**, texto del botón
+  **1**, y el control (`auditar con IA`) **1** para asegurar que el escáner cuenta. Vite valida además los
+  imports nuevos.
+- **A qué requisito toca:** **RF-08** y **RNF-06**. Pendiente: recrear el frontend y probarlo.
+- **Evidencia:** recuentos del bundle (10-oct 21:4x) y la captura del defecto previo
+  `evidencias/capturas/RNF-06-no-analizados-techo10-academyx.png`.
+- **Horas:** ~0,4 h de Claude. **0 € de API.**
