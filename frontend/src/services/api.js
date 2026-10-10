@@ -124,3 +124,14 @@ export async function obtenerNoAnalizados(espacio) {
   )
   return data
 }
+
+// Las vulnerabilidades YA detectadas. Hasta el 10-oct esta llamada no existia y la
+// pantalla se alimentaba SOLO del WebSocket, de modo que lo encontrado mientras el
+// operador no estaba en esa pestana era invisible aunque el backend lo tuviera guardado:
+// bastaba cambiar de pestana para "perder" los hallazgos. El endpoint ya existia
+// (`vulnerabilities.py`), solo que nadie lo llamaba. Mismo criterio que los no
+// analizados: lo ya ocurrido se consulta al entrar, lo nuevo llega por el WebSocket.
+export async function obtenerVulnerabilidades(espacio) {
+  const { data } = await api.get(`/api/vulnerabilities/${encodeURIComponent(espacio)}`)
+  return data
+}

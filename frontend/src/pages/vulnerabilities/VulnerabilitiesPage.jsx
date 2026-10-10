@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Badge } from '@/components/ui'
 import { mockVulnerabilities } from '@/services/mockData'
-import { config, lanzarAuditoria, obtenerNoAnalizados } from '@/services/api'
+import { config, lanzarAuditoria, obtenerNoAnalizados, obtenerVulnerabilidades } from '@/services/api'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { useSession } from '@/hooks/useSession'
 import { ResizableSplit } from '@/components/layout/ResizableSplit'
@@ -13,9 +13,30 @@ export function VulnerabilitiesPage() {
   const sessionToken = useSession()
   const { vulnerabilities: wsVulnerabilities, noAnalizados: wsNoAnalizados } =
     useWebSocket(sessionToken)
-  const vulnerabilities = config.USE_MOCKS ? mockVulnerabilities : wsVulnerabilities
   const [selected, setSelected] = useState(null)
   const [filter, setFilter] = useState('all')
+
+  // Lo ya detectado se consulta al entrar; lo que llegue despues, por WebSocket. Hasta el
+  // 10-oct esta pantalla se alimentaba SOLO del WebSocket, que arranca vacio en cada
+  // montaje: los hallazgos de un rastreo hecho desde otra pestana no aparecian nunca,
+  // aunque el backend los tuviera. Mismo patron que los no analizados, doce lineas mas
+  // abajo, que si lo hacian — eso explica que un panel pudiera acumular 144 "sin
+  // analizar" y cero "detectadas".
+  const [previasVulns, setPreviasVulns] = useState([])
+  useEffect(() => {
+    if (!sessionToken || config.USE_MOCKS) return
+    obtenerVulnerabilidades(sessionToken)
+      .then(setPreviasVulns)
+      .catch(() => setPreviasVulns([]))
+  }, [sessionToken])
+
+  // Se deduplica por id, al contrario que los no analizados: aqui una entrada repetida
+  // seria un hallazgo fantasma en el informe, no una linea de aviso de mas.
+  const vulnerabilities = config.USE_MOCKS
+    ? mockVulnerabilities
+    : [...(wsVulnerabilities || []), ...previasVulns].filter(
+        (v, i, todas) => todas.findIndex(o => (o?.id ?? o) === (v?.id ?? v)) === i,
+      )
 
   // RF-08. Hasta el 10-oct no habia forma de arrancar una auditoria: el modulo de IA
   // existia, esperaba ordenes y nadie podia darlas. El objetivo por omision es el
