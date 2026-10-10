@@ -2193,3 +2193,41 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
 - **Evidencia:** `docs/evidencias/bus-ia-prueba-en-vivo-10oct.md` §7b; captura
   `Salto1_Salvaguarda.png` — **vive FUERA del repo**, en `~/claude-workspace/lineas/practica3-hooksuite/evidencias/capturas/` (no copiada aquí todavía: publicarla en un repo público es decisión de josemax). **Revisada entera antes de citarla: no lleva ningún secreto.**
 - **Horas:** ~0,2 h de Claude. **0 € de API.**
+
+### Fase 3 (10-oct, 13:00) · La prueba desde el panel falla, y el diagnóstico sale entero sin volcar una línea
+
+- **De dónde salió:** josemax probó el disparador **desde el panel, con sesión real** — la prueba que
+  faltaba, porque la de las 12:26 se había saltado panel y login publicando directo en Redis.
+- **Resultado: la orden NO llegó al módulo de IA.** Su log sigue **idéntico** al de media hora antes (192
+  líneas, 96 `techo`, 0 `Traceback`): no movió ni una línea.
+- **Y lo valioso es dónde NO está el fallo**, porque descarta casi todo de golpe: **0× `500`** (el backend no
+  se cayó, `RestartCount=0`, arriba desde las 11:58), **0× `403`** (el guardián no rechazó nada), **0× `422`**
+  (el cuerpo no venía mal). En todo el log desde el recreado hay **2 POST**, 6 GET y **3× `401`**.
+- **Un falso diagnóstico, detectado y corregido en el acto:** al ver **2 `Traceback`** nuevos en el backend
+  se dijo que «el botón reventó en el backend». **Es falso.** Caen en las **líneas 6 y 24** de 39 —zona de
+  arranque, no el final— y hay **8** menciones de `bcrypt`: es el aviso conocido de detección de versión de
+  esa librería. Se descartó mirando **la posición**, no el contenido.
+- **Segundo error propio, también declarado:** entre dos mediciones del mismo log se perdió el `-i` del
+  `grep`, y eso hizo parecer que `completad` pasaba de 2 a 0 y `WARNING/ERROR` de 5 a 0. **No había cambiado
+  nada**: `-i` casa minúsculas y sin `-i` no. **Una comparación entre dos medidas solo vale si las dos se
+  tomaron con las mismas banderas** — es la versión «de recuentos» del mismo error que el `grep` sin `-a`
+  sobre un diff binario.
+- **Lo que no se pudo cerrar, y por qué está bien que no se cerrara:** quedan tres hipótesis (la petición no
+  llegó autenticada / llegó pero el tipo no era `full_audit` / se publicó y el módulo lo ignoró). Los 3×
+  `401` y los solo 2 POST apuntan a la primera, **pero no está probado y no se da por bueno**. Lo que
+  distingue entre ellas está en la pantalla de josemax: la ruta devuelve `{"ia_avisada": false, "motivo": …}`
+  si el bus falla, en vez de un error.
+- **🔴 Y la prueba de que la norma nueva funciona:** todo este diagnóstico salió **sin volcar una sola línea
+  de log** — tipo de excepción, módulo, posición en el fichero y librería, todo por `grep -c`. Además el
+  auto-mode **bloqueó por su cuenta** un intento de volcar 16 líneas del log del backend aun con guardia de
+  secretos puesta; **no se insistió** con otro comando equivalente, y acotar contando bastó. La norma de las
+  llamadas separadas se estrenó hoy y aguantó.
+- **Qué se descartó:** instrumentar el consumidor **antes** de la prueba (se propuso, pero josemax ya la
+  tenía hecha); y volver a lanzar la auditoría para «ver el log con calma».
+- **Qué falta:** la captura del panel (josemax, siguiente sesión) y, si hace falta, ~3 líneas en
+  `_repartir_hallazgo` para que el consumidor deje constancia por mensaje — hoy reparte en silencio y por eso
+  un «0 aciertos» en su log no prueba nada.
+- **A qué requisito toca:** RF-08 (el disparador, **no cerrado**) y RNF-06 (la tira ámbar, sin ver todavía).
+- **Evidencia:** `docs/evidencias/bus-ia-prueba-en-vivo-10oct.md` (recuentos de las 12:26) ·
+  ⚠️ **FALTA: captura del panel al pulsar «auditar con IA» [pantalla — josemax, la trae la próxima sesión]**.
+- **Horas:** ~0,5 h de Claude. **0 € de API.**
