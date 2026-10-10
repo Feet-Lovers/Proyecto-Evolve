@@ -14,9 +14,15 @@ volumes:
 services:
   backend:
     build: ./backend
+    # Sin esto los print() del backend se quedan en el buffer y NO salen en el log. El
+    # 10-oct costo un diagnostico: la linea del consumidor del bus no aparecia y parecia
+    # que no habia arrancado — Redis confirmo que si (`pubsub numsub ia:hallazgos` = 1).
+    # Un log que no distingue "funciona" de "roto" es el mismo fallo silencioso que RNF-06
+    # persigue, un nivel mas abajo. Los servicios `ia` y `playwright` ya lo tenian.
     # Sin 'ports': el backend NO se publica a internet. Nginx lo proxea (/api, /ws) y
     # ia/playwright le hablan por la red interna (http://backend:8000). Cierra el :8000 abierto.
     environment:
+      - PYTHONUNBUFFERED=1
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - HOST=0.0.0.0
       - PORT=8000
