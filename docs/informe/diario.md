@@ -2513,3 +2513,45 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
 - **Evidencia:** recuentos del registro del módulo (8 → 28 líneas, 0 errores, 0 `techo`) y del bundle servido
   (`full_audit` y «no analizado» presentes, imagen de las 11:57).
 - **Horas:** ~0,2 h de Claude. **0 € de API** (no llegó a llamarse al modelo).
+
+### Fase 3 (10-oct, 19:06 — hora de reloj, leída con `date`) · El arreglo del panel funciona; lo que faltaba sigue siendo el rastreo
+
+*⚠️ Nota de orden: las cuatro entradas anteriores llevan horas adelantadas respecto a sus propios commits
+(la titulada «19:3x» se commiteó a las **18:42**). Esta entrada es **posterior** a todas ellas y lleva la
+hora verificada, no estimada. Las otras no se reescriben: no consta de dónde salieron sus horas.*
+
+- **De dónde salió:** tras implementar la consulta-al-entrar (`a662e8c2`) y que josemax recreara el
+  contenedor del frontend, el panel de Vulnerabilidades **seguía sin mostrar ni un hallazgo confirmado**. La
+  pregunta ya no era «¿pinta bien?», sino «¿hay algo que pintar?».
+- **Se contestó con dos recuentos sobre el registro del backend**, sin volcar una sola línea: **10
+  `GET /api/vulnerabilities`** y **0 `POST /api/vulnerabilities`** desde el arranque de las 18:52:32.
+- **🟢 La mitad buena:** los 10 GET prueban que el arreglo **funciona en la cocina**, no solo en el bundle
+  construido. La pantalla ya pregunta al entrar; eso queda cerrado.
+- **Y la mitad que explica el panel vacío:** cero POST significa que en este arranque **no se ha registrado
+  ni una vulnerabilidad confirmada**. No hay nada que pintar. **El panel vacío no es un defecto de la
+  interfaz** — y conviene dejarlo escrito, porque ya se sospechó del pintado una vez esta tarde y se
+  descartó con datos; esta es la segunda vez que la sospecha habría sido la pista equivocada.
+- **Encaja con la conclusión de la entrada anterior por una vía independiente:** allí se vio que la cuarta
+  auditoría trabajó en vacío (usuario nuevo sin hallazgos); aquí, que el endpoint de confirmados no se ha
+  llamado nunca. Dos mediciones distintas, el mismo diagnóstico: **falta rastrear antes de auditar**.
+- **Qué se descartó:** volver a sospechar del frontend (ya descartado con el bundle); y **leer
+  `ia/orchestrator.py`**, que es donde estaría la respuesta definitiva — el protocolo de contexto limpio lo
+  veda, así que se trabajó con el esqueleto de `bin/estructura.sh` y con **nombres de fichero** nada más.
+- **Dato que acota la búsqueda:** `ia/main.py` **no** es quien publica el hallazgo; su única ruta de API es
+  la de instrucciones de Playwright. El candidato que queda es `ia/orchestrator.py`.
+- **Cómo acabó el tramo:** cortado por la salvaguarda a las ~19:00, con el diagnóstico a medias. **No se
+  tocó nada**: ni un commit, ni un contenedor, ni un fichero después de `a662e8c2`. Verificado al destilar
+  (árbol de trabajo limpio, 0 commits sin empujar).
+- **A qué requisito toca:** **RF-08**, que sigue abierto por un motivo cada vez menor: ya no es el esquema,
+  ni el pintado — es el **orden de los pasos**.
+- **Evidencia:** recuentos del registro del backend del 10-oct 19:06 (10 GET · 0 POST · arranque 18:52:32) y
+  `lineas/practica3-hooksuite/evidencias/capturas/Comandos/comando09.png` (captura del corte, tomada por
+  josemax a las 19:01).
+- **Horas:** ~0,15 h de Claude. **0 € de API** (no se llamó al modelo en este tramo).
+- **Apunte añadido al destilar (19:12), recuperado de la captura del corte:** josemax **ya había recreado y
+  pulsado F5**, y comprobó con su propio comando que **el bundle servido es el nuevo** (2 rutas
+  `api/vulnerabilities/` frente a 1 del viejo) — o sea que la pantalla correcta está desplegada y aun así no
+  aparece nada, lo que deja al frontend definitivamente fuera de sospecha. Y el dato que más acota: **los
+  únicos productores de hallazgos confirmados son la auditoría de IA y Playwright, y Playwright está
+  diferido y no corre**, así que **la única vía viva es que la auditoría analice algo y encuentre algo**.
+  Sin rastreo previo no hay nada que analizar: es la misma conclusión por tercer camino distinto.
