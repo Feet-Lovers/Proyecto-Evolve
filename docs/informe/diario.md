@@ -2575,3 +2575,32 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
   spider. ⚠️ Esa tirada **sí gasta API** (techo a 10 llamadas, clave nueva); las anteriores costaron 0 €.
 - **Evidencia:** recuentos del registro del backend del 10-oct 19:2x (3 POST spider · 0 auditoría · 22 GET).
 - **Horas:** ~0,1 h de Claude. **0 € de API.**
+
+### Fase 3 (10-oct, 19:4x) · El objetivo por defecto es el de la práctica 1: auditar y rastrear se desacoplan en silencio
+
+- **Lo detectó josemax usando la herramienta** (cuarta pista buena que sale de ahí y no de leer código):
+  al ir a pulsar la auditoría vio que el campo de objetivo **siempre aparece con `http://dvwa:80`**, y
+  preguntó si tenía que escribir la URL a mano.
+- **Qué dice el código:** el valor está fijado en `frontend/src/pages/vulnerabilities/VulnerabilitiesPage.jsx:44`
+  (`useState('http://dvwa:80')`) y **se envía de verdad** dentro de la instrucción —
+  `frontend/src/services/api.js:114` manda `{type:'full_audit', url, selector, session_token}` a
+  `POST /api/playwright/instruction/{espacio}`. No es un adorno de la interfaz.
+- **🟠 El defecto, con precisión: no es que el campo sea libre —eso es correcto— sino el VALOR POR DEFECTO.**
+  Apunta al objetivo de la **práctica 1**. josemax lanzó el spider contra la página autorizada de
+  `web.academyx.es`; si pulsa sin tocar el campo, **audita un objetivo distinto del que rastreó**. Rastrear y
+  auditar se desacoplan **sin un solo aviso**.
+- **Agravante de coste, que es lo que lo sube de prioridad:** con la clave real puesta y el techo en 10, esa
+  equivocación **no da un resultado vacío: gasta llamadas de API para nada**.
+- **Agravante de producto:** `http://dvwa:80` es un **hostname interno de Docker**. Un entregable no debería
+  traer prefijado el nombre de un contenedor de pruebas que el usuario no puede conocer ni alcanzar.
+- **Arreglo propuesto (no aplicado):** que el campo **herede el objetivo del rastreo ya hecho en esa sesión**
+  y quede vacío con *placeholder* si no hay ninguno. Borrar el default a secas arregla el caso; heredar
+  elimina **la clase entera** de error.
+- **Dato corregido de paso:** se creía que **DVWA estaba desconectado** y es **FALSO** — verificado el 10-oct
+  19:4x: contenedor `running` desde el 4-oct, en la red `hooksuite-net`, con su bloque todavía en el
+  `docker-compose.yml`. El desacople de DVWA sigue siendo un **pendiente abierto**, no un hecho consumado.
+  Este default es precisamente uno de los acoplamientos que ese pendiente tenía que cazar.
+- **A qué requisito toca:** **RF-08**, y material directo del **apartado 8** (pruebas que fallaron).
+- **Evidencia:** ⚠️ FALTA: pestaña Vulnerabilidades con el campo mostrando `http://dvwa:80` al entrar
+  **[pantalla — josemax]**, pedida en el acto porque nuestro propio arreglo la destruye (R6).
+- **Horas:** ~0,1 h de Claude. **0 € de API.**
