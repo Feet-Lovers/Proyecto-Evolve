@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Badge } from '@/components/ui'
 import { mockVulnerabilities } from '@/services/mockData'
-import { config, lanzarAuditoria, limpiarPanel, obtenerNoAnalizados, obtenerVulnerabilidades } from '@/services/api'
+import { config, lanzarAuditoria, limpiarPanel, obtenerNoAnalizados, obtenerResumenIA, obtenerVulnerabilidades } from '@/services/api'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { useSession } from '@/hooks/useSession'
 import { useAppContext } from '@/AppContext'
@@ -12,7 +12,7 @@ const SEVERITY_LABEL = { critical: 'Crítica', high: 'Alta', medium: 'Media', lo
 
 export function VulnerabilitiesPage() {
   const sessionToken = useSession()
-  const { vulnerabilities: wsVulnerabilities, noAnalizados: wsNoAnalizados } =
+  const { vulnerabilities: wsVulnerabilities, noAnalizados: wsNoAnalizados, resumenIA: wsResumen } =
     useWebSocket(sessionToken)
   const [selected, setSelected] = useState(null)
   const [filter, setFilter] = useState('all')
@@ -81,6 +81,15 @@ export function VulnerabilitiesPage() {
   const vulnerabilities = delObjetivo(vulnerabilitiesTodas)
   const noAnalizados = delObjetivo([...(wsNoAnalizados || []), ...previos])
 
+  // Recibo de la ultima auditoria. Se consulta al entrar igual que los no analizados: lo
+  // que llego mientras no estabas en esta pestaña tambien cuenta.
+  const [resumenPrevio, setResumenPrevio] = useState(null)
+  useEffect(() => {
+    if (!sessionToken) return
+    obtenerResumenIA(sessionToken).then(setResumenPrevio).catch(() => setResumenPrevio(null))
+  }, [sessionToken])
+  const resumen = wsResumen || resumenPrevio
+
   const [limpiando, setLimpiando] = useState(false)
 
   async function limpiar() {
@@ -89,6 +98,7 @@ export function VulnerabilitiesPage() {
       const r = await limpiarPanel(sessionToken)
       setPrevios([])
       setPreviasVulns([])
+      setResumenPrevio(null)
       setSelected(null)
       setAviso(`panel vaciado (${r?.borrados ?? 0} entradas)`)
     } catch (e) {
@@ -308,6 +318,17 @@ export function VulnerabilitiesPage() {
             {vulnerabilities.length} detectadas
             {noAnalizados.length > 0 && (
               <span style={{ color: '#d9a93a' }}> · {noAnalizados.length} sin analizar</span>
+            )}
+            {/* El recibo: sin esto, "0 detectadas" no distingue "examino 48 y ninguna era
+                vulnerable" de "no examino nada". Se muestra SIEMPRE que haya habido
+                auditoria, tambien cuando el resultado es cero. */}
+            {resumen && (
+              <span style={{ color: 'var(--hs-text-muted)' }}>
+                {' · '}
+                {typeof resumen.analisis === 'number'
+                  ? `${resumen.analisis} analisis realizados`
+                  : 'analisis realizados: desconocido'}
+              </span>
             )}
           </span>
         </div>

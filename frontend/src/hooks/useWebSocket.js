@@ -24,6 +24,7 @@ export function useWebSocket(sessionToken) {
   // calculaba y lo publicaba, y no habia consumidor ni en el backend ni en el panel.
   // Un fallo de analisis era indistinguible de «no hay vulnerabilidades».
   const [noAnalizados, setNoAnalizados] = useState([])
+  const [resumenIA, setResumenIA] = useState(null)
   const [connected, setConnected] = useState(config.USE_MOCKS)
   const wsRef = useRef(null)
 
@@ -50,12 +51,13 @@ export function useWebSocket(sessionToken) {
       // El backend avisa de que el panel se ha vaciado (boton limpiar o auditoria nueva).
       // Sin esto el boton no serviria de nada: se borraria en el servidor y en el estado
       // local, pero lo que llego por aqui seguiria en pantalla hasta recargar.
-      if (data.type === 'panel_limpiado') { setVulnerabilities([]); setNoAnalizados([]) }
+      if (data.type === 'panel_limpiado') { setVulnerabilities([]); setNoAnalizados([]); setResumenIA(null) }
+      if (data.type === 'ia_resumen') setResumenIA(data.payload)
       if (data.type === 'network_packet') setNetworkPackets(prev => [normalizePacket(data.payload), ...prev])
     }
     return () => ws.close()
   }, [sessionToken])
 
   const clearRequests = useCallback(() => setRequests([]), [])
-  return { requests, networkPackets, connected, clearRequests, vulnerabilities, noAnalizados }
+  return { requests, networkPackets, connected, clearRequests, vulnerabilities, noAnalizados, resumenIA }
 }

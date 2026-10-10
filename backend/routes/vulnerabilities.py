@@ -87,6 +87,21 @@ async def limpiar_panel(session_token: str):
     borrados = len(session.get("vulnerabilities", [])) + len(session.get("no_analizados", []))
     session["vulnerabilities"] = []
     session["no_analizados"] = []
+    session["resumen_ia"] = None
     session["objetivo_actual"] = None
     await session_manager.emit(session_token, "panel_limpiado", {"borrados": borrados})
     return {"borrados": borrados}
+
+
+@router.get("/{session_token}/resumen")
+async def get_resumen_ia(session_token: str):
+    """El recibo de la ultima auditoria: cuantos analisis se hicieron de verdad.
+
+    Existe porque «0 detectadas» es ambiguo: significa lo mismo si la IA examino 48
+    elementos y ninguno era vulnerable que si no examino ninguno. Sin este dato la
+    herramienta no es creible, que es lo que hizo notar josemax el 10-oct.
+
+    Devuelve `null` si no ha habido auditoria en esta sesion.
+    """
+    session = session_manager.get_session(session_token)
+    return session.get("resumen_ia")

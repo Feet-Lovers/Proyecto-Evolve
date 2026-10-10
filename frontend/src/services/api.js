@@ -144,3 +144,11 @@ export async function limpiarPanel(espacio) {
   const { data } = await api.delete(`/api/vulnerabilities/${encodeURIComponent(espacio)}`)
   return data
 }
+
+// El recibo de la ultima auditoria: cuantos analisis se hicieron de verdad. Sin este dato
+// "0 detectadas" es ambiguo — significa lo mismo si la IA examino 48 elementos y ninguno
+// era vulnerable que si no examino ninguno.
+export async function obtenerResumenIA(espacio) {
+  const { data } = await api.get(`/api/vulnerabilities/${encodeURIComponent(espacio)}/resumen`)
+  return data
+}

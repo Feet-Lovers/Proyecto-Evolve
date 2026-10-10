@@ -47,6 +47,7 @@ async def receive_instruction(session_token: str, instruction: PlaywrightInstruc
         sesion["objetivo_actual"] = instruction.url
         sesion["vulnerabilities"] = []
         sesion["no_analizados"] = []
+        sesion["resumen_ia"] = None
         try:
             oyentes = await bus_ia.publicar_instruccion(session_token, instruction.model_dump())
         except Exception as e:

@@ -37,6 +37,14 @@ async def _repartir_hallazgo(data: dict):
     # RNF-06. «No analizado» no es «no hay vulnerabilidad», y tampoco encaja en el modelo
     # VulnerabilityReport (no tiene id, tipo, severidad ni confianza). Va por su propio
     # camino para que el panel pueda decirlo en voz alta en vez de callar.
+    # Resumen de la auditoria: no es un hallazgo, es el recibo de lo que se hizo. Va a su
+    # propia casilla para que el panel pueda decir «N analisis» aunque no haya encontrado
+    # nada, que es justo lo que distingue «no habia nada» de «no se ejecuto».
+    if data.get("estado") == "resumen_auditoria":
+        session["resumen_ia"] = data
+        await session_manager.emit(espacio, "ia_resumen", data)
+        return
+
     if data.get("estado") == "no_analizado":
         session.setdefault("no_analizados", []).append(data)
         await session_manager.emit(espacio, "ia_no_analizado", data)

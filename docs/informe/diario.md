@@ -2851,3 +2851,30 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
   commits»), repetido por quien lo había señalado. Corregidas con la hora real de cada commit. **Norma:
   la hora de una entrada se toma de `git log` o de `date`, nunca se estima.**
 - **Horas:** ~0,1 h de Claude. **0 € de API.**
+
+### Fase 3 (10-oct, 21:4x) · El recibo de la auditoría: «0 detectadas» deja de ser ambiguo
+
+- **Lo pidió josemax y tenía razón desde el principio:** «0 detectadas» significa lo mismo si la IA
+  **examinó 48 elementos y ninguno era vulnerable** que si **no examinó ninguno**. Esa ambigüedad no es un
+  detalle de interfaz: es la diferencia entre una herramienta que puedes creerte y una que no. Lo
+  comprobamos en vivo — tras una auditoría con techo 50 el panel decía «0 detectadas» y no había forma de
+  saber si había trabajado.
+- **Qué se hizo, 61 líneas de backend/módulo y ~35 de frontend:** al terminar, el módulo publica un
+  **resumen** en el bus (`estado: resumen_auditoria`) con **el número real de análisis**, las detectadas y
+  las no analizadas. El backend lo guarda en su propia casilla y lo emite; el panel lo muestra en la
+  cabecera junto a las otras dos cifras, y se consulta al entrar igual que los «no analizados».
+- **🔑 La clave para no tocar el fichero vedado:** el contador real vive en el cliente
+  (`HookSuiteAIClient.llamadas`), que cuelga de algún atributo del orquestador. En vez de escribir la ruta
+  a mano —que habría exigido leer `ia/orchestrator.py`, vedado por el protocolo de contexto limpio— se
+  **busca recorriendo los atributos**. Efecto secundario bueno: no se rompe si mañana el cliente cuelga de
+  otro sitio.
+- **Si el contador no aparece, el panel dice «desconocido», no cero.** Un cero inventado sería
+  indistinguible de «no analizó nada», que es exactamente el problema que esto viene a resolver.
+- **Qué se descartó:** listar cada análisis limpio como entrada verde —era lo que josemax pidió primero—
+  porque exige que el orquestador **guarde** los limpios (hoy los tira) y eso sí obliga a tocar el fichero
+  vedado con el agente `testigo`. Al aparecer esta vía más barata, josemax eligió el resumen.
+- **Verificado:** los cuatro ficheros de Python compilan; bundle construido con `ia_resumen` presente y
+  control positivo.
+- **A qué requisito toca:** **RF-08** y **RNF-06**.
+- **Evidencia:** recuentos del bundle (`ia_resumen` 1, texto del contador 2, control 1).
+- **Horas:** ~0,5 h de Claude. **0 € de API.**

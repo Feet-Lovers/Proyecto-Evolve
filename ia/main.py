@@ -48,6 +48,32 @@ async def publicar(r, espacio: str, hallazgo: dict):
     await r.publish(CANAL_HALLAZGOS, json.dumps(mensaje, default=str))
 
 
+def _analisis_hechos(orq):
+    """Cuenta REAL de llamadas al modelo en esta auditoria, sin tocar el orquestador.
+
+    El contador vive en el cliente (`HookSuiteAIClient.llamadas`), que cuelga de algun
+    atributo del orquestador. Se busca recorriendo sus atributos en vez de escribir la
+    ruta a mano: asi esto no se rompe si manana el cliente cuelga de otro sitio, y no hace
+    falta leer el orquestador para saber como esta montado.
+
+    Devuelve None si no se encuentra, y entonces el panel dira "desconocido" en vez de
+    inventarse un cero, que seria indistinguible de "no analizo nada".
+    """
+    vistos, pendientes = set(), [orq]
+    while pendientes:
+        o = pendientes.pop()
+        if id(o) in vistos:
+            continue
+        vistos.add(id(o))
+        n = getattr(o, "llamadas", None)
+        if isinstance(n, int):
+            return n
+        for hijo in getattr(o, "__dict__", {}).values():
+            if hasattr(hijo, "__dict__"):
+                pendientes.append(hijo)
+    return None
+
+
 async def publicar_resultados(r, espacio: str, orq) -> tuple:
     """Publica lo que la auditoria encontro Y lo que no pudo analizar (RNF-06).
 
@@ -65,6 +91,17 @@ async def publicar_resultados(r, espacio: str, orq) -> tuple:
         mensaje = dict(n)
         mensaje.setdefault("estado", "no_analizado")
         await publicar(r, espacio, mensaje)
+
+    # RESUMEN de la tirada (10-oct). Sin esto el panel no puede distinguir «analizo 48 y
+    # ninguna era vulnerable» de «no analizo nada»: las dos cosas se ven igual, «0 detectadas».
+    # Lo pidio josemax despues de quedarse sin saber si la herramienta habia ejecutado algo,
+    # y es la diferencia entre una herramienta que puedes creerte y una que no.
+    await publicar(r, espacio, {
+        "estado": "resumen_auditoria",
+        "analisis": _analisis_hechos(orq),
+        "detectadas": len(vulns),
+        "no_analizados": len(no_analizados),
+    })
 
     return len(vulns), len(no_analizados)
 
