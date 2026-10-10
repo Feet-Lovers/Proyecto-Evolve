@@ -4,6 +4,7 @@ import { mockVulnerabilities } from '@/services/mockData'
 import { config, lanzarAuditoria, obtenerNoAnalizados, obtenerVulnerabilidades } from '@/services/api'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import { useSession } from '@/hooks/useSession'
+import { useAppContext } from '@/AppContext'
 import { ResizableSplit } from '@/components/layout/ResizableSplit'
 
 const SEVERITY_ORDER = { critical: 0, high: 1, medium: 2, low: 3 }
@@ -39,9 +40,24 @@ export function VulnerabilitiesPage() {
       )
 
   // RF-08. Hasta el 10-oct no habia forma de arrancar una auditoria: el modulo de IA
-  // existia, esperaba ordenes y nadie podia darlas. El objetivo por omision es el
-  // laboratorio interno, que es nuestro y no sale de la red interna.
-  const [objetivo, setObjetivo] = useState('http://dvwa:80')
+  // existia, esperaba ordenes y nadie podia darlas.
+  //
+  // El objetivo HEREDA el del rastreo en curso (arreglado el 10-oct). Antes venia fijo a
+  // `http://dvwa:80`, el laboratorio de la practica 1: quien rastreaba otro objetivo y
+  // pulsaba sin mirar auditaba un sitio DISTINTO del que habia rastreado, sin un solo
+  // aviso — y con clave real eso gasta llamadas para nada. Ademas era un nombre de
+  // servicio interno de Docker, que el usuario del entregable no puede conocer.
+  //
+  // Heredar no arregla solo ese caso: elimina la clase entera de error. Si no hay
+  // rastreo, el campo queda VACIO y el boton se deshabilita solo, que es mejor que
+  // ofrecer un valor plausible y equivocado. En cuanto el usuario escribe, deja de
+  // heredar: lo suyo manda.
+  const { activeUrl } = useAppContext()
+  const [objetivo, setObjetivo] = useState(activeUrl || '')
+  const [objetivoEditado, setObjetivoEditado] = useState(false)
+  useEffect(() => {
+    if (!objetivoEditado && activeUrl) setObjetivo(activeUrl)
+  }, [activeUrl, objetivoEditado])
   const [lanzando, setLanzando] = useState(false)
   const [aviso, setAviso] = useState(null)
 
@@ -270,8 +286,8 @@ export function VulnerabilitiesPage() {
         <div className="flex items-center gap-2">
           <input
             value={objetivo}
-            onChange={e => setObjetivo(e.target.value)}
-            placeholder="objetivo a auditar"
+            onChange={e => { setObjetivoEditado(true); setObjetivo(e.target.value) }}
+            placeholder="objetivo a auditar (hereda el del rastreo)"
             className="px-2 py-1.5 rounded border outline-none text-[10px] w-56"
             style={{
               fontFamily: 'var(--font-mono)',

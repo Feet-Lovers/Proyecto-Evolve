@@ -2635,3 +2635,27 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **Evidencia:** recuentos de código de respuesta del 10-oct 19:5x (POST 200 · GET 401) y
   `evidencias/capturas/RF-08-objetivo-por-defecto-dvwa.png`.
 - **Horas:** ~0,1 h de Claude. **0 € de API.**
+
+### Fase 3 (10-oct, 20:0x) · El objetivo se hereda del rastreo: se arregla la clase de error, no el caso
+
+- **Decisión de josemax:** el arreglo entra antes de la congelación, en vez de documentarse como limitación.
+- **Qué se hizo:** `VulnerabilitiesPage` deja de arrancar con `http://dvwa:80` fijo y **hereda `activeUrl`**
+  del `AppContext` —el objetivo del rastreo en curso, el mismo que usa la pantalla de Proxy—. Si no hay
+  rastreo, el campo queda **vacío** y el botón se deshabilita solo. En cuanto el usuario escribe, deja de
+  heredar: lo suyo manda (`objetivoEditado`). 21 líneas nuevas, 5 fuera.
+- **Por qué así y no borrando el valor por defecto:** borrarlo arregla **este** caso; heredar elimina **la
+  clase entera** — ya no existe un estado en el que auditar y rastrear apunten a sitios distintos sin que
+  nadie lo diga. Y un campo vacío con el botón apagado es más honesto que un valor plausible y equivocado.
+- **Qué se descartó:** dejarlo para el rediseño posterior al 16 (es de coste real, gasta API); y poner un
+  aviso de «¿seguro?» al pulsar, que traslada al usuario un problema que el programa puede evitar.
+- **Verificado donde se puede mentir menos, en el bundle construido:** **0** ocurrencias de `dvwa:80` en el
+  JS servido por la imagen nueva (antes estaba), con **control positivo** sobre el texto nuevo del
+  *placeholder* para asegurar que el escáner sabe contar. La construcción con Vite es además la
+  comprobación de sintaxis: el import nuevo de `useAppContext` la habría tumbado si estuviera mal.
+- **⚠️ Cuidado técnico que casi muerde:** el fichero está en **CRLF**. Escribirlo con Python sin
+  `newline=""` **en lectura y escritura** lo pasa a LF y convierte 21 líneas en un diff de cientos,
+  ilegible para quien lo revise. Diff real: **21 inserciones, 5 bajas**, terminadores intactos.
+- **A qué requisito toca:** **RF-08**. Pendiente: recrear el contenedor (lo hace josemax).
+- **Evidencia:** `evidencias/capturas/RF-08-objetivo-por-defecto-dvwa.png` (el defecto, antes del arreglo) y
+  los recuentos del bundle nuevo (0 `dvwa:80` · 1 control positivo).
+- **Horas:** ~0,3 h de Claude. **0 € de API.**
