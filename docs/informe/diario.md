@@ -2402,3 +2402,47 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
 - **Evidencia:** salida de las tres pruebas y de la nueva (1/5 vs 5/5), reproducible con
   `python3 ia/tests/test_esquemas_api.py ia/esquemas.py`. Commit `db360ff8`.
 - **Horas:** ~0,4 h de Claude. **0 € de API** (los 400 no facturan).
+
+### Fase 3 (10-oct, 18:4x) · Segundo rechazo de la API, y el error de método que lo hizo necesario
+
+- **De dónde salió:** segunda auditoría real, tras arreglar los objetos abiertos. **También rechazada**, con
+  un error *distinto*: `For 'number' type, properties maximum, minimum are not supported`. El esquema
+  declaraba `confianza` con `minimum: 0, maximum: 100`.
+- **Coste: 0 € otra vez.** Y el módulo trabajó bien: su log pasó de 8 a 192 líneas, **0 `Traceback`**, y
+  **«techo de 10» ×78** — el techo hacía exactamente lo suyo.
+- **🔴 Mi error de método, que es lo que obligó a josemax a lanzar dos veces:** con el primer rechazo arreglé
+  **solo lo que nombraba el mensaje**, en vez de auditar el esquema entero contra esa misma clase de límite.
+  El segundo defecto ya estaba ahí, a la vista. **La regla que queda: cuando un servicio externo rechaza una
+  construcción, se audita la construcción completa contra ese tipo de restricción, no se parchea la línea
+  del error.**
+- **Un susto que no lo fue, y por qué conviene medir antes de creer:** josemax vio en el panel líneas de
+  «techo de **0** llamadas» y dedujo, razonablemente, que la configuración había vuelto atrás. No era eso:
+  el log de la tirada nueva decía **«techo de 10» 78 veces y «techo de 0» ninguna**. Lo que veía eran
+  resultados **acumulados** de la auditoría de las 13:58. Se descartó contando, sin volcar una línea.
+- **🧹 Y de ahí sale un hallazgo de producto suyo, que no es cosmético:** el panel **acumula** los hallazgos
+  de todas las auditorías del usuario sin separarlas —llegó a «144 sin analizar» sumando tres tiradas— y no
+  hay forma de limpiar. **Hoy ha costado un diagnóstico equivocado.** Una herramienta de auditoría que no
+  distingue lo nuevo de lo viejo obliga a llevar la cuenta de memoria. Propuesta: botón de limpiar por
+  usuario, y/o separar cada auditoría con su marca de tiempo y objetivo. *Atajo para las capturas de hoy, sin
+  construir nada: usuario nuevo = panel limpio, aprovechando el aislamiento de RF-12.*
+- **Consecuencia de producto, declarada y no tapada:** el rango 0-100 **ya no lo impone el esquema**, porque
+  la API no lo admite. Para ese campo el esquema **deja de ser el control** y protege solo la guardia de
+  escala del clasificador. El apartado 8 defendía lo contrario y **se ha corregido con corrección declarada**
+  (R9). Matiz que salva la tesis: la rendija peligrosa —la confusión 0-1, la del descarte silencioso— **nunca
+  la cerró el rango**, porque 0,85 siempre estuvo dentro de 0-100; lo que se pierde es el control que cazaba
+  un 150 absurdo.
+- **Qué se hizo para que no haya una tercera vuelta:** `test_esquemas_api.py` pasa a rechazar **cualquier**
+  clave que no conste como admitida, no solo las dos que ya mordieron. Vista fallar a propósito: **1/5** con
+  el rango, **5/5** sin él. Las cuatro suites verdes: 11/11, 5/5, 8/8, 19/19.
+- **Una prueba que tuve que corregir en vez de borrar:** el caso «'confianza' rechaza 150» **pasó a ser
+  falso** al salir el rango del esquema. Se reescribió para que afirme lo que ahora ocurre —que 150 ya pasa—
+  con el motivo al lado, en lugar de suprimirlo y dejar la suite «verde» ocultando una pérdida de control.
+- **⚠️ Reincidencia, segunda vez en el día:** el defecto volvía a estar en `herramientas/`, el generador,
+  **única pieza del proyecto sin control de versiones**.
+- **Qué se descartó:** declarar `confianza` como entero (ya descartado el 8-oct: impondría algo que los
+  prompts no piden); y validar el rango a mano al recibir la respuesta, que duplicaría el umbral en dos
+  sitios — el defecto exacto que se arregló el 9-oct.
+- **A qué requisito toca:** **RF-08** (sigue sin cerrar: la auditoría real aún no ha devuelto un hallazgo) y
+  **RNF-06** (la vía degradada aguantó las dos veces: nada se perdió en silencio).
+- **Evidencia:** `ia/tests/test_esquemas_api.py` (1/5 vs 5/5, reproducible). Commits `64e1b12f` y `ebd695bd`.
+- **Horas:** ~0,5 h de Claude. **0 € de API.**
