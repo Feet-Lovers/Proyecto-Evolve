@@ -2728,3 +2728,29 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **A qué requisito toca:** **RF-08**.
 - **Evidencia:** `evidencias/consumidor-hallazgos-arreglado-10oct.md`.
 - **Horas:** ~0,1 h de Claude. **0 € de API.**
+
+### Fase 3 (10-oct, 20:4x) · 🔴 El arreglo nunca se ejecutó: faltaba `--build`, y la prueba que lo "confirmó" era falsa
+
+- **Qué pasó:** con el backend "arreglado", josemax relanzó spider y auditoría y **seguía sin aparecer
+  nada**. Medido: el módulo **publicó 3 hallazgos** (277 líneas, 0 errores) y `ia:hallazgos` tenía **0
+  oyentes**. Los tres se perdieron.
+- **🔴 Causa: el contenedor corría el código VIEJO.** El comando que propuse llevaba
+  `--force-recreate --no-deps` **sin `--build`**: recrea el contenedor, **no** reconstruye la imagen.
+  Verificado: `sha256` de `/app/services/redis_consumer.py` distinto del repo y **`pubsub.listen()` todavía
+  dentro del contenedor**.
+- **🔴 Y la entrada anterior de este diario daba por probado el arreglo. Era falso, y el modo de engaño
+  merece quedar escrito:** el `ia:hallazgos: 0 → 1` se midió **justo después** de recrear, y **el
+  consumidor viejo también se suscribe al arrancar**. El contraste era real pero no probaba lo que
+  parecía. **Un efecto medido justo tras recrear no distingue código nuevo de código viejo recién
+  arrancado.**
+- **Lo más incómodo: la comprobación correcta ya estaba escrita** en `memoria/ESTADO.md` —comparar el
+  `sha256` del fichero **dentro** del contenedor con el del repo, con la nota «`--force-recreate` recrea el
+  contenedor pero NO reconstruye la imagen»— y no se aplicó. No fue falta de conocimiento, fue no usarlo.
+- **💸 Coste:** segunda tirada que gasta llamadas reales (menciones del techo de 78 → 117) **y tira el
+  resultado**. Van dos.
+- **Qué cambia en el método, a partir de ahora:** un despliegue no se da por bueno por su **efecto**, sino
+  verificando el **código dentro del contenedor**. El efecto puede venir del código viejo.
+- **A qué requisito toca:** **RF-08** y **apartado 8** (es un fallo de método nuestro, y de los que más
+  enseñan).
+- **Evidencia:** `evidencias/consumidor-hallazgos-arreglado-10oct.md`, con la rectificación al final.
+- **Horas:** ~0,2 h de Claude. Gasto de API en la tirada perdida.

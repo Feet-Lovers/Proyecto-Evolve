@@ -43,3 +43,31 @@ Consecuencia: cada auditoria gastaba llamadas reales (techo 10) y el resultado s
 3. Supervisor con reintento (1s -> 30s) que anuncia cada caida con su tipo de error.
 
 El contraste 0 -> 1 oyentes, con el mismo comando antes y despues, es la prueba.
+
+---
+
+## 🔴 RECTIFICACION (20:4x, el mismo dia): ESTA EVIDENCIA ERA FALSA
+
+Lo de arriba da por probado un arreglo que **nunca llego a ejecutarse**. Se conserva entero, sin borrar
+nada, porque el error de metodo vale mas que el resultado.
+
+**Que fallo.** El backend se recreo con `--force-recreate --no-deps` **y sin `--build`**: eso recrea el
+contenedor pero **no reconstruye la imagen**, asi que siguio corriendo el codigo anterior.
+
+**Por que la prueba parecia buena, que es lo importante.** El `ia:hallazgos: 1` se midio **justo despues**
+de recrear. El consumidor VIEJO tambien se suscribe al arrancar — y muere despues. O sea: **el contraste
+0 -> 1 era real, pero no probaba lo que se creia**. Medido a las 20:4x, con el mismo comando: `ia:hallazgos`
+de vuelta a **0**, y el registro con el mismo `RuntimeError: aclose(): asynchronous generator is already
+running` que el arreglo elimina.
+
+**La comprobacion que SI distingue** (y que ya estaba documentada en `memoria/ESTADO.md`, sin aplicarse):
+
+    $ docker compose exec -T backend sh -c 'sha256sum /app/services/redis_consumer.py'
+    $ sha256sum backend/services/redis_consumer.py        # deben coincidir
+    $ docker compose exec -T backend sh -c "grep -c 'pubsub.listen()' /app/..."   # 0 = codigo nuevo
+
+Resultado real: hashes distintos (`b620d1e1…` vs `7a1db8bb…`) y **1** ocurrencia de `pubsub.listen()`
+dentro del contenedor.
+
+**Leccion, en una linea: un efecto observado justo despues de recrear no distingue codigo nuevo de codigo
+viejo recien arrancado.** Se verifica el CODIGO dentro del contenedor, no el sintoma.
