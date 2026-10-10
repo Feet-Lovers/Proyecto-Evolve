@@ -2078,3 +2078,89 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
 - **Evidencia:** `docs/evidencias/canal-ia-backend-muerto-10oct.md` (el 401 en vivo, antes de arreglarlo);
   commits `57f3ae6c` (bus y módulo IA) y `12dc4183` (frontend).
 - **Horas:** ~1,5 h de Claude. **0 € de API.**
+
+### Fase 3 (10-oct, 12:0x) · Reconstruir la cocina: el techo que no llegaba, el log que mentía y el proxy que no se enteró
+
+- **De dónde salió:** para probar el bus había que reconstruir `backend`, `frontend` e `ia`. La reconstrucción
+  destapó **tres defectos distintos**, ninguno del bus, y los tres de la misma familia: *algo decía estar bien
+  sin estarlo*.
+- **(1) El techo de llamadas no llegaba al contenedor.** `HOOKSUITE_IA_MAX_LLAMADAS` estaba en `ia/client.py`
+  pero **no se pasaba al servicio `ia`** en el compose, así que el contenedor corría siempre con el valor por
+  defecto y la variable del `.env` no pintaba nada. De paso, `depends_on` del módulo `ia` apuntaba a
+  **`backend`** cuando ya no lo necesita —se suscribe a Redis—, así que se cambió a **`redis`**, y se le puso
+  un reintento de conexión al bus (`esperar_bus`) porque Docker da por «arriba» un Redis que aún no acepta
+  conexiones. Commit **`6ee3fdd2`**.
+- **(2) El log del backend no distinguía «funciona» de «roto».** El consumidor del bus **sí** estaba suscrito
+  —comprobado contra Redis con `pubsub numsub`, que devolvió 1—, pero su línea de arranque **no aparecía en
+  `docker logs`**. No era un fallo del consumidor: era el buffer de stdout de Python. Sin
+  `PYTHONUNBUFFERED=1`, un servicio que arranca bien y uno que se cuelga antes de imprimir **se ven
+  exactamente igual**. Commit **`2d42b171`**.
+- **Por qué importa más de lo que parece:** fue *la fuente* la que resolvió la duda, no el log. Si nos
+  hubiéramos fiado del log habríamos «arreglado» un consumidor que no estaba roto. Es R9 en pequeño.
+- **(3) El proxy no se enteró del recreado: 502.** Al recrear `backend`/`frontend`/`ia`, Nginx siguió
+  resolviendo las **IPs viejas** de la red de Docker y devolvió **502** en todo. `docker compose restart nginx`
+  lo arregló en seco. **Regla nueva:** cuando se recrea un servicio, se recrea *también* el proxy que lo
+  resuelve.
+- **El «caso espejo», y por qué va al apartado 8:** es la otra cara de una lección que ya estaba en la
+  memoria —que `up -d --build <servicio>` **no** recrea un servicio cuya definición no cambió, y el
+  despliegue sale «en verde» sin aplicar nada—. Aquí el fallo es el simétrico: **recrear de más sin recrear
+  el proxy**. El par completo (recrear de menos / recrear de más) es lo que convierte una anécdota en una
+  lección transferible. Commit **`d9a9e2d5`**; se corrigieron además **2 pares de `**`** que no renderizaban
+  (Typst marca énfasis con un solo `*`, no con la sintaxis de Markdown).
+- **Qué se descartó:** reconstruir *todo* el compose en vez de los tres servicios (más lento y recrea DVWA y
+  Redis sin motivo), y dejar el 502 «para luego» una vez entendido (habría falseado la prueba del bus, que
+  era justo lo siguiente).
+- **Qué falló, dicho claro:** el 502 **no estaba previsto** y costó un diagnóstico en medio de la prueba.
+- **Verificado después del arreglo:** `npm run build` del frontend sin errores · frontend **200** ·
+  `/api/vulnerabilities/{x}/no-analizados` **401** (correcto: exige token) · los dos canales del bus con 1
+  suscriptor cada uno.
+- **A qué requisito toca:** RF-08 y RNF-06 (infraestructura de la prueba); apartado 8 (el caso espejo).
+- **Evidencia:** `docs/evidencias/bus-ia-prueba-en-vivo-10oct.md` §1 (los `numsub`); commits `6ee3fdd2`,
+  `2d42b171` y `d9a9e2d5`.
+- **Horas:** ~1 h de Claude. **0 € de API.**
+
+### Fase 3 (10-oct, 12:26) · La auditoría de prueba terminó sola, y nos dejó el número que llevábamos semanas estimando a ojo
+
+- **De dónde salió:** se publicó una orden de prueba **directamente en el canal `ia:instrucciones`** de Redis
+  (sin panel ni login), con un espacio de usar y tirar (`prueba-bus-10oct`) y objetivo el DVWA de la red
+  interna. El módulo la recogió y arrancó una auditoría real. **La sesión se cortó con la auditoría en
+  marcha** (la salvaguarda del modelo se disparó, ver abajo), así que lo que sigue se reconstruyó midiendo el
+  servidor, no recordándolo.
+- **Lo que se encontró al volver:** la auditoría **había terminado sola y limpiamente** — contenedor vivo,
+  `RestartCount=0`, **0 `Traceback`**, **0 `Error`** y **0 % de CPU**.
+- **🔴 El dato que faltaba, y es el importante: una auditoría completa intenta ~96 llamadas al modelo.** El
+  techo corría a **0**, así que cada intento se cortó y devolvió la vía degradada (0 € de API) — y el mensaje
+  que los cuenta (`ia/client.py:94`) sale **96 veces**. El techo por defecto es **40**
+  (`ia/client.py:51`), y estaba declarado **provisional** a falta exactamente de este dato. **40 cortaría una
+  auditoría real al 42 % de sus llamadas**, dejando el informe a medias justo del modo que el techo pretendía
+  evitar. Subirlo es **decisión de josemax**, no automática.
+  - *Matiz honesto:* con el techo a 0 no hay hallazgos, y un hallazgo podría ramificar el recorrido. 96 es la
+    medida del bucle **en vía degradada**: orden de magnitud y cota inferior, no número exacto.
+- **Lo que NO se pudo cerrar:** al backend **no hay constancia de que llegara nada** del espacio de prueba (0
+  aciertos en sus 34 líneas de log). Pero el backend **no registra por mensaje**, así que esto no prueba que
+  el mensaje no llegara. Sus 5 líneas de `WARNING`/`ERROR` **no mencionan** `redis`, `bus`, `ia:` ni
+  `hallazgo`: el bus no está dando errores en ese lado. **Queda pendiente la prueba desde el panel con sesión
+  real**, que es la que de verdad cierra RF-08.
+- **Pendiente que se cierra sin acción:** el espacio ficticio **no dejó rastro** (nada en disco, `dbsize 0` en
+  Redis, nada en el log). El almacén de vulnerabilidades del backend es **en proceso**, así que un reinicio lo
+  vacía igual. No hay nada que limpiar.
+- **⚠️ CORRECCIÓN DECLARADA (R9): la predicción de que las 7 llamadas HTTP del orquestador interrumpirían la
+  auditoría era FALSA.** No interrumpieron nada, y la explicación ya estaba escrita en la entrada anterior de
+  este diario: *el código comprueba `status_code == 200` y un 401 no lanza excepción*. Un 401 **falla en
+  silencio** — coherente con los 0 aciertos de `401` y `Unauthorized` en 192 líneas. El modo de fallo de ese
+  camino es silencioso, que es **el defecto exacto que el bus vino a arreglar**. Se declara aquí en vez de
+  cambiarse en silencio.
+- **🔴 Vía de fuga NUEVA para el contexto limpio, y es la lección que más lejos llega.** El clasificador se
+  disparó con `docker compose logs --since 30s ia`. **El fichero protegido no se leyó**: se leyó **su salida
+  en ejecución**, que lleva la misma clase de contenido. `.claude/sensibles.txt` protege **rutas de
+  ficheros**, y el log de un contenedor no es una ruta → el cerco `contexto-limpio.sh` **no lo frena**. Un
+  fichero quieto está protegido; **el mismo código ejecutándose, no**. Decisión pendiente de josemax: si la
+  lista cubre también los logs del servicio `ia`.
+- **Qué se descartó:** volver a lanzar la auditoría para ver el log «con calma» (vuelve a disparar la
+  salvaguarda y no aporta nada que un `grep -c` no dé), y leer el log del contenedor para responder a lo que
+  quedaba abierto — **todo lo de esta entrada se midió con `grep -c`, `wc -l` y `docker inspect`, sin volcar
+  una sola línea**.
+- **A qué requisito toca:** RF-08 (el disparador, probado a medias), RNF-06 (la vía degradada, que recorrió
+  96 veces) y apartados 8, 10 y **12** (el incidente de la salvaguarda).
+- **Evidencia:** `docs/evidencias/bus-ia-prueba-en-vivo-10oct.md` (los siete bloques de recuentos).
+- **Horas:** ~0,7 h de Claude (destilado del rescate incluido). **0 € de API.**
