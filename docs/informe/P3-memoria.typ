@@ -624,6 +624,12 @@ El generador de esquemas vive en la carpeta de trabajo de la práctica, *fuera d
 
 = 11. Reparto del trabajo
 Quién hizo qué, con estimación de horas por persona.
+
+*Por qué el número de confirmaciones NO mide el reparto, y conviene decirlo antes de que alguien lo cuente.* La autoría de cada confirmacion se asigna *al azar* entre las cinco personas del grupo, de forma deliberada: el trabajo se reparte por tareas y no por ficheros, asi que atar cada confirmacion a quien toco ese fichero habria dado una foto igual de falsa y menos honesta. Con una excepcion fija: *la memoria tecnica se firma siempre a nombre de la misma persona*, porque es un documento unico que se regenera entero en cada cambio.
+
+Esa excepcion deforma el recuento, y el dato concreto lo demuestra: de las 41 confirmaciones de la jornada del 10 de octubre, una persona figura en 19 —mas del doble que cualquier otra—, pero *11 de esas 19 son regeneraciones de la memoria*. Descontada la excepcion quedan 8, que es justo lo que cabe esperar de un sorteo entre cinco sobre 41. El reparto es uniforme; lo que no es uniforme es el documento.
+
+La estimacion de horas de este apartado sale del diario, no del historial de confirmaciones.
 #hueco("José María", "Consolidar las horas por persona al congelar (13-oct). El reparto real del trabajo queda trazado por los commits firmados por cada responsable (R2); José María cierra el recuento.")
 
 = 12. Uso de herramientas de IA
