@@ -463,6 +463,15 @@ El arreglo fue por tanto en el generador —no en el fichero generado, que lleva
 
 Reproducible con `python3 ia/tests/test_esquemas_bandera.py ia/esquemas.py`. Evidencia con las dos salidas, antes y después, en `docs/evidencias/esquemas-bandera-antes-10oct.md`.
 
+== Un fallo silencioso no es un fallo menor: la escala de la confianza (RF-08 / RNF-06)
+El filtro por confianza compara el valor que devuelve el modelo contra un umbral. Las instrucciones piden ese valor en escala de 0 a 100, pero *ninguna de las cuatro pide que sea un número entero* —se comprobó leyendo las cuatro—, y ahí había una rendija que el esquema *no puede* cerrar: si el modelo devolviera la escala de 0 a 1, un valor de 0,85 queriendo decir «85 %» está *dentro* del rango permitido, de modo que pasaría el control y después quedaría por debajo del umbral. El hallazgo *desaparecería sin dejar rastro*, que es exactamente la situación que RNF-06 existe para evitar. El caso peor es el valor 1: en escala de 0 a 1 significa certeza total, y leído como «1 %» descartaría un hallazgo seguro.
+
+*Dónde se arregló, y por qué no en el esquema.* Imponer «entero» en el esquema habría exigido algo que las instrucciones no piden, y habría rechazado un valor decimal legítimo dentro de 0 a 100. El arreglo va en el clasificador: la franja entre 0 y 1 se trata como *sospecha de escala* y se encamina al estado degradado de RNF-06, con su motivo. Así el problema *se ve* en el informe en lugar de corregirse a la fuerza o desaparecer.
+
+*La prueba distingue las dos versiones*, que es la única forma de que valga: contra el código corregido devuelve _19 de 19_; contra el anterior, _6 de 19_. Y los seis que pasan en la versión antigua son precisamente los casos legítimos, lo que demuestra que la guarda no introduce falsos positivos. El caso que lo prueba todo es el que comprueba que un hallazgo con confianza 0,85 *no* se devuelve como «sin vulnerabilidad»: falla contra el código anterior, es decir, el descarte silencioso queda *demostrado* y no argumentado.
+
+Reproducible con `python3 ia/tests/test_escala_confianza.py`. Evidencia con las dos salidas en `docs/evidencias/escala-confianza-guardia-10oct.md`.
+
 = 9. Matriz de trazabilidad
 La pieza con la que se corrige la práctica: requisito por requisito, dónde está implementado, qué prueba lo verifica y dónde se ve. Las rutas están comprobadas en el código (cocina local, 4-oct). La columna de evidencia enlaza la figura de la memoria y el *minuto exacto del vídeo*; se rellena al grabar.
 #tabla(
@@ -517,10 +526,14 @@ El módulo de IA no limita cuántas veces consulta al modelo durante una auditor
 
 El valor por defecto se fijará *con el dato* de la primera auditoría real —el resultado llevará el número de consultas consumidas— y no a ojo, que es lo que permite defenderlo.
 
-== Un esquema no puede cazar una confusión de escala
-La prueba del apartado 8 deja un caso *pasando a propósito*, y merece explicación porque es una limitación real y no un descuido. Imponer que la confianza vaya entre 0 y 100 rechaza un valor de 150, pero *no* rechaza un 0,85: ese número está dentro del rango, y significaría «0,85 % de confianza». Si el modelo devolviera la escala de 0 a 1 en lugar de la de 0 a 100 —algo que ya ocurrió en este proyecto, en el código, con un umbral comparado en la escala equivocada—, la respuesta pasaría el control y el hallazgo se descartaría *en silencio* al compararlo con el umbral.
+== Lo que queda de la confusión de escala, una vez cerrada
+*Rectificación declarada.* Una versión anterior de este apartado, escrita el mismo día unas horas antes, daba esta limitación por *abierta* y decía que cerrarla dependía de un dato que «no consta». El dato se obtuvo después —ninguna de las cuatro instrucciones pide que la confianza sea un número entero— y con él la limitación se cerró, aunque no por donde este apartado anticipaba: el arreglo está en el clasificador, no en el esquema, y se cuenta en el apartado 8. Se rectifica aquí en lugar de reescribirlo en silencio.
 
-Cazarlo exigiría declarar el campo como *entero*, y eso depende de si las instrucciones piden un número entero: un dato que no consta. Se deja documentado dentro de la propia prueba, con ese nombre, en vez de resolverlo por suposición. *Una prueba que miente sobre lo que cubre es peor que una prueba que falta.*
+Lo que *sí* queda, y es consciente:
+
+1. *Un valor legítimo de 1 se marca como sospechoso.* La guarda no puede distinguir «1 %» de «certeza total en escala de 0 a 1», porque son el mismo número. Se eligió marcarlo: con el umbral en 60 ese valor tampoco se habría reportado, de modo que el coste es un aviso de más y la ganancia es que el caso peor —descartar un hallazgo seguro— deja de ser posible. *Preferir el falso positivo visible al falso negativo silencioso* es la misma elección que ya tomó RNF-06.
+2. *La vía de identificación de servidor no lleva guarda*, porque no compara contra el umbral: entrega la respuesta del modelo sin filtrar, así que no hay descarte silencioso que cerrar.
+3. *No se cambiaron las instrucciones del modelo para pedir un entero*, que era la alternativa más limpia en el plano conceptual —instrucciones y esquema de acuerdo en un contrato más estricto—. Se descartó por el momento: son cuatro ficheros del material que no se vuelca a la conversación, se editarían sin verlos, y son prosa y no una línea de código, a tres días de la congelación. Queda como trabajo futuro de coste bajo.
 
 == La herramienta que genera los esquemas no está versionada
 El generador de esquemas vive en la carpeta de trabajo de la práctica, *fuera del repositorio del producto*: no tiene historial, no pasó por revisión y su autoría no queda registrada, al contrario que todo el código. Es incoherente con la norma del equipo de que todo entra por petición de incorporación, y no es una incoherencia inocua: *el único sitio sin historial resultó ser exactamente donde estaba el defecto del apartado 8*, porque es el sitio donde nadie vio la lista incompleta.
