@@ -50,3 +50,22 @@ async def receive_vulnerability_for_session(session_token: str, vulnerability: V
 async def get_vulnerabilities(session_token: str):
     session = session_manager.get_session(session_token)
     return session.get("vulnerabilities", [])
+
+@router.get("/{session_token}/no-analizados")
+async def get_no_analizados(session_token: str):
+    """RNF-06: lo que la IA NO pudo analizar, con su motivo.
+
+    Existe porque hasta el 10-oct el estado degradado se calculaba, sobrevivia al filtro
+    de confianza y se publicaba... y NADIE lo leia: `no_analizado` aparecia 4 veces en
+    `ia/` y CERO en `backend` y `frontend`. O sea, RNF-06 estaba cumplido en el modulo e
+    invisible en el producto, que para el operador es lo mismo que no estar.
+
+    Va aparte de las vulnerabilidades y no mezclado con ellas por una razon: un fallo de
+    analisis no es un hallazgo. Mezclarlos obligaria a inventarle severidad y confianza a
+    algo que precisamente no se ha podido valorar.
+
+    El aislamiento es automatico: `session_token` esta en PARAMETROS_DE_ESPACIO, asi que
+    el guardian responde 403 si no es el espacio de quien llama.
+    """
+    session = session_manager.get_session(session_token)
+    return session.get("no_analizados", [])

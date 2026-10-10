@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 from services.session_service import session_manager
+from services import bus_ia
 
 router = APIRouter()
 
@@ -17,11 +18,47 @@ class PlaywrightInstruction(BaseModel):
 
 @router.post("/instruction/{session_token}")
 async def receive_instruction(session_token: str, instruction: PlaywrightInstruction):
+    """Encola una orden y, si es para la IA, la publica en el bus interno.
+
+    `session_token` ES el espacio de quien llama: el guardian ya lo ha comprobado antes de
+    entrar aqui (`services/guardia.py`, PARAMETROS_DE_ESPACIO incluye "session_token", y
+    responde 403 si no coincide con el del Bearer). Por eso se puede usar como dueño sin
+    volver a validarlo — y por eso NO se lee del cuerpo, que el cliente si controla.
+    """
     if session_token not in pending_instructions:
         pending_instructions[session_token] = []
     pending_instructions[session_token].append(instruction.model_dump())
     await session_manager.emit(session_token, "playwright_instruction", instruction.model_dump())
-    return {"queued": True, "session_token": session_token}
+
+    # El modulo de IA ya no pollea esta ruta: desde la Fase 2 el guardian se lo impedia en
+    # silencio (ver services/bus_ia.py). Ahora la orden le llega por el bus, con el dueño
+    # dentro, de modo que los hallazgos vuelven a la sesion de quien pidio la auditoria.
+    oyentes = None
+    if instruction.type == "full_audit":
+        try:
+            oyentes = await bus_ia.publicar_instruccion(session_token, instruction.model_dump())
+        except Exception as e:
+            # Que falle el bus no debe tumbar la peticion, pero TAMPOCO puede pasar por
+            # exito: el usuario tiene que saber que su auditoria no ha salido.
+            return {
+                "queued": True,
+                "session_token": session_token,
+                "ia_avisada": False,
+                "motivo": f"el bus no acepto la orden: {type(e).__name__}",
+            }
+        if oyentes == 0:
+            return {
+                "queued": True,
+                "session_token": session_token,
+                "ia_avisada": False,
+                "motivo": "nadie escucha el canal: el modulo de IA no esta en marcha",
+            }
+
+    respuesta = {"queued": True, "session_token": session_token}
+    if oyentes is not None:
+        respuesta["ia_avisada"] = True
+        respuesta["oyentes"] = oyentes
+    return respuesta
 
 @router.get("/instruction/{session_token}")
 async def get_pending_instructions(session_token: str):
