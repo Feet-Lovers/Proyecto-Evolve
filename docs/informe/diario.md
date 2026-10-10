@@ -2827,3 +2827,22 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **Evidencia:** recuentos del bundle (10-oct 21:4x) y la captura del defecto previo
   `evidencias/capturas/RNF-06-no-analizados-techo10-academyx.png`.
 - **Horas:** ~0,4 h de Claude. **0 € de API.**
+
+### Fase 3 (10-oct, 22:0x) · El botón no hacía nada: segundo despliegue a medias del día
+
+- **Síntoma:** josemax recreó el frontend, el botón «limpiar» apareció, lo pulsó y **no pasó nada**.
+- **Causa, medida en el contenedor:** el backend **no tenía ninguno de los dos cambios** —
+  `router.delete` **0** y `objetivo_actual` **0**—. El botón llamaba a un endpoint inexistente.
+- **🔴 El fallo es de método y es el segundo igual hoy:** el commit `a6bbd5e5` tocaba **backend** y el
+  `2c6aed22` **frontend**, pero el bloque de despliegue que se entregó recreaba **solo el frontend**. Un
+  cambio repartido entre dos servicios necesita desplegar los dos, y quien escribe el bloque es quien
+  sabe qué tocó cada commit.
+- **Norma que se añade a la del `--build`:** antes de entregar un bloque de despliegue, mirar **qué
+  servicios tocan los commits que se están activando** (`git show --stat`) y recrearlos todos. Un
+  despliegue parcial no falla ruidosamente: produce una función que *parece* rota.
+- **Detalle que conviene anticipar al usuario:** recrear el backend **borra la sesión**, así que los 39
+  avisos desaparecen solos — resuelve el problema inmediato pero deja el botón sin nada que borrar, y sin
+  forma de probarlo hasta la siguiente auditoría. Decírselo antes, no después.
+- **A qué requisito toca:** **RF-08** / **RNF-06** y **apartado 8** (fallo de método propio).
+- **Evidencia:** recuentos en el contenedor del 10-oct 22:0x (`router.delete` 0, `objetivo_actual` 0).
+- **Horas:** ~0,1 h de Claude. **0 € de API.**
