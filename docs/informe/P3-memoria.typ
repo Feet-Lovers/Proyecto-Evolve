@@ -250,7 +250,9 @@ Cada funcionalidad con capturas: qué hace, cómo se usa y qué requisitos cubre
 - Proxy interceptor, Repeater, Intruder, Utilidades (hash/encoder/regex), Vulnerabilidades, Red/DevTools, módulo IA.
 
 == Defectos corregidos en la Fase 1
-Diez defectos del prototipo, todos reproducidos antes de corregirlos y verificados después en producción. El detalle de cada uno (causa raíz, prueba y autoría) está en el diario del repositorio.
+Los *doce* defectos del prototipo que recoge la tabla, todos reproducidos antes de corregirlos y verificados después en producción. El detalle de cada uno (causa raíz, prueba y autoría) está en el diario del repositorio.
+
+> *Corrección declarada (R9).* Hasta el 10-oct esta frase decía «diez defectos» y la tabla listaba doce. No fue un desfase posterior: el recuento y la tabla se escribieron en el mismo cambio del 5-oct, así que la cifra estuvo mal desde el principio y se publicó así. Se corrige aquí en vez de cambiarla en silencio. El número va ahora *atado a la tabla* —«los doce que recoge la tabla»— para que no pueda volver a divergir de ella.
 
 #tabla(
   (5fr, 6fr, auto),
