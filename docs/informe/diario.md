@@ -2283,3 +2283,46 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
   publicarlas es decisión de josemax). **Las ocho revisadas enteras antes de citarlas: son tiras de 32-58 px
   de alto, solo la línea del comando, sin salida alrededor y sin ningún secreto.**
 - **Horas:** ~0,25 h de la sesión cortada + ~0,6 h de destilado. **0 € de API.**
+
+### Fase 3 (10-oct, 14:00) · 🟢 El disparador FUNCIONA, y la vía degradada de RNF-06 se ve por fin en el panel
+
+- **De dónde salió:** josemax volvió a pulsar «auditar con IA» desde el panel, con sesión real, **anotando la
+  hora exacta (13:58:10)** — el dato que le faltaba al diagnóstico de las 13:00 para poder atar la medición a
+  un reloj en vez de a ventanas aproximadas.
+- **🟢 RF-08: el canal funciona de punta a punta.** Medido con `--since 2026-10-10T13:58:00`: **1 POST al
+  disparador con `200`**, y el log del módulo de IA pasa de **192 a 376 líneas** (+184). La orden salió del
+  panel, pasó la autenticación, se publicó en el bus y **el módulo la consumió**. Es la primera vez que se
+  ve el recorrido entero.
+- **🟢 RNF-06, que estaba «construido y sin verificar», AHORA SE VE:** el panel titula **«48 SIN ANALIZAR —
+  LA IA NO PUDO VALORARLO»** y cada entrada lleva su motivo — `techo de 0 llamadas por auditoria alcanzado`.
+  Es exactamente el diseño que se defendió el 9-oct: que el recorte **se vea** en vez de que un informe
+  diga «sin hallazgos» sobre una auditoría a medias. **`0 detectadas · 48 sin analizar`**: la lista vacía ya
+  no miente.
+- **Y costó 0 €, que era el otro objetivo:** el techo estaba en **0**, así que no salió ni una llamada a la
+  API. Eso cierra de paso el **paso 4b** del plan de RF-08 (probar el techo), que seguía pendiente desde el
+  9-oct: el techo corta de verdad y además **el corte es visible**, no silencioso.
+- **Una advertencia mía que resultó innecesaria, y se declara (R9):** avisé a josemax de que pulsar podía
+  gastar hasta 40 llamadas de API. **Con el techo a 0 el gasto era imposible**, y yo tenía el dato —el
+  recuento de `techo` del 12:26 salía precisamente de eso—. Le hice aceptar un riesgo que no existía.
+- **Lo que NO queda explicado, y no se da por cerrado:** por qué a las 13:00 la misma pulsación no movió
+  nada. Entre las 13:00 y las 13:58 **no se tocó el producto** (verificado: ni un fichero ni un contenedor
+  cambió después de las 13:13), así que la misma acción dio dos resultados distintos. La sospecha es la
+  sesión caducada, **pero no cuadra del todo**: los `401` del sondeo **siguen apareciendo ahora**, con la
+  sesión buena y el botón funcionando.
+- **🟠 Hallazgo suelto que sobrevive y ya tiene dueño propio:** el **GET de `get_pending_instructions` sigue
+  devolviendo `401`** incluso con sesión válida y el disparador funcionando. No es un síntoma de sesión
+  caducada —se descarta aquí mismo—, es un **fallo de autenticación del sondeo**, y no consta en ningún
+  requisito ni pendiente anterior.
+- **🟠 Segundo detalle a mirar:** los 48 hallazgos son de `https://web.academyx.es/` mientras el objetivo del
+  panel dice `http://dvwa:80`. Probablemente material de una sesión de proxy anterior, pero conviene
+  confirmarlo antes de usar esta captura en la memoria.
+- **Qué se descartó:** recrear el contenedor `ia` para forzar el techo a 0 (lo propuse; **josemax eligió no
+  tocar nada**, y acertó: ya estaba a 0); y seguir midiendo por ventanas aproximadas en vez de pedirle la
+  hora de reloj.
+- **A qué requisito toca:** **RF-08** (disparador — el recorrido completo, verificado) y **RNF-06** (vía
+  degradada visible en el panel, con captura).
+- **Evidencia:** `RNF-06-panel-no-analizado-techo0-10oct.png` — **vive FUERA del repo**, en
+  `~/claude-workspace/lineas/practica3-hooksuite/evidencias/capturas/` (copiarla a `docs/capturas/` es
+  decisión de josemax: el repo es público). **Revisada entera antes de citarla: no se ve ningún token ni
+  credencial** (solo la IP interna de la cocina y el usuario `UsuarioA`).
+- **Horas:** ~0,3 h de Claude. **0 € de API** (techo a 0, confirmado por el propio mensaje del panel).
