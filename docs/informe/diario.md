@@ -2480,3 +2480,36 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
   Commit `f53be239`.
 - **Horas:** ~0,4 h de Claude. **Coste:** los tres rechazos, 0 € (los 400 no facturan); la validación, cuatro
   llamadas mínimas.
+
+### Fase 3 (10-oct, 19:3x) · Cuarta tirada: el esquema deja de fallar, y lo que fallaba era el orden
+
+- **De dónde salió:** cuarta auditoría real, con el esquema ya validado contra la API (4/4). josemax creó un
+  usuario nuevo, metió la URL y pulsó. El panel respondió en verde y **no apareció nada** en dos minutos.
+- **🟢 Lo primero, que es la buena noticia: ni un solo rechazo.** `0 invalid_request`, `0 Traceback`, `0`
+  reinicios. Después de **tres** auditorías tumbadas por el esquema, la cuarta no tropieza con él. La
+  validación contra el servicio real se confirma en la cocina.
+- **La hipótesis de josemax —que el frontend estuviera desfasado— se descarta con datos**, y conviene
+  dejarlo escrito para que nadie vuelva a sospechar del pintado: el bundle que sirve nginx contiene
+  `full_audit` y el código de «no analizado», se construyó a las 11:57 de hoy, y es el mismo que pintó la
+  tira ámbar a las 13:58.
+- **Lo que de verdad pasaba: el usuario nuevo no tenía hallazgos.** El botón analiza las vulnerabilidades
+  **ya recogidas** por ese usuario; no rastrea por su cuenta. Con el usuario anterior había 48 de un rastreo
+  previo; con el nuevo, cero. El módulo recibió la orden, produjo **20 líneas** de registro —frente a las
+  ~92 de la tirada anterior— y terminó **sin errores y sin llegar al techo**: trabajó en vacío.
+- **Cómo se diagnosticó, que es la parte reproducible:** solo con **recuentos**, sin volcar una línea. La
+  combinación «log crece poco + cero errores + cero menciones del techo» describe un recorrido que no
+  encontró nada que hacer, y distingue ese caso de un fallo. ⚠️ Es **inferencia**: el fichero del
+  orquestador no se lee (protocolo de contexto limpio), así que se confirmará cuando un rastreo previo haga
+  que la auditoría devuelva hallazgos.
+- **🟠 Y de aquí sale un defecto que entra en el relato del apartado 8:** el panel anuncia *«auditoría
+  lanzada: los hallazgos irán apareciendo»* **aunque no haya absolutamente nada que auditar**. Es el mismo
+  defecto de familia que RNF-06 vino a corregir, un paso más arriba: allí no se distinguía «sin hallazgos»
+  de «no pude valorarlo»; aquí no se distingue «lanzada» de «lanzada en vacío». Arreglo propuesto: que la
+  ruta responda «no hay hallazgos que auditar» cuando la lista del usuario esté vacía.
+- **Qué se descartó:** reconstruir el frontend «por si acaso» —se comprobó antes y no hacía falta—; y seguir
+  lanzando auditorías a ciegas sin entender por qué la anterior no devolvía nada.
+- **A qué requisito toca:** **RF-08**, que sigue sin cerrar pero por un motivo nuevo y mucho menor: falta
+  ejecutar el rastreo antes de auditar.
+- **Evidencia:** recuentos del registro del módulo (8 → 28 líneas, 0 errores, 0 `techo`) y del bundle servido
+  (`full_audit` y «no analizado» presentes, imagen de las 11:57).
+- **Horas:** ~0,2 h de Claude. **0 € de API** (no llegó a llamarse al modelo).
