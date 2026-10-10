@@ -2659,3 +2659,32 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **Evidencia:** `evidencias/capturas/RF-08-objetivo-por-defecto-dvwa.png` (el defecto, antes del arreglo) y
   los recuentos del bundle nuevo (0 `dvwa:80` · 1 control positivo).
 - **Horas:** ~0,3 h de Claude. **0 € de API.**
+
+### Fase 3 (10-oct, 20:2x) · CAUSA RAÍZ de RF-08: el consumidor de hallazgos del backend muere al arrancar
+
+- **De dónde salió:** con el arreglo del objetivo ya desplegado y confirmado por josemax (el campo hereda
+  `https://web.academyx.es/`), el panel **seguía sin mostrar nada** pese a que el módulo sí analizaba.
+- **🔴 El hallazgo, medido en el bus y sin volcar una línea:** de los tres canales,
+  `ia:instrucciones` tiene **1 oyente** (el módulo IA, que por eso recibe las órdenes), pero
+  **`ia:hallazgos` tiene 0 y `traffic` tiene 0**. El camino de **vuelta no tiene a nadie escuchando**:
+  el módulo analiza, publica los hallazgos y **se pierden en el bus**.
+- **Por qué pasa, acotado con tres medidas más:** el consumidor **sí arranca** (1 `Redis consumer
+  escuchando` en el registro) y **luego muere**: aparece **`Task exception was never retrieved`**, la firma
+  de una tarea asyncio que revienta con una excepción que nadie recoge. Arranca, imprime que escucha, y se
+  cae — dejando el canal de vuelta huérfano sin que nada lo denuncie.
+- **Lo que NO era, y conviene dejarlo escrito porque costó tres diagnósticos equivocados hoy:** no era el
+  frontend (descartado dos veces), no era el objetivo (arreglado, y el fallo persiste), no era el `401` del
+  sondeo (ruido del camino HTTP viejo), y no era «falta rastrear» (el rastreo estaba hecho).
+- **El único traceback del registro es ruido conocido:** `passlib/handlers/bcrypt.py:620`, el choque de
+  passlib con bcrypt 4.x. No mata al consumidor; conviene no confundirlo con la causa.
+- **🟠 Defecto de diseño que hay que contar en el apartado 8, más allá del fallo concreto:** una tarea de
+  fondo que muere en silencio **y nadie lo nota**. El backend sigue respondiendo 200 a todo, el panel sigue
+  en verde, el módulo sigue gastando API — y el producto está roto por dentro. Hace falta **supervisar la
+  tarea y reiniciarla**, no solo arreglar la excepción que la mató esta vez.
+- **💸 Consecuencia económica, que es lo que lo hace urgente:** cada pulsación **gasta llamadas de verdad**
+  (acotadas al techo de 10) y **tira el resultado a la basura**. Hasta arreglarlo, no conviene volver a
+  pulsar «auditar con IA».
+- **A qué requisito toca:** **RF-08** (causa raíz) y **apartado 8**.
+- **Evidencia:** recuentos del 10-oct 20:2x — `PUBSUB NUMSUB`: `ia:instrucciones` 1, `ia:hallazgos` 0,
+  `traffic` 0; registro del backend: 1 arranque del consumidor, 1 `Task exception was never retrieved`.
+- **Horas:** ~0,2 h de Claude. **0 € de API.**
