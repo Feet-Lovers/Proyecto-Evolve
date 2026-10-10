@@ -551,6 +551,10 @@ Las cuatro vías de análisis del módulo de IA piden al modelo una respuesta co
 
 La prueba comprueba que el esquema obliga a las dos cosas que las instrucciones piden: que la bandera de resultado sea un booleano y que la confianza venga en escala de 0 a 100. Contra el código anterior devuelve _5 de 11_, y los fallos no eran cosméticos:
 
+#estado("rojo", "CORRECCIÓN DECLARADA (10-OCT): EL RANGO DE LA CONFIANZA YA NO LO IMPONE EL ESQUEMA")
+
+*Lo de arriba dejó de ser cierto a medias el 10-oct, y se corrige aquí en lugar de reescribirlo en silencio* (R9). La API *no admite* `minimum` ni `maximum` en salida estructurada, de modo que el rango 0-100 *tuvo que salir del esquema*: para ese campo, el esquema ya no es el control. Lo que sigue en pie es el resto —las tres banderas sí las impone— y, sobre todo, el matiz que ya constaba: la rendija de la escala 0-1 *nunca la cerró el rango*, porque 0,85 siempre estuvo dentro de 0-100. El control que se pierde es el que cazaba un 150 absurdo; el peligroso, el del descarte silencioso, vive en el clasificador y sigue intacto (sección siguiente). Queda como *limitación conocida*: un valor fuera de escala ya no lo para nadie.
+
 1. De los tres campos de bandera —uno por vía, con *tres nombres distintos para el mismo papel*—, solo el primero estaba declarado como booleano. Los otros dos admitían cadena de texto, y el clasificador evalúa los tres igual, dentro de un `if`. En el lenguaje en que está escrito, *cualquier cadena no vacía es verdadera, incluida la palabra que significa «no»*: una respuesta negativa del modelo se habría registrado como vulnerabilidad confirmada.
 2. La confianza se declaraba como número *sin rango*, así que nada rechazaba un valor fuera de la escala.
 3. El esquema de la vía de identificación de servidor declaraba *cero campos*, mientras sus instrucciones piden nueve, uno de ellos una lista de objetos.
@@ -560,6 +564,22 @@ La prueba comprueba que el esquema obliga a las dos cosas que las instrucciones 
 El arreglo fue por tanto en el generador —no en el fichero generado, que lleva en su cabecera la advertencia de que se regenera— y después se regeneró. La prueba pasa _11 de 11_, y la de RNF-06 sigue en _8 de 8_: el cambio no rompió nada.
 
 Reproducible con `python3 ia/tests/test_esquemas_bandera.py ia/esquemas.py`. Evidencia con las dos salidas, antes y después, en `docs/evidencias/esquemas-bandera-antes-10oct.md`.
+
+== Dos esquemas rechazados por la API: validar contra tu propia prueba no es validar (RF-08)
+La primera auditoría *real* —clave válida, objetivo propio, techo de gasto puesto— no devolvió ni un hallazgo. Las llamadas que salieron se rechazaron antes de procesarse, y hubo que lanzarla *dos veces* para llegar al fondo, porque los motivos fueron distintos:
+
+1. Los objetos del esquema iban *abiertos*, y la salida estructurada no lo admite.
+2. La confianza declaraba un rango con mínimo y máximo, y tampoco lo admite para números.
+
+*Coste: cero.* Un rechazo por petición mal formada no consume saldo, y el techo acotaba el daño de todas formas. La factura fue de tiempo, no de dinero.
+
+*Lo que este episodio enseña, y es lo que justifica contarlo.* La prueba de esquemas daba _11 de 11_ *y las seguía dando con el defecto dentro*. Comprobaba lo que *nosotros* le pedíamos al esquema —tipos de las banderas, rango de la confianza— y nunca lo que la API exige para aceptarlo. Ninguna prueba local podía cazarlo, porque el requisito incumplido *no estaba escrito en ninguna parte nuestra*: vivía en el servicio del otro lado. Hizo falta que un esquema saliera de casa *por primera vez* para descubrirlo. Dicho corto: *un esquema validado contra tu propia prueba no está validado; está de acuerdo contigo.*
+
+*Y un error de método, que es el que explica las dos vueltas.* Con el primer rechazo se arregló únicamente lo que nombraba el mensaje, en vez de revisar el esquema entero contra esa misma clase de límite. El segundo rechazo estaba ya ahí, esperando, a la vista de cualquiera que hubiera mirado. La regla que queda escrita: *cuando un servicio externo rechaza una construcción, se audita la construcción completa contra ese tipo de restricción, no se parchea la línea del error.*
+
+*Lo que se hizo para que no haya una tercera vez.* La prueba nueva (`ia/tests/test_esquemas_api.py`) ya no comprueba solo los dos defectos conocidos: recorre los esquemas en profundidad y rechaza *cualquier* clave que no conste como admitida, de modo que un límite que aún no nos haya mordido salte aquí y no en una auditoría. Se verificó distinguiendo las dos versiones —_1 de 5_ contra los esquemas defectuosos, _5 de 5_ contra los corregidos—, y lleva una comprobación de que sabe contar: si el recorrido no encontrara ni un objeto, falla, para que un cero no se confunda con un aprobado.
+
+*Dónde estaba el defecto, por segunda vez.* En el generador de esquemas, que es la única pieza del proyecto que *no está bajo control de versiones*. La primera vez fue la lista de campos escrita a mano que se describe más arriba. Dos defectos distintos, el mismo sitio, y la misma causa de fondo: lo que no tiene historial es donde nadie mira.
 
 == Un fallo silencioso no es un fallo menor: la escala de la confianza (RF-08 / RNF-06)
 El filtro por confianza compara el valor que devuelve el modelo contra un umbral. Las instrucciones piden ese valor en escala de 0 a 100, pero *ninguna de las cuatro pide que sea un número entero* —se comprobó leyendo las cuatro—, y ahí había una rendija que el esquema *no puede* cerrar: si el modelo devolviera la escala de 0 a 1, un valor de 0,85 queriendo decir «85 %» está *dentro* del rango permitido, de modo que pasaría el control y después quedaría por debajo del umbral. El hallazgo *desaparecería sin dejar rastro*, que es exactamente la situación que RNF-06 existe para evitar. El caso peor es el valor 1: en escala de 0 a 1 significa certeza total, y leído como «1 %» descartaría un hallazgo seguro.
