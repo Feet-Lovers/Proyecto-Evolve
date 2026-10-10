@@ -103,9 +103,32 @@ async def atender(r, mensaje: dict):
     print(f"  Auditoria terminada: {hallazgos} hallazgos, {degradados} sin analizar")
 
 
+async def esperar_bus(r, intentos: int = 15, espera: int = 2):
+    """Espera a que el bus responda, y si no responde SE RINDE EN VOZ ALTA.
+
+    `depends_on` en el compose solo espera a que el contenedor arranque, no a que el
+    servicio este listo, asi que el primer ping puede llegar demasiado pronto. Se
+    reintenta — pero al agotar los intentos se lanza, en vez de continuar como si nada:
+    eso es exactamente lo que hacia la version anterior de este modulo (descartaba el
+    resultado de su propia comprobacion y arrancaba igual diciendo que esperaba ordenes),
+    y es la razon de que un canal roto pasara cuatro dias inadvertido.
+    """
+    for i in range(1, intentos + 1):
+        try:
+            await r.ping()
+            return
+        except Exception as e:
+            print(f"  Bus no disponible ({i}/{intentos}): {type(e).__name__}")
+            if i == intentos:
+                raise RuntimeError(
+                    f"el bus {REDIS_HOST}:{REDIS_PORT} no responde tras {intentos} intentos"
+                ) from e
+            await asyncio.sleep(espera)
+
+
 async def escuchar():
     r = aioredis.Redis(host=REDIS_HOST, port=REDIS_PORT)
-    await r.ping()  # si Redis no esta, se entera AQUI y no tras 30 intentos callados
+    await esperar_bus(r)
     pubsub = r.pubsub()
     await pubsub.subscribe(CANAL_INSTRUCCIONES)
     print(f"  Escuchando '{CANAL_INSTRUCCIONES}'. Esperando ordenes del panel...")

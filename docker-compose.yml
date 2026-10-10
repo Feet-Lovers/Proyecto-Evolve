@@ -76,8 +76,18 @@ services:
       - MOCK_PLAYWRIGHT=false
       - SESSION_TOKEN=ia_session
       - PYTHONUNBUFFERED=1
+      # Techo de llamadas por auditoria (client.py). Hasta el 10-oct NO se pasaba al
+      # contenedor, asi que poner la variable en el shell no servia de nada: el modulo
+      # usaba su defecto de 40 y una prueba que se creia gratis habria gastado saldo.
+      # El defecto sigue siendo 40 y sigue declarado provisional: se fija con el dato de
+      # la primera auditoria real, no a ojo.
+      - HOOKSUITE_IA_MAX_LLAMADAS=${HOOKSUITE_IA_MAX_LLAMADAS:-40}
     depends_on:
-      - backend
+      # Desde el 10-oct el modulo escucha el BUS, no al backend: su dependencia real es
+      # redis. Dejarlo apuntando al backend hacia que arrancase antes que redis y muriese
+      # en el primer ping. (`depends_on` solo espera el arranque, no que este listo: por
+      # eso el modulo reintenta la conexion antes de rendirse.)
+      - redis
     restart: unless-stopped
     networks:
       - hooksuite-net
