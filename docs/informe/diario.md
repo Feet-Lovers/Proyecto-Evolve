@@ -1992,3 +1992,28 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
 - **Evidencia:** `(no aplica)` — es redacción, y el método ya tiene su evidencia en los despliegues del 5 y
   8-oct ya documentados.
 - **Horas:** ~0,5 h de Claude.
+
+### Fase 3 (10-oct) · «Diez defectos» eran doce, y estuvo mal desde el primer día
+
+- **Qué se hizo:** corregido el recuento del apartado 6. Decía «Diez defectos del prototipo» con una tabla
+  de **12 filas** de datos (13 menos la cabecera). Ahora dice «los *doce* que recoge la tabla».
+- **Verificado fila por fila antes de tocar el número**, como pedía el pendiente: las 12 filas están
+  listadas y cada una es un defecto distinto con su causa y su requisito.
+- **Y git zanjó la duda que quedaba:** el recuento y la tabla **salieron del MISMO commit** (`c93d93ae`,
+  5-oct 19:50, «volcar la Fase 1 a la memoria técnica»), y la tabla **ya tenía 12 filas allí**. Así que no
+  fue un desfase posterior —la hipótesis razonable era que la prosa se escribiera con diez y luego se
+  añadieran dos filas—: **la cifra estuvo mal desde el principio y se publicó así cinco días.**
+- **Comprobado que corregirla no rompe nada más:** ningún otro sitio del repo (memoria, diario, LINEA) da
+  una cifra de defectos de la Fase 1. La única aparición era esa.
+- **Corrección declarada en el documento (R9)**, no cambiada en silencio, porque esa cifra ya se había
+  publicado en el artefacto que ve el grupo.
+- **Lo que se hizo además, y es lo que evita la reincidencia:** el número queda **atado a la tabla** —«los
+  doce que recoge la tabla»— en vez de ser una cifra suelta en la prosa. Una cifra que no dice de dónde sale
+  puede divergir de su fuente sin que nada chille; atada, no.
+- **Qué falló de paso:** se escribió el aviso con una función `#nota[...]` que **no existe en la plantilla**
+  (solo hay `estado`, `hueco`, `tabla` e `imagen`). Habría roto la compilación. Se cambió al patrón de cita
+  que el documento ya usa 6 veces. **Antes de usar una función de la plantilla, comprobar que está definida.**
+- **A qué requisito toca:** ninguno del producto. Apartado 6.
+- **Evidencia:** `(no aplica)` — la tabla corregida es su propia evidencia, y el commit `c93d93ae` prueba el
+  origen del error.
+- **Horas:** ~0,2 h de Claude.
