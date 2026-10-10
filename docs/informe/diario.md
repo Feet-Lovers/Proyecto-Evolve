@@ -2779,7 +2779,7 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
   **[pantalla — josemax]**, pedidas en el acto por irrepetibles (R6).
 - **Horas:** ~0,2 h de Claude.
 
-### Fase 3 (10-oct, 21:2x) · El panel se limpia solo, sella su objetivo y se puede vaciar a mano (backend)
+### Fase 3 (10-oct, 21:18 — hora del commit) · El panel se limpia solo, sella su objetivo y se puede vaciar a mano (backend)
 
 - **Lo pidió josemax tras usar la herramienta:** los 39 avisos de «no analizado» **se quedaron pegados** —
   limpió el proxy, el campo de objetivo se vació (el arreglo de herencia funcionando) y los avisos
@@ -2805,7 +2805,7 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
   arreglarlo: cabecera «0 detectadas · 39 sin analizar» con el campo de objetivo ya vacío.
 - **Horas:** ~0,3 h de Claude. **0 € de API.**
 
-### Fase 3 (10-oct, 21:4x) · El panel ya se puede vaciar y deja de mezclar objetivos (frontend)
+### Fase 3 (10-oct, 21:20 — hora del commit) · El panel ya se puede vaciar y deja de mezclar objetivos (frontend)
 
 - **Tres piezas, 60 líneas:**
   1. **Botón «limpiar»** junto a «auditar con IA», que llama al `DELETE` nuevo. Se deshabilita solo cuando
@@ -2828,7 +2828,7 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
   `evidencias/capturas/RNF-06-no-analizados-techo10-academyx.png`.
 - **Horas:** ~0,4 h de Claude. **0 € de API.**
 
-### Fase 3 (10-oct, 22:0x) · El botón no hacía nada: segundo despliegue a medias del día
+### Fase 3 (10-oct, 21:26 — hora del commit) · El botón no hacía nada: segundo despliegue a medias del día
 
 - **Síntoma:** josemax recreó el frontend, el botón «limpiar» apareció, lo pulsó y **no pasó nada**.
 - **Causa, medida en el contenedor:** el backend **no tenía ninguno de los dos cambios** —
@@ -2844,5 +2844,10 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
   avisos desaparecen solos — resuelve el problema inmediato pero deja el botón sin nada que borrar, y sin
   forma de probarlo hasta la siguiente auditoría. Decírselo antes, no después.
 - **A qué requisito toca:** **RF-08** / **RNF-06** y **apartado 8** (fallo de método propio).
-- **Evidencia:** recuentos en el contenedor del 10-oct 22:0x (`router.delete` 0, `objetivo_actual` 0).
+- **Evidencia:** recuentos en el contenedor del 10-oct 21:26 (`router.delete` 0, `objetivo_actual` 0).
+- **🔴 Corrección de este propio diario (21:28):** las tres entradas anteriores se titularon `21:2x`,
+  `21:4x` y `22:0x` **a ojo, sin mirar el reloj** — eran las 21:18, 21:20 y 21:26. Es **el mismo defecto
+  que esta tarde se señaló** en las entradas de la mañana («llevan horas adelantadas respecto a sus
+  commits»), repetido por quien lo había señalado. Corregidas con la hora real de cada commit. **Norma:
+  la hora de una entrada se toma de `git log` o de `date`, nunca se estima.**
 - **Horas:** ~0,1 h de Claude. **0 € de API.**
