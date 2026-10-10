@@ -20,6 +20,10 @@ export function useWebSocket(sessionToken) {
   const [requests, setRequests] = useState(config.USE_MOCKS ? mockRequests : [])
   const [networkPackets, setNetworkPackets] = useState([])
   const [vulnerabilities, setVulnerabilities] = useState(config.USE_MOCKS ? mockVulnerabilities : [])
+  // RNF-06. Hasta el 10-oct el estado degradado no llegaba aqui: el modulo de IA lo
+  // calculaba y lo publicaba, y no habia consumidor ni en el backend ni en el panel.
+  // Un fallo de analisis era indistinguible de «no hay vulnerabilidades».
+  const [noAnalizados, setNoAnalizados] = useState([])
   const [connected, setConnected] = useState(config.USE_MOCKS)
   const wsRef = useRef(null)
 
@@ -42,11 +46,12 @@ export function useWebSocket(sessionToken) {
       const data = JSON.parse(event.data)
       if (data.type === 'request_intercepted') setRequests(prev => [normalizePacket(data.payload), ...prev])
       if (data.type === 'vulnerability_detected') setVulnerabilities(prev => [data.payload, ...prev])
+      if (data.type === 'ia_no_analizado') setNoAnalizados(prev => [data.payload, ...prev])
       if (data.type === 'network_packet') setNetworkPackets(prev => [normalizePacket(data.payload), ...prev])
     }
     return () => ws.close()
   }, [sessionToken])
 
   const clearRequests = useCallback(() => setRequests([]), [])
-  return { requests, networkPackets, connected, clearRequests, vulnerabilities }
+  return { requests, networkPackets, connected, clearRequests, vulnerabilities, noAnalizados }
 }

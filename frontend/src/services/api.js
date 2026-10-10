@@ -100,3 +100,27 @@ export async function salir() {
     guardarToken(null)
   }
 }
+
+// --- Modulo de IA (RF-08) --------------------------------------------------------
+// El boton de auditar pasa por aqui. La orden va al endpoint de instrucciones con el
+// espacio en la RUTA: el guardian comprueba que ese espacio es el tuyo (403 si no) y el
+// backend lo usa como dueño del trabajo, de modo que los hallazgos vuelven a tu sesion.
+// El `session_token` del cuerpo lo exige el modelo del backend, pero NO es el que decide
+// la propiedad — eso se lee de la ruta, que el guardian ya ha validado.
+
+export async function lanzarAuditoria({ espacio, url, selector }) {
+  const { data } = await api.post(
+    `/api/playwright/instruction/${encodeURIComponent(espacio)}`,
+    { type: 'full_audit', url, selector: selector || null, session_token: espacio },
+  )
+  return data
+}
+
+// RNF-06: lo que la IA no pudo analizar, con su motivo. Se consulta al entrar en la
+// pantalla; lo que llegue despues entra por el WebSocket.
+export async function obtenerNoAnalizados(espacio) {
+  const { data } = await api.get(
+    `/api/vulnerabilities/${encodeURIComponent(espacio)}/no-analizados`,
+  )
+  return data
+}
