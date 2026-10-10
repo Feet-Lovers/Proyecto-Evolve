@@ -2555,3 +2555,23 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
   únicos productores de hallazgos confirmados son la auditoría de IA y Playwright, y Playwright está
   diferido y no corre**, así que **la única vía viva es que la auditoría analice algo y encuentre algo**.
   Sin rastreo previo no hay nada que analizar: es la misma conclusión por tercer camino distinto.
+
+### Fase 3 (10-oct, 19:2x) · El spider rastrea, pero no confirma: la mitad del orden que faltaba
+
+- **De dónde salió:** josemax relanzó el spider y avisó de que en «Vulnerabilidades» seguía sin aparecer
+  nada. Era la comprobación directa de la hipótesis de la entrada anterior.
+- **Medido en el registro del backend, por recuentos:** **3 POST `/api/spider`**, 2 de repeater y 1 de
+  intruder desde el arranque de las 18:52 — y **cero llamadas de auditoría** (ninguna ruta con `ia` ni
+  `audit`). Los GET a `/api/vulnerabilities` subieron de 10 a **22**: la pantalla pregunta cada vez.
+- **Lo que confirma, y cierra la duda abierta:** **el spider no produce vulnerabilidades confirmadas.**
+  Recoge hallazgos «sin analizar»; la pestaña muestra las *confirmadas*, y esas solo las crea la auditoría
+  de IA. Con el rastreo hecho y la auditoría sin pulsar, **el panel vacío es el comportamiento correcto**.
+- **Por qué importa para el relato del apartado 8:** es la tercera vez en la tarde que un panel vacío parece
+  un defecto y no lo es. El producto no distingue «no hay nada» de «no has lanzado el paso que lo genera»,
+  que es la misma familia de defecto que RNF-06 vino a corregir un nivel más abajo.
+- **Qué se descartó:** volver a tocar el frontend (descartado dos veces con datos) y leer
+  `ia/orchestrator.py`, vedado por el protocolo de contexto limpio.
+- **A qué requisito toca:** **RF-08**. Siguiente paso: pulsar la auditoría con el **mismo usuario** del
+  spider. ⚠️ Esa tirada **sí gasta API** (techo a 10 llamadas, clave nueva); las anteriores costaron 0 €.
+- **Evidencia:** recuentos del registro del backend del 10-oct 19:2x (3 POST spider · 0 auditoría · 22 GET).
+- **Horas:** ~0,1 h de Claude. **0 € de API.**
