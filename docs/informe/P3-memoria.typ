@@ -448,6 +448,21 @@ La prueba que demuestra RNF-06 no necesita ni clave de API ni conexión: sustitu
 
 Reproducible con `python3 ia/tests/test_tres_estados.py`. Evidencia completa, con las dos salidas, en `docs/evidencias/rnf06-tres-estados-antes-y-despues-09oct.md`.
 
+== Lo que el modelo puede devolver, y lo que el código daba por hecho (RF-08)
+Las cuatro vías de análisis del módulo de IA piden al modelo una respuesta con un formato fijo, y ese formato se le impone mediante un *esquema* que viaja con la consulta: la API garantiza que la respuesta se ajusta a él. El esquema, entonces, no es documentación: *es el control*. Y un campo declarado con tipo abierto no es un campo permisivo, es un campo sin control.
+
+La prueba comprueba que el esquema obliga a las dos cosas que las instrucciones piden: que la bandera de resultado sea un booleano y que la confianza venga en escala de 0 a 100. Contra el código anterior devuelve _5 de 11_, y los fallos no eran cosméticos:
+
+1. De los tres campos de bandera —uno por vía, con *tres nombres distintos para el mismo papel*—, solo el primero estaba declarado como booleano. Los otros dos admitían cadena de texto, y el clasificador evalúa los tres igual, dentro de un `if`. En el lenguaje en que está escrito, *cualquier cadena no vacía es verdadera, incluida la palabra que significa «no»*: una respuesta negativa del modelo se habría registrado como vulnerabilidad confirmada.
+2. La confianza se declaraba como número *sin rango*, así que nada rechazaba un valor fuera de la escala.
+3. El esquema de la vía de identificación de servidor declaraba *cero campos*, mientras sus instrucciones piden nueve, uno de ellos una lista de objetos.
+
+*La causa era una sola, y estaba fuera del repositorio del producto.* Los esquemas no se escriben a mano: los genera una herramienta de la práctica que deduce los campos a partir de las lecturas que el propio clasificador hace sobre la respuesta. Esa herramienta llevaba una lista, escrita a mano, de los campos «que el código interpreta», y se redactó mirando *una sola* de las cuatro vías; su propio comentario lo delata, porque habla de la bandera en singular. El esquema vacío tiene la misma raíz por el camino opuesto: la vía de identificación de servidor devuelve la respuesta del modelo *sin inspeccionarla*, de modo que no hay ninguna lectura de la que deducir nada. Un esquema no se puede derivar de un código que no mira los datos.
+
+El arreglo fue por tanto en el generador —no en el fichero generado, que lleva en su cabecera la advertencia de que se regenera— y después se regeneró. La prueba pasa _11 de 11_, y la de RNF-06 sigue en _8 de 8_: el cambio no rompió nada.
+
+Reproducible con `python3 ia/tests/test_esquemas_bandera.py ia/esquemas.py`. Evidencia con las dos salidas, antes y después, en `docs/evidencias/esquemas-bandera-antes-10oct.md`.
+
 = 9. Matriz de trazabilidad
 La pieza con la que se corrige la práctica: requisito por requisito, dónde está implementado, qué prueba lo verifica y dónde se ve. Las rutas están comprobadas en el código (cocina local, 4-oct). La columna de evidencia enlaza la figura de la memoria y el *minuto exacto del vídeo*; se rellena al grabar.
 #tabla(
@@ -502,6 +517,16 @@ El módulo de IA no limita cuántas veces consulta al modelo durante una auditor
 
 El valor por defecto se fijará *con el dato* de la primera auditoría real —el resultado llevará el número de consultas consumidas— y no a ojo, que es lo que permite defenderlo.
 
+== Un esquema no puede cazar una confusión de escala
+La prueba del apartado 8 deja un caso *pasando a propósito*, y merece explicación porque es una limitación real y no un descuido. Imponer que la confianza vaya entre 0 y 100 rechaza un valor de 150, pero *no* rechaza un 0,85: ese número está dentro del rango, y significaría «0,85 % de confianza». Si el modelo devolviera la escala de 0 a 1 en lugar de la de 0 a 100 —algo que ya ocurrió en este proyecto, en el código, con un umbral comparado en la escala equivocada—, la respuesta pasaría el control y el hallazgo se descartaría *en silencio* al compararlo con el umbral.
+
+Cazarlo exigiría declarar el campo como *entero*, y eso depende de si las instrucciones piden un número entero: un dato que no consta. Se deja documentado dentro de la propia prueba, con ese nombre, en vez de resolverlo por suposición. *Una prueba que miente sobre lo que cubre es peor que una prueba que falta.*
+
+== La herramienta que genera los esquemas no está versionada
+El generador de esquemas vive en la carpeta de trabajo de la práctica, *fuera del repositorio del producto*: no tiene historial, no pasó por revisión y su autoría no queda registrada, al contrario que todo el código. Es incoherente con la norma del equipo de que todo entra por petición de incorporación, y no es una incoherencia inocua: *el único sitio sin historial resultó ser exactamente donde estaba el defecto del apartado 8*, porque es el sitio donde nadie vio la lista incompleta.
+
+*Trabajo futuro, de coste bajo:* mover las herramientas de la práctica al repositorio, para que un cambio en ellas se revise como cualquier otro. No se hizo ahora porque mover ficheros a tres días de la congelación introduce riesgo sin aportar nada al producto.
+
 #hueco("José María + Claude", "Acumular el resto de limitaciones conforme aparezcan durante las Fases 1-4; este apartado recibe material hasta el último día.")
 
 = 11. Reparto del trabajo
@@ -519,6 +544,15 @@ Lo caro no fue el bloqueo, sino *la recuperación*. Para desatascar la sesión s
 De ahí sale el hallazgo que sí afecta al diseño de nuestros controles: *el rebobinado restaura la conversación y los ficheros, pero no los efectos sobre el servidor*. En la lista de puntos de retorno, el turno que había construido una imagen de contenedor figuraba como «sin cambios de código», porque esa función contabiliza ficheros. La imagen siguió existiendo después de rebobinar. Quien la construyó —el asistente— ya no recordaba haberlo hecho, y el único testigo del cambio fue un control externo que compara el estado del servidor contra lo que la documentación afirma. La consecuencia práctica es que *un control que mira ficheros no sustituye a uno que mira el sistema*, y que los avisos molestos de ese control no se pueden desactivar sin perder exactamente aquello para lo que sirve.
 
 *Qué fue generado y qué fue verificado.* La distinción no es teórica: ese mismo día, una afirmación escrita por el asistente en el plan del módulo de IA —que los cuatro conjuntos de instrucciones pedían un campo `descripcion`— resultó falsa para uno de ellos al releer el código fuente, y quedó corregida de forma declarada en vez de reescrita en silencio. El criterio que seguimos es que *nada entra en esta memoria por haberlo dicho la herramienta*: entra cuando se ha contrastado contra el código, la salida de un comando o el enunciado.
+
+== Leer sin leer: delegar la lectura de lo que no debe entrar en la conversación
+El filtro descrito arriba obligó a una medida de método que vale la pena declarar, porque cambió la forma de trabajar. Las instrucciones que el producto envía al modelo son el material que más incomoda a ese filtro y, a la vez, eran lo único que faltaba por conocer para terminar el módulo de IA: *tres defectos abiertos dependían de saber qué formato piden*. El asistente principal no podía abrirlas sin arriesgar la sesión, y el permiso del operador no sirve de nada, porque el filtro no sabe nada de ese permiso: mide lo que entra en la conversación, no lo que alguien ha autorizado.
+
+La salida fue *delegar la lectura*. Un asistente secundario, con instrucciones propias y un contexto que se destruye con él, abre los ficheros y devuelve solo su *interfaz*: nombres de campo, tipos, escalas y números de línea. No devuelve ni una frase del texto. El encargo se redactó con una precisión que resultó ser la clave —*«no los cites», nunca «no los leas»*—, porque una versión anterior, mal formulada, llevó al secundario a *medir* los ficheros sin abrirlos y a contestar a medias.
+
+De ahí salieron los tres defectos del apartado 8. Es decir: el control que impide volcar material delicado en la conversación no solo no frenó el trabajo, sino que obligó a una forma de trabajar —preguntar por la interfaz y no por el contenido, y comprobar con pruebas en vez de con la vista— que resultó *más* estricta que la lectura directa. Lo que no se puede leer, se mide, se edita a ciegas y se verifica con una prueba.
+
+El límite del método también se declara: el asistente secundario es un modelo, no un control. Lo que devuelve tiene que revisarlo *una persona que conozca el material*, porque es la única que puede juzgar si cruzó la línea entre describir y reproducir; el asistente principal no puede, precisamente porque no conoce el contenido.
 
 #hueco("José María", "Detallar por fase qué aportó la IA y qué fue decisión/revisión humana; distinguir generado de verificado.")
 
