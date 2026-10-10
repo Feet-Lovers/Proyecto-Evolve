@@ -510,14 +510,21 @@ Y tres mas que cubren el fallo silencioso en el otro extremo: si la auditoria se
 
 Reproducible con `python3 backend/tests/test_bus_reparto.py` y `python3 ia/tests/test_bus_publicacion.py`.
 
-== Prueba preparada y NO ejecutada: el techo de gasto del módulo de IA (RF-08)
-El plan de pruebas incluye un caso que *no se ha podido ejecutar*, y se declara en lugar de omitirse. Una auditoría del módulo de IA no tiene límite de consultas al modelo: el recorrido anida páginas × tipos de prueba × cargas, y cada carga es una consulta. Con el disparador de la interfaz construido, cada pulsación arrancaría ese recorrido completo.
+== El recorrido completo del disparador, verificado de punta a punta (RF-08)
+Durante cuatro días el disparador estuvo *construido y sin poder demostrarse*: el botón existía, el bus estaba cableado, y aun así una pulsación desde el panel no movía ni una línea del módulo de IA. El apartado llegó a listar tres hipótesis sin poder decidir entre ellas.
 
-El caso está diseñado para costar *cero*: fijando el techo en 0 por variable de entorno, ninguna consulta debe salir y la auditoría debe quedar marcada como truncada; con el techo en 1 debe pasar una sola y el resto quedar como «no analizado», con el motivo del techo. Reutiliza la vía degradada de RNF-06, de modo que el recorte *se ve* en el panel en lugar de pasar por «sin hallazgos».
+El 10-oct se cerró, y la forma de cerrarlo es parte del resultado: en lugar de seguir estimando sobre ventanas de tiempo aproximadas, *se anotó la hora exacta de la pulsación* y se midió contra ella. A partir de las 13:58:10 el servidor registra *una* petición al disparador, con respuesta correcta, y el registro del módulo de IA pasa de 192 a 376 líneas. Panel → autenticación → bus → módulo suscrito: el recorrido entero, por primera vez.
 
-*Por qué no está ejecutada:* exige aplicar antes la reescritura del cliente del modelo, y esa reescritura no se aplica sin una clave de API válida con la que probarla de verdad (decisión del 8-oct: preparar, no ejecutar). El plan completo, con el código listo para aplicar, está en el repositorio de la línea.
+*Lo que no se da por explicado.* Cincuenta y ocho minutos antes, la misma pulsación no había movido nada, y entre una y otra *no se tocó el producto* —ningún fichero ni contenedor cambió—. La explicación cómoda sería una sesión caducada, pero no encaja: el sondeo de instrucciones sigue devolviendo *no autorizado* ahora, con sesión válida y el disparador funcionando. Queda abierto y declarado, porque un apartado de pruebas que explica lo que no sabe explicar vale menos que uno que lo admite.
 
-#hueco("José María + Claude", "Ejecutar el caso del techo de gasto en cuanto haya clave válida: captura de terminal con techo 0 y con techo 1, y captura de pantalla del panel mostrando la auditoría marcada como truncada. Coste previsto: 0 € la primera, una consulta la segunda.")
+== El techo de gasto, ejecutado: una auditoría entera por 0 € (RF-08)
+Este caso estuvo declarado durante semanas como *preparado y no ejecutado*, y se deja constancia de que ya no lo está. Una auditoría del módulo de IA no tiene límite de consultas al modelo: el recorrido anida páginas × tipos de prueba × cargas, y cada carga es una consulta. Con el disparador funcionando, cada pulsación arranca ese recorrido completo.
+
+El caso estaba diseñado para costar *cero*: fijando el techo en 0 por variable de entorno, ninguna consulta debe salir y la auditoría debe quedar marcada como truncada. *Ejecutado el 10-oct desde el panel, con sesión real.* La auditoría recorrió cuarenta y ocho elementos, no salió *ni una sola* consulta al modelo —coste 0 €— y los cuarenta y ocho quedaron marcados como no analizados, cada uno con el motivo del techo. El techo no se limita a cortar: *el corte se ve*, que era la condición que se le puso al diseñarlo.
+
+*La mitad que falta del caso*, y se declara: el techo en 1, donde debe pasar una sola consulta y el resto quedar como «no analizado». Esa sí necesita clave de API válida, porque la consulta que pasa tiene que salir de verdad.
+
+#hueco("José María + Claude", "Ejecutar la segunda mitad del caso del techo —techo en 1— en cuanto haya clave de API válida: debe pasar una sola consulta y el resto quedar como «no analizado» con el motivo del techo. La primera mitad (techo 0) ya está ejecutada y capturada. Coste previsto: una consulta.")
 #estado("ok", "AISLAMIENTO POR USUARIO VERIFICADO EN LA COCINA (11/11) · PENDIENTE DE VERIFICAR EN PRODUCCIÓN")
 #estado("ok", "EVIDENCIA DE EXPOSICIÓN Y DE LA FASE 1 COMPLETA")
 #hueco("José María + Claude", "Plan de pruebas formal y capturas de PRODUCTO de los bugs (500 de `check/alive`, trampa del Spider) reproducidos en la cocina. Las de pantalla las saca José María (R6), tras la Fase 3, cuando el login nuevo cambie las pantallas. Las pruebas las hacen José María y Claude (R2).")
@@ -531,6 +538,13 @@ La prueba que demuestra RNF-06 no necesita ni clave de API ni conexión: sustitu
 *Por qué una prueba y no una revisión visual.* El fichero del clasificador está en la lista de material que este equipo no vuelca a la conversación con la herramienta de IA (apartado 12), así que se editó sin leerlo, mediante una receta de pasos verificables. En ese modo de trabajo la prueba no es un complemento de la revisión: es lo que la sustituye, y es más estricta, porque comprueba el comportamiento en vez de la impresión que deja el código al leerlo.
 
 Reproducible con `python3 ia/tests/test_tres_estados.py`. Evidencia completa, con las dos salidas, en `docs/evidencias/rnf06-tres-estados-antes-y-despues-09oct.md`.
+
+== RNF-06 visto en el panel, que es donde tenía que verse
+Una prueba unitaria demuestra que el clasificador *devuelve* el estado degradado; no demuestra que alguien lo *enseñe*. Entre las dos cosas hubo un hueco real: durante un día el estado existió en el módulo de IA y no lo consumía nadie al otro lado, de modo que RNF-06 estaba cumplido y era invisible. El 10-oct se cerró el hueco y se comprobó en la interfaz, con una auditoría lanzada desde el panel y sesión real.
+
+#imagen("../capturas/ia/RNF-06-panel-no-analizado-techo0-censurada.png", "RNF-06 / RF-08 — el panel tras una auditoría truncada por el techo de gasto. El encabezado anuncia *48 sin analizar — la IA no pudo valorarlo* y cada entrada lleva su motivo, `techo de 0 llamadas por auditoria alcanzado`: el recorte se ve en lugar de pasar por «sin hallazgos». El recuento `0 detectadas · 48 sin analizar` distingue las dos cosas. *Las direcciones auditadas van tapadas a propósito*: son de un objetivo ajeno a la práctica, y la evidencia del requisito es el motivo, no a quién se auditó.")
+
+Lo que la figura prueba, y que ninguna prueba unitaria alcanzaba: que el mensaje de lista vacía *dejó de mentir*. Antes, una auditoría que no había podido analizar nada y otra que había analizado y no encontrado nada producían la misma pantalla. Ahora el aviso va aparte de los hallazgos —en su propia tira, por encima— porque mezclarlo obligaría a inventarle una severidad a algo que precisamente *no se pudo valorar*.
 
 == Lo que el modelo puede devolver, y lo que el código daba por hecho (RF-08)
 Las cuatro vías de análisis del módulo de IA piden al modelo una respuesta con un formato fijo, y ese formato se le impone mediante un *esquema* que viaja con la consulta: la API garantiza que la respuesta se ajusta a él. El esquema, entonces, no es documentación: *es el control*. Y un campo declarado con tipo abierto no es un campo permisivo, es un campo sin control.
@@ -569,14 +583,17 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
   RF-05 | Repeater | Cumplido (parser y avisos de error corregidos en F1) | `backend/routes/repeater.py`, `backend/services/proxy_service.py` | PR-05 | apdo. 6 · vídeo —:—
   RF-06 | Intruder / fuzzing | Cumplido (cancelación corregida en F1) | `backend/services/intruder_service.py` | PR-06 | apdo. 6 · vídeo —:—
   RF-07 | Utilidades (incl. JWT) | Cumplido | `frontend/src/pages/utilities/` | PR-07 | fig. — · vídeo —:—
-  RF-08 | IA → panel Vulnerabilidades | según alcance | `ia/analyzers/vulnerability_classifier.py` + `backend/routes/vulnerabilities.py` | PR-08 | fig. — · vídeo —:—
+  RF-08 | IA → panel Vulnerabilidades | Cumplido (recorrido verificado de punta a punta el 10-oct; techo de gasto ejecutado) | `ia/`, `backend/routes/playwright.py`, `backend/services/redis_consumer.py`, `frontend/.../VulnerabilitiesPage.jsx` | PR-08 | figs. apdo. 8 · vídeo —:—
   RF-09 | DevTools → panel Red | según alcance | `devtools/` + `backend/routes/network.py` | PR-09 | fig. — · vídeo —:—
   RF-10 | Playwright | según alcance | `playwright/` + `backend/routes/playwright.py` | PR-10 | fig. — · vídeo —:—
   RF-11 | Multi-usuario | Cumplido (reimplementado en F2) | `backend/services/guardia.py` + `services/auth_service.py` | PR-11 | apdo. 7 · figs. apdo. 8
   RF-12 | Registro y login por usuario + aislamiento | Cumplido en F2 (verificado en cocina 11/11; pendiente de producción) | `backend/services/auth_service.py`, `guardia.py`, `usuarios_store.py`, `frontend/.../LoginPage.jsx` | PR-12 | apdo. 7 · figs. apdo. 8
+  RNF-01 | Accesible desde navegador sin instalar nada en el cliente | Cumplido, con limitación documentada en móvil (apdo. 10) | `frontend/` servido por Nginx | PR-01 | apdo. 10
   RNF-02 | WebSocket en tiempo real | Cumplido (autenticado en F2: el token viaja en el primer mensaje, no en la URL) | `backend/main.py` (`/ws/`) | PR-17 | apdo. 7 · vídeo —:—
   RNF-03 | Despliegue Docker en Hetzner | Cumplido | `docker-compose.yml` + `infra/nginx.conf` | PR-13 | fig. — · vídeo —:—
+  RNF-04 | Historial de commits que refleje el trabajo del grupo | Parcial: el reparto es real, pero dos correos del mismo autor parten el grafo de contribuciones | repositorio del producto | — | apdo. 11
   RNF-05 | Límite de concurrencia | Cumplido | `backend/services/intruder_service.py` (`asyncio.Semaphore`) | PR-20 | apdo. 8
+  RNF-06 | Operación degradada cuando la IA falla o no supera el umbral | Cumplido y *visto en el panel* (10-oct) | `ia/client.py`, `ia/analyzers/vulnerability_classifier.py`, `backend/services/redis_consumer.py`, `frontend/.../VulnerabilitiesPage.jsx` | `test_tres_estados.py` (8/8), `test_escala_confianza.py` (19/19) | fig. apdo. 8
   RNF-07 | Seguridad del producto | Cumplido en F1 (exposición cerrada y servidor endurecido) y F2 (autenticación y aislamiento, verificados en cocina) | ver apartado 7 | PR-14, PR-16 | apdo. 7-8
   RNF-08 | Firewall dinámico por sesión | Operativo y endurecido en F1 (permisos del canal y validación de entradas) | `firewall_agent.py` | PR-15 | apdo. 7-8
   RNF-09 | TLS/HTTPS | Pendiente | (por configurar en Nginx) | PR-18 | apdo. 8
@@ -585,6 +602,8 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
 #estado("curso", "RUTAS VERIFICADAS EN CÓDIGO · PRUEBAS Y MINUTOS DE VÍDEO POR COMPLETAR")
 
 > *Corrección declarada de este documento (7-oct), por R9.* La fila de RF-11 citaba como implementación la ruta `/api/session/new`. Esa ruta *se retiró en la Fase 2*: repartía identificadores que no eran credenciales, y la interfaz no la llamaba desde hacía tiempo. Citar como prueba de un requisito una ruta que ya no existe es el tipo de error que una memoria arrastra hasta la defensa, así que se deja dicho en lugar de corregirlo en silencio. Quien cumple hoy RF-11 es el sistema de acceso por usuario.
+
+> *Segunda corrección declarada (10-oct), por R9.* Esta matriz *no tenía fila* para RNF-01, RNF-04 ni RNF-06, pese a estar los tres declarados en el apartado 4. El caso de RNF-06 es el que más duele: se le dedican varias secciones del apartado 8 y aun así no se podía trazar desde aquí, que es precisamente la pieza con la que se corrige la práctica. Las tres filas se añaden ahora. El defecto no es de redacción sino de método —la matriz se rellenó requisito a requisito desde la lista de RF y los RNF se fueron añadiendo según aparecían en el trabajo—, y explica por qué faltaban justo los tres que ninguna fase tuvo como protagonista.
 
 El estado de cada prueba (PR-xx) y su resultado detallado están en el apartado 8. Al arreglar cada fallo se reejecuta la prueba y se actualiza la fila. La numeración RF/RNF es la fijada en el apartado 4 y #estado("curso", "PENDIENTE DE VALIDAR POR EL GRUPO").
 #hueco("José María + Claude", "Al revisar el vídeo grabado, anotar el minuto exacto donde se demuestra cada requisito y el número de figura de su captura (R6: el nombre de la captura va atado al ID del requisito, p. ej. `RF-08-panel-ia.png`, para que esta columna se rellene sola).")
