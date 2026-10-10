@@ -2933,3 +2933,23 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **Evidencia:** `evidencias/capturas/RF-08-auditoria-completa-49-analisis.png` — cabecera con
   «0 detectadas · 4 sin analizar · 49 analisis realizados» y los 4 motivos de truncado.
 - **Horas:** ~0,4 h de Claude.
+
+### Fase 3 (10-oct, 22:1x) · 502 tras desplegar: nginx cachea la IP del contenedor y nadie se entera
+
+- **Síntoma:** josemax refrescó la web tras recrear `frontend` e `ia` y recibió **502 Bad Gateway**.
+- **Causa, medida sin ambigüedad:** nginx intentaba conectar a **`172.24.0.7`** y el frontend estaba en
+  **`172.24.0.2`**. Nginx resuelve los nombres de los upstreams **al arrancar** y los cachea; lleva 10
+  horas en pie mientras el frontend se ha recreado varias veces esta noche. 20 errores 502 por esa IP.
+- **🟠 Esto NO es un incidente de la cocina, es un DEFECTO DE DESPLIEGUE del producto.** En la caja pasará
+  igual: cada despliegue del frontend dejará el sitio **caído con 502** hasta que alguien recargue nginx a
+  mano. Y el despliegue habrá parecido **exitoso** — los contenedores arrancan bien. Es el mismo patrón del
+  día una vez más: *algo roto que no se anuncia*.
+- **Arreglo inmediato:** `nginx -s reload` (no hace falta recrear: relee la configuración y vuelve a
+  resolver). **Arreglo de fondo, pendiente:** que nginx resuelva en caliente —`resolver` de Docker con
+  `set` y variable en el `proxy_pass`— o que el despliegue recargue nginx como último paso.
+- **Dato que evita una alarma:** la pulsación de auditar **no llegó a salir** (log del módulo en 8 líneas,
+  0 auditorías arrancadas), así que el 502 **no costó ninguna llamada de API**.
+- **A qué requisito toca:** **apartado 8** y el procedimiento de despliegue (RNF de disponibilidad).
+- **Evidencia:** recuentos del log de nginx del 10-oct 22:1x (20× `upstream: "http://172.24.0.7:80`) frente
+  a la IP real del contenedor (`172.24.0.2`).
+- **Horas:** ~0,1 h de Claude. **0 € de API.**
