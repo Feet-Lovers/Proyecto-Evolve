@@ -1921,3 +1921,37 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
 - **A qué requisito toca:** RF-08 y RNF-06; apartados 8 y 10. **Decisión pendiente de josemax.**
 - **Evidencia:** `evidencias/testigo-confianza-entero-10oct.md` (ausencia confirmada, atada a fichero+línea).
 - **Horas:** ~0,1 h de Claude; el testigo, 1,1 min y 8 llamadas de herramienta.
+
+### Fase 3 (10-oct) · La guardia de escala: el arreglo va en el código, no en el esquema
+
+- **Qué se hizo:** guardia en `ia/analyzers/vulnerability_classifier.py` (+57 líneas) — la franja `(0, 1]`
+  de `confianza` se trata como **sospecha de escala** y se encamina al estado degradado de **RNF-06**, con su
+  motivo. Aplicada a las **tres** vías que comparan contra el umbral. Prueba nueva
+  `ia/tests/test_escala_confianza.py` (162 líneas).
+- **Por qué NO en el esquema, que es lo que se iba a hacer:** el testigo confirmó que **ninguno** de los
+  cuatro prompts pide `confianza` entera. Poner `{"type": "integer"}` habría **impuesto algo que el prompt no
+  pide** y habría rechazado un `87.5` legítimo. Era el error de la mañana del revés: separar prompt y esquema
+  en vez de acercarlos. La decisión fue de josemax entre tres opciones.
+- **El caso peor, que es el que justifica la franja entera:** el valor `1`. En escala 0-1 significa **certeza
+  total**; leído como «1 %» habría descartado un hallazgo seguro. Por eso la franja es `(0, 1]` y no `(0, 1)`.
+- **Visto fallar a propósito** (lección del 5-oct, R4): la misma prueba da **19/19** con el arreglo y
+  **6/19** sin él. Y los 6 que pasan en el viejo son **los casos legítimos**, lo que demuestra que la guardia
+  no mete falsos positivos. El caso decisivo —`0.85 NO se devuelve como «sin vulnerabilidad»`— **falla** en el
+  código anterior: el descarte silencioso queda **demostrado**, no argumentado.
+- **Sin regresión:** `test_tres_estados` 8/8 y `test_esquemas_bandera` 11/11.
+- **Qué falló de paso, dos veces, y las dos eran mías:** (1) la prueba no cargaba el respaldo porque el
+  cargador solo acepta `.py` y el fichero acababa en `.bak` → se copió con extensión. (2) Un `grep` dio
+  `pdf=0` en una frase que **sí estaba**, partida por un salto de línea; se comprobó normalizando los saltos
+  antes de afirmar nada. **Un `grep` que falla no prueba que falte el contenido** (R9).
+- **Qué NO se hizo, a propósito:** (a) guardia en la vía de fingerprint — no compara contra el umbral, así
+  que no hay descarte silencioso que cerrar; (b) cambiar los prompts para pedir «entero», que era la
+  alternativa más limpia conceptualmente: cuatro ficheros protegidos, en prosa, editados a ciegas, a tres
+  días de congelar. Va al apartado 10 como trabajo futuro.
+- **Memoria técnica en la misma pasada (R4):** apartado **8** con la guardia; apartado **10** con
+  **rectificación declarada** — unas horas antes ese apartado daba la limitación por *abierta* y decía que
+  cerrarla dependía de un dato que «no consta». El dato llegó y la limitación se cerró, **pero no por donde
+  el apartado anticipaba**. Se rectifica en el documento, no en silencio. Artefacto **publicado**.
+- **A qué requisito toca:** RF-08 y RNF-06; apartados 8 y 10.
+- **Evidencia:** `docs/evidencias/escala-confianza-guardia-10oct.md` (las dos salidas y lo que queda abierto);
+  commits `8093a754` (código) y `70aaf278` (memoria técnica).
+- **Horas:** ~0,5 h de Claude. 0 € de API.
