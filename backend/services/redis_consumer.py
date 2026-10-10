@@ -28,6 +28,12 @@ async def _repartir_hallazgo(data: dict):
 
     session = session_manager.get_session(espacio)
 
+    # Sello del objetivo: el hallazgo se queda con el objetivo que estaba auditandose cuando
+    # llego. Sin esto el panel no puede distinguir lo de ESTA auditoria de lo que quedo de
+    # otra anterior, que es lo que confundia al leerlo. `setdefault` para no pisar el valor
+    # si algun dia el modulo lo manda por su cuenta.
+    data.setdefault("objetivo", session.get("objetivo_actual"))
+
     # RNF-06. «No analizado» no es «no hay vulnerabilidad», y tampoco encaja en el modelo
     # VulnerabilityReport (no tiene id, tipo, severidad ni confianza). Va por su propio
     # camino para que el panel pueda decirlo en voz alta en vez de callar.

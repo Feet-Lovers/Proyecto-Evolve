@@ -69,3 +69,24 @@ async def get_no_analizados(session_token: str):
     """
     session = session_manager.get_session(session_token)
     return session.get("no_analizados", [])
+
+
+@router.delete("/{session_token}")
+async def limpiar_panel(session_token: str):
+    """Vacia el panel de vulnerabilidades de ESTA sesion, a peticion del usuario.
+
+    Hace falta porque la limpieza automatica al lanzar una auditoria no cubre el caso que
+    se dio el 10-oct: josemax limpio el proxy, vacio el campo de objetivo, y los 39 avisos
+    de "no analizado" seguian ahi sin forma de quitarlos. Lanzar otra auditoria para poder
+    limpiar la pantalla seria pedirle que gaste llamadas de API para borrar algo.
+
+    El aislamiento es automatico: `session_token` esta en PARAMETROS_DE_ESPACIO, asi que el
+    guardian ya ha comprobado que es el espacio de quien llama (403 si no coincide).
+    """
+    session = session_manager.get_session(session_token)
+    borrados = len(session.get("vulnerabilities", [])) + len(session.get("no_analizados", []))
+    session["vulnerabilities"] = []
+    session["no_analizados"] = []
+    session["objetivo_actual"] = None
+    await session_manager.emit(session_token, "panel_limpiado", {"borrados": borrados})
+    return {"borrados": borrados}

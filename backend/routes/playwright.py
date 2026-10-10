@@ -35,6 +35,18 @@ async def receive_instruction(session_token: str, instruction: PlaywrightInstruc
     # dentro, de modo que los hallazgos vuelven a la sesion de quien pidio la auditoria.
     oyentes = None
     if instruction.type == "full_audit":
+        # Cada auditoria empieza con el panel EN BLANCO (10-oct). Antes los resultados se
+        # acumulaban entre tiradas y entre objetivos distintos: josemax se encontro 39 avisos
+        # de "no analizado" que sobrevivian a limpiar el proxy y a vaciar el campo de objetivo,
+        # sin forma de quitarlos. Un panel que mezcla la tirada de ahora con las de antes no
+        # deja contestar la pregunta que de verdad importa: "¿acaba de ejecutar algo o no?".
+        #
+        # Se guarda ademas el objetivo de ESTA auditoria, para que el panel pueda mostrar solo
+        # lo que corresponde a lo que hay en el campo y no restos de otro objetivo.
+        sesion = session_manager.get_session(session_token)
+        sesion["objetivo_actual"] = instruction.url
+        sesion["vulnerabilities"] = []
+        sesion["no_analizados"] = []
         try:
             oyentes = await bus_ia.publicar_instruccion(session_token, instruction.model_dump())
         except Exception as e:

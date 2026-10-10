@@ -2778,3 +2778,29 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **Evidencia:** ⚠️ FALTA: panel con los hallazgos a la vista, y uno abierto con el análisis de la IA
   **[pantalla — josemax]**, pedidas en el acto por irrepetibles (R6).
 - **Horas:** ~0,2 h de Claude.
+
+### Fase 3 (10-oct, 21:2x) · El panel se limpia solo, sella su objetivo y se puede vaciar a mano (backend)
+
+- **Lo pidió josemax tras usar la herramienta:** los 39 avisos de «no analizado» **se quedaron pegados** —
+  limpió el proxy, el campo de objetivo se vació (el arreglo de herencia funcionando) y los avisos
+  seguían ahí, sin forma de quitarlos. *«No es coherente»*, y tiene razón: el panel mezclaba la tirada de
+  ahora con las de antes.
+- **Explica además las 39:** en la captura se repiten `/vulnerabilities/fi/` muchas veces y `xss_r` dos.
+  No son 39 cosas distintas: es **acumulación de varias auditorías** (los «no analizados» se concatenan
+  sin deduplicar, al revés que las vulnerabilidades, que sí se deduplican por `id`).
+- **Tres cambios, 39 líneas:**
+  1. **Limpieza al lanzar auditoría** (`routes/playwright.py`): cada `full_audit` vacía `vulnerabilities`
+     y `no_analizados` de la sesión. El panel empieza en blanco.
+  2. **Sello del objetivo** (`services/redis_consumer.py`): cada hallazgo se queda con el objetivo que se
+     estaba auditando al llegar, para que el panel pueda filtrar y no mezclar objetivos.
+  3. **`DELETE /api/vulnerabilities/{session_token}`** (`routes/vulnerabilities.py`): vaciado manual.
+     Hace falta aparte de (1) porque el caso de josemax era **sin lanzar nada**: sin esto, limpiar la
+     pantalla exigiría gastar una auditoría, que es absurdo.
+- **Aislamiento:** el `DELETE` no necesita comprobación propia — `session_token` está en
+  `PARAMETROS_DE_ESPACIO`, así que el guardián ya responde 403 si no es el espacio de quien llama. Misma
+  garantía que el resto del router, sin excepciones nuevas (lo que el apartado 7 presume).
+- **Verificado:** los tres ficheros compilan; diff de **39 inserciones, 0 bajas**, sin tocar nada más.
+- **A qué requisito toca:** **RF-08** y **RNF-06** (usabilidad del panel). Falta la parte de frontend.
+- **Evidencia:** `evidencias/capturas/RNF-06-no-analizados-techo10-academyx.png` — el defecto, antes de
+  arreglarlo: cabecera «0 detectadas · 39 sin analizar» con el campo de objetivo ya vacío.
+- **Horas:** ~0,3 h de Claude. **0 € de API.**
