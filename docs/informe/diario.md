@@ -2326,3 +2326,34 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
   decisión de josemax: el repo es público). **Revisada entera antes de citarla: no se ve ningún token ni
   credencial** (solo la IP interna de la cocina y el usuario `UsuarioA`).
 - **Horas:** ~0,3 h de Claude. **0 € de API** (techo a 0, confirmado por el propio mensaje del panel).
+
+### Fase 3 (10-oct, 17:40) · Auditar la matriz: la cobertura estaba bien, pero citaba dieciséis pruebas que el lector no tiene
+
+- **De dónde salió:** al añadir las tres filas que faltaban (RNF-01, RNF-04, RNF-06) quedó la sospecha de que
+  el defecto era **de método** y no de descuido, así que se auditó la matriz entera en vez de darla por buena.
+- **Lo que salió bien, y conviene decirlo:** la cobertura ya está **completa, 21 de 21** —los doce RF y los
+  nueve RNF del apartado 4 tienen fila, sin sobrantes—, y **todas las rutas de implementación existen**: se
+  comprobó fichero a fichero. Ninguna cita muerta en esa columna.
+- **🔴 Lo que salió mal, y es más gordo que lo de las tres filas: de los 19 códigos de prueba (PR-xx) que
+  cita la matriz, solo 3 aparecen en algún otro punto de la memoria** (PR-01, PR-16 y PR-20). Los **16
+  restantes no están en ninguna parte del entregable**. Y la matriz afirmaba literalmente que «el estado de
+  cada prueba y su resultado detallado están en el apartado 8». Era falso: quien corrige lee «PR-08» en la
+  fila de RF-08 y no tiene dónde mirar.
+- **Dónde está el plan, que sí existe:** los 19 casos están completos —procedimiento, resultado esperado y
+  resultado observado— en `lineas/practica3-hooksuite/MATRIZ.md`, un **documento de trabajo del equipo que
+  no se entrega**. Así que el defecto no es que las pruebas no se hicieran: es que la memoria cita un plan
+  que el lector no tiene delante.
+- **Qué se hizo y qué NO:** se corrigió la frase falsa, con **corrección declarada** (R9, la tercera de este
+  documento), y se dejó el hueco con el aviso que importa: **copiar el plan tal cual metería afirmaciones
+  falsas**, porque sus resultados son del 29-sep y varios están desfasados —PR-01 figura como *FALLA* por un
+  Basic Auth que la Fase 2 retiró—. Traerlo al anexo exige revisarlo caso por caso, y eso es trabajo aparte.
+- **Dos arreglos menores de la misma pasada:** las dos pruebas de RNF-06 se citaban por nombre suelto
+  (`test_tres_estados.py`) y ahora van con su ruta (`ia/tests/…`), que es lo que hace una cita comprobable; y
+  se corrigió un `**` que se había colado en la fuente —el dialecto usa un solo asterisco— que **lo avisó el
+  propio compilador** y por poco se ignora.
+- **Qué se descartó:** traer el plan de pruebas al anexo en esta misma pasada. Es lo que arregla el fondo,
+  pero con los resultados del 29-sep sin revisar habría cambiado una cita muerta por dato falso, que es peor.
+- **A qué requisito toca:** a todos, por la vía de la matriz. Es la pieza con la que se corrige la práctica.
+- **Evidencia:** (no aplica) — el resultado de esta entrada *es* el propio documento; comprobable en el
+  apartado 9 del PDF y del artefacto, y en los commits `cd7f2434` y `011c6d7c`.
+- **Horas:** ~0,4 h de Claude. **0 € de API.**
