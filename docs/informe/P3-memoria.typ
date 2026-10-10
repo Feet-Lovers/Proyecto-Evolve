@@ -207,6 +207,28 @@ Desde la Fase 1, Nginx es además la *única* entrada: `backend` y `frontend` de
 
 *El reparto de responsabilidades cambió con la Fase 2*, y conviene decirlo porque es una decisión de arquitectura, no un detalle: antes Nginx era quien autenticaba (una contraseña única, igual para todos, que no distinguía personas) y el backend no pedía nada. Ahora Nginx solo reparte, y *quien autentica y autoriza es el backend*, que es el único que puede saber de quién es cada dato.
 
+== Dos entornos: la cocina y la caja
+Toda la práctica se trabajó sobre *dos* instalaciones de HookSuite, y la separación entre ellas es una decisión de ingeniería, no una comodidad. Conviene explicarla antes de los apartados 6, 7 y 8, porque es el marco en el que ocurre todo lo que esos apartados cuentan.
+
+#tabla(
+  (auto, 5fr, 4fr),
+  "
+  Entorno | Para qué | Quién lo toca
+  *La cocina* (servidor doméstico propio) | Donde se reproduce cada defecto, se escribe el arreglo, se reconstruyen los contenedores y se verifica que funciona. Todas las pruebas de las Fases 1 y 2 se ejecutaron aquí. | Cualquier cambio, cuantas veces haga falta
+  *La caja* (servidor público contratado) | La instalación que usan las personas. Es la herramienta final. | *Solo recibe despliegues.* Ni un comando de prueba, ni un arreglo rápido, ni una reconstrucción
+  ",
+)
+
+*El orden de trabajo, siempre el mismo.* Reproducir el fallo en la cocina → escribir el arreglo → reconstruir y verificar en la cocina → y solo entonces desplegar a la caja y volver a verificar allí. Ninguna de las dos verificaciones sustituye a la otra, y la memoria las mantiene *separadas a propósito*: en la matriz del apartado 9 hay requisitos marcados como «verificado en cocina, pendiente de producción», y el apartado 7 estuvo diciendo expresamente que no podía afirmar nada de la instalación pública hasta que el despliegue se hizo de verdad.
+
+*El despliegue descarta lo que encuentre en la caja.* Se trae el código con `git fetch` y `git reset --hard`, nunca con `git pull`. La diferencia importa: `reset --hard` *borra* cualquier cambio local, así que si alguien editara un fichero en la caja, el siguiente despliegue se lo llevaría. Eso no es un efecto secundario que se tolere, es el comportamiento que se busca: convierte la caja en un destino y no en un sitio donde trabajar.
+
+*Y la regla nació de un fallo propio, que es la razón de que sea tan estricta.* La interfaz que corría en producción se había reescrito directamente en la caja y *no estaba en ninguna rama del repositorio*: existía solo allí, sin commitear, sin revisar y sin forma de reconstruirla si la máquina se perdía. Recuperarla fue una de las tareas de la Fase 0. La prohibición de editar en la caja no es prudencia abstracta: es la respuesta a haber estado a un fallo de disco de perder el frontend.
+
+*Por qué en esta herramienta pesa más que en otras.* HookSuite lanza tráfico contra sistemas de terceros —rastrea, repite peticiones y prueba cargas—. Ensayar eso en la instalación que otras personas están usando no arriesga solo nuestros datos: arriesga dirigir tráfico de ataque desde la infraestructura pública del grupo sin querer. El laboratorio vulnerable con el que se prueba vive, por eso, en la red interna de la cocina (apartado 7).
+
+*Lo que esta separación NO garantiza, dicho sin adornos.* La cocina no es idéntica a producción: comparte máquina con otros servicios y remapea puertos (ver la nota de reproducibilidad al final de este apartado). Por tanto «verificado en la cocina» es una afirmación más débil que «verificado en producción», y la memoria no las confunde en ningún sitio. El caso que lo demuestra se cuenta en el apartado 8: un despliegue que habría terminado sin errores *sin aplicar* la configuración del proxy, porque nombrar un servicio en un comando no prueba que el comando lo recree.
+
 == Decisiones técnicas
 === Proxy del lado servidor: pivote PAC → httpx (RF-02)
 La decisión arquitectónica de más peso heredada de la P1. En origen, HookSuite interceptaba el tráfico del navegador con un archivo de autoconfiguración (PAC) + WebSockets; ese modelo quedó expuesto y se saturó con tráfico de bots. Se pivotó a que *el servidor ejecute las peticiones directamente con `httpx`*: menos superficie y un flujo más simple, a cambio de perder la captura pasiva del tráfico del navegador —justo lo que retoman después DevTools (RF-09) y Playwright (RF-10)—. Versión original/nueva/justificación detalladas en el apartado 4.
@@ -365,6 +387,8 @@ El flujo completo del acceso, capturado en la instalación pública el mismo dí
 = 8. Pruebas y evidencias
 Plan de pruebas, casos ejecutados, resultados y las pruebas que fallaron con su explicación. El detalle caso a caso (PR-01…PR-20) se mantiene en la matriz del apartado 9 y en el diario del repo.
 
+*Dónde se tomó cada evidencia, porque cambia lo que vale.* Salvo cuando se dice lo contrario, *toda* la verificación de las Fases 1 y 2 se ejecutó en la cocina —el entorno de pruebas descrito en el apartado 5—, y se repitió después contra la instalación pública tras cada despliegue. Las dos se registran por separado y con su fecha: una prueba en la cocina dice que el arreglo funciona; solo la de producción dice que *está puesto*. Esa distinción no es formalismo: más abajo se cuenta un despliegue que habría pasado por correcto sin aplicar la configuración que se le pedía.
+
 == Evidencia de exposición (RNF-07 / PR-16), capturada el 4-oct
 La prueba PR-16 —llamar a la API sin credenciales— y la verificación del frontend confirman que, antes de endurecer, el producto quedaba accesible sin autenticación. Capturas obtenidas antes de cualquier arreglo (R6: la evidencia de un fallo se captura antes de corregirlo, porque el propio arreglo la destruye):
 
@@ -425,6 +449,15 @@ Ni el código de invitación ni las contraseñas aparecen en ninguna salida: el 
 
 > *Nota de tratamiento de las capturas (R7).* La del usuario A mostraba el valor íntegro de la cabecera `XSRF-TOKEN`, que es el identificador de sesión capturado *de la web auditada*: justo el dato que este requisito existe para no compartir. Se publica con ese valor tapado y la etiqueta a la vista, para que se vea qué se redactó; el original no sale del almacén interno. La del usuario B lleva tapada la barra de marcadores del navegador, ajena al proyecto.
 
+
+== El despliegue habría terminado «en verde» sin aplicar la configuración del proxy
+La comprobación previa al despliegue de la Fase 2 —hecha *antes* de tocar la instalación pública— encontró un defecto no en el producto, sino *en el propio plan de despliegue*, escrito dos días antes. Se cuenta porque el enunciado pide las pruebas que fallaron, y porque el modo de fallo es de los que no avisan.
+
+El plan mandaba reconstruir «solo el frontend, el backend y el proxy». Pero el proxy *no se construye*: usa una imagen descargada, y su bloque del fichero de composición *no cambiaba ni un byte* entre la rama publicada y la que se iba a desplegar. Compose lo veía idéntico a lo que ya estaba corriendo y, por tanto, *no lo habría recreado*. Y como el proxy lee su configuración una sola vez al arrancar —y el contenedor en producción llevaba vivo desde dos días antes—, el despliegue habría acabado *sin errores y sin aplicar nada*: el panel de acceso nuevo habría seguido detrás de la contraseña compartida que la Fase 2 venía a jubilar, y las dos rutas retiradas habrían seguido publicadas.
+
+*Lo que convierte esto en una lección y no en una anécdota:* era el mismo fallo que ya había ocurrido dos días antes, con el mismo servicio y la misma causa. Y la razón de que se repitiera es instructiva: *nombrar un servicio en un comando da la impresión de cubrirlo*. El plan lo nombraba, así que nadie volvió a mirar si el comando lo tocaba de verdad.
+
+*Arreglo:* forzar explícitamente la recreación de ese servicio. Cuesta segundos y no construye nada. *Se descartó* recargar la configuración en caliente —que también habría funcionado, pero depende de un detalle del sistema de ficheros en lugar de ser incondicional— y también tocar su bloque del fichero de composición solo para que Compose lo viera cambiado, que es resolver el síntoma ensuciando la fuente.
 
 == Prueba preparada y NO ejecutada: el techo de gasto del módulo de IA (RF-08)
 El plan de pruebas incluye un caso que *no se ha podido ejecutar*, y se declara en lugar de omitirse. Una auditoría del módulo de IA no tiene límite de consultas al modelo: el recorrido anida páginas × tipos de prueba × cargas, y cada carga es una consulta. Con el disparador de la interfaz construido, cada pulsación arrancaría ese recorrido completo.
