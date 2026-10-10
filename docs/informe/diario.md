@@ -2713,5 +2713,18 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
   tienen el tamaño del cambio — 67/15 y 10/2, sin conversiones de saltos de línea que los vuelvan ilegibles.
 - **A qué requisito toca:** **RF-08** (causa raíz) y **apartado 8**. Pendiente: recrear el `backend`,
   comprobar que `ia:hallazgos` pasa a **1 oyente**, y repetir el ciclo rastreo → auditoría.
-- **Evidencia:** ⚠️ FALTA: `PUBSUB NUMSUB` tras recrear, con `ia:hallazgos` en 1 **[terminal — Claude]**.
+- **Evidencia:** `evidencias/consumidor-hallazgos-arreglado-10oct.md` — contraste antes/después con el
+  mismo comando: `ia:hallazgos` de **0 a 1** oyentes, y `Task exception` de **1 a 0**.
 - **Horas:** ~0,4 h de Claude. **0 € de API.**
+
+### Fase 3 (10-oct, 20:3x) · El arreglo funciona: el canal de vuelta queda abierto
+
+- **josemax recreó el backend** y el mismo comando que antes daba 0 ahora da **1 oyente en `ia:hallazgos`**
+  (y 1 en `traffic`, que también estaba huérfano). Registro: **1 arranque, 0 caídas, 0 `Task exception`**.
+- **Por qué esta prueba vale:** es el **mismo comando antes y después**, sobre el mismo sistema, con un
+  único cambio en medio. No hay que creerse el razonamiento: el contraste 0 → 1 lo enseña.
+- **Lo que queda para cerrar RF-08:** relanzar el spider contra academyx (el rastreo se perdió al recrear,
+  asumido) y pulsar auditar. Si los hallazgos aparecen, el requisito se cierra de punta a punta.
+- **A qué requisito toca:** **RF-08**.
+- **Evidencia:** `evidencias/consumidor-hallazgos-arreglado-10oct.md`.
+- **Horas:** ~0,1 h de Claude. **0 € de API.**
