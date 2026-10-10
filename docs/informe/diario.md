@@ -1955,3 +1955,40 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
 - **Evidencia:** `docs/evidencias/escala-confianza-guardia-10oct.md` (las dos salidas y lo que queda abierto);
   commits `8093a754` (código) y `70aaf278` (memoria técnica).
 - **Horas:** ~0,5 h de Claude. 0 € de API.
+
+### Fase 3 (10-oct) · El método de trabajo estaba en el protocolo pero NO en la memoria
+
+- **Qué se hizo:** apartado 5 → sección nueva **«Dos entornos: la cocina y la caja»**; apartado 8 → encuadre
+  de dónde se tomó cada evidencia, más la lección del despliegue que habría terminado «en verde» sin aplicar
+  la configuración del proxy. `.typ` 574 → 598+ líneas, PDF y artefacto regenerados y **publicado**.
+- **De dónde salió:** lo detectó josemax preguntando si el método de trabajo —arreglar, reconstruir en la
+  cocina, verificar, y solo entonces pasar a la caja— estaba escrito en algún sitio. **Sí lo estaba: es la R1
+  del `PROTOCOLO-TRABAJO.md`**, que esta misma sesión leyó al arrancar. Lo que no estaba era **en el
+  entregable**.
+- **El hueco, medido:** la memoria decía «cocina» **13 veces y no la explicaba ni una**. Las 13 eran de
+  pasada («verificado en la cocina», «medidos en la cocina el 6-oct», «montaje de la cocina»). Lo más
+  parecido a una explicación era una **nota entre paréntesis** sobre el remapeo de puertos, que es
+  reproducibilidad y no método. Quien corrige la práctica leía el término trece veces sin que nadie le dijera
+  qué es.
+- **Qué se contó, que antes no estaba en ninguna parte del documento:** los dos entornos y para qué es cada
+  uno; el orden de trabajo siempre igual; que la caja **solo recibe despliegues**; que el `reset --hard` es
+  **decisión deliberada** y no descuido, porque convierte la caja en un destino y no en un sitio donde
+  trabajar; **el fallo que motivó R1** —el frontend de producción vivía solo en la caja, sin commitear y
+  sin estar en ninguna rama: se estuvo a un fallo de disco de perderlo—; por qué en esta herramienta pesa
+  más que en otras (lanza tráfico contra terceros); y **lo que la separación NO garantiza**, porque la cocina
+  no es idéntica a producción.
+- 🔴 **Qué falló de paso, y es el hallazgo que más vale de esta tanda: escribí DOS referencias cruzadas a un
+  caso que NO estaba en la memoria.** Al verificarlas (R9) resultó que la única aparición de «nombrar un
+  servicio» en el `.typ` **era mi propia frase recién escrita**: me estaba citando a mí mismo apuntando a la
+  nada. La lección del despliegue sí existía, pero **solo en el diario**. Arreglado escribiéndola de verdad
+  en el apartado 8 —con los hechos sacados del diario, no de memoria— y corrigiendo los dos cruces (uno
+  además apuntaba al apartado equivocado). **Es la tercera cita muerta de esta línea, y la primera que se
+  caza antes de publicarla**: el pendiente del cerco que comprueba las citas del diario debería cubrir
+  también las referencias internas del `.typ`.
+- **Qué NO se hizo:** corregir el «Diez defectos del prototipo» del apartado 6, que la tabla contradice con
+  **12 filas** (13 menos la cabecera, contado a máquina). Detectado hoy al reconstruir las Fases 1 y 2;
+  josemax decidió dejarlo para después. Sigue abierto.
+- **A qué requisito toca:** ninguno del producto. Apartados 5 y 8, y método de trabajo (R1).
+- **Evidencia:** `(no aplica)` — es redacción, y el método ya tiene su evidencia en los despliegues del 5 y
+  8-oct ya documentados.
+- **Horas:** ~0,5 h de Claude.
