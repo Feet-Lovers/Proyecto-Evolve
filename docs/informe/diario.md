@@ -1863,3 +1863,42 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
 - **Evidencia:** `evidencias/testigo-prompts-rf08-10oct.md` (informe del testigo, con `[leído]`/`[deducido]`
   y cada dato atado a fichero+línea).
 - **Horas:** ~0,4 h de Claude; el testigo, 2,4 min de reloj y 9 llamadas de herramienta.
+
+### Fase 3 (10-oct) · Arreglados los tres defectos de RF-08 con un cambio en el generador
+
+- **Qué se hizo, en el orden que exige R6 (evidencia antes del arreglo):**
+  1. Prueba nueva `ia/tests/test_esquemas_bandera.py` (118 líneas) contra el esquema **sin tocar**:
+     **5/11**. Los seis fallos son los defectos reales.
+  2. Evidencia guardada como **texto** (no foto): `docs/evidencias/esquemas-bandera-antes-10oct.md`.
+  3. Arreglo en `herramientas/generar-esquemas.py` (114 → 193 líneas): las tres banderas a `boolean`,
+     `confianza` con `minimum: 0, maximum: 100`, y `CLAVES_DECLARADAS` para los métodos que devuelven la
+     respuesta sin inspeccionarla. Regenerado `ia/esquemas.py` (+32/−9).
+  4. **11/11**, y `test_tres_estados.py` sigue **8/8** → el cambio no rompió RNF-06.
+- **Por qué en el generador y no en `esquemas.py`:** su cabecera dice «NO editar a mano: se regenera», y el
+  siguiente `generar-esquemas.py` se habría llevado el arreglo. El defecto estaba en quien escribe, no en
+  lo escrito.
+- **Qué se descartó, y el caso que se deja fallando a propósito:** cerrar la confusión de escala con un
+  rango. **No se puede:** `0.85` está *dentro* de 0-100 (sería «0,85 % de confianza»), así que el rango lo
+  acepta y luego `0.85 >= 60` lo descarta en silencio. Cazarlo exige `{"type": "integer"}`, y **no consta
+  si los prompts piden entero** (el informe del testigo da la escala, no el tipo). El caso se queda en el
+  test **con ese nombre**, documentando la limitación en vez de ocultarla: una prueba que miente sobre lo
+  que cubre es peor que una que falta.
+- **Qué falló de paso:** el primer `0.85` del test lo escribí esperando un rechazo. **El fallo era mío, no
+  del arreglo** — corregido en el acto y declarado (R9).
+- **Hallazgo nuevo, que va al apartado 10:** el generador **no está versionado**. Vive en
+  `lineas/practica3-hooksuite/herramientas/`, que no es un repo git: sin historial, sin PR y sin autoría,
+  al contrario que todo el código. Y no es inocuo — **el único sitio sin historial resultó ser justo donde
+  estaba el defecto**, porque es donde nadie vio la lista incompleta.
+- **Memoria técnica, en la misma pasada (R4):** apartados **8** (el defecto y su causa única), **10** (las
+  dos limitaciones nuevas) y **12** (el método de lectura delegada, con su límite declarado). Las tres
+  salidas regeneradas y **verificadas con `grep` en las tres**, no supuestas: `.typ` 527 → 561 líneas, PDF
+  (con `--root .`) y artefacto (con el python del venv, que aporta Pillow). **Artefacto PUBLICADO** en su
+  URL fija — el desfase que arrastraba desde el 8-oct queda cerrado.
+- **Protocolo de contexto limpio ampliado:** `orchestrator.py` añadido a `.claude/sensibles.txt`. Hizo
+  saltar el clasificador el 9-oct y llevaba desde entonces sin proteger; la memoria incluso afirmaba lo
+  contrario («no es sensible → se puede hacer ya»), y esa frase falsa fue la que mandó a la sesión de las
+  17:2x a abrirlo. Corregida en `HOJA-DE-RUTA.md:1372` con la corrección a la vista (R9).
+- **A qué requisito toca:** RF-08 (los tres defectos, cerrados) y RNF-06; apartados 8, 10 y 12.
+- **Evidencia:** `docs/evidencias/esquemas-bandera-antes-10oct.md` (las dos salidas y la limitación que
+  queda); commits `8b8dd3eb` (código) y `48cc4d25` (memoria técnica).
+- **Horas:** ~1,1 h de Claude en total. 0 € de API: ninguna prueba sale a la red.
