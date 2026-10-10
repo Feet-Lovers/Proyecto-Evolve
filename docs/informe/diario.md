@@ -2357,3 +2357,48 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
 - **Evidencia:** (no aplica) — el resultado de esta entrada *es* el propio documento; comprobable en el
   apartado 9 del PDF y del artefacto, y en los commits `cd7f2434` y `011c6d7c`.
 - **Horas:** ~0,4 h de Claude. **0 € de API.**
+
+### Fase 3 (10-oct, 18:1x) · La primera auditoría REAL rechazada entera: el esquema era válido para nosotros, no para la API
+
+- **De dónde salió:** primera auditoría con clave válida y techo 10, lanzada por josemax desde el panel
+  contra `web.academyx.es` (web propia del equipo). **Las nueve llamadas que salieron se rechazaron**, todas
+  con el mismo error y distinto identificador de petición.
+- **El error, literal:** `400 invalid_request_error — output_config.format.schema: For 'object' type,
+  'additionalProperties: true' is not supported. Please set 'additionalProperties' to false`.
+- **Coste: 0 €.** Un `400` se rechaza *antes* de procesar, así que no factura tokens. El techo de 10 acotó
+  el daño de todas formas, que es para lo que está.
+- **La causa, y que estaba puesta a propósito:** el generador emitía los objetos **abiertos**
+  (`additionalProperties: true`) y lo decía en su propio comentario — *«el resto queda abierto a propósito
+  para no romper si un prompt añade campos»*. El motivo era razonable; lo derrota una **restricción externa**
+  que nadie había comprobado. Si un prompt añade campos, lo que toca es regenerar el fichero, que para eso
+  existe el generador.
+- **🔴 Y esto es lo que de verdad enseña el episodio: `test_esquemas_bandera.py` daba 11/11 — y las seguía
+  dando con el defecto dentro.** Comprobaba lo que *nosotros* le pedíamos al esquema (tipos de las banderas,
+  rango de la confianza) y **nunca lo que la API exige para aceptarlo**. Hizo falta que un esquema saliera
+  de casa **por primera vez** para que se viera. *Un esquema validado contra tu propio test no está
+  validado: está de acuerdo contigo.*
+- **Qué se hizo:** arreglo **en el generador**, no en el fichero generado (que avisa en su cabecera de que
+  se regenera), y regeneración. Incluye los objetos **anidados**, que era por donde se colaba el de
+  `vectores_prioritarios`. Las tres pruebas que tocan esto siguen pasando: **11/11, 8/8 y 19/19**.
+- **Prueba nueva, y verificada como manda la casa:** `ia/tests/test_esquemas_api.py` recorre los esquemas
+  *en profundidad* y exige que ningún objeto quede abierto. **Da 1/5 contra el esquema de esta mañana y 5/5
+  contra el regenerado** — distingue las dos versiones, que es la única forma de que una prueba valga. Lleva
+  además una comprobación de que *sabe contar*: si el recorrido no encuentra ni un objeto, falla, para que
+  un cero no se confunda con un aprobado.
+- **Un fallo propio al estrenarla, declarado (R9):** la primera vez que la lancé contra el esquema viejo
+  «falló», pero no por detectar nada: reventó con una excepción porque el respaldo no acababa en `.py`, y su
+  código de salida 1 **se parecía a un fallo legítimo**. Casi lo doy por bueno. Corregido en la propia
+  prueba, que ahora avisa de que no puede importar el fichero en vez de estrellarse.
+- **⚠️ Reincidencia que ya no es anecdótica:** el defecto estaba **otra vez** en `herramientas/`, el
+  generador, que es el **único sitio del proyecto sin control de versiones**. Es la segunda vez —el
+  apartado 8 ya cuenta la primera, la de la lista de campos escrita a mano— y la causa de fondo es la
+  misma: *lo que no está en git es donde nadie mira*.
+- **Qué se descartó:** editar `ia/esquemas.py` a mano para salir del paso (es un fichero generado: el
+  arreglo habría durado hasta la siguiente regeneración); y quitar el techo para «ver si funciona», que es
+  exactamente la forma de gastar que vació los 5 € de la P1.
+- **A qué requisito toca:** **RF-08** (la vía de análisis, que sigue sin poder darse por buena hasta que una
+  auditoría real devuelva hallazgos) y **RNF-06**, cuya vía degradada funcionó: los 39 restantes salieron
+  como «no analizado» con el motivo del techo, y los 9 con su motivo de error. Nada se perdió en silencio.
+- **Evidencia:** salida de las tres pruebas y de la nueva (1/5 vs 5/5), reproducible con
+  `python3 ia/tests/test_esquemas_api.py ia/esquemas.py`. Commit `db360ff8`.
+- **Horas:** ~0,4 h de Claude. **0 € de API** (los 400 no facturan).
