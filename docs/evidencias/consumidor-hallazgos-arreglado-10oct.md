@@ -71,3 +71,41 @@ dentro del contenedor.
 
 **Leccion, en una linea: un efecto observado justo despues de recrear no distingue codigo nuevo de codigo
 viejo recien arrancado.** Se verifica el CODIGO dentro del contenedor, no el sintoma.
+
+---
+
+## ✅ VERIFICACION BUENA (20:5x) — esta vez con el codigo comprobado y sin gastar API
+
+Tras recrear **con `--build`**:
+
+    sha256 /app/services/redis_consumer.py (contenedor)  7a1db8bb1dde0e05
+    sha256 backend/services/redis_consumer.py (repo)     7a1db8bb1dde0e05   <-- COINCIDEN
+    "async for message in pubsub.listen"  -> 0    (codigo viejo fuera)
+    "get_message"                         -> 3    (codigo nuevo dentro)
+    "tareas_fondo" en /app/main.py        -> 1    (referencia fuerte dentro)
+
+⚠️ **Un grep mal pensado dio falso negativo primero.** `grep -c 'pubsub.listen()'` devolvia **1** aun con
+el codigo nuevo: el docstring del arreglo **menciona** `pubsub.listen()` para explicar por que ya no se usa.
+Hay que buscar la LINEA DE CODIGO (`async for message in pubsub.listen`), no el nombre suelto. Mismo error
+de familia que «comprobar que el escaner sabe contar»: un contador que cuenta lo que no es.
+
+### Prueba funcional a coste 0 €
+
+En vez de quemar otra auditoria real, se inyecto un hallazgo de prueba **sin dueño** en el bus:
+
+    $ docker compose exec -T redis redis-cli PUBLISH ia:hallazgos '{"prueba":"...","sin_espacio":true}'
+    1                                     <-- 1 suscriptor lo recibio
+
+    (en orden APARTE, sin encadenar publicacion y lectura)
+    descartados sin espacio : 1           <-- lo PROCESO
+    oyentes ia:hallazgos    : 1           <-- y SIGUE VIVO despues
+    consumer caido          : 0
+    Task exception          : 0
+
+**Por que esta prueba vale y la anterior no:** la de las 20:30 solo medía que hubiera un suscriptor **justo
+despues de arrancar**, cosa que el codigo viejo tambien hacia. Esta demuestra el ciclo entero —recibir,
+procesar y seguir vivo— que es exactamente donde el codigo viejo se moria. Y no cuesta nada, asi que puede
+repetirse en cada despliegue.
+
+**Lo que esto NO prueba todavia:** que un hallazgo REAL, con su `espacio`, llegue hasta el panel. Eso
+necesita el ciclo spider -> auditar.
