@@ -1902,3 +1902,22 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
 - **Evidencia:** `docs/evidencias/esquemas-bandera-antes-10oct.md` (las dos salidas y la limitación que
   queda); commits `8b8dd3eb` (código) y `48cc4d25` (memoria técnica).
 - **Horas:** ~1,1 h de Claude en total. 0 € de API: ninguna prueba sale a la red.
+
+### Fase 3 (10-oct) · Los prompts NO piden la confianza entera: el esquema no es el sitio del arreglo
+
+- **Qué se hizo:** segundo encargo al `testigo`, de una sola pregunta → el tipo numérico de `confianza`
+  (informe: `evidencias/testigo-confianza-entero-10oct.md`).
+- **Respuesta, con la ausencia confirmada:** en los cuatro ficheros, `confianza` aparece **solo** con el
+  marcador de rango 0-100 (`network_packet.py:10`, `intruder.py:11`, `console.py:10`, `fingerprint.py:21`).
+  **Ninguno dice «entero», «int», «redondeado» ni «sin decimales»**, ni a favor ni en contra. Y ninguno da un
+  valor de ejemplo de ese campo. Los cuatro coinciden: no hay discrepancia.
+- **Por qué esto cambia la decisión:** poner `{"type": "integer"}` en el esquema **no corregiría un desajuste
+  prompt/esquema** —no hay desajuste—, sino que **impondría por esquema algo que el prompt no pide**. Sería
+  el mismo error que arreglamos esta mañana, pero del revés: hacer que las dos piezas discrepen en vez de
+  acercarlas. El arreglo, por tanto, no va en el esquema.
+- **Qué NO se hizo, y es deliberado:** cambiar el esquema igualmente «porque es más estricto». Un control que
+  rechaza respuestas válidas no es más seguro: convierte análisis buenos en fallos, y con RNF-06 ya puesto
+  eso se vería como «no analizado» sin que nada estuviera mal.
+- **A qué requisito toca:** RF-08 y RNF-06; apartados 8 y 10. **Decisión pendiente de josemax.**
+- **Evidencia:** `evidencias/testigo-confianza-entero-10oct.md` (ausencia confirmada, atada a fichero+línea).
+- **Horas:** ~0,1 h de Claude; el testigo, 1,1 min y 8 llamadas de herramienta.

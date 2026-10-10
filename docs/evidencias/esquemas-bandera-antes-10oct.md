@@ -53,7 +53,8 @@ El arreglo NO se hizo en `ia/esquemas.py` —su cabecera lo prohíbe y el siguie
 llevaría— sino en `herramientas/generar-esquemas.py`, y luego se regeneró:
 
 ```
-$ python3 herramientas/generar-esquemas.py ia/analyzers/vulnerability_classifier.py ia/esquemas.py
+$ python3 ~/claude-workspace/lineas/practica3-hooksuite/herramientas/generar-esquemas.py \
+      ia/analyzers/vulnerability_classifier.py ia/esquemas.py
 ESQUEMA_PACKET: 7 claves (deducidas del clasificador)
 ESQUEMA_INTRUDER: 7 claves (deducidas del clasificador)
 ESQUEMA_CONSOLE: 7 claves (deducidas del clasificador)
