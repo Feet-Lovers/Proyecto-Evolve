@@ -2878,3 +2878,25 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **A qué requisito toca:** **RF-08** y **RNF-06**.
 - **Evidencia:** recuentos del bundle (`ia_resumen` 1, texto del contador 2, control 1).
 - **Horas:** ~0,5 h de Claude. **0 € de API.**
+
+### Fase 3 (10-oct, 21:5x) · La auditoría tarda minutos y el panel no lo dice
+
+- **Situación:** josemax esperó a que el spider terminara (**54 peticiones** recogidas, más que las 48 de
+  referencia), pulsó auditar, y en el panel **no aparecía nada**. Medido en el módulo: `-> Auditoria de`
+  **1**, `Auditoria terminada` **0**, `interrumpida` **0**. No se había caído: **seguía trabajando**.
+- **🟠 Defecto, y es la cuarta variante del mismo patrón en el día:** mientras la auditoría corre, el panel
+  enseña **exactamente lo mismo** que si no hubiera pasado nada — el mensaje de «auditoría lanzada» y cero
+  resultados. **No distingue «en curso» de «terminado sin hallazgos»**, igual que antes no distinguía
+  «sin hallazgos» de «no pude valorarlo» (RNF-06), «lanzada» de «lanzada en vacío», ni «no hay nada» de
+  «no puedo verlo». Arreglo natural: un indicador de progreso o un estado «auditando…» en la cabecera.
+- **Y explica probablemente un diagnóstico mío anterior:** en la tirada previa interpreté «2 análisis» como
+  «había poco material que auditar». Con 54 peticiones recogidas y el techo sin tocarse, la explicación
+  más plausible es otra: **medí mientras todavía estaba trabajando**. Lo de «el spider no había terminado»
+  se sostiene peor. Queda como hipótesis corregida, no como hecho.
+- **Método que se aplica a partir de ahora:** antes de interpretar las cifras de una auditoría, comprobar
+  que **ha terminado** (`Auditoria terminada` o `interrumpida` en el registro). Medir una tarea en curso y
+  leer el resultado como definitivo es el mismo error que dar por desplegado lo que no se desplegó.
+- **A qué requisito toca:** **RF-08** y **apartado 8**.
+- **Evidencia:** recuentos del módulo del 10-oct 21:5x (arranque 1, terminada 0, interrumpida 0) y las 54
+  peticiones del proxy reportadas por josemax.
+- **Horas:** ~0,1 h de Claude.
