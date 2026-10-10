@@ -48,7 +48,12 @@ def objetos_abiertos(nodo, camino="raíz"):
     anidados cuentan igual, que es por donde se coló el de `vectores_prioritarios`)."""
     malos = []
     if isinstance(nodo, dict):
-        if nodo.get("type") == "object" and nodo.get("additionalProperties") is not False:
+        # OJO con la lista: un campo declarado {'type': ['string', …, 'object', …]} cuenta
+        # como objeto para la API y exige additionalProperties:false igual que uno puro.
+        # Mirar solo `== "object"` dejó pasar 22 campos y costó una tercera reconstrucción.
+        t = nodo.get("type")
+        es_objeto = t == "object" or (isinstance(t, list) and "object" in t)
+        if es_objeto and nodo.get("additionalProperties") is not False:
             malos.append(camino)
         for clave, valor in nodo.items():
             malos += objetos_abiertos(valor, f"{camino}.{clave}")
