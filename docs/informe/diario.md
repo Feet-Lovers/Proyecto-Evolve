@@ -2151,7 +2151,7 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
   camino es silencioso, que es **el defecto exacto que el bus vino a arreglar**. Se declara aquí en vez de
   cambiarse en silencio.
 - **🔴 Vía de fuga NUEVA para el contexto limpio, y es la lección que más lejos llega.** El clasificador se
-  disparó con `docker compose logs --since 30s ia`. **El fichero protegido no se leyó**: se leyó **su salida
+  disparó con **un solo comando encadenado** que publicaba la orden en el bus, esperaba 12 s y terminaba en `docker compose logs --since 30s ia | tail -20`. **El fichero protegido no se leyó**: se leyó **su salida
   en ejecución**, que lleva la misma clase de contenido. `.claude/sensibles.txt` protege **rutas de
   ficheros**, y el log de un contenedor no es una ruta → el cerco `contexto-limpio.sh` **no lo frena**. Un
   fichero quieto está protegido; **el mismo código ejecutándose, no**. Decisión pendiente de josemax: si la
@@ -2164,3 +2164,32 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
   96 veces) y apartados 8, 10 y **12** (el incidente de la salvaguarda).
 - **Evidencia:** `docs/evidencias/bus-ia-prueba-en-vivo-10oct.md` (los siete bloques de recuentos).
 - **Horas:** ~0,7 h de Claude (destilado del rescate incluido). **0 € de API.**
+
+### Fase 3 (10-oct, 12:45) · La captura del comando desmiente al rescate: fue UNA llamada, y eso cambia la lección
+
+- **De dónde salió:** josemax aportó la captura del comando que hizo saltar la salvaguarda
+  (`evidencias/capturas/Salto1_Salvaguarda.png`). Se abrió **solo porque él confirmó que contiene el comando
+  y no la salida** — y las dimensiones lo respaldaban (1463×249 px: no caben 30 s de log).
+- **⚠️ CORRECCIÓN DECLARADA (R9), y es sobre el diagnóstico, no sobre un detalle.** El borrador del rescate
+  afirmaba que el disparo fue un `docker compose logs` **«inmediatamente después de»** el publish, o sea
+  **dos** comandos. **Fue uno solo**: `publish …full_audit… ; sleep 12 ; docker compose logs --since 30s ia
+  | tail -20`, todo encadenado en una misma llamada.
+- **Por qué importa:** el problema **no fue leer un log**. Fue **arrancar algo ofensivo y leer su salida en
+  la misma llamada**, que elimina el único punto donde se podía parar: el `sleep 12` le da tiempo a producir
+  material y el `| tail -20` lo mete en el contexto sin que nadie llegue a mirar qué era. Como dos comandos
+  parecía un descuido al leer; como uno **es un diseño que no podía salir bien**.
+- **Regla que queda, y es más útil que la anterior:** disparar y observar van en **llamadas separadas**, y la
+  observación empieza siempre **midiendo**. Si entre arrancar algo y mirarlo hace falta un `sleep`, eso ya
+  indica que son dos pasos.
+- **Segunda lección, sobre el propio ciclo de rescate:** el borrador lo escribe un modelo de relevo «sin
+  pensar ni verificar». Ya sabíamos que **sus efectos en el servidor son un testimonio, no un hecho**; hoy se
+  demuestra que **su relato del disparo también lo es**. Se equivocó en lo esencial y su versión llegó a
+  **cinco documentos** antes de que la captura la desmintiera. **Al destilar, el campo 8 se contrasta como
+  todo lo demás** — y la fuente para contrastarlo es una captura del comando, que josemax puede sacar sin
+  riesgo porque el comando no es el contenido.
+- **Qué se descartó:** reconstruir el comando desde `bitacora/` — el cerco lo bloqueó (correctamente: esa
+  ruta está protegida y registra la **salida** de todos los comandos en texto plano), y no se insistió.
+- **A qué requisito toca:** apartado 12 (uso de herramientas de IA) y el protocolo de contexto limpio.
+- **Evidencia:** `docs/evidencias/bus-ia-prueba-en-vivo-10oct.md` §7b; captura
+  `Salto1_Salvaguarda.png` — **vive FUERA del repo**, en `~/claude-workspace/lineas/practica3-hooksuite/evidencias/capturas/` (no copiada aquí todavía: publicarla en un repo público es decisión de josemax). **Revisada entera antes de citarla: no lleva ningún secreto.**
+- **Horas:** ~0,2 h de Claude. **0 € de API.**

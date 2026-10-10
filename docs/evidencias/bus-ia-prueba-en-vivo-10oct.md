@@ -104,10 +104,38 @@ de ese camino es silencioso, que es exactamente el defecto que el bus vino a arr
 
 ## 7. Vía de fuga NUEVA, no cubierta por la lista de protección
 
-El clasificador se disparó con `docker compose logs --no-color --since 30s ia`. **El fichero no se leyó**:
+El clasificador se disparó con **un solo comando encadenado** que publicaba la orden en el bus, esperaba 12 s y terminaba en `docker compose logs --since 30s ia | tail -20`. **El fichero no se leyó**:
 se leyó su *salida en ejecución*, que lleva la misma clase de contenido (nombres de fase de ataque,
 recuentos de intentos). `.claude/sensibles.txt` (48 líneas) protege **rutas de ficheros**, y un log de
 contenedor no es una ruta → el hook `contexto-limpio.sh` no lo frena.
 
 Decisión pendiente de josemax: si la lista debe cubrir también `docker logs` / `docker compose logs` del
 servicio `ia`. Mientras no se decida, la norma de trabajo es la de este documento: **medir, nunca volcar**.
+
+### 7b. 🔴 CORRECCIÓN (12:45, con la captura del comando delante): fue UN comando, no dos
+
+El borrador del rescate decía que el disparo fue un `docker compose logs` **«inmediatamente después de»** el
+publish —es decir, **dos** comandos—. **Es falso.** La captura
+(`lineas/practica3-hooksuite/evidencias/capturas/Salto1_Salvaguarda.png`, aportada por josemax) enseña que
+fue **una sola llamada encadenada**:
+
+```
+cd …/Proyecto-Evolve ; echo "=== publico una orden de prueba en el bus ===" ;
+docker compose exec -T redis redis-cli publish ia:instrucciones '{"type":"full_audit",…}' 2>&1 ;
+echo " (el número = suscriptores que la oyeron; debe ser 1)" ;
+sleep 12 ; echo ; echo "=== qué hizo el módulo IA ===" ;
+docker compose logs --no-color --since 30s ia 2>&1 | tail -20
+```
+
+**Y eso cambia la lección.** El problema no fue «leer un log»: fue **arrancar algo ofensivo y leer su salida
+en la misma llamada**, lo que elimina el único punto donde se podía parar. El `sleep 12` le da tiempo a
+producir material y el `| tail -20` lo mete en el contexto sin que nadie llegue a mirar qué era. Visto como
+dos comandos parece un descuido; visto como uno es **un diseño que no podía salir bien**.
+
+**Regla que queda:** disparar y observar van en **llamadas separadas**, y la observación empieza siempre
+midiendo. Si entre arrancar algo y mirarlo hace falta un `sleep`, eso ya indica que son dos pasos.
+
+> ✅ **La captura está vetada y es publicable:** revisada entera antes de citarla (norma de que ninguna
+> captura se publica sin abrirla). Muestra el comando, el `restart` de nginx y las dos comprobaciones
+> (`frontend HTTP 200`, `api no-analizados HTTP 401`). **No lleva ningún secreto**: ni claves, ni tokens, ni
+> cabeceras de sesión. Solo nombres de host internos, el puerto local y el espacio de usar y tirar.
