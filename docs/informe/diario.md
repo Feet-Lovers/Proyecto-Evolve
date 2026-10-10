@@ -2231,3 +2231,55 @@ Entrada de proceso, no de producto: aquí queda lo que el apartado «reparto del
 - **Evidencia:** `docs/evidencias/bus-ia-prueba-en-vivo-10oct.md` (recuentos de las 12:26) ·
   ⚠️ **FALTA: captura del panel al pulsar «auditar con IA» [pantalla — josemax, la trae la próxima sesión]**.
 - **Horas:** ~0,5 h de Claude. **0 € de API.**
+
+### Fase 3 (10-oct, 13:30) · La salvaguarda saltó con ocho comandos impecables: lo que pesa es el turno, no el comando
+
+- **De dónde salió:** cuarto rescate del día. La sesión de las 13:13 se cortó a los ~14 minutos mientras
+  afinaba el diagnóstico del botón de RF-08. Al destilar, josemax aportó **ocho capturas de comando**
+  (`evidencias/capturas/Comandos/comando01..08.png`) y, sobre todo, **dijo cuándo saltó**, que es el dato que
+  ninguna captura lleva dentro.
+- **El borrador se equivocó de cabo a rabo en el campo 8, y lo reconocía:** lo dejó en «NO VERIFICADO» y
+  propuso como candidato un `grep` recursivo que había enseñado una línea de un fichero vedado. **No era
+  eso.**
+- **Lo que de verdad pasó, en palabras de josemax:** los comandos **01 a 05 se lanzaron en una misma orden**
+  → saltó la salvaguarda, pero se pudo seguir; después **06, 07 y 08 en una misma orden** → saltó otra vez y
+  ahí se acabó la sesión.
+- **🔴 Y lo que eso enseña, que es lo incómodo:** los ocho comandos son **impecables**. Todos son de medir
+  —`grep -c`, `grep -vc`, `wc -l`, `find`, `ls`—, **ninguno vuelca una línea**, y cumplen enteras las reglas
+  1-4 del protocolo de contexto limpio. No hay ningún comando al que echarle la culpa. Lo único que
+  comparten los dos disparos es ir **apiladas en una sola orden**. Lo que el clasificador puntúa es **el
+  turno**, así que **medir dejó de ser un salvoconducto**: la regla «medir en vez de volcar» baja el material
+  de cada llamada, no el del turno, y diez recuentos sobre un log de ataques siguen dibujando el log.
+  Norma nueva (regla 8 de `CLAUDE.md`): **una orden, una observación**.
+- **Lo que NO se da por probado:** que una a una hubieran pasado. Cada turno reenvía el contexto entero, así
+  que la sesión pudo llegar al umbral por acumulación. Los dos hechos sostienen «no concentres»; **no**
+  demuestran que repartir sea inmune. Se escribe como la mejor explicación disponible, no como mecanismo.
+- **Un fallo del protocolo, declarado:** el paso 4 de «si la salvaguarda salta» manda ampliar la lista de
+  rutas vedadas con lo que haya disparado. **Hoy no aplica y forzarlo habría sido peor**: aquí no disparó un
+  fichero sino una forma de pedir las cosas, y meter una ruta a la fuerza deja la sensación de que queda
+  tapado cuando no lo está. El paso 4 queda matizado en `CLAUDE.md`.
+- **Lo que la sesión cortada sí dejó, y es útil:** correlacionando método y código sobre las líneas de
+  `playwright/instruction` salen **2 GET+`401`** y **1 POST+`200`**, y **cero POST+`401`**. Los `401` eran
+  del **sondeo** (`get_pending_instructions`), no del disparador → **la hipótesis «no llegó autenticada»
+  queda tocada**. Y echando la cuenta de las ventanas, ese POST+`200` cae entre las 12:10 y las 12:35, no a
+  las 13:00 → **podría ser el de la prueba de las 12:26 y no la pulsación de josemax**, lo que abriría una
+  hipótesis (d): que el botón no llegara a emitir petición. ⚠️ **Sin atar a hora de reloj: se rehace antes
+  de tirar por ahí.** Detalle en `memoria/HOJA-DE-RUTA.md §2026-10-10 (cont. 7)`.
+- **Un agujero del cerco que YA estaba levantado, y que hoy por fin tiene su prueba:** `contexto-limpio.sh`
+  casa las rutas vedadas contra **el texto del comando**, así que un `grep -rn <patrón> .` no nombra ningún
+  fichero y **pasa**, enseñando líneas de los vedados. 🔵 **No es un hallazgo de hoy** —está levantado desde
+  el 9-oct como pendiente **(f)**, leído en el código—, y estuve a punto de reabrirlo como nuevo: queda
+  dicho porque duplicar un pendiente es la manera de que luego se arregle dos veces o ninguna. Lo que sí
+  aporta hoy es **lo que (f) pedía expresamente y le faltaba: verlo fallar a propósito**. Probado con
+  **fichero señuelo y lista cebo** (sin nombrar ningún fichero real ni tocar la lista buena): `cat` 🔒 ·
+  `Read` 🔒 · `wc -l` ✱ (correcto) · **`grep -rn` ✱ y enseña contenido**. No es lo que disparó hoy; **el
+  arreglo lo decide josemax**.
+- **Qué se descartó:** rehacer las mediciones de log en el destilado (habría sido repetir el patrón que
+  acababa de cortar la sesión, y sin saber aún qué lo causó); y tapar el agujero del cerco sobre la marcha
+  —es infraestructura y no vale sin verlo fallar antes y después—.
+- **A qué requisito toca:** RF-08 (el disparador, **sigue sin cerrar**). El resto es método de trabajo.
+- **Evidencia:** `evidencias/capturas/Comandos/comando01..08.png` — **viven FUERA del repo**, en
+  `~/claude-workspace/lineas/practica3-hooksuite/evidencias/capturas/Comandos/` (no copiadas aquí:
+  publicarlas es decisión de josemax). **Las ocho revisadas enteras antes de citarlas: son tiras de 32-58 px
+  de alto, solo la línea del comando, sin salida alrededor y sin ningún secreto.**
+- **Horas:** ~0,25 h de la sesión cortada + ~0,6 h de destilado. **0 € de API.**
