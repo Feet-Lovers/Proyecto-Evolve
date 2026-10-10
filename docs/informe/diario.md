@@ -2688,3 +2688,30 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **Evidencia:** recuentos del 10-oct 20:2x — `PUBSUB NUMSUB`: `ia:instrucciones` 1, `ia:hallazgos` 0,
   `traffic` 0; registro del backend: 1 arranque del consumidor, 1 `Task exception was never retrieved`.
 - **Horas:** ~0,2 h de Claude. **0 € de API.**
+
+### Fase 3 (10-oct, 20:3x) · Arreglo de la causa raíz: el consumidor deja de morir, y si muere se levanta solo
+
+- **Decisión de josemax:** bucle **+ supervisor**, no solo el bucle. Y recrear asumiendo perder el rastreo,
+  para probar el ciclo completo de punta a punta.
+- **Dos causas, no una, y la segunda es la interesante:**
+  1. `backend/services/redis_consumer.py` iteraba con **`async for … in pubsub.listen()`**. `listen()` es un
+     **generador asíncrono**: si se cierra mientras está suspendido esperando mensajes, revienta con
+     `RuntimeError: aclose(): asynchronous generator is already running`. Sustituido por
+     **`get_message(ignore_subscribe_messages=True, timeout=1.0)`**, que es un `await` normal sin generador
+     que cerrar.
+  2. `backend/main.py` lanzaba la tarea con **`asyncio.create_task()` sin guardar la referencia**. asyncio
+     solo mantiene una **referencia débil**: el recolector de basura puede llevarse la tarea a media
+     ejecución — y con un generador asíncrono dentro, eso produce **exactamente** esa excepción. Ahora las
+     dos tareas de fondo viven en `app.state.tareas_fondo`. *Sin esto, cambiar el bucle podría no bastar.*
+- **El supervisor, que es lo que pidió josemax y cubre el defecto de diseño:** si el bucle cae, se reintenta
+  con espera creciente (1 s → 30 s) y **cada caída se anuncia en el registro con el tipo de error**.
+  `CancelledError` se respeta y sale. Antes, una tarea de fondo podía morir **sin que nadie se enterara**:
+  backend contestando 200, panel en verde, módulo gastando API y producto roto por dentro.
+- **Qué se descartó:** arreglar solo la excepción (deja intacto el modo de fallo para la próxima) y envolver
+  el `async for` en un `try` (el problema es el generador, no lo que pasa dentro).
+- **Verificado hasta donde se puede sin recrear:** ambos ficheros **compilan** (`py_compile`), y los diffs
+  tienen el tamaño del cambio — 67/15 y 10/2, sin conversiones de saltos de línea que los vuelvan ilegibles.
+- **A qué requisito toca:** **RF-08** (causa raíz) y **apartado 8**. Pendiente: recrear el `backend`,
+  comprobar que `ia:hallazgos` pasa a **1 oyente**, y repetir el ciclo rastreo → auditoría.
+- **Evidencia:** ⚠️ FALTA: `PUBSUB NUMSUB` tras recrear, con `ia:hallazgos` en 1 **[terminal — Claude]**.
+- **Horas:** ~0,4 h de Claude. **0 € de API.**

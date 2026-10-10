@@ -93,8 +93,16 @@ async def websocket_endpoint(websocket: WebSocket):
         session_manager.unregister_websocket(espacio, websocket)
 @app.on_event("startup")
 async def startup_event():
-    asyncio.create_task(start_redis_consumer())
-    asyncio.create_task(proxy_manager.cleanup_expired())
+    # Referencia FUERTE a proposito. `asyncio.create_task()` solo guarda una referencia
+    # debil: si nadie se queda con la tarea, el recolector de basura puede llevarsela a
+    # media ejecucion. Con un generador asincrono dentro, eso es exactamente como murio
+    # el consumidor de hallazgos el 10-oct ("aclose(): asynchronous generator is already
+    # running"), dejando el canal `ia:hallazgos` sin nadie escuchando mientras el modulo
+    # de IA seguia gastando API. Guardarlas en `app.state` las mantiene vivas.
+    app.state.tareas_fondo = [
+        asyncio.create_task(start_redis_consumer()),
+        asyncio.create_task(proxy_manager.cleanup_expired()),
+    ]
 
 #  RETIRADO: GET /api/session/new
 #
