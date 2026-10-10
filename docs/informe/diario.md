@@ -2754,3 +2754,27 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
   enseñan).
 - **Evidencia:** `evidencias/consumidor-hallazgos-arreglado-10oct.md`, con la rectificación al final.
 - **Horas:** ~0,2 h de Claude. Gasto de API en la tirada perdida.
+
+### Fase 3 (10-oct, 21:0x) · ✅ RF-08 funciona de punta a punta — y el instrumento que decía lo contrario era mío
+
+- **Lo confirmó josemax mirando el panel:** tras relanzar spider y auditoría **sí aparecieron hallazgos**.
+  El ciclo completo funciona: spider → auditoría → bus `ia:instrucciones` → módulo IA → bus `ia:hallazgos`
+  → consumidor del backend → sesión del dueño → panel.
+- **🔴 Y yo había dicho que no llegaba nada. El error es instructivo, así que queda escrito:** me apoyé en
+  el contador de **«hallazgo SIN espacio, descartado»** para saber si llegaban mensajes. Pero
+  `_repartir_hallazgo` **solo escribe en el registro cuando DESCARTA**: el reparto correcto es
+  **silencioso**. Leí «0 descartes» como «no ha llegado nada» cuando significaba lo contrario.
+- **Es el mismo defecto que llevamos todo el día señalando en el producto, cometido en el diagnóstico:**
+  *no distinguir «no ha pasado nada» de «no puedo verlo»*. Un contador que solo cuenta el camino de error
+  no sirve para afirmar que no hubo tráfico — solo para afirmar que no hubo errores.
+- **Medido para confirmarlo:** 6 `print()` en `redis_consumer.py` (arranque, descarte, error de procesado,
+  y los tres del supervisor) y **ninguno en el camino de éxito**.
+- [ ] 🔧 **Arreglo propuesto, pequeño y con valor más allá de hoy:** que el consumidor registre también el
+  reparto correcto (un contador o una línea por hallazgo repartido, con su `espacio`). Sin eso, la única
+  forma de saber si el bus mueve datos es preguntarle a la interfaz — y el registro es justo lo que se mira
+  cuando la interfaz no se puede consultar.
+- **A qué requisito toca:** **RF-08** (cumplido, pendiente de capturas) y **apartado 8** (el fallo de
+  método entra en el relato: dos diagnósticos equivocados seguidos por instrumentos que medían mal).
+- **Evidencia:** ⚠️ FALTA: panel con los hallazgos a la vista, y uno abierto con el análisis de la IA
+  **[pantalla — josemax]**, pedidas en el acto por irrepetibles (R6).
+- **Horas:** ~0,2 h de Claude.
