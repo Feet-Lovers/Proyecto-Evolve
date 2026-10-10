@@ -479,6 +479,10 @@ El plan mandaba reconstruir «solo el frontend, el backend y el proxy». Pero el
 
 *Lo que convierte esto en una lección y no en una anécdota:* era el mismo fallo que ya había ocurrido dos días antes, con el mismo servicio y la misma causa. Y la razón de que se repitiera es instructiva: *nombrar un servicio en un comando da la impresión de cubrirlo*. El plan lo nombraba, así que nadie volvió a mirar si el comando lo tocaba de verdad.
 
+*Y el 10 de octubre apareció el caso espejo, que completa la lección.* Al revés que entonces, se recrearon el frontend, la API y el modulo de IA *y no el proxy* —porque su configuracion no habia cambiado—. Resultado: *502 en todo*. Los contenedores recreados reciben *direcciones nuevas*, y el proxy resuelve los nombres de sus destinos *una sola vez, al arrancar*: seguia llamando a las direcciones de los contenedores que acababan de desaparecer. Su registro lo decia con todas las letras, nombrando direcciones que ya no existian.
+
+Las dos mitades tienen la misma raiz: *el estado del proxy se fija al arrancar*, tanto la configuracion que lee como las direcciones que resuelve. De ahi sale una regla operativa que no estaba escrita en ningun sitio y ahora si: *cuando se recrea cualquiera de los servicios a los que el proxy apunta, se recrea tambien el proxy.* No es una precaucion: es que no hacerlo lo deja hablando con direcciones muertas.
+
 *Arreglo:* forzar explícitamente la recreación de ese servicio. Cuesta segundos y no construye nada. *Se descartó* recargar la configuración en caliente —que también habría funcionado, pero depende de un detalle del sistema de ficheros en lugar de ser incondicional— y también tocar su bloque del fichero de composición solo para que Compose lo viera cambiado, que es resolver el síntoma ensuciando la fuente.
 
 == Un modulo que parecia sano y no podia hablar con nadie (RF-08)
