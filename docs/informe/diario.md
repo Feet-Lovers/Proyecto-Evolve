@@ -2601,6 +2601,37 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
   `docker-compose.yml`. El desacople de DVWA sigue siendo un **pendiente abierto**, no un hecho consumado.
   Este default es precisamente uno de los acoplamientos que ese pendiente tenía que cazar.
 - **A qué requisito toca:** **RF-08**, y material directo del **apartado 8** (pruebas que fallaron).
-- **Evidencia:** ⚠️ FALTA: pestaña Vulnerabilidades con el campo mostrando `http://dvwa:80` al entrar
+- **Evidencia:** `evidencias/capturas/RF-08-objetivo-por-defecto-dvwa.png` (entregada 19:51) — muestra el campo con `http://dvwa:80`, «0 detectadas» y el mensaje de vacío
   **[pantalla — josemax]**, pedida en el acto porque nuestro propio arreglo la destruye (R6).
+- **Horas:** ~0,1 h de Claude. **0 € de API.**
+
+### Fase 3 (10-oct, 19:5x) · El `401` del sondeo tiene dueño: es por lo que «auditoría lanzada» no audita nada
+
+- **De dónde salió:** josemax puso `https://web.academyx.es/` en el campo (el mismo objetivo que el spider),
+  pulsó, y el panel respondió *«auditoría lanzada: los hallazgos irán apareciendo»*… y nada en pantalla.
+- **Medido en el registro del backend, por códigos de respuesta y sin volcar líneas:**
+  `POST /api/playwright/instruction` → **200**; `GET /api/playwright/instruction` → **401**.
+- **🔴 Lo que significa, y es la causa raíz que faltaba:** la instrucción **se publicó bien** (de ahí el
+  mensaje en verde), pero cuando el módulo IA fue a **recogerla**, el backend le respondió **401** y
+  **la orden nunca llegó**. No faltaba rastrear, no era el objetivo, no era el frontend.
+- **📌 Asciende un pendiente que llevaba todo el día huérfano.** El `401` de `get_pending_instructions` con
+  sesión válida estaba anotado como «hallazgo suelto sin dueño». Ya tiene dueño: **es el bloqueante de
+  RF-08**, y explica también el episodio de las 13:08 («la orden no llegó al módulo IA») y el enigma de por
+  qué a las 13:00 la misma pulsación no hizo nada.
+- **🔴 CORREGIDO 10 minutos después, y es la clase de error que no se puede dejar pasar porque es dinero
+  de josemax:** esta entrada afirmaba **«0 €, el módulo no recibió la orden»** y es **FALSO**. El `401` era
+  un sondeo HTTP **residual**, no el bloqueo: `backend/services/bus_ia.py` —escrito hoy mismo— movió el
+  canal a **Redis** precisamente porque el guardián cortaba el HTTP por `401` y `403` a la vez. Medido:
+  **1 oyente suscrito** a `ia:instrucciones`, y el log del módulo pasó a **174 líneas con 78 menciones del
+  techo** y 0 errores. **El módulo recibió la orden y analizó**, así que esta tirada **sí ha gastado API**
+  (acotada por el techo de 10). La lección de método: *un 401 en el registro no prueba que el canal esté
+  muerto cuando existe un segundo canal* — había que mirar quién escucha el bus, no solo quién recibe un
+  código de error.
+- **🟠 Y deja a la vista un segundo defecto, de producto:** el panel **da por lanzada** una auditoría que el
+  backend ha impedido recoger. Es la tercera variante del mismo patrón en el día: *no se distingue lo que ha
+  salido bien de lo que se ha quedado por el camino*. Debería reflejar el fallo del sondeo, no un verde.
+- **Qué se descartó:** seguir pulsando a ver si «esta vez sí» — el 401 es determinista, no intermitente.
+- **A qué requisito toca:** **RF-08** (bloqueante) y **apartado 8**.
+- **Evidencia:** recuentos de código de respuesta del 10-oct 19:5x (POST 200 · GET 401) y
+  `evidencias/capturas/RF-08-objetivo-por-defecto-dvwa.png`.
 - **Horas:** ~0,1 h de Claude. **0 € de API.**
