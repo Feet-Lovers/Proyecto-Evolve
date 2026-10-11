@@ -36,6 +36,7 @@ class SpiderService:
         self.base_domain = urlparse(base_url).netloc
         self.cookie = cookie
         self.visited: Set[str] = set()
+        self.con_error = 0  # visitadas que fallaron: cuentan en visited pero no se publican
         self.queue: List[str] = [base_url]
         # Formularios ya emitidos (metodo+accion+campos). Sin esto, un formulario
         # repetido en cada pagina (o uno por producto) genera decenas de entradas
@@ -250,6 +251,7 @@ class SpiderService:
                     self.queue.append(new_url)
 
         except Exception as e:
+            self.con_error += 1
             await session_manager.emit(self.session_token, 'spider_error', {
                 'url': url,
                 'error': str(e)
@@ -275,10 +277,11 @@ class SpiderService:
             'max_pages': self.max_pages,
             'completo': (not limite_alcanzado) and (not detenido),
             'mensaje': (
-                f"Spider detenido manualmente — {len(self.visited)} paginas analizadas antes de parar."
+                f"Spider detenido manualmente — {len(self.visited) - self.con_error} paginas analizadas antes de parar."
                 if detenido else
                 f"Spider detenido — limite de {self.max_pages} paginas alcanzado. Pueden existir paginas sin analizar."
                 if limite_alcanzado else
-                f"Spider completado — {len(self.visited)} paginas encontradas y analizadas. Auditoria completa."
+                f"Spider completado — {len(self.visited) - self.con_error} paginas analizadas"
+                + (f", {self.con_error} con error (de {len(self.visited)} visitadas)." if self.con_error else ". Auditoria completa.")
             )
         })
