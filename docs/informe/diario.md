@@ -3268,3 +3268,25 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **A qué requisito toca:** **apartado 10** (trabajo futuro) y **RF-01**.
 - **Evidencia:** `PROPUESTA-REDISENO-UI.md` (análisis completo y reproducible) · (no aplica captura).
 - **Horas:** ~0,4 h de Claude.
+
+### Fase 3 (11-oct, 13:38) · PROXY pasada 3: la cabecera, reorganizada por naturaleza
+
+- **El problema, mapeado antes de tocar.** La franja superior mezclaba **cuatro naturalezas distintas** en
+  la misma línea —estado (conectado, sesión, cookies), configuración (URL, alcance), la acción principal
+  (iniciar/detener) y **tres acciones destructivas**—, con `nueva auditoría` a un centímetro de
+  `limpiar`. Además el estado estaba **repartido en cuatro sitios** y había **dos bloques condicionales
+  seguidos con la misma condición** (`activeUrl`), fruto de los arreglos de hoy.
+- **Cómo se decidió.** Se le presentaron a josemax **dos esquemas** dibujados sobre la cabecera real, no
+  una propuesta única: (A) ordenar sin mover nada de zona, (B) bajar las acciones destructivas junto a la
+  lista que vacían. Eligió **B**, y que `limpiar` conserve su nombre.
+- **Cómo queda.** Cabecera: identidad + **todo el estado junto**, con `liberar sesión` al lado del
+  indicador de sesión —que es lo que afecta—. Debajo: configuración y acción principal. Y una **barra de
+  acciones sobre la tabla** con `importar`, `limpiar` y `nueva auditoría`, que es lo que modifican.
+- **Cómo se hizo, que importa para el riesgo.** Mover bloques de JSX con `sed` encadenados es frágil;
+  se usó un script que **localiza los bloques por marcador** (no por número de línea) y respeta los
+  finales de línea. El primer intento **abortó antes de escribir** porque un cálculo de posición estaba
+  una línea corto: el fichero quedó intacto y se corrigió buscando el marcador hacia atrás en vez de
+  asumir la distancia. **Diff 40/40**: bloques movidos, no reescritos.
+- **A qué requisito toca:** **RF-01** (usabilidad), **RF-03**, **apartado 10**.
+- **Evidencia:** ⚠️ **FALTA: la cabecera reorganizada [pantalla, josemax]**.
+- **Horas:** ~0,5 h de Claude.
