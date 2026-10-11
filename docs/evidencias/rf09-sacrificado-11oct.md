@@ -82,3 +82,20 @@ terminar, a dos días de congelar. Se retira del front y pasa al apartado de tra
   anotado (6-oct) que `hooks/useWebSocket.js` es un **segundo** WebSocket usado por Vulnerabilidades y Red;
   al irse Red, queda como consumidor único Vulnerabilidades. Unificarlo es limpieza, no urgencia.
 - `devtools/` **se queda en el repo**: es trabajo hecho, va al apartado de trabajo futuro, no se borra.
+
+## 7. Captura de evidencia (R6)
+
+![Barra de navegación con las seis pestañas, antes de retirar RED](../capturas/fase3/RF-09-pestana-red-antes-de-retirar.png)
+
+**Pie para la memoria:** *Barra de navegación de HookSuite **antes** de retirar RF-09: seis pestañas, con
+**RED** en último lugar. Capturada por josemax en la cocina el 11-oct-2026, antes de aplicar el cambio, por
+exigencia de R6 (la evidencia la destruyen nuestros propios arreglos). La IP interna de la barra de
+direcciones va **censurada**; se publica solo la copia censurada (R7). Dos resoluciones disponibles:
+`RF-09-pestana-red-antes-de-retirar.png` (completa, para el PDF) y `-reducida.png` (1100 px, para el
+artefacto).* **Requisitos: RF-09** (retirado) y **RF-01** (interfaz, que pasa de 6 a 5 pestañas).
+
+> **De las tres capturas pedidas solo se tomó esta, y es deliberado.** Las otras dos (la pestaña Red abierta
+> y la consola con el 404 de `console_finding`) no se tomaron: el defecto técnico ya está capturado **como
+> texto** en los §1–§3 de este mismo documento, que para esto es mejor evidencia que una foto —es buscable,
+> comparable y no corre el riesgo de publicar una credencial (R3)—. La que sí era irrepetible era la de la
+> interfaz, y está.

@@ -3017,10 +3017,10 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **A qué requisito toca:** **RF-09** (sacrificado), **RF-01** (el nav pasa de 6 a 5 pestañas), la
   **matriz de trazabilidad** y el **apartado 10** (trabajo futuro).
 - **Evidencia:** `docs/evidencias/rf09-sacrificado-11oct.md` (contraste completo de rutas, patrón de
-  detección y qué queda vivo) · ⚠️ **FALTA: las 3 capturas de la pestaña Red antes de retirarla
-  —barra con las 6 pestañas, la pestaña abierta y la consola del navegador con el 404 de
-  `console_finding`— [pantalla, josemax].** Pedidas antes de tocar nada; el frontend **no se ha
-  recreado todavía** para que la evidencia siga viva en su navegador.
+  detección y qué queda vivo) · ✅ **`docs/capturas/fase3/RF-09-pestana-red-antes-de-retirar.png`** —barra
+  con las 6 pestañas antes de retirar RED, entregada por josemax, con la IP interna censurada y en dos
+  resoluciones (R6/R7)—. **De las 3 capturas pedidas se tomó 1**, y es suficiente: las otras dos cubrían el
+  404 de `console_finding`, que ya está capturado como texto en la evidencia, mejor que en foto (R3).
 - **Horas:** ~0,6 h de Claude. **0 € de API.**
 
 ### Fase 3 (11-oct, 09:41) · Corrección: el pendiente de RF-09 estaba bien, mi comprobación no
