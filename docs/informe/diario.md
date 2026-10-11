@@ -3676,3 +3676,27 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
   ⚠️ Lleva la IP interna del servidor en la barra del navegador — privada, no alcanzable desde
   fuera, y ya presente en otras capturas del repo; pendiente de decidir si se tapa al llevarla
   a la memoria técnica. **Horas:** ~0,4 h de Claude.
+
+### Fase 3 (11-oct, 19:54) · PROXY cerrado: el pulido entra en la memoria técnica
+
+- **josemax da el PROXY por finalizado** y pide dejarlo «todo bien documentado donde corresponda» antes
+  de pasar al Repeater. Era lo único que faltaba de esa pestaña: nada del pulido estaba aún en el `.typ`.
+- **Apartado 8 — subapartado nuevo.** Los **quince defectos** del Spider en tabla, cada fila atada a su
+  entrada de este diario (la fuente, R9), y la distinción que importa: **catorce aparecieron usando la
+  herramienta y uno leyendo el código**. Con el par de capturas del filtro, antes y después. Y el patrón
+  de la jornada dicho con todas las letras: **en once de los quince el backend ya sabía la respuesta y no
+  llegaba a la pantalla**. Un producto puede estar entero por dentro y ser inservible por fuera, y las
+  pruebas que miran el backend no detectan nada de eso.
+- **Apartado 10.** El manual de uso: una sección escrita, cuatro pendientes, y la regla de no escribir
+  una sección antes de pulir su pestaña. Más las dos cosas del Spider que se dejan **dichas y no hechas**
+  (el recuento de apariciones de un formulario y la etiqueta del desplegable).
+- **Apartado 12.** Los **dos defectos que introdujo el asistente** al arreglar otros, con su lección:
+  *avisar de un riesgo no sustituye a comprobarlo*.
+- **Matriz.** RF-01 pasa a seis pestañas con Manual · RF-03 suma los quince del pulido y la ruta de
+  `RequestsTable.jsx` · RF-05 recoge el importador trasladado.
+- **Matiz en RF-03 (R9).** El enunciado de la P1 habla de «velocidad configurable» y el control fija un
+  **tope de páginas**. El enunciado **se conserva** —no se reescriben requisitos a posteriori— pero la
+  diferencia queda anotada, y la interfaz sí se corrigió para decir lo que hace.
+- **R4 cumplido:** `.typ` → PDF → artefacto, los tres regenerados en cadena de quince segundos, y el
+  artefacto republicado en su URL de siempre.
+- **Horas:** ~0,6 h de Claude.
