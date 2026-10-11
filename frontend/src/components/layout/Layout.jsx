@@ -10,6 +10,7 @@ const navItems = [
   { path: '/intruder',        label: 'Intruder' },
   { path: '/utilities',       label: 'Utilidades' },
   { path: '/vulnerabilities', label: 'Vulnerabilidades' },
+  { path: '/manual',          label: 'Manual' },
 ]
 
 function SunIcon() {
