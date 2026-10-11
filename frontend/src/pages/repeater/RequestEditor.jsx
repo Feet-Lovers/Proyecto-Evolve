@@ -1,21 +1,57 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui'
 
+// El borrador se guarda en el navegador, no solo en memoria: asi vuelve tambien
+// despues de un F5, igual que el objetivo del Spider. Va en sessionStorage y no en
+// localStorage a proposito -el estado de sesion es volatil por diseno, apdo. 10-:
+// al cerrar la pestana del navegador se va, y no queda en disco una peticion contra
+// un objetivo real con sus cabeceras.
+const CLAVE_BORRADOR = 'repeater_borrador'
+
+const CABECERAS_POR_DEFECTO = { 'Content-Type': 'application/json' }
+
+function leerBorrador() {
+  try {
+    const crudo = sessionStorage.getItem(CLAVE_BORRADOR)
+    return crudo ? JSON.parse(crudo) : null
+  } catch {
+    return null   // un borrador corrupto no puede impedir usar el Repeater
+  }
+}
+
 export function RequestEditor({ initialRequest, onSend, loading }) {
-  const [method, setMethod] = useState(initialRequest?.method || 'GET')
-  const [url, setUrl] = useState(initialRequest?.url || '')
+  // Lo que llega del Spider manda sobre el borrador guardado; si no hay nada nuevo,
+  // se recupera lo que se estaba editando.
+  const partida = initialRequest || leerBorrador()
+
+  const [method, setMethod] = useState(partida?.method || 'GET')
+  const [url, setUrl] = useState(partida?.url || '')
   const [headers, setHeaders] = useState(
-    Object.entries(initialRequest?.requestHeaders || { 'Content-Type': 'application/json' })
+    Object.entries(partida?.requestHeaders || CABECERAS_POR_DEFECTO)
       .map(([k, v]) => ({ key: k, value: v }))
   )
-  const [body, setBody] = useState(initialRequest?.requestBody || '')
+  const [body, setBody] = useState(partida?.requestBody || '')
+
+  // Guarda segun se escribe. Se guarda el BORRADOR, no la respuesta: una respuesta
+  // puede pesar megas y no cabe aqui.
+  useEffect(() => {
+    const borrador = {
+      method,
+      url,
+      requestHeaders: Object.fromEntries(headers.filter(h => h.key).map(h => [h.key, h.value])),
+      requestBody: body,
+    }
+    try {
+      sessionStorage.setItem(CLAVE_BORRADOR, JSON.stringify(borrador))
+    } catch { /* sin sitio en el navegador se sigue trabajando, solo se pierde al navegar */ }
+  }, [method, url, headers, body])
 
   useEffect(() => {
     if (!initialRequest) return
     setMethod(initialRequest.method || 'GET')
     setUrl(initialRequest.url || '')
     setHeaders(
-      Object.entries(initialRequest.requestHeaders || { 'Content-Type': 'application/json' })
+      Object.entries(initialRequest.requestHeaders || CABECERAS_POR_DEFECTO)
         .map(([k, v]) => ({ key: k, value: v }))
     )
     setBody(initialRequest.requestBody || '')

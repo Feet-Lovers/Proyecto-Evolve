@@ -16,12 +16,14 @@ function normalizeResponse(data) {
 }
 
 export function RepeaterPage() {
-  const { sessionToken } = useAppContext()
+  const {
+    sessionToken,
+    repeaterResponse: response, setRepeaterResponse: setResponse,
+    repeaterHistory: history, setRepeaterHistory: setHistory,
+    repeaterLastUrl: lastUrl, setRepeaterLastUrl: setLastUrl,
+  } = useAppContext()
   const [initialRequest, setInitialRequest] = useState(null)
-  const [response, setResponse] = useState(null)
   const [loading, setLoading] = useState(false)
-  const [history, setHistory] = useState([])
-  const [lastUrl, setLastUrl] = useState('')
 
   useEffect(() => {
     const stored = sessionStorage.getItem('repeater_request')

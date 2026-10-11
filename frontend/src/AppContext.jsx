@@ -40,6 +40,12 @@ export function AppProvider({ children }) {
   const [spiderEvento, setSpiderEvento] = useState(null)
   const [sessionCookies, setSessionCookies] = useState({})
   const [wsKey, setWsKey] = useState(0)
+  // Estado del Repeater que debe sobrevivir a cambiar de pestana. Vive aqui y no en
+  // RepeaterPage porque el router la desmonta al navegar y se perdia TODO: la peticion
+  // que estabas editando, su respuesta y el historial.
+  const [repeaterResponse, setRepeaterResponse] = useState(null)
+  const [repeaterHistory, setRepeaterHistory] = useState([])
+  const [repeaterLastUrl, setRepeaterLastUrl] = useState('')
   const wsRef = useRef(null)
 
   // Limpieza del identificador que el navegador se inventaba antes: si se queda, no
@@ -115,6 +121,12 @@ export function AppProvider({ children }) {
       setActiveUrl,
       sessionCookies,
       setSessionCookies,
+      repeaterResponse,
+      setRepeaterResponse,
+      repeaterHistory,
+      setRepeaterHistory,
+      repeaterLastUrl,
+      setRepeaterLastUrl,
     }}>
       {children}
     </AppContext.Provider>
