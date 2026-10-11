@@ -107,7 +107,7 @@ Usando las cinco categorías del enunciado. El recuento es provisional, a valida
   *Parcial* | Existe algo, pero incompleto o con fallos; hay que terminarlo y probarlo | RF-08 · RNF-04, RNF-07 *(3)*
   *Pendiente* | Definido, pero sin implementar; se hace desde cero | RF-09, RF-10, RF-12 · RNF-09 *(4)*
   *A revisar* | El feedback o la experiencia indican que estaba mal planteado; se reformula con justificación | RF-02 · RNF-06 *(2)*
-  *Descartado* | Se decide no implementarlo (debe ser la excepción y justificarse) | — ninguno de momento
+  *Descartado* | Se decide no implementarlo (debe ser la excepción y justificarse) | — ninguno *en el punto de partida*; RF-09 se descarta después, durante la Fase 3 (§4)
   ",
 )
 #hueco("José María", "Feedback docente de la P1: la calificación y los comentarios del equipo evaluador NO constan en el material de la línea. El enunciado los pide expresamente en este apartado. Conseguirlos (José María / portavoz) y resumir aquí qué se nos señaló y cómo lo aborda la P3.")
@@ -128,7 +128,7 @@ Lista completa y numerada. Numeración fijada en la P3 (la P1 no la tenía) a pa
   RF-06 | Intruder: fuzzing de parámetros marcados con `*`; 4 tipos (SQLi, Blind SQLi, XSS, genérico); resultados en tiempo real | Cumplido
   RF-07 | Utilidades: Encoder/Decoder (Base64/URL/HTML/JWT), Hash (MD5/SHA1/SHA256/SHA512), Regex Tester, Payload Generator | Cumplido
   RF-08 | *Análisis y clasificación de vulnerabilidades con IA (Claude) según OWASP* → panel Vulnerabilidades | Parcial
-  RF-09 | Captura de tráfico HTTP en tiempo real (DevTools / CDP) → panel Red con código de colores | Pendiente
+  RF-09 | Captura de tráfico HTTP en tiempo real (DevTools / CDP) → panel Red con código de colores | *Descartado* (§4)
   RF-10 | Ejecución de ataques con navegador real (Playwright) | Pendiente
   RF-11 | Soporte multi-usuario simultáneo mediante tokens de sesión UUID | Cumplido
   RF-12 | Registro y login individual con JWT + aislamiento de historial/auditorías por usuario | Pendiente (mejora)
@@ -175,7 +175,15 @@ El enunciado pide que todo requisito modificado o descartado lleve su versión o
 - *Cómo se resuelve el registro, y por qué no es abierto.* La persona se da de alta ella misma y elige su propia contraseña —nadie más la conoce, ni quien administra, que es el punto del requisito—, pero necesita un *código de invitación* que reparte el grupo. La razón es el propio producto: HookSuite lanza tráfico contra terceros, así que con altas anónimas cualquiera podría usar el Spider y el Intruder contra quien quisiera desde nuestra infraestructura. El código es obligatorio por configuración: si faltara, el servicio no arranca, en lugar de arrancar con el registro abierto sin que nadie lo note.
 - *Lo que obliga a persistir, y lo que no.* Las *cuentas* se guardan en un volumen, porque el despliegue reconstruye los contenedores y unas cuentas que se evaporasen en cada despliegue harían inútil el registro. El *estado de sesión* sigue siendo volátil a propósito, por las razones del apartado 10: son cosas distintas y conviene no confundirlas.
 
-> *Descartados:* ninguno por ahora. El enunciado pide que sean la excepción; si alguno se descarta (candidato: RF-09/DevTools si aprieta el tiempo) se justificará aquí por escrito.
+=== RF-09 — captura de tráfico en tiempo real con DevTools/CDP (*descartado*)
+- *Versión original (P1):* captura del tráfico HTTP en tiempo real mediante el protocolo de depuración de Chrome (CDP), volcada a un panel «Red» con código de colores por método y estado.
+- *Versión nueva:* se descarta. El *11-oct* se retiró del producto la pestaña Red —entrada de navegación, ruta y página—, y la interfaz pasa de seis pestañas a cinco: Proxy, Repeater, Intruder, Utilidades y Vulnerabilidades.
+- *Motivo, verificado contra el código antes de decidir.* RF-09 no era una pantalla a medio pulir, sino un vertical entero sin cerrar, con cuatro cosas rotas a la vez: el capturador se lanza *a mano* y busca el navegador en rutas absolutas de Windows (`C:\Program Files\...`) que no existen en los contenedores, que son Linux; sus hallazgos de consola se envían a un extremo *que no existe* en el backend y se pierden contra un 404; su lanzador apunta en una sola línea a una IP de producción fija, a un puerto que la Fase 1 cerró y a la ruta del fichero PAC que se jubiló al reformular RF-02; y la pestaña del panel era *pasiva* —no pedía nada al servidor, solo pintaba lo que llegara por WebSocket—, de modo que el usuario no podía distinguir «no hay tráfico» de «el capturador no está corriendo».
+- *Por qué se descarta en vez de terminarse.* Cerrarlo exigía arreglar las cuatro cosas y, sobre todo, *probarlo*, a dos días de la congelación y con la auditoría con IA (RF-08) recién verificada de punta a punta. El enunciado pide que los descartes sean la excepción y vayan justificados; este es el único, y la alternativa honesta era entregarlo sin probar.
+- *Qué se conserva, y por qué no se borra.* El capturador (`devtools/`) permanece en el repositorio: es trabajo hecho y queda como punto de partida en el apartado 10. Los extremos de red del backend (`backend/routes/network.py`) *también se conservan, y no por inercia*: los consume el módulo de IA y el de Playwright, así que retirarlos habría roto RF-08. Esa dependencia no era evidente desde la pestaña, y es la razón de que el descarte se limite a la interfaz.
+- *Efecto sobre otros requisitos.* RF-01 (acceso desde el navegador sin instalar nada) se mantiene cumplido: la barra de navegación pasa de seis pestañas a cinco, y la figura del apartado 8 documenta el estado anterior, capturado *antes* de retirarlo porque el propio arreglo destruía la evidencia.
+
+> *Descartados:* uno, *RF-09*, justificado arriba. El enunciado pide que sean la excepción: es el único de los doce requisitos funcionales que se descarta.
 
 = 5. Arquitectura y decisiones técnicas
 HookSuite se despliega como un conjunto de contenedores Docker coordinados por `docker-compose`, todos en una red interna `hooksuite-net`, con Nginx como única puerta de entrada. Arquitectura verificada fichero a fichero en la cocina local el 4-oct (`docker-compose.yml` + `infra/nginx.conf`).
@@ -593,6 +601,13 @@ El filtro por confianza compara el valor que devuelve el modelo contra un umbral
 
 Reproducible con `python3 ia/tests/test_escala_confianza.py`. Evidencia con las dos salidas en `docs/evidencias/escala-confianza-guardia-10oct.md`.
 
+
+== La interfaz antes de descartar RF-09, capturada antes de retirarla
+#imagen("../capturas/fase3/RF-09-pestana-red-antes-de-retirar.png", "Barra de navegación de HookSuite con las *seis* pestañas, antes de retirar RF-09; «RED» es la última. Capturada en la cocina el 11-oct, antes de aplicar el cambio. La dirección interna de la barra del navegador va censurada. Requisitos: RF-09 (descartado) y RF-01 (interfaz).")
+
+Esta figura existe por una regla que el grupo se dio al empezar la Fase 3: *las evidencias de un defecto se capturan antes de arreglarlo, porque el arreglo las destruye*. Retirar la pestaña hacía imposible volver a fotografiarla, de modo que se pidió la captura antes de tocar el código y el despliegue se mantuvo a la espera hasta tenerla.
+
+Hay una segunda decisión deliberada, y conviene explicarla porque va contra la intuición: de las tres evidencias previstas se tomó *una sola* imagen. Las otras dos documentaban el defecto técnico —el extremo de consola que responde 404— y ese se guardó *como texto* en lugar de como fotografía. Una salida de terminal en texto es buscable, comparable entre versiones y no corre el riesgo de publicar de refilón una credencial que estuviera en pantalla; una captura no cumple ninguna de las tres cosas. La imagen se reserva para lo único que no puede contarse de otro modo: cómo se veía la interfaz.
 = 9. Matriz de trazabilidad
 La pieza con la que se corrige la práctica: requisito por requisito, dónde está implementado, qué prueba lo verifica y dónde se ve. Las rutas están comprobadas en el código (cocina local, 4-oct). La columna de evidencia enlaza la figura de la memoria y el *minuto exacto del vídeo*; se rellena al grabar.
 #tabla(
@@ -607,7 +622,7 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
   RF-06 | Intruder / fuzzing | Cumplido (cancelación corregida en F1) | `backend/services/intruder_service.py` | PR-06 | apdo. 6 · vídeo —:—
   RF-07 | Utilidades (incl. JWT) | Cumplido | `frontend/src/pages/utilities/` | PR-07 | fig. — · vídeo —:—
   RF-08 | IA → panel Vulnerabilidades | Cumplido (recorrido verificado de punta a punta el 10-oct; techo de gasto ejecutado) | `ia/`, `backend/routes/playwright.py`, `backend/services/redis_consumer.py`, `frontend/.../VulnerabilitiesPage.jsx` | PR-08 | figs. apdo. 8 · vídeo —:—
-  RF-09 | DevTools → panel Red | según alcance | `devtools/` + `backend/routes/network.py` | PR-09 | fig. — · vídeo —:—
+  RF-09 | DevTools → panel Red | *Descartado* (11-oct; justificado en §4) | `devtools/` conservado · `backend/routes/network.py` se mantiene (lo consumen IA y Playwright) | — | fig. apdo. 8 · vídeo —:—
   RF-10 | Playwright | según alcance | `playwright/` + `backend/routes/playwright.py` | PR-10 | fig. — · vídeo —:—
   RF-11 | Multi-usuario | Cumplido (reimplementado en F2) | `backend/services/guardia.py` + `services/auth_service.py` | PR-11 | apdo. 7 · figs. apdo. 8
   RF-12 | Registro y login por usuario + aislamiento | Cumplido en F2 (verificado en cocina 11/11; pendiente de producción) | `backend/services/auth_service.py`, `guardia.py`, `usuarios_store.py`, `frontend/.../LoginPage.jsx` | PR-12 | apdo. 7 · figs. apdo. 8
