@@ -3308,3 +3308,21 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **A qué requisito toca:** **apartado 10** (trabajo futuro) y **apartado 11** (gestión del trabajo).
 - **Evidencia:** sección «Aparcado para la fase de diseño» de la hoja de ruta · (no aplica captura).
 - **Horas:** ~0,1 h de Claude.
+
+### Fase 3 (11-oct, 13:49) · Corrección: los textos explicativos también se aparcan
+
+- **Qué se corrige.** La entrada anterior fijaba que «un texto que explica un botón entra ahora». **Lo
+  corrigió josemax en el momento**, y tenía razón: si el rediseño llega, **traerá su propio apartado
+  explicando la herramienta**, así que esos textos **se tirarían igual que el diseño**. Mi regla dejaba
+  una puerta abierta que contradecía el motivo mismo de aparcar.
+- **Regla corregida:** se hace ahora lo que cambia lo que la herramienta **hace** (comportamiento,
+  defectos, datos incorrectos); se aparca **cómo se ve y cómo se explica**.
+- **No se revierte lo ya hecho hoy** —ayudas de los botones, aviso de objetivo fijado, indicador de
+  sesión—: están hechos y funcionan; deshacerlos gastaría justo el tiempo que la norma protege.
+- **Queda planteado, no decidido:** si el aviso de «datos de muestra» con los mocks activos es una
+  excepción. No explica la herramienta: impide tomar por reales datos inventados en una entrega evaluada.
+  Lo decide josemax.
+- **A qué requisito toca:** **apartado 11** (gestión) y **apartado 12** (uso de IA: la corrección la hizo
+  él sobre una regla que yo había escrito mal).
+- **Evidencia:** `memoria/DECISIONES.md` del 11-oct · (no aplica captura).
+- **Horas:** ~0,1 h de Claude.
