@@ -3419,3 +3419,30 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **A qué requisito toca:** **RF-03**, **RF-01**, **apartado 8**.
 - **Evidencia:** ⚠️ **FALTA: la tabla con la jerarquía y el recuento de campos [pantalla, josemax]**.
 - **Horas:** ~0,6 h de Claude.
+
+### Fase 3 (11-oct, 17:52) · El rastreo no decía cómo había terminado, y el objetivo se perdía al refrescar
+
+- **De dónde salen.** Los dos los encontró josemax **usando** la herramienta, no leyendo código.
+- **(2) El final del rastreo era siempre el mismo texto.** El backend calcula tres finales distintos
+  —*completado* · *detenido manualmente* · ***límite alcanzado, «pueden existir páginas sin analizar»***—
+  y manda el recuento de páginas en el evento `spider_completed`. **El frontend no escuchaba ese
+  evento**: su `onmessage` manejaba cuatro tipos y ese no estaba, así que el evento llegaba y se
+  descartaba. Todos los textos que se veían estaban **escritos a mano** en `ProxyPage`. Consecuencia
+  real para una auditoría: **no podías saber si habías visto el sitio entero o te habías quedado corto**.
+- **(3) El objetivo se evaporaba con F5.** `activeUrl` vivía solo en `useState`. Al refrescar, las
+  peticiones seguían ahí —las sirve el backend— pero el campo quedaba libre y **se podía lanzar otro
+  spider encima**, mezclando dos objetivos en el mismo panel: exactamente lo que el bloqueo del campo
+  existía para impedir. El backend **recibía** la URL y **no la guardaba**; ahora la guarda
+  (`spider_target`), `/status` la devuelve y la pantalla la recupera al montar.
+- **Detalle de semántica que se respetó:** `nueva auditoría` **suelta** el objetivo y `limpiar` lo
+  **mantiene**, coherente con el reparto de tareas que se verificó en la pasada 2.
+- **El patrón, por enésima vez hoy:** el backend **sabía** las dos cosas y no llegaban a la pantalla. No
+  hubo que calcular nada nuevo: solo dejar de tirar información que ya existía.
+- **Pendiente de decisión (josemax):** un formulario repetido —un buscador de cabecera— se cataloga **una
+  sola vez** (`forms_emitidos`) y cuelga de la primera página donde se vio, así que la tabla insinúa
+  *«formularios de esta página»* cuando significa *«vistos aquí por primera vez»*. Tres salidas
+  planteadas: etiquetarlo · emitirlo por página · contar en cuántas páginas aparece.
+- **A qué requisito toca:** **RF-03**, **RF-04**, **apartado 8**.
+- **Evidencia:** ⚠️ **FALTA: el mensaje real al terminar y el objetivo sobreviviendo a un F5
+  [pantalla, josemax]**.
+- **Horas:** ~0,7 h de Claude.
