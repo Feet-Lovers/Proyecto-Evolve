@@ -284,7 +284,9 @@ class SpiderService:
             # redirige, dos pedidas distintas pueden ser una sola fila: se dice, no se esconde.
             mensaje = f"Spider completado — {analizadas} URLs visitadas"
             if distintas and distintas != analizadas:
-                mensaje += f", {distintas} paginas distintas ({analizadas - distintas} redirigian a otra ya vista)"
+                repetidas = analizadas - distintas
+                verbo = "redirigia" if repetidas == 1 else "redirigian"
+                mensaje += f", {distintas} paginas distintas ({repetidas} {verbo} a otra ya vista)"
             if self.con_error:
                 mensaje += f", {self.con_error} con error"
             mensaje += ". Auditoria completa."
