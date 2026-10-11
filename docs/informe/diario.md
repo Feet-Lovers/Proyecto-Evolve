@@ -3528,3 +3528,28 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **Evidencia:** ⚠️ **FALTA: el scroll llegando a las primeras capturadas y la etiqueta nueva
   [pantalla, josemax]**.
 - **Horas:** ~0,4 h de Claude.
+
+### Fase 3 (11-oct, 18:26) · 55 y 54 eran los dos correctos: no contaban lo mismo
+
+- **Qué pasaba.** josemax contó dos veces: **54 filas** en el panel, **55** en el mensaje. Y acertó al
+  decir «aparentemente están todas»: no faltaba ninguna.
+- **La causa.** El spider cuenta las URLs que **pide** (`self.visited`); la tabla agrupa por la URL
+  **final tras redirecciones** (`str(response.url)`). Si dos URLs distintas acaban en el mismo destino
+  —`/tienda` y `/tienda/`— son **dos visitas** y **una sola fila**. Ninguno de los dos números era
+  falso: **no estaban contando lo mismo**.
+- **Cómo se verificó la hipótesis.** No se dio por buena: el propio arreglo era el experimento. Se añadió
+  un conjunto de URLs finales distintas, de modo que **si salía 54 la causa eran redirecciones** y **si
+  salía 55 se había perdido una petición por el WebSocket**, que sí habría sido un defecto. El sitio ya
+  había demostrado que redirige —fue lo que provocó la regresión de `pagina_origen`—, pero eso era
+  indicio, no prueba.
+- **Cómo queda el mensaje.** Cuando los números coinciden, igual que antes. Cuando difieren:
+  *«55 URLs visitadas, 54 páginas distintas (1 redirigía a otra ya vista)»*. El evento lleva además
+  `paginas_distintas` y `con_error` como datos propios.
+- **Limpieza de paso:** el mensaje se construía con una expresión condicional anidada de cuatro niveles
+  dentro del `emit`; ahora se arma por partes antes de emitirlo. Era ilegible y ya había costado dos
+  correcciones seguidas.
+- **El patrón, una vez más:** no había que calcular nada nuevo. El backend **tenía** las URLs finales;
+  solo no las contaba.
+- **A qué requisito toca:** **RF-03**, **apartado 8**.
+- **Evidencia:** ⚠️ **FALTA: el mensaje distinguiendo visitadas de páginas distintas [pantalla, josemax]**.
+- **Horas:** ~0,3 h de Claude.
