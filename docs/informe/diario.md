@@ -3243,3 +3243,28 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **A qué requisito toca:** **RF-01** (usabilidad), **RF-03**, **apartado 8**.
 - **Evidencia:** ⚠️ **FALTA: los tres textos de ayuda al pasar el ratón [pantalla, josemax]**.
 - **Horas:** ~0,4 h de Claude.
+
+### Fase 3 (11-oct, 13:31) · Rediseño de la interfaz: medido antes de decidir, y aplazado
+
+- **Qué pasó.** josemax propuso rediseñar la interfaz tomando como referencia una herramienta comercial
+  del sector: **el aspecto** (color, tipografía, botones) y **cómo presenta la información**.
+- **Qué se hizo antes de contestar: medir.** El sistema de estilos **está a medias** — 12 variables CSS
+  (`--hs-*`) conviviendo con **179 colores escritos a mano, 69 distintos, repartidos por 19 ficheros**,
+  incluidos todos los componentes base (`Button`, `Badge`, `Panel`, `Spinner`). Los peores:
+  `Layout.jsx` (24 colores), `RequestsTable.jsx` (14), `LoginPage.jsx` (14).
+- **Por qué eso decide.** Cambiar solo las 12 variables **dejaría media interfaz con la paleta vieja**: el
+  resultado sería peor que el actual. Hacerlo bien exige dos fases —migrar los 179 colores a variables, y
+  solo entonces cambiar la paleta—, y la segunda parte (reorganizar la presentación) es tocar el JSX de
+  cada pantalla. **No es una tarde de CSS: son 19 ficheros.**
+- **Decisión (josemax):** terminar primero los pendientes y revisar después el calendario. Queda
+  **documentado en `PROPUESTA-REDISENO-UI.md`** de la línea, con la referencia, los patrones
+  aprovechables, los números, los comandos para re-medirlos y las cuatro opciones de decisión.
+- **Lo que quedó identificado como adoptable sin rediseñar** (son textos): una descripción de una línea
+  por pestaña · **un aviso de «datos de muestra» cuando `USE_MOCKS` o `MOCK_PLAYWRIGHT` estén activos**
+  —hoy la herramienta puede mostrar datos inventados sin decirlo, lo que en una entrega evaluada es más
+  grave que cualquier asunto estético— · mensajes de error específicos en vez de genéricos.
+- **Ganancia aunque no se rediseñe nada:** «69 colores distintos en cinco pantallas» es un dato medido
+  para el **apartado 10**, mucho mejor que un «queda pendiente mejorar la interfaz».
+- **A qué requisito toca:** **apartado 10** (trabajo futuro) y **RF-01**.
+- **Evidencia:** `PROPUESTA-REDISENO-UI.md` (análisis completo y reproducible) · (no aplica captura).
+- **Horas:** ~0,4 h de Claude.
