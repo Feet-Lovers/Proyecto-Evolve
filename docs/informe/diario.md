@@ -3210,3 +3210,36 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **A qué requisito toca:** **RF-01** (usabilidad), **RF-03**, y **apartado 8** como patrón.
 - **Evidencia:** ⚠️ **FALTA: la barra con el aviso de objetivo fijado [pantalla, josemax]**.
 - **Horas:** ~0,2 h de Claude.
+
+### Fase 3 (11-oct, 13:01) · PROXY pasada 2: los tres botones no fallaban, pero no se podía saber cuál usar
+
+- **Resultado de la prueba, que era el objetivo de esta pasada:** josemax probó `limpiar`,
+  `liberar sesión` y `nueva auditoría` **uno a uno**, más el caso de limpiar con el spider corriendo.
+  **Los cuatro se comportan exactamente como dice el código. Ningún defecto.**
+- **🔧 Y una corrección mía, declarada (R9).** Esta mañana escribí que había «tres botones para dos
+  operaciones» y que `liberar sesión` era un subconjunto de `nueva auditoría`. **Era falso, y el error
+  fue mirar solo el backend:** ahí `reset = clear + release-session`, cierto, pero en el frontend cada
+  botón toca un conjunto distinto de estado. El reparto real:
+
+  | | Peticiones | Spider | Sesión | Campo URL |
+  |---|---|---|---|---|
+  | limpiar | vacía | **para** | mantiene | bloqueado |
+  | liberar sesión | mantiene | mantiene | **suelta** | bloqueado |
+  | nueva auditoría | vacía | para | suelta | **libera** |
+
+  Cada uno cubre un caso real: seguir con el mismo objetivo pero con la lista en blanco · dejar de ir
+  autenticado sin perder lo capturado · empezar de cero. **No sobra ninguno.**
+- **Qué se hizo entonces.** Lo que faltaba no era comportamiento sino **poder elegir**: cada botón lleva
+  ahora su explicación al pasar el ratón. Se descartó renombrar `limpiar` —que detiene el spider sin
+  decirlo— hasta la pasada 3, cuando se vea cuánto sitio deja la cabecera reorganizada.
+- **🔴 Dos trampas en el camino, las dos del tipo «el arreglo parece hecho y no lo está».**
+  1. **`Button` no propagaba props extra**: aceptaba solo `children/variant/size/onClick/disabled/className`,
+     así que un `title` se habría **descartado en silencio**. Detectado leyendo el componente antes de
+     confiar en él; ahora acepta `title` y lo pasa al DOM.
+  2. **`Button.jsx` tiene finales de línea de Windows (CRLF)** y `ProxyPage.jsx` no. El `sed` con
+     ancla `$` **no casó y no cambió nada, sin avisar** — el mismo fallo documentado el 6-oct en esta
+     misma línea. Se detectó porque el `git diff --stat` marcaba 1 línea donde debían ser 2. Rehecho con
+     el `\r` explícito, conservando CRLF: el diff son **2 líneas**, no el fichero entero.
+- **A qué requisito toca:** **RF-01** (usabilidad), **RF-03**, **apartado 8**.
+- **Evidencia:** ⚠️ **FALTA: los tres textos de ayuda al pasar el ratón [pantalla, josemax]**.
+- **Horas:** ~0,4 h de Claude.
