@@ -30,8 +30,10 @@ function groupRequests(requests) {
   })
   requests.forEach(r => {
     if (r.source === 'spider-form') {
-      const key = r.url.split('?')[0]
-      const matchKey = order.find(k => k === key || k.startsWith(key))
+      // El backend dice de que pagina sale cada formulario (pagina_origen).
+      // Antes se adivinaba por prefijo de URL y colgaba formularios de paginas ajenas:
+      // un action='/' casaba con CUALQUIER fila por startsWith.
+      const matchKey = r.pagina_origen
       if (matchKey && groups[matchKey]) {
         groups[matchKey].forms.push(r)
       }

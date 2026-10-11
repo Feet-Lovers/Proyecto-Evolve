@@ -120,7 +120,7 @@ export function ProxyPage() {
               className="text-[14px] font-bold tracking-wide"
               style={{ fontFamily: 'var(--font-sans)', color: 'var(--hs-text-primary)' }}
             >
-              Proxy Interceptor
+              Spider
             </h2>
             <span
               className="flex items-center gap-1.5 px-2 py-0.5 rounded border text-[10px]"

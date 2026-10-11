@@ -5,7 +5,7 @@ import { useAuth } from '@/AuthContext'
 export const ThemeContext = createContext({ dark: true, toggle: () => {} })
 
 const navItems = [
-  { path: '/proxy',           label: 'Proxy' },
+  { path: '/proxy',           label: 'Spider' },
   { path: '/repeater',        label: 'Repeater' },
   { path: '/intruder',        label: 'Intruder' },
   { path: '/utilities',       label: 'Utilidades' },
