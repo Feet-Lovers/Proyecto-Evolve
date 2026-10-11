@@ -198,6 +198,16 @@ class SpiderService:
             session['requests'].append(result)
             await session_manager.emit(self.session_token, 'request_intercepted', result)
 
+            # El cliente HTTP es compartido con el Repeater y el Intruder, asi que aqui
+            # tambien se acumulan cookies: avisamos al panel igual que hace forward_request.
+            # Sin esto el indicador decia 'sin cookies' mientras el spider rastreaba con sesion.
+            cookies_sesion = dict(client.cookies)
+            if cookies_sesion:
+                await session_manager.emit(self.session_token, 'session_cookies', {
+                    'cookies': cookies_sesion,
+                    'url': url
+                })
+
             # Emitir peticiones de formularios como peticiones independientes
             for form in forms:
                 if not session_manager.get_session(self.session_token).get("spider_running", True):
