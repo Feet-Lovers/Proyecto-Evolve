@@ -3100,3 +3100,35 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **Evidencia:** mensaje del commit `89cfaebc`, que declara el fallo; salida del build desde el árbol de
   la rama (exit 0).
 - **Horas:** ~0,3 h de Claude.
+
+### Fase 3 (11-oct, 11:17) · Pulido de PROXY, pasada 1: la parada del spider y tres textos que mentían
+
+- **Qué se hizo.** Cuatro cambios acordados uno a uno con josemax tras mapear la pestaña entera:
+  (a) el spider **para en seco**; (b) el selector deja de llamarse velocidad; (c) el placeholder suelta
+  DVWA; (d) la cabecera deja de pintar el **valor** de las cookies.
+- **(a) El defecto de la parada, y por qué josemax tenía razón contra el código.** Yo había escrito que
+  `/clear` «vacía la lista y para el spider», porque eso es lo que el código *declara*. Él respondió que
+  en la práctica **seguían apareciendo peticiones**, y la pantalla ganaba: la bandera `spider_running`
+  solo se consulta **una vez por página**, en el `while` del rastreo, y justo después se entra en
+  `crawl_page`, que emite **una petición por cada formulario** encontrado (`spider_service.py:228`).
+  Una página con ocho formularios son nueve peticiones más **después** de haber pulsado parar. Arreglado
+  añadiendo la misma comprobación dentro del bucle de formularios.
+- **(b) El selector no medía velocidad.** `SPEED_PRESETS = {'rapido': 50, 'normal': 200, 'completo': 500}`
+  alimenta `max_pages`: son **páginas máximas**. «Rápido» no iba más deprisa, **llegaba menos lejos** —el
+  nombre invitaba a elegirlo para ir rápido y lo que hacías era auditar menos—. Ahora dice
+  «hasta N páginas», con un `title` que lo explica.
+- **(c)** El placeholder citaba `http://dvwa`, justo lo que la línea está desacoplando.
+- **(d) Las cookies: se queda el indicador, se va el valor.** La cabecera mostraba `clave=valor`, y eso es
+  lo que llevó un `XSRF-TOKEN` a la vista en **dos** capturas del 5-oct. No se puede quitar entero: es la
+  **única señal visible de RF-04** (si la auditoría va autenticada o anónima, que cambia por completo lo
+  que el Spider alcanza). Así que muestra los **nombres** y no los valores.
+- **Qué se descartó.** Quitar el importador de peticiones de Proxy: se **mueve al Repeater** (pasada 4),
+  porque el Repeater ya compone peticiones a mano y el importador solo ahorra teclear. Y tocar los tres
+  botones de borrado: josemax decide **probarlos uno a uno** antes (pasada 2).
+- **A qué requisito toca:** **RF-03** (spider), **RF-04** (auditoría autenticada) y **apartado 7**
+  (el valor de la cookie deja de estar en pantalla).
+- **Evidencia:** el «antes» de (b) y (c) está en `docs/capturas/fase3/RF-09-pestana-red-antes-de-retirar.png`,
+  que captura esa misma barra con `http://dvwa` y `Normal (200)` · ⚠️ **FALTA: el «después» de la barra
+  y la prueba en vivo de la parada [pantalla, josemax]**, pendiente de recrear los contenedores.
+  De (d) **no se pide captura del antes a propósito**: esa foto llevaría la cookie a la vista.
+- **Horas:** ~0,5 h de Claude.
