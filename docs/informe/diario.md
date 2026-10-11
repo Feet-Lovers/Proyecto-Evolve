@@ -3571,3 +3571,31 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **A qué requisito toca:** **RF-03**, **apartado 8**.
 - **Evidencia:** mensaje reportado por josemax, citado arriba.
 - **Horas:** ~0,1 h de Claude.
+
+### Fase 3 (11-oct, 18:52) · Una pestaña de Manual, rellenada al ritmo del pulido
+
+- **Idea de josemax**, planteada antes de cerrar el Spider: una sexta pestaña que explique **cómo se usa
+  cada herramienta**, con la estética actual y sin formatos nuevos.
+- **Por qué encaja:** es la solución de raíz al patrón que ha dominado todo el pulido —**funciones
+  correctas pero invisibles**—. En el Spider aparecieron cinco: la sesión compartida entre módulos, la
+  autenticación que se hereda del Repeater, el selector que no medía velocidad, el campo que se bloquea
+  sin decir por qué, y el reparto de los tres botones de borrado. Ninguna se podía descubrir usando la
+  herramienta.
+- **Qué se discutió antes de hacerlo.** josemax proponía escribirlo entero ahora, «que lo tenemos
+  fresco». Se acordó **rellenar una sección por pestaña, y solo cuando esa pestaña se haya pulido**: hoy
+  conocemos el Spider a fondo, pero de las otras cuatro sabemos lo que *creemos* que hacen —y en el
+  Spider hemos comprobado **cinco veces** que eso no coincide con lo que el código hace—. **Un manual
+  escrito a ciegas induce a error, y eso es peor que no tenerlo.** Las cuatro restantes quedan con un
+  marcador *pendiente* visible en la propia pantalla.
+- **Qué contiene hoy, todo verificado durante el pulido:** qué es un rastreador y por qué no es un proxy ·
+  qué significa el alcance · la diferencia entre filas de página y de formulario · por qué un formulario
+  global cuelga de una sola página · qué indica el estado de sesión y cómo se consigue · el reparto de
+  `limpiar` / `liberar sesión` / `nueva auditoría` · y cómo leer el mensaje final.
+- **Coste y riesgo:** contenido estático, sin backend ni lógica. No puede romper nada.
+- **Efecto colateral:** el nav pasa de 5 a 6 pestañas, así que **la captura de la barra hay que
+  rehacerla**.
+- **Pendiente de comprobar:** si el enunciado valora la documentación de uso. Si la valora, esto no es
+  solo una mejora.
+- **A qué requisito toca:** **RF-01** (usabilidad) y **apartado 10**.
+- **Evidencia:** ⚠️ **FALTA: la pestaña Manual con la sección del Spider [pantalla, josemax]**.
+- **Horas:** ~0,4 h de Claude.
