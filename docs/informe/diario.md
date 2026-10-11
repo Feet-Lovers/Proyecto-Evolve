@@ -2978,3 +2978,45 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **Evidencia:** mensaje del módulo (`ValueError: Streaming is required…`) y el contador detenido en 3m30s
   reportado por josemax.
 - **Horas:** ~0,2 h de Claude. **0 € de API.**
+
+### Fase 3 (11-oct, 09:37) · RF-09 se sacrifica: la pestaña Red sale del front
+
+- **Qué se hizo.** Se retira del front la pestaña **Red/DevTools**: la entrada del nav
+  (`Layout.jsx`), el import y la ruta (`App.jsx`) y la página `pages/network/NetworkPage.jsx`
+  (113 líneas). El nav queda con **cinco** pestañas: Proxy, Repeater, Intruder, Utilidades y
+  Vulnerabilidades. Commit `55c483cb`, autoría sorteada (Carlos Bañuelos Fernández), empujado en el
+  momento a `origin/develop`.
+- **Por qué.** Decisión de josemax: **no se implementa nada nuevo en la herramienta** antes de congelar.
+  El día se dedica a pulir lo que ya funciona —las cinco pestañas restantes— en vez de sumar función
+  sin probar. RF-09 era el candidato declarado a sacrificar desde el 3-oct.
+- **🔴 Lo que se descubrió al contrastar el pendiente con el código (R9), y corrige la memoria.** El
+  enunciado de RF-09 («dos llamadas a endpoints que no existen, rutas de Windows e IP hardcodeada»)
+  **estaba mal en dos de sus tres puntos**: de las dos llamadas de `devtools/utils/reporter.py`, la de
+  `:45` (`/api/network/packet/{token}`) **sí existe** (`network.py:51`) y solo falla la de `:63`
+  (`/api/network/console_finding/{token}`); la «ruta de Windows» es `(r'C:\\', "SERVER_PATH_EXPOSED")`
+  en `console_analyzer.py:8`, es decir **un patrón de detección, no un defecto**; y de IP fija no hay
+  ninguna, solo `localhost`. **Es la cuarta vez que un pendiente describe lo que alguien entendió al
+  escribirlo y no lo que el código hace.** La memoria dirá la razón real: RF-09 es un capturador CDP
+  aparte que exige lanzar Chrome a mano, le falta un endpoint, su pestaña solo pintaba en pasivo, y
+  nada de eso está probado a dos días de congelar.
+- **Qué se descartó.**
+  - **Quitar también `backend/routes/network.py`.** Sus cinco endpoints los consumen
+    `ia/orchestrator.py` y `playwright/` (declarado en `main.py:158`): quitarlos rompería RF-08, que
+    empezó a funcionar ayer tras cuatro causas encadenadas.
+  - **Limpiar `networkPackets` de `AppContext.jsx` y `hooks/useWebSocket.js`.** Vive en la vía del
+    WebSocket que alimenta las cinco pestañas que vamos a pulir hoy. Tocar el WS por limpieza cosmética,
+    en mitad del pulido, es riesgo alto y beneficio bajo. Queda como limpieza menor al final del día.
+  - **Borrar `devtools/`.** Es trabajo hecho y va al apartado de trabajo futuro; no se borra.
+- **Qué falló.** Nada en el cambio: compila (`docker compose build frontend`) y no quedan referencias
+  colgando. Lo que falló fue **el enunciado del pendiente**, ya descrito arriba.
+- **Hallazgo colateral.** `AppContext.jsx` y `hooks/useWebSocket.js` llevan **la misma lógica de
+  WebSocket duplicada**. Dos fuentes de verdad para el mismo canal; candidato a explicar
+  comportamientos distintos según de cuál lea cada componente.
+- **A qué requisito toca:** **RF-09** (sacrificado), **RF-01** (el nav pasa de 6 a 5 pestañas), la
+  **matriz de trazabilidad** y el **apartado 10** (trabajo futuro).
+- **Evidencia:** `docs/evidencias/rf09-sacrificado-11oct.md` (contraste completo de rutas, patrón de
+  detección y qué queda vivo) · ⚠️ **FALTA: las 3 capturas de la pestaña Red antes de retirarla
+  —barra con las 6 pestañas, la pestaña abierta y la consola del navegador con el 404 de
+  `console_finding`— [pantalla, josemax].** Pedidas antes de tocar nada; el frontend **no se ha
+  recreado todavía** para que la evidencia siga viva en su navegador.
+- **Horas:** ~0,6 h de Claude. **0 € de API.**
