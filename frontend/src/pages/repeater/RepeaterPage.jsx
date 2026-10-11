@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { RequestEditor } from './RequestEditor'
 import { ResponsePanel } from './ResponsePanel'
+import { ImportRequest } from './ImportRequest'
+import { Button } from '@/components/ui'
 import { api, config } from '@/services/api'
 import { useAppContext } from '@/AppContext'
 
@@ -22,6 +24,7 @@ export function RepeaterPage() {
   const [loading, setLoading] = useState(false)
   const [history, setHistory] = useState([])
   const [lastUrl, setLastUrl] = useState('')
+  const [showImport, setShowImport] = useState(false)
 
   useEffect(() => {
     const stored = sessionStorage.getItem('repeater_request')
@@ -61,12 +64,15 @@ export function RepeaterPage() {
         >
           Repeater
         </h2>
-        <span
-          className="text-[10px]"
-          style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}
-        >
-          {history.length} peticiones en historial
-        </span>
+        <div className="flex items-center gap-3">
+          <span
+            className="text-[10px]"
+            style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}
+          >
+            {history.length} peticiones en historial
+          </span>
+          <Button size="sm" variant="ghost" onClick={() => setShowImport(true)}>importar peticion</Button>
+        </div>
       </div>
       <div className="flex flex-1 overflow-hidden">
         <div className="w-1/2 border-r overflow-hidden flex flex-col" style={{ borderColor: 'var(--hs-border)' }}>
@@ -76,6 +82,16 @@ export function RepeaterPage() {
           <ResponsePanel response={response} requestUrl={lastUrl} />
         </div>
       </div>
+
+      {showImport && (
+        <ImportRequest
+          onClose={() => setShowImport(false)}
+          onImport={(parsed) => {
+            setInitialRequest(parsed)
+            setShowImport(false)
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -3,14 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { useAppContext } from '@/AppContext'
 import { RequestsTable } from './RequestsTable'
 import { RequestDetail } from './RequestDetail'
-import { ImportRequest } from './ImportRequest'
 import { Button } from '@/components/ui'
 import { config, apiFetch } from '@/services/api'
 
 export function ProxyPage() {
   const { sessionToken, requests, connected, clearRequests, resetWs, activeUrl, setActiveUrl, sessionCookies, setSessionCookies } = useAppContext()
   const [selectedRequest, setSelectedRequest] = useState(null)
-  const [showImport, setShowImport] = useState(false)
   const [targetUrl, setTargetUrl] = useState('')
   const [speed, setSpeed] = useState('normal')
   const [spiderRunning, setSpiderRunning] = useState(false)
@@ -237,7 +235,6 @@ export function ProxyPage() {
       <div className="flex flex-1 overflow-hidden">
         <div className="w-1/2 border-r overflow-hidden flex flex-col" style={{ borderColor: 'var(--hs-border)' }}>
           <div className="flex items-center gap-2 px-3 py-2 border-b" style={{ borderColor: 'var(--hs-border)' }}>
-              <Button size="sm" variant="ghost" onClick={() => setShowImport(true)}>importar peticion</Button>
               <Button size="sm" variant="ghost" title="Vacía la lista de peticiones y detiene el spider. Mantiene la sesión y el objetivo." onClick={async () => {
                 await apiFetch(`/api/spider/clear/${sessionToken}`, { method: 'POST' })
                 clearRequests()
@@ -257,15 +254,6 @@ export function ProxyPage() {
         </div>
       </div>
 
-      {showImport && (
-        <ImportRequest
-          onClose={() => setShowImport(false)}
-          onImport={(parsed) => {
-            sessionStorage.setItem('repeater_request', JSON.stringify(parsed))
-            setShowImport(false)
-          }}
-        />
-      )}
     </div>
   )
 }
