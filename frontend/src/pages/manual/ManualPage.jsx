@@ -54,7 +54,7 @@ function Controles({ children }) {
 
 // Cada elemento de la interfaz se nombra diciendo QUE ES: un boton no se pulsa
 // igual que se rellena un campo, y un aviso no se pulsa en absoluto.
-function Control({ tipo, nombre, children }) {
+function Control({ tipo, nombre, cuando, children }) {
   return (
     <li
       className="text-[11px] leading-relaxed flex gap-2"
@@ -75,6 +75,14 @@ function Control({ tipo, nombre, children }) {
         <span style={{ color: 'var(--hs-accent)' }}>{nombre}</span>
         {' — '}
         {children}
+        {cuando && (
+          <span
+            className="block mt-1 text-[10px]"
+            style={{ color: 'var(--hs-text-dim)' }}
+          >
+            {'\u25B8 '}{cuando}
+          </span>
+        )}
       </span>
     </li>
   )
@@ -139,12 +147,20 @@ export function ManualPage() {
               <i>sin conexion</i>, el rastreo puede estar corriendo igualmente, pero
               las peticiones no irán apareciendo solas: recarga la página.
             </Control>
-            <Control tipo="indicador" nombre="con sesión / sin cookies de sesión">
+            <Control
+              tipo="indicador"
+              nombre="con sesión / sin cookies de sesión"
+              cuando="no está desde el principio: aparece al fijar el objetivo, es decir al lanzar el primer rastreo"
+            >
               dice si el rastreo lleva cookies, y cuáles por su nombre. Ojo al
               matiz: indica que <b>hay</b> cookies de sesión, no que la
               autenticación sea válida ni que siga viva.
             </Control>
-            <Control tipo="botón" nombre="liberar sesion">
+            <Control
+              tipo="botón"
+              nombre="liberar sesion"
+              cuando="solo si hay cookies: sin sesión, el botón no está"
+            >
               suelta las cookies. Conserva las peticiones ya capturadas y el
               objetivo. Úsalo para repetir un rastreo como usuario anónimo y
               comparar qué cambia.
@@ -160,17 +176,28 @@ export function ManualPage() {
               cuenta páginas, no filas del panel: cada página puede añadir varias
               filas, una por cada formulario que tenga.
             </Control>
-            <Control tipo="botón" nombre="Iniciar spider">
-              arranca el rastreo. Mientras corre, en su sitio aparece{' '}
-              <i>Detener</i>.
+            <Control
+              tipo="botón"
+              nombre="Iniciar spider"
+              cuando="apagado mientras no haya una URL escrita o un objetivo ya fijado"
+            >
+              arranca el rastreo. Mientras corre no desaparece: cambia su texto a{' '}
+              <i>Ejecutando...</i> y deja de poder pulsarse.
             </Control>
-            <Control tipo="botón" nombre="Detener">
+            <Control
+              tipo="botón"
+              nombre="Detener"
+              cuando="solo mientras el rastreo está en marcha, y aparece AL LADO de «Ejecutando...», no en su lugar"
+            >
               para el rastreo. Puede entrar todavía una petición más: es la que ya
               estaba en vuelo cuando pulsaste.
             </Control>
-            <Control tipo="aviso" nombre="objetivo fijado">
-              texto informativo, no se pulsa. Aparece bajo el campo cuando ya hay
-              un objetivo y recuerda cómo cambiarlo.
+            <Control
+              tipo="aviso"
+              nombre="objetivo fijado"
+              cuando="solo cuando ya hay un objetivo fijado; antes del primer rastreo no está"
+            >
+              texto informativo, no se pulsa. Recuerda cómo cambiar de objetivo.
             </Control>
           </Controles>
 
@@ -184,7 +211,11 @@ export function ManualPage() {
               vacía la lista de peticiones y detiene el rastreo. <b>Conserva</b> la
               sesión y el objetivo.
             </Control>
-            <Control tipo="botón" nombre="liberar sesion">
+            <Control
+              tipo="botón"
+              nombre="liberar sesion"
+              cuando="solo si hay cookies"
+            >
               suelta las cookies. <b>Conserva</b> las peticiones y el objetivo.
             </Control>
             <Control tipo="botón" nombre="nueva auditoria">
@@ -219,7 +250,11 @@ export function ManualPage() {
               <i>FORM</i>; ahí lo que se indica es <b>cuántos campos</b> tiene el
               formulario, que es lo que define su superficie de ataque.
             </Control>
-            <Control tipo="desplegable" nombre="[N formularios · vistos aqui primero]">
+            <Control
+              tipo="desplegable"
+              nombre="[N formularios · vistos aqui primero]"
+              cuando="solo en las páginas que tienen formularios; y las filas de formulario no se ven hasta que lo despliegas"
+            >
               despliega los formularios que cuelgan de esa página. Un mismo
               formulario se cataloga <b>una sola vez</b> aunque esté en muchas
               páginas: un buscador de cabecera aparecerá bajo la primera página
@@ -235,8 +270,13 @@ export function ManualPage() {
           </P>
           <Controles>
             <Control tipo="pestaña" nombre="Request">
-              el método y la URL de la petición, y debajo el cuerpo enviado, si lo
-              hubo.
+              el método y la URL de la petición, y debajo el cuerpo enviado.
+              <span
+                className="block mt-1 text-[10px]"
+                style={{ color: 'var(--hs-text-dim)' }}
+              >
+                {'\u25B8 '}el apartado del cuerpo solo sale si la petición llevaba uno: en un GET no aparece
+              </span>
             </Control>
             <Control tipo="pestaña" nombre="Response">
               el código de respuesta y el cuerpo que devolvió el servidor.
@@ -255,8 +295,9 @@ export function ManualPage() {
 
           <Sub>El mensaje de cierre</Sub>
           <P>
-            Al acabar aparece un aviso bajo la barra que dice <b>cómo</b> terminó, y
-            los tres finales significan cosas distintas:
+            Mientras el rastreo corre no hay ningún mensaje. Al acabar aparece un
+            aviso bajo la barra que dice <b>cómo</b> terminó, y los tres finales
+            significan cosas distintas:
           </P>
           <Controles>
             <Control tipo="aviso" nombre="Spider completado">

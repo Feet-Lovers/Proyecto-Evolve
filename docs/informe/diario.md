@@ -3628,3 +3628,25 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **Evidencia:** ⚠️ **FALTA: la pestaña Manual con el Spider detallado [pantalla, josemax]** · ⚠️ **FALTA:
   el panel con el filtro en POST y la tabla vacía [pantalla, josemax]**.
 - **Horas:** ~0,5 h de Claude.
+
+### Fase 3 (11-oct, 19:33) · «Esto no aparece hasta que…» — y un error del propio manual
+
+- **josemax:** faltaba indicar que **algunos elementos no están desde el principio**, y puso como ejemplo
+  el botón `Detener` del Spider.
+- **Qué se hizo:** cada control puede declarar ahora su **condición de aparición**, en una línea aparte
+  bajo su descripción. Se marcaron **siete**: el indicador de sesión · `liberar sesion` (dos sitios) ·
+  `Iniciar spider` · `Detener` · el aviso de objetivo fijado · el desplegable de formularios · el
+  apartado del cuerpo en la pestaña Request. Y se añadió que **mientras el rastreo corre no hay ningún
+  mensaje de cierre**.
+- 🔴 **El manual se equivocaba en el ejemplo que él mismo puso.** Decía que al arrancar «en su sitio
+  aparece `Detener`». Falso: `ProxyPage.jsx:234-240` deja `Iniciar spider` donde está, le cambia el
+  texto a `Ejecutando...` y lo deshabilita, y **`Detener` sale AL LADO**. Se corrigió.
+- 🟠 **Y una condición que nadie había visto:** el indicador de sesión **no existe hasta que hay objetivo
+  fijado** (`ProxyPage.jsx:163`, todo el bloque va dentro de `activeUrl &&`). Nada más entrar no hay ni
+  «con sesión» ni «sin cookies de sesión»: no hay nada. Esto **invalida el guion de capturas** que yo
+  mismo había propuesto una hora antes, que pedía fotografiar «sin cookies de sesión nada más entrar».
+- **La lección vuelve a ser la misma del día:** lo que se supone de una pantalla y lo que el código hace
+  no coinciden, y la única forma de saberlo es ir al código. Van **tres** veces hoy que documentar algo
+  destapa un defecto o un error de descripción.
+- **A qué requisito toca:** **RF-01**. **Evidencia:** ⚠️ **FALTA: el manual con las condiciones de
+  aparición [pantalla, josemax]**. **Horas:** ~0,2 h de Claude.
