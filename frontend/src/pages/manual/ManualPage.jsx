@@ -150,6 +150,7 @@ export function ManualPage() {
             ['Iniciar / Detener', 'arranca y para el rastreo. Al detener puede entrar una peticion mas: es la que ya estaba en curso.'],
           ]} />
           <Captura src="/manual/spider-barra.png" pie="Objetivo fijado y bloqueado, alcance en 200 paginas y el boton de detener durante un rastreo en marcha." />
+          <Captura src="/manual/spider-alcance.png" pie="La ayuda del selector recuerda que el alcance cuenta paginas, no filas del panel." />
 
           <P>
             Cada boton explica su alcance al pasar el raton por encima, porque los
