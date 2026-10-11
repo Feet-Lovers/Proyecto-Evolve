@@ -3789,3 +3789,30 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
   comando en vez de citarlo.**
 - **A qué requisito toca:** **RF-05**. **Evidencia:** ⚠️ **FALTA: el editor con el botón limpiar y dos
   cabeceras del mismo nombre [pantalla, josemax]**. **Horas:** ~0,5 h de Claude.
+
+### Fase 3 (11-oct, 21:18) · La vista previa ejecutaba el código del sitio auditado
+
+- **Hallazgo** (leyendo el código del Repeater, no usándolo): el marco de la pestaña `Preview` llevaba
+  `sandbox="allow-same-origin allow-scripts"`. **Esa pareja se anula**: con `srcdoc` el contenido hereda
+  el origen del documento padre, así que el código que viniera en la respuesta **se ejecutaba contando
+  como HookSuite** y alcanzaba lo que la herramienta guarda en el navegador, incluida la sesión del
+  auditor.
+- **Por qué importa aquí más que en otra aplicación.** En una aplicación normal el HTML que pintas es
+  tuyo. En una herramienta de auditoría es **justo al revés**: lo que se pinta viene del sitio auditado,
+  que es por definición del que no te fías. El flujo era mandar una petición a un objetivo, recibir lo
+  que quisiera devolver y renderizarlo con permisos.
+- **Alcance, dicho sin inflarlo:** no exponía el servidor ni a otros usuarios. Afectaba a **quien pulsara
+  `Preview`**, y solo si el objetivo decidía aprovecharlo.
+- **Decisión de josemax** entre las tres salidas que se le plantearon: **sin scripts** (`sandbox=""`,
+  todos los permisos denegados), por encima de «scripts pero aislados» y de retirar la pestaña.
+- **Y una mejora suya:** avisar **dentro** de la pestaña y **por encima** del marco de que no se ejecuta
+  JavaScript y que una página que se construya sola puede verse incompleta. Su razonamiento: quien pulsa
+  tiene que saberlo **antes** de ver la página a medias, no después.
+- **Verificación:** sobre el **bundle construido**, donde los comentarios ya no están —`allow-same-origin`
+  0, `allow-scripts` 0, aviso 1, control 1—. ⚠️ El `grep` sobre el **fuente** daba 1 y 2: contaba **mi
+  propio comentario**, el que explica el atributo retirado. Es la tercera vez en dos días que un
+  comentario falsea un recuento.
+- **Evidencia (R6):** el atributo anterior **queda en el historial de git**; para un defecto de
+  configuración no hace falta captura para conservar el estado previo.
+- **A qué requisito toca:** **RNF-07** (seguridad del producto) y **RF-05**. Va al **apartado 7**.
+- **Horas:** ~0,3 h de Claude.
