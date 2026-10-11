@@ -108,7 +108,7 @@ export function RequestsTable({ requests, onSelect, selectedId }) {
   )
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col flex-1 min-h-0">
       <div
         className="flex gap-2 p-2 border-b"
         style={{ background: 'var(--hs-surface)', borderColor: 'var(--hs-border)' }}
@@ -143,7 +143,7 @@ export function RequestsTable({ requests, onSelect, selectedId }) {
         </select>
       </div>
 
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 min-h-0 overflow-auto">
         <table className="w-full text-[10px]" style={{ fontFamily: 'var(--font-mono)' }}>
           <thead
             className="sticky top-0"
@@ -170,7 +170,7 @@ export function RequestsTable({ requests, onSelect, selectedId }) {
                     className="ml-2 cursor-pointer"
                     style={{ color: 'var(--hs-accent)', fontSize: '9px' }}
                   >
-                    {'[' + group.forms.length + (group.forms.length === 1 ? ' formulario ' : ' formularios ') + (expanded[group.main.url] ? '\u25b2' : '\u25bc') + ']'}
+                    {'[' + group.forms.length + (group.forms.length === 1 ? ' formulario · visto aqui primero ' : ' formularios · vistos aqui primero ') + (expanded[group.main.url] ? '\u25b2' : '\u25bc') + ']'}
                   </span>
                 ))}
                 {expanded[group.main.url] && group.forms.map(form => renderRow(form, true))}
