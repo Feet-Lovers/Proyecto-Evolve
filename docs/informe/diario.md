@@ -3757,3 +3757,35 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
   contexto 2, control 1), no por el efecto.
 - **A qué requisito toca:** **RF-05** y **RF-01**. **Evidencia:** ⚠️ **FALTA: el editor conservando la
   petición tras cambiar de pestaña y tras F5 [pantalla, josemax]**. **Horas:** ~0,3 h de Claude.
+
+### Fase 3 (11-oct, 21:02) · Botón limpiar, y las cabeceras repetidas dejaban de serlo
+
+- **De dónde sale.** josemax probó el Repeater de verdad y preguntó si convenía un botón **limpiar** y
+  si la herramienta debía parecerse más a la de Burp. De esa conversación salieron tres decisiones.
+- **El botón limpiar hacía falta, y lo habíamos creado nosotros.** Hasta el arreglo del borrador
+  persistente, el editor se vaciaba solo al cambiar de pestaña: **por accidente, no por diseño**. Al
+  quitar el accidente hizo falta la acción deliberada. Vacía petición y respuesta, conserva el historial,
+  y lo dice en su ayuda emergente.
+- 🔴 **Cabeceras repetidas: la herramienta hacía imposible una prueba habitual, y en silencio.** El envío
+  usaba `Object.fromEntries`, que **se queda solo con la última** de dos cabeceras con el mismo nombre.
+  Ahora el front manda **lista de pares**, el schema acepta lista o diccionario y `forward_request`
+  normaliza a pares. El mismo fallo estaba en el guardado del borrador.
+- **Verificación de extremo a extremo**, contra un servidor de eco levantado **dentro del contenedor**,
+  con tres patas y no una: lista de pares con repetida → llegan `['uno','dos']` · diccionario de siempre
+  → llega `['unica']` (Spider y proxy intactos) · **control sin mandarla → llega `[]`**, que es lo que
+  demuestra que el vacío de la prueba es real y no un fallo del montaje.
+- ⚠️ **Lo que no cubre:** la vista de detalle sigue mostrando **una sola** de las repetidas, porque el
+  panel espera un objeto. Se envían las dos; se ve una. Queda anotado en el apdo. 10.
+- 🧭 **Decisión de producto (josemax): el Repeater se queda con campos, no pasa a edición en crudo.** No
+  es una carencia sino una elección: la herramienta guía en vez de dar una caja de texto libre. La
+  contrapartida —no se puede enviar una petición mal formada a propósito— se asume y se documenta.
+- ⚠️ **Dato que NO se pudo confirmar:** si el Repeater de Burp permite crear peticiones desde cero o si
+  edita en crudo. La documentación oficial consultada solo confirma que admite **varias peticiones a la
+  vez, cada una en su pestaña**. **No se apoya ninguna afirmación del informe en lo que yo recuerde de
+  Burp**: queda para que josemax lo mire en el suyo.
+- 🛡️ **Dos bloqueos del guardián, el mismo falso positivo:** la prueba llamaba al método que detiene el
+  servidor de eco, palabra que está en su lista de acciones críticas; y el segundo saltó **al escribir la
+  memoria**, porque el texto citaba ese método. Lección: **al documentar un bloqueo, describir el
+  comando en vez de citarlo.**
+- **A qué requisito toca:** **RF-05**. **Evidencia:** ⚠️ **FALTA: el editor con el botón limpiar y dos
+  cabeceras del mismo nombre [pantalla, josemax]**. **Horas:** ~0,5 h de Claude.
