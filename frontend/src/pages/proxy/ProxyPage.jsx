@@ -156,6 +156,7 @@ export function ProxyPage() {
           <input
             type="text"
             placeholder="URL objetivo (ej: https://ejemplo.com)"
+            title={activeUrl ? "Objetivo fijado para esta auditoría. Pulsa «nueva auditoria» para cambiarlo." : "URL del sitio que se va a rastrear"}
             value={activeUrl || targetUrl}
             onChange={e => !activeUrl && setTargetUrl(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !spiderRunning && !activeUrl && handleStartSpider()}
@@ -197,6 +198,12 @@ export function ProxyPage() {
             </Button>
           )}
         </div>
+
+        {activeUrl && (
+          <span className="text-[11px]" style={{ color: "var(--hs-text-dim)", fontFamily: "var(--font-mono)" }}>
+            objetivo fijado · pulsa «nueva auditoria» para cambiarlo
+          </span>
+        )}
 
         {spiderMessage && (
           <span className="text-[11px]" style={{ color: 'var(--hs-text-dim)', fontFamily: 'var(--font-mono)' }}>
