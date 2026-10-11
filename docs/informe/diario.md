@@ -3354,3 +3354,38 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **Evidencia:** salida del build fallido con la posición exacta · ⚠️ **FALTA: el importador funcionando
   desde el Repeater [pantalla, josemax]**.
 - **Horas:** ~0,5 h de Claude.
+
+### Fase 3 (11-oct, 14:19) · La pestaña no era un Proxy, y los formularios colgaban de páginas ajenas
+
+- **De dónde sale esto.** josemax, usando la herramienta, planteó dos dudas de fondo: que lo que hace
+  **ya no es un proxy** —«hay que introducir la URL a mano»— y que la tabla muestra las peticiones
+  **mezcladas** hasta bloquearle a él, que sabe cómo funciona.
+- **(A) Qué es realmente, verificado en el código.** El servicio hace **una sola clase de petición**,
+  `client.get()` (`spider_service.py:161`); sigue enlaces **del mismo dominio** (`is_same_domain`,
+  `normalize_url`, `should_skip`) hasta un tope; y **cataloga** los formularios que encuentra
+  **sin enviarlos** (`size: 0`, `time: 0`). Eso no es un proxy —no se interpone en nada—, no es un
+  interceptor, y **no es fuzzing**: tiene **0 payloads**, los 14 están en `intruder_service`. Es un
+  **rastreador web** (*spider*), es decir **descubrimiento de contenido**: el equivalente al *Crawl* de
+  Burp, no a su *Proxy*.
+- **El dato que cierra la discusión:** el **backend ya lo llamaba así** —`spider_service.py`,
+  `/api/spider/*`, eventos `spider_started`/`spider_completed`, botón «Iniciar spider»—. La **única**
+  pieza que decía «Proxy Interceptor» era la etiqueta de la pestaña. No se ha redefinido nada: se le ha
+  puesto el nombre que el propio código usaba.
+- **(B) El defecto de la tabla, que no era estético.** Los formularios se emparejaban con su página
+  **por prefijo de texto**: `order.find(k => k === key || k.startsWith(key))`. Consecuencias reales: un
+  formulario con `action="/"` casaba con **cualquier** fila; `/login.php` casaba también con
+  `/login.php?x=1` y `/login.php.bak`; y las páginas se agrupaban por URL **completa** mientras los
+  formularios se buscaban por URL **sin query** —dos criterios distintos en la misma función—.
+  **La tabla afirmaba pertenencias falsas.**
+- **La raíz estaba en el backend:** el spider **sabe** en qué página encontró cada formulario —los emite
+  dentro de `crawl_page(url)`— pero **no mandaba ese dato**, así que el frontend lo reconstruía
+  adivinando. Ahora lo manda (`pagina_origen`) y la tabla lo usa.
+- **Hallazgo pendiente, ya identificado:** la columna **STATUS mezcla dos cosas** — un código HTTP para
+  las páginas (`200`, `403`) y la palabra `FORM` para los formularios, que no es un status. Entra en
+  la reorganización de la tabla, pendiente de que josemax elija entre tres esquemas.
+- **⚠️ Afecta a la memoria técnica:** RF-02 y la matriz describen esta pieza como «proxy». Al llevar el
+  pulido al `.typ` hay que revisar esa terminología.
+- **A qué requisito toca:** **RF-02**, **RF-03**, **RF-01**, **apartado 8**.
+- **Evidencia:** ⚠️ **FALTA: la pestaña renombrada y la tabla con los formularios en su sitio
+  [pantalla, josemax]**.
+- **Horas:** ~0,6 h de Claude.
