@@ -3599,3 +3599,32 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **A qué requisito toca:** **RF-01** (usabilidad) y **apartado 10**.
 - **Evidencia:** ⚠️ **FALTA: la pestaña Manual con la sección del Spider [pantalla, josemax]**.
 - **Horas:** ~0,4 h de Claude.
+
+### Fase 3 (11-oct, 19:22) · El manual, control por control — y un defecto que aparece al documentar
+
+- **josemax, sobre la primera versión:** «el texto que hay está muy bien pero es algo pobre». Pide
+  **detallar más cada punto** y **especificar qué es cada cosa**: un botón, un campo de texto para
+  rellenar, un mensaje informativo. Y decide dejar el manual **sin capturas** —ni puestas ni pendientes—
+  y volver a esa decisión más adelante.
+- **Qué se hizo:** de 7 párrafos a **25 controles documentados uno a uno**, agrupados por zona de la
+  pantalla (barra de control · panel de peticiones · panel de detalle), más los tres borrados y los tres
+  finales posibles del rastreo. Cada elemento se nombra **diciendo qué es** (botón, campo de texto,
+  desplegable, aviso, indicador, pestaña, columna). La distinción no es cosmética: un aviso no se pulsa,
+  y el texto anterior no los separaba.
+- **Regla que se aplicó al propio manual:** antes de describir nada, leer el código. Así entraron seis
+  elementos que **no estaban documentados** —el filtro por URL, el filtro por método, las tres pestañas
+  del detalle, los dos botones de envío, el indicador de conexión y el código de color del `status`—,
+  verificados en `ProxyPage.jsx`, `RequestsTable.jsx` y `RequestDetail.jsx`.
+- 🔴 **DEFECTO ENCONTRADO AL DOCUMENTAR (sin buscarlo):** los **filtros esconden los formularios**.
+  `RequestsTable.jsx:50-56` filtra las filas **antes** de agrupar, y `groupRequests` cuelga cada
+  formulario de `groups[r.pagina_origen]`: **si su página queda fuera del filtro, el formulario no se
+  muestra en ninguna parte**. Dos efectos: (a) filtrar por **POST** vacía la tabla entera —las páginas
+  son GET, desaparecen los grupos y los formularios POST se quedan sin dónde colgar— justo cuando lo que
+  se busca son formularios; (b) con el filtro de texto, un formulario desaparece tanto si no casa él como
+  si no casa su página. **Es lectura de código, no prueba en vivo:** se confirma poniendo el desplegable
+  en POST.
+- **Es el mismo patrón del resto del día:** el dato está en el backend y la pantalla no lo deja ver.
+- **A qué requisito toca:** **RF-01** (usabilidad) y **RF-03** (el filtro es del rastreador).
+- **Evidencia:** ⚠️ **FALTA: la pestaña Manual con el Spider detallado [pantalla, josemax]** · ⚠️ **FALTA:
+  el panel con el filtro en POST y la tabla vacía [pantalla, josemax]**.
+- **Horas:** ~0,5 h de Claude.
