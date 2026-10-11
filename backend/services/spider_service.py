@@ -198,6 +198,8 @@ class SpiderService:
 
             # Emitir peticiones de formularios como peticiones independientes
             for form in forms:
+                if not session_manager.get_session(self.session_token).get("spider_running", True):
+                    break
                 if form['body']:
                     huella = (form['method'], form['action'], form['body'])
                     if huella in self.forms_emitidos:

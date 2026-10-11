@@ -155,7 +155,7 @@ export function ProxyPage() {
         <div className="flex gap-2">
           <input
             type="text"
-            placeholder="URL objetivo (ej: http://dvwa)"
+            placeholder="URL objetivo (ej: https://ejemplo.com)"
             value={activeUrl || targetUrl}
             onChange={e => !activeUrl && setTargetUrl(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !spiderRunning && !activeUrl && handleStartSpider()}
@@ -170,6 +170,7 @@ export function ProxyPage() {
             }}
           />
           <select
+            title="Máximo de páginas que rastreará el spider"
             value={speed}
             onChange={e => setSpeed(e.target.value)}
             className="px-2 py-1.5 rounded text-[12px]"
@@ -179,9 +180,9 @@ export function ProxyPage() {
               color: 'var(--hs-text-primary)',
             }}
           >
-            <option value="rapido">Rapido (50)</option>
-            <option value="normal">Normal (200)</option>
-            <option value="completo">Completo (500)</option>
+            <option value="rapido">hasta 50 páginas</option>
+            <option value="normal">hasta 200 páginas</option>
+            <option value="completo">hasta 500 páginas</option>
           </select>
           <Button
             size="sm"
@@ -210,7 +211,7 @@ export function ProxyPage() {
                 <>
                   <span className="w-2 h-2 rounded-full" style={{ background: '#3a7d4f', flexShrink: 0 }} />
                   <span className="text-[10px] truncate" style={{ fontFamily: 'var(--font-mono)', color: '#3a7d4f' }}>
-                    {Object.entries(sessionCookies).map(([k, v]) => `${k}=${v}`).join('; ')}
+                    {'autenticado · ' + Object.keys(sessionCookies).join(', ')}
                   </span>
                 </>
               ) : (
