@@ -3476,3 +3476,27 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
   de IA que identificó el riesgo y no lo verificó).
 - **Evidencia:** ⚠️ **FALTA: el buscador apareciendo tras el arreglo [pantalla, josemax]**.
 - **Horas:** ~0,3 h de Claude.
+
+### Fase 3 (11-oct, 18:12) · El recuento del mensaje ya cuadra con el panel
+
+- **Qué se arregló.** El mensaje decía «55 páginas encontradas y analizadas» y el panel mostraba **53**.
+  No se perdía nada: `self.visited.add(url)` ocurre **antes** del `try`, así que una página cuya
+  petición falla **cuenta como visitada y nunca se publica**. Eran **2 con error**, y el usuario se
+  quedaba buscando dos filas que no existen.
+- **Cómo queda:** *«53 páginas analizadas, 2 con error (de 55 visitadas)»*. Si no hubo errores el texto no
+  cambia. Misma corrección en el mensaje de parada manual, que arrastraba el mismo defecto.
+- **Por qué no se tocó `visited`:** marcar la página como visitada antes de pedirla es correcto — evita
+  reintentar en bucle una URL que falla. Lo que estaba mal era **el mensaje**, que prometía que todo lo
+  visitado estaba en el panel.
+- **Confirmado por josemax en el mismo rato:** el arreglo de `pagina_origen` funciona — el buscador de
+  su sitio **ya aparece colgado de `/tienda`**, que es donde está.
+- **🔎 Defecto nuevo, pendiente de clasificar:** las primeras páginas capturadas —que quedan **al final**
+  de la lista, porque las nuevas se insertan arriba— **no se alcanzan con el scroll**. La fila existe
+  (su formulario se ve filtrando) pero no se puede llegar a ella. Sospecha: el panel izquierdo es
+  `overflow-hidden` y la tabla vive en un `flex-1 overflow-auto`; sin `min-height` en la cadena de
+  contenedores flex, el contenido se desborda y el scroll interno no alcanza las últimas filas.
+  **La causa es de maquetación pero el efecto es que no se puede acceder a datos capturados**, así que
+  lo decide josemax (norma del día: ante la duda diseño/funcionalidad, decide él).
+- **A qué requisito toca:** **RF-03**, **apartado 8**.
+- **Evidencia:** ⚠️ **FALTA: el mensaje con el recuento correcto [pantalla, josemax]**.
+- **Horas:** ~0,3 h de Claude.
