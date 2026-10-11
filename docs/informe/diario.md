@@ -3163,3 +3163,31 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **Evidencia:** ⚠️ **FALTA: la barra con los textos nuevos y el panel limpio tras pulsar limpiar
   [pantalla, josemax]**, pendiente de recrear.
 - **Horas:** ~0,4 h de Claude.
+
+### Fase 3 (11-oct, 12:45) · El indicador de sesión fallaba en los dos sentidos
+
+- **Qué se hizo.** El Spider avisa ahora al panel de las cookies del cliente compartido, igual que hacía
+  solo el Repeater.
+- **El defecto, que es el reverso del de hace un rato.** La emisión de `session_cookies` vivía **dentro
+  de `forward_request`** (`proxy_service.py:71`), la función del Repeater. Spider e Intruder usan el
+  **mismo cliente** (`get_session_client`) y por tanto **sí acumulan cookies**, pero no la llaman nunca:
+  el panel no se enteraba. Resultado: podías estar rastreando con sesión activa y leer «sin cookies de
+  sesión». Esta mañana el indicador daba **falso positivo** (cualquier cookie = «autenticado»); esto era
+  el **falso negativo** del mismo cartel.
+- **Cómo se encontró.** josemax preguntó por qué había tenido que mandar una petición desde el Repeater
+  para que se encendiera. La respuesta no era «porque es la única forma de obtener la cookie», sino
+  **«porque es la única que avisa»** — y eso solo se ve mirando quién llama a qué.
+- **Por qué se arregla y no se documenta como limitación.** No es funcionalidad nueva: es que un indicador
+  que ya existe funcione en los tres módulos que **ya** comparten el cliente. Se descartó la alternativa
+  (añadir una pista de «envía algo desde el Repeater»), que habría documentado la rareza en vez de
+  quitarla.
+- **🔎 Hallazgo del mismo rato, sin tocar:** una vez lanzado el spider, **el campo de URL se bloquea**
+  (`ProxyPage.jsx:24` lo fija, `:162` lo pone en solo lectura) y **solo `nueva auditoría` lo libera**
+  (`:84`). No hay ni un comentario que lo explique; la razón deducible es impedir **mezclar objetivos**
+  en un mismo panel, la misma idea del sello de objetivo del 10-oct. Dos consecuencias: es otra función
+  **invisible** —nada dice cómo cambiar de objetivo—, y demuestra que **`nueva auditoría` no es
+  redundante**, que era justo lo que íbamos a evaluar en la pasada 2.
+- **A qué requisito toca:** **RF-03**, **RF-04**.
+- **Evidencia:** ⚠️ **FALTA: el indicador encendiéndose durante un rastreo, sin pasar por el Repeater
+  [pantalla, josemax]**.
+- **Horas:** ~0,3 h de Claude.
