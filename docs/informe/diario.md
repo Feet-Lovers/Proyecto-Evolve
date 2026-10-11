@@ -3326,3 +3326,31 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
   él sobre una regla que yo había escrito mal).
 - **Evidencia:** `memoria/DECISIONES.md` del 11-oct · (no aplica captura).
 - **Horas:** ~0,1 h de Claude.
+
+### Fase 3 (11-oct, 13:57) · El importador de peticiones se muda al Repeater
+
+- **Qué se hizo.** El modal de importar peticiones (raw HTTP / cURL) sale del Proxy y pasa al **Repeater**,
+  que es donde aparecía su resultado. Antes: pulsabas «parsear y enviar al repeater», el modal se cerraba
+  y **no pasaba nada visible** —dejaba la petición en `sessionStorage` y había que ir a mano a la otra
+  pestaña—. Ahora entrega la petición **directamente al editor**.
+- **Lo que no se toca:** el paso por `sessionStorage` sigue vivo para el **otro** flujo, «enviar al
+  repeater» desde la tabla del Proxy (`ProxyPage.jsx:104`).
+- **Por qué se hizo ahora pese a la norma de aparcar diseño.** Lo reclasificó josemax: *«ese botón no está
+  bien en el PROXY»*. Si el importador se queda o se quita se decide al pulir el Repeater.
+- **🔴 Tres tropiezos seguidos, los tres del mismo tipo: el cambio parecía hecho y no lo estaba.**
+  1. **`RepeaterPage.jsx` es CRLF entero** y `ProxyPage.jsx` es LF. Las sustituciones **multilínea** no
+     casaron —el botón y el modal **no se añadieron**— mientras que las de una sola línea sí, metiendo
+     saltos LF sueltos en un fichero CRLF. Es la **tercera vez hoy** que los finales de línea mixtos del
+     frontend muerden; se revirtió el fichero y se rehizo detectando el terminador y trabajando por
+     líneas, no por texto.
+  2. **El modal quedó fuera del JSX**, entre el `</div>` raíz y el `)` del `return`. El build lo cazó
+     (*«Expected `,` or `)` but found `{`»*): el error no era de React sino de dónde insertó el script.
+  3. Un **fallo de sintaxis en el propio script** de corrección hizo que no tocara nada; se detectó porque
+     el fichero seguía igual, no porque avisara.
+- **Lo que evitó que esto llegara a producción:** compilar **antes** de commitear, y mirar el recuento de
+  cada pieza en vez de fiarse de que el comando terminó sin error.
+- **A qué requisito toca:** **RF-05** (Repeater), **RF-01**, **apartado 8** (los finales de línea mixtos
+  ya son un patrón del proyecto, no una anécdota).
+- **Evidencia:** salida del build fallido con la posición exacta · ⚠️ **FALTA: el importador funcionando
+  desde el Repeater [pantalla, josemax]**.
+- **Horas:** ~0,5 h de Claude.
