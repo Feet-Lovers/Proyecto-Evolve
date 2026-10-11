@@ -7,7 +7,7 @@ import { Button } from '@/components/ui'
 import { config, apiFetch } from '@/services/api'
 
 export function ProxyPage() {
-  const { sessionToken, requests, connected, clearRequests, resetWs, activeUrl, setActiveUrl, sessionCookies, setSessionCookies } = useAppContext()
+  const { sessionToken, spiderEvento, requests, connected, clearRequests, resetWs, activeUrl, setActiveUrl, sessionCookies, setSessionCookies } = useAppContext()
   const [selectedRequest, setSelectedRequest] = useState(null)
   const [targetUrl, setTargetUrl] = useState('')
   const [speed, setSpeed] = useState('normal')
@@ -15,6 +15,25 @@ export function ProxyPage() {
   const pollRef = useRef(null)
   const [spiderMessage, setSpiderMessage] = useState('')
   const navigate = useNavigate()
+
+  // El backend distingue completado / detenido a mano / limite alcanzado y manda el
+  // recuento de paginas; hasta ahora ese evento se descartaba y se pintaba un texto fijo.
+  useEffect(() => {
+    if (spiderEvento?.tipo === 'completado' && spiderEvento.mensaje) {
+      setSpiderMessage(spiderEvento.mensaje)
+      setSpiderRunning(false)
+    }
+  }, [spiderEvento])
+
+  // Tras un F5 se perdia el objetivo y se podia lanzar otro spider encima, mezclando
+  // objetivos en el mismo panel. El backend lo recuerda: se lo preguntamos al montar.
+  useEffect(() => {
+    if (!sessionToken || activeUrl) return
+    apiFetch(`/api/spider/status/${sessionToken}`)
+      .then(r => r.json())
+      .then(d => { if (d && d.target) setActiveUrl(d.target) })
+      .catch(() => {})
+  }, [sessionToken])
 
   const handleStartSpider = async () => {
     const urlToUse = activeUrl || targetUrl.trim()
@@ -42,7 +61,10 @@ export function ProxyPage() {
             clearInterval(poll)
             pollRef.current = null
             setSpiderRunning(false)
-            setSpiderMessage(prev => prev === 'Deteniendo el spider...' ? 'Spider detenido' : 'Spider completado')
+            setSpiderMessage(prev =>
+                          prev === 'Deteniendo el spider...' ? 'Spider detenido'
+                          : /p[áa]ginas/.test(prev) ? prev
+                          : 'Spider finalizado')
           }
         }, 2000)
         pollRef.current = poll

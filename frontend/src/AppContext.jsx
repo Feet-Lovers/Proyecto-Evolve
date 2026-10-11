@@ -37,6 +37,7 @@ export function AppProvider({ children }) {
   const [vulnerabilities, setVulnerabilities] = useState(config.USE_MOCKS ? mockVulnerabilities : [])
   const [connected, setConnected] = useState(config.USE_MOCKS)
   const [activeUrl, setActiveUrl] = useState(null)
+  const [spiderEvento, setSpiderEvento] = useState(null)
   const [sessionCookies, setSessionCookies] = useState({})
   const [wsKey, setWsKey] = useState(0)
   const wsRef = useRef(null)
@@ -88,6 +89,10 @@ export function AppProvider({ children }) {
       if (data.type === 'request_intercepted') { console.log('packet:', data.payload.method, data.payload.url); setRequests(prev => [normalizePacket(data.payload), ...prev]) }
       if (data.type === 'vulnerability_detected') setVulnerabilities(prev => [data.payload, ...prev])
       if (data.type === 'session_cookies') setSessionCookies(data.payload.cookies)
+      // El backend distingue completado / detenido a mano / limite alcanzado y manda
+      // el recuento de paginas. Antes estos dos eventos llegaban y se descartaban.
+      if (data.type === 'spider_completed') setSpiderEvento({ tipo: 'completado', ...data.payload })
+      if (data.type === 'spider_started') setSpiderEvento({ tipo: 'iniciado', ...data.payload })
       if (data.type === 'network_packet') setNetworkPackets(prev => [normalizePacket(data.payload), ...prev])
     }
     return () => ws.close()
@@ -105,6 +110,8 @@ export function AppProvider({ children }) {
       clearRequests,
       resetWs: () => setWsKey(k => k + 1),
       activeUrl,
+      spiderEvento,
+      setSpiderEvento,
       setActiveUrl,
       sessionCookies,
       setSessionCookies,
