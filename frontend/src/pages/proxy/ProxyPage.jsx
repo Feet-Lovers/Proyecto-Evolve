@@ -142,13 +142,13 @@ export function ProxyPage() {
           </div>
           <div className="flex gap-2">
             <Button size="sm" variant="ghost" onClick={() => setShowImport(true)}>importar peticion</Button>
-            <Button size="sm" variant="ghost" onClick={async () => {
+            <Button size="sm" variant="ghost" title="Vacía la lista de peticiones y detiene el spider. Mantiene la sesión y el objetivo." onClick={async () => {
               await apiFetch(`/api/spider/clear/${sessionToken}`, { method: 'POST' })
               clearRequests()
               setSelectedRequest(null)
               setSpiderMessage('')
             }}>limpiar</Button>
-            <Button size="sm" variant="danger" onClick={handleNewAudit}>nueva auditoria</Button>
+            <Button size="sm" variant="danger" title="Empieza de cero: vacía la lista, suelta la sesión y libera el campo de URL." onClick={handleNewAudit}>nueva auditoria</Button>
           </div>
         </div>
 
@@ -233,6 +233,7 @@ export function ProxyPage() {
             {Object.keys(sessionCookies).length > 0 && (
               <button
                 onClick={handleReleaseSession}
+                title="Suelta las cookies de sesión. Mantiene las peticiones capturadas y el objetivo."
                 className="text-[9px] px-2 py-0.5 rounded"
                 style={{ background: 'var(--hs-surface)', border: '1px solid var(--hs-accent)', color: 'var(--hs-accent)', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'var(--font-mono)' }}
               >

@@ -1,4 +1,4 @@
-export function Button({ children, variant = 'primary', size = 'md', onClick, disabled, className = '' }) {
+export function Button({ children, variant = 'primary', size = 'md', onClick, disabled, className = '', title }) {
   const base = 'inline-flex items-center justify-center font-medium rounded transition-all focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer'
 
   const variants = {
@@ -18,6 +18,7 @@ export function Button({ children, variant = 'primary', size = 'md', onClick, di
     <button
       onClick={onClick}
       disabled={disabled}
+      title={title}
       style={{ fontFamily: 'var(--font-mono)' }}
       className={`${base} ${variants[variant]} ${sizes[size]} ${className}`}
     >
