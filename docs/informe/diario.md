@@ -3700,3 +3700,35 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **R4 cumplido:** `.typ` → PDF → artefacto, los tres regenerados en cadena de quince segundos, y el
   artefacto republicado en su URL de siempre.
 - **Horas:** ~0,6 h de Claude.
+
+### Fase 3 (11-oct, 20:25) · REPEATER: mapa sobre la mesa y el importador se retira
+
+- **Método, el mismo que funcionó con el Spider:** mapa primero, sin tocar nada. Del Repeater salen
+  **diez puntos**, todos de lectura de código, y josemax pidió **verificar en vivo** los tres primeros
+  antes de arreglar nada. Acertó: de esa verificación salieron dos correcciones a mi propio mapa.
+- 🔴 **Corrección mía nº1 — un punto del mapa era falso.** Dije que `/api/repeater/parse` era el único
+  endpoint **sin guardián**, porque su firma no lleva `Depends`. Lo probé: devuelve **`401` sin
+  credencial**. Está protegido; el guardián se monta en el router. *Es el mismo error que esta mañana con
+  RF-09: deducir de una lectura parcial.*
+- 🔴 **Corrección mía nº2 — el `429` no es nuestro.** josemax avisó de que enviando seguido salía un
+  `429`. Iba a anotarlo como defecto de la herramienta; la captura lo desmiente: el cuerpo de la
+  respuesta es la página *Too Many Requests* **del sitio auditado**, y el Repeater la muestra
+  correctamente (código, 85 ms, 6.5 KB y el HTML). Es el objetivo protegiéndose. **Nada que arreglar.**
+- ✅ **Punto 3 confirmado, y es peor de lo descrito.** Cambiar de pestaña y volver no solo pone el
+  contador de historial a cero: **borra la petición en curso entera** —método, URL, cabeceras, cuerpo— y
+  la respuesta. En una herramienta cuyo trabajo es afinar una petición a mano, perderla por consultar
+  otra pestaña es un defecto serio. Evidencias: `RF-05-historial-cuenta-pero-no-se-abre.png` y
+  `RF-05-historial-se-pierde-al-cambiar-de-pestaña.png`.
+- ✅ **Punto 1 verificado y retirado con su causa.** El parser devolvía `headers`/`body` y el editor leía
+  `requestHeaders`/`requestBody`: al importar se perdían cabeceras y cuerpo. Comprobado ejecutando el
+  parser dentro del contenedor. **Lo tapaba el modo de datos de muestra, que sí usa los nombres buenos**:
+  con mocks funcionaba y contra el backend real no. El traspaso desde el Spider nunca estuvo afectado.
+- 🗑️ **Decisión de josemax: se retira el importador entero.** «No es necesario, es redundante, y con las
+  herramientas existentes es suficiente.» Se va el botón, el componente, el endpoint y los dos parsers:
+  **164 líneas menos**. Con ello desaparece el defecto anterior sin arreglarlo. Evidencia previa (R6) ya
+  estaba tomada: `RF-05-repeater-importador.png`, de las 18:43.
+- ⚠️ **Nota de despliegue:** las sesiones viven **en memoria del backend** (cero referencias a Redis en
+  `session_service.py`), así que **recrear el backend las borra**. Ya está documentado en el apdo. 10
+  como decisión («el estado de sesión es volátil, por diseño»), pero conviene recordarlo antes de cada
+  recreado.
+- **A qué requisito toca:** **RF-05**. **Horas:** ~0,5 h de Claude.
