@@ -2981,6 +2981,8 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 
 ### Fase 3 (11-oct, 09:37) · RF-09 se sacrifica: la pestaña Red sale del front
 
+> 🔧 **AVISO: el punto marcado en rojo de esta entrada quedó CORREGIDO el mismo día — ver la entrada «Corrección» al final del diario. El pendiente de RF-09 estaba BIEN en sus tres puntos; lo que estaba mal era mi comprobación.**
+
 - **Qué se hizo.** Se retira del front la pestaña **Red/DevTools**: la entrada del nav
   (`Layout.jsx`), el import y la ruta (`App.jsx`) y la página `pages/network/NetworkPage.jsx`
   (113 líneas). El nav queda con **cinco** pestañas: Proxy, Repeater, Intruder, Utilidades y
@@ -3020,3 +3022,39 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
   `console_finding`— [pantalla, josemax].** Pedidas antes de tocar nada; el frontend **no se ha
   recreado todavía** para que la evidencia siga viva en su navegador.
 - **Horas:** ~0,6 h de Claude. **0 € de API.**
+
+### Fase 3 (11-oct, 09:41) · Corrección: el pendiente de RF-09 estaba bien, mi comprobación no
+
+- **Qué se corrige.** La entrada anterior afirmaba que el enunciado de RF-09 («dos llamadas a endpoints
+  que no existen, rutas de Windows e IP hardcodeada») estaba **mal en dos de sus tres puntos**. **Es
+  falso: estaba bien en los tres.** Se declara aquí en vez de editarlo en silencio (R9), y la entrada
+  anterior queda marcada con un aviso.
+- **Lo verificado, ahora con los patrones correctos.**
+  - **Dos endpoints 404, y son dos:** `/api/ia/fingerprint`, que llama `playwright/utils/reporter.py`
+    (0 coincidencias de `fingerprint` en `backend/routes/` y `backend/main.py`), y
+    `/api/network/console_finding/{token}`, que llama `devtools/utils/reporter.py:63`. Están en **dos
+    componentes distintos**, y ahí estuvo mi fallo.
+  - **Rutas de Windows, reales:** `devtools/core/chrome_launcher.py:18-19` lleva
+    `C:\Program Files\...\chrome.exe` hardcodeado, y los contenedores son Linux.
+  - **IP fija, real:** `chrome_launcher.py:39` →
+    `--proxy-pac-url=http://<IP de produccion>:8000/api/proxy/proxy.pac`, con el puerto 8000 cerrado en
+    la Fase 1 y la ruta PAC ya jubilada al pivotar RF-02 a `httpx`. Tres cosas muertas en una línea.
+- **🔴 Por qué me equivoqué, que es la parte que vale.** Los tres fueron **falsos ceros**, no lecturas:
+  busqué las dos llamadas **solo** dentro de `devtools/` y bajo el prefijo `/api/network` (cuando una es
+  de Playwright y cuelga de `/api/ia`), y busqué la IP fija por el patrón `192.168` (cuando la IP fija es
+  la **de producción**). Un `grep` que no encuentra nada **no prueba que no haya nada**: prueba que mi
+  patrón no cubría el caso. La regla que ya estaba escrita en la memoria —*ante un cero, preguntarse «¿me
+  habría salido un número si esto hubiera pasado?»*— se aplica también cuando el cero **confirma** lo que
+  yo esperaba encontrar. Ahí es más peligrosa, porque no invita a repetir la comprobación.
+- **Segundo error, de orden:** escribí la conclusión en el diario y en la evidencia **antes** de leer qué
+  decía ya la memoria extensa de la línea sobre RF-09. `LINEA.md:205-206` nombraba exactamente los dos
+  endpoints, y `:1298` situaba la IP fija en `chrome_launcher.py:39`. **Estaba todo escrito**, y lo leí
+  después de publicar. El orden correcto es: leer la memoria, luego el código, y solo entonces afirmar.
+- **Efecto sobre la decisión:** ninguno. RF-09 se sacrifica igual, y con **mejor** justificación: el
+  vertical entero está sin terminar (capturador que solo arranca en Windows y se lanza a mano, hallazgos
+  de consola que caen en un 404, IP/puerto/ruta muertos, pestaña pasiva).
+- **A qué requisito toca:** **RF-09**, **apartado 8** (como patrón de método, no como anécdota) y
+  **apartado 12** (uso de IA: este tipo de error entra en la declaración, sin disimulo).
+- **Evidencia:** `docs/evidencias/rf09-sacrificado-11oct.md`, reescrito con la corrección declarada en
+  su cabecera.
+- **Horas:** ~0,3 h de Claude. **0 € de API.**
