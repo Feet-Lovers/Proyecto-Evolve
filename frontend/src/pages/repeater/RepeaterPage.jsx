@@ -74,7 +74,12 @@ export function RepeaterPage() {
       </div>
       <div className="flex flex-1 overflow-hidden">
         <div className="w-1/2 border-r overflow-hidden flex flex-col" style={{ borderColor: 'var(--hs-border)' }}>
-          <RequestEditor initialRequest={initialRequest} onSend={handleSend} loading={loading} />
+          <RequestEditor
+            initialRequest={initialRequest}
+            onSend={handleSend}
+            onClear={() => { setResponse(null); setLastUrl('') }}
+            loading={loading}
+          />
         </div>
         <div className="w-1/2 overflow-hidden flex flex-col">
           <ResponsePanel response={response} requestUrl={lastUrl} />

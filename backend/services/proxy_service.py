@@ -71,7 +71,7 @@ def _mensaje_de_error(exc: Exception, url: str) -> str:
 async def forward_request(
     method: str,
     url: str,
-    headers: Dict[str, str],
+    headers,
     body: Optional[str],
     timeout: int = 30,
     session_token: str = None,
@@ -79,7 +79,11 @@ async def forward_request(
     start = time.time()
     request_id = str(uuid.uuid4())
     protected_headers = ['host', 'content-length', 'transfer-encoding', 'connection']
-    clean_headers = {k: v for k, v in headers.items() if k.lower() not in protected_headers}
+    # Las cabeceras llegan como diccionario (Spider y proxy) o como lista de pares
+    # (Repeater). Se trabaja siempre con pares: un diccionario no puede llevar la misma
+    # cabecera dos veces, y httpx si acepta la lista y las envia las dos.
+    pares = list(headers.items()) if isinstance(headers, dict) else [(k, v) for k, v in headers]
+    clean_headers = [(k, v) for k, v in pares if k.lower() not in protected_headers]
 
     try:
         if session_token:
@@ -126,7 +130,7 @@ async def forward_request(
             "size": len(response.content),
             "time": elapsed_ms,
             "timestamp": datetime.utcnow().isoformat(),
-            "request_headers": dict(headers),
+            "request_headers": dict(pares),   # para la vista: si se repitio una, se ve la ultima
             "request_body": body,
             "response_headers": dict(response.headers),
             "response_body": response_body[:50000],
@@ -142,7 +146,7 @@ async def forward_request(
             "size": 0,
             "time": int((time.time() - start) * 1000),
             "timestamp": datetime.utcnow().isoformat(),
-            "request_headers": dict(headers),
+            "request_headers": dict(pares),   # para la vista: si se repitio una, se ve la ultima
             "request_body": body,
             "response_headers": {},
             "response_body": "Error: Timeout",
@@ -158,7 +162,7 @@ async def forward_request(
             "size": 0,
             "time": int((time.time() - start) * 1000),
             "timestamp": datetime.utcnow().isoformat(),
-            "request_headers": dict(headers),
+            "request_headers": dict(pares),   # para la vista: si se repitio una, se ve la ultima
             "request_body": body,
             "response_headers": {},
             "response_body": _mensaje_de_error(e, url),

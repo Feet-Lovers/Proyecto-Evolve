@@ -10,6 +10,14 @@ const CLAVE_BORRADOR = 'repeater_borrador'
 
 const CABECERAS_POR_DEFECTO = { 'Content-Type': 'application/json' }
 
+// Acepta tanto un objeto de cabeceras (lo que manda el Spider) como una lista de
+// pares (lo que guarda el borrador), y devuelve siempre la lista editable.
+function aPares(cabeceras) {
+  if (!cabeceras) return null
+  if (Array.isArray(cabeceras)) return cabeceras.map(([k, v]) => ({ key: k, value: v }))
+  return Object.entries(cabeceras).map(([k, v]) => ({ key: k, value: v }))
+}
+
 function leerBorrador() {
   try {
     const crudo = sessionStorage.getItem(CLAVE_BORRADOR)
@@ -19,7 +27,7 @@ function leerBorrador() {
   }
 }
 
-export function RequestEditor({ initialRequest, onSend, loading }) {
+export function RequestEditor({ initialRequest, onSend, onClear, loading }) {
   // Lo que llega del Spider manda sobre el borrador guardado; si no hay nada nuevo,
   // se recupera lo que se estaba editando.
   const partida = initialRequest || leerBorrador()
@@ -27,8 +35,7 @@ export function RequestEditor({ initialRequest, onSend, loading }) {
   const [method, setMethod] = useState(partida?.method || 'GET')
   const [url, setUrl] = useState(partida?.url || '')
   const [headers, setHeaders] = useState(
-    Object.entries(partida?.requestHeaders || CABECERAS_POR_DEFECTO)
-      .map(([k, v]) => ({ key: k, value: v }))
+    aPares(partida?.requestHeaders) || aPares(CABECERAS_POR_DEFECTO)
   )
   const [body, setBody] = useState(partida?.requestBody || '')
 
@@ -38,7 +45,9 @@ export function RequestEditor({ initialRequest, onSend, loading }) {
     const borrador = {
       method,
       url,
-      requestHeaders: Object.fromEntries(headers.filter(h => h.key).map(h => [h.key, h.value])),
+      // Pares y no objeto: si no, dos cabeceras con el mismo nombre se fundirian en una
+      // al guardar el borrador, igual que pasaba al enviar.
+      requestHeaders: headers.filter(h => h.key).map(h => [h.key, h.value]),
       requestBody: body,
     }
     try {
@@ -50,10 +59,7 @@ export function RequestEditor({ initialRequest, onSend, loading }) {
     if (!initialRequest) return
     setMethod(initialRequest.method || 'GET')
     setUrl(initialRequest.url || '')
-    setHeaders(
-      Object.entries(initialRequest.requestHeaders || CABECERAS_POR_DEFECTO)
-        .map(([k, v]) => ({ key: k, value: v }))
-    )
+    setHeaders(aPares(initialRequest.requestHeaders) || aPares(CABECERAS_POR_DEFECTO))
     setBody(initialRequest.requestBody || '')
   }, [initialRequest])
 
@@ -64,8 +70,20 @@ export function RequestEditor({ initialRequest, onSend, loading }) {
   )
 
   const handleSend = () => {
-    const headersObj = Object.fromEntries(headers.filter(h => h.key).map(h => [h.key, h.value]))
-    onSend({ method, url, headers: headersObj, body: body || null })
+    // Lista de pares, no objeto: `Object.fromEntries` se quedaba solo con la ULTIMA de
+    // dos cabeceras con el mismo nombre, asi que la herramienta hacia imposible una
+    // prueba habitual -repetir una cabecera- y ademas en silencio.
+    const paresCabeceras = headers.filter(h => h.key).map(h => [h.key, h.value])
+    onSend({ method, url, headers: paresCabeceras, body: body || null })
+  }
+
+  const handleClear = () => {
+    setMethod('GET')
+    setUrl('')
+    setHeaders(aPares(CABECERAS_POR_DEFECTO))
+    setBody('')
+    try { sessionStorage.removeItem(CLAVE_BORRADOR) } catch { /* nada que borrar */ }
+    onClear?.()
   }
 
   const inputStyle = {
@@ -98,6 +116,14 @@ export function RequestEditor({ initialRequest, onSend, loading }) {
         />
         <Button onClick={handleSend} disabled={loading || !url}>
           {loading ? 'enviando...' : 'enviar'}
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={handleClear}
+          title="Vacía la petición y la respuesta. Mantiene el historial."
+        >
+          limpiar
         </Button>
       </div>
 

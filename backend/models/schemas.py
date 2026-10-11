@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List, Tuple, Union
 from datetime import datetime
 
 class ProxyRequest(BaseModel):
@@ -29,7 +29,10 @@ class ProxyResponse(BaseModel):
 class RepeaterRequest(BaseModel):
 	method: str
 	url: str
-	headers: Dict[str, str] = {}
+	# Lista de pares ademas de diccionario: es la unica forma de REPETIR una cabecera,
+	# y mandar la misma cabecera dos veces es una prueba de auditoria habitual que un
+	# diccionario hace imposible (la segunda pisa a la primera, en silencio).
+	headers: Union[Dict[str, str], List[Tuple[str, str]]] = {}
 	body: Optional[str] = None
 	session_token: Optional[str] = None
 
