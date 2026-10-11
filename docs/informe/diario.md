@@ -3389,3 +3389,33 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **Evidencia:** ⚠️ **FALTA: la pestaña renombrada y la tabla con los formularios en su sitio
   [pantalla, josemax]**.
 - **Horas:** ~0,6 h de Claude.
+
+### Fase 3 (11-oct, 14:27) · La tabla del Spider deja de mezclar páginas y formularios
+
+- **Qué se hizo (opción C1 de tres propuestas).** La tabla pasa a mostrar una **jerarquía explícita**:
+  una columna **tipo** (`pagina` / `└ form`) como primera columna, y cada formulario colgando de su
+  página con sangría.
+- **Lo que se quitó, y por qué era confuso:** la columna **STATUS llevaba dos cosas distintas** —un código
+  HTTP (`200`, `403`) para las páginas y la palabra `FORM` para los formularios, que no es un status—.
+  Ahora un formulario muestra **`—` en status, size y ms**, porque **no se envía**: esos tres datos no
+  existen para él.
+- **Lo que se añadió, que es el dato que sí importa:** cada formulario muestra **cuántos campos tiene**
+  —su superficie de ataque—. El backend ya tenía la lista (`fields`) y solo le faltaba contarla
+  (`num_campos`).
+- **Deuda que se cerró de paso:** la fila de página se pintaba **en línea** y la de formulario con
+  `renderRow`: **dos sitios haciendo lo mismo**, que podían divergir con cualquier cambio. Ahora ambas
+  salen de `renderRow`, con el expansor pasado como argumento.
+- **Por qué este cambio de diseño sí se hizo**, habiendo aparcado el resto: lo pidió josemax con un
+  argumento de alcance, no estético — *«si no, avanzar al resto de herramientas va a ser un caos ya que el
+  inicio de la herramienta ya lo es»*. La estructura actual mezclaba naturalezas y habría arrastrado el
+  problema a las cuatro pestañas restantes.
+- **🔴 Tropiezo, el cuarto del día con la misma firma.** El script de reescritura buscó el cierre del
+  bloque por el patrón `))}`… **y la propia línea del expansor contenía `))}`**
+  (`renderRow(form, true))}`), así que el corte se hizo en el sitio equivocado y quedaron huérfanos un
+  `</>` y un `))}`. **Lo cazó el build** señalando la línea exacta. Lección: al delimitar un bloque por
+  un patrón, comprobar que el patrón **no aparece dentro** del propio bloque.
+- **Nota menor sin arreglar:** `STATUS_COLOR` conserva una rama para `'FORM'` que ya no se usa (los
+  formularios pintan `—`). Es código muerto inocuo.
+- **A qué requisito toca:** **RF-03**, **RF-01**, **apartado 8**.
+- **Evidencia:** ⚠️ **FALTA: la tabla con la jerarquía y el recuento de campos [pantalla, josemax]**.
+- **Horas:** ~0,6 h de Claude.
