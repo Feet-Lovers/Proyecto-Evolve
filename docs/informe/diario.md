@@ -3446,3 +3446,33 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **Evidencia:** ⚠️ **FALTA: el mensaje real al terminar y el objetivo sobreviviendo a un F5
   [pantalla, josemax]**.
 - **Horas:** ~0,7 h de Claude.
+
+### Fase 3 (11-oct, 18:03) · Una regresión propia: los formularios pasaron de sobrar a desaparecer
+
+- **Qué pasó.** El arreglo de esta mañana —que los formularios colgaran de su página real en vez de
+  emparejarse por prefijo de texto— **introdujo un fallo peor que el que corregía**. josemax lo detectó
+  buscando el buscador de su sitio **en 55 páginas** y no encontrándolo en ninguna.
+- **La causa, en una línea.** La página se publica con `str(response.url)` —la URL **final tras
+  redirecciones**— y yo puse `pagina_origen = url`, la **pedida**. En cuanto el objetivo redirige
+  (`/tienda` → `/tienda/`, http → https, con o sin www) las dos cadenas dejan de coincidir, el
+  formulario no encuentra su fila y **desaparece de la tabla**.
+- **🔴 Por qué es peor que el defecto original.** Antes los formularios colgaban **de más**: una fila
+  sobrante **se ve**. Con mi fallo colgaban **de menos**: una fila ausente **no se ve**. Cambié un error
+  visible por uno invisible, que es la peor dirección posible.
+- **Y lo sabía.** Al implementarlo escribí literalmente que el riesgo era *«que `pagina_origen` no
+  coincida exactamente con la URL con la que la tabla agrupa esa página»*. Identifiqué el riesgo, **no lo
+  comprobé**, y lo di por bueno porque el build pasaba y la prueba inicial de josemax («no hay formularios
+  de más») salía bien. **Esa prueba solo medía una de las dos direcciones del error.**
+- **Lo que lo cazó:** josemax buscando un dato concreto que **sabía que tenía que estar**. No el build, no
+  una revisión de código, no un contador verde.
+- **Lección para el resto del pulido:** cuando un arreglo cambia *cómo se emparejan* dos conjuntos de
+  datos, hay que comprobar **las dos direcciones** —que no sobren y que no falten—, y la segunda exige un
+  caso del que se conozca la respuesta de antemano.
+- **Defecto pendiente de redacción (josemax decide):** el mensaje dice «55 páginas encontradas y
+  analizadas» pero el panel muestra **53**. No es una pérdida: `self.visited.add(url)` ocurre **antes**
+  del `try`, así que las páginas cuya petición falla cuentan como visitadas y nunca se publican. Eran
+  **2 con error**. Propuesto: *«53 páginas analizadas, 2 con error (55 visitadas)»*.
+- **A qué requisito toca:** **RF-03**, **apartado 8** (y **apartado 12**: el fallo es de una herramienta
+  de IA que identificó el riesgo y no lo verificó).
+- **Evidencia:** ⚠️ **FALTA: el buscador apareciendo tras el arreglo [pantalla, josemax]**.
+- **Horas:** ~0,3 h de Claude.
