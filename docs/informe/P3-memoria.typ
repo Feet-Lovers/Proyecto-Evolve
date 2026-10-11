@@ -135,6 +135,8 @@ Lista completa y numerada. Numeración fijada en la P3 (la P1 no la tenía) a pa
   ",
 )
 
+> *Matiz sobre el enunciado de RF-03, anotado el 11-oct.* El requisito habla de «velocidad configurable». El control que existe no regula velocidad: fija un *tope de páginas* a visitar. Un valor menor no rastrea más rápido, llega menos lejos. El enunciado se conserva tal como se escribió en la P1 —no se reescriben requisitos a posteriori—, pero la interfaz sí se corrigió para decir lo que de verdad hace, y el control pasó a llamarse «hasta N páginas».
+
 == Requisitos no funcionales (RNF)
 #tabla(
   (auto, 7fr, auto),
@@ -446,6 +448,42 @@ Dos pares de capturas tomadas sobre el producto desplegado, antes y después de 
 
 > *Nota de tratamiento de las capturas (R7).* Las dos del estado anterior mostraban un identificador de sesión de la web de pruebas en la franja superior; se publican con esa franja tapada, y los originales no salen del almacén interno. Las del estado posterior no lo contienen porque la sesión no estaba autenticada.
 
+== El pulido del Spider (11-oct): quince defectos, y catorce los encontró el uso
+
+Cerrada la Fase 2, el 11-oct no se añadió funcionalidad: la jornada se dedicó a *pulir* lo que ya existía, pestaña por pestaña, empezando por la primera. De esa pasada salen quince defectos corregidos en el Spider. Lo que más dice de ellos no es el número, sino *cómo aparecieron*: catorce usando la herramienta y uno leyendo el código. Cada fila está atada a su entrada del diario de desarrollo, que es la fuente.
+
+#tabla(
+  (auto, 5fr, 2fr, auto),
+  "
+  \# | Qué pasaba | Cómo apareció | Diario
+  1 | Pulsar «Detener» no paraba hasta terminar todos los formularios de la página en curso | usando | 11:17
+  2 | Tres textos de la pantalla describían algo distinto de lo que el código hacía | usando | 11:17
+  3 | El indicador de sesión decía «autenticado» sin que nadie se hubiera autenticado | usando | 11:49
+  4 | El mismo indicador fallaba en los dos sentidos: ni se encendía con sesión ni se apagaba sin ella | usando | 12:45
+  5 | El campo de URL se bloqueaba al iniciar, y no decía por qué ni cómo liberarlo | usando | 12:51
+  6 | Los tres botones de borrado hacían cosas distintas y nada permitía saber cuál usar | usando | 13:01
+  7 | La pestaña se llamaba «Proxy» y no es un proxy, sino un rastreador | usando | 14:19
+  8 | Los formularios colgaban de páginas ajenas: la pertenencia se adivinaba por prefijo de URL | usando | 14:19
+  9 | La columna de estado mezclaba códigos HTTP con la palabra FORM, que no es un código | usando | 14:27
+  10 | Al terminar, el rastreo no decía cómo había terminado | usando | 17:52
+  11 | El objetivo fijado se perdía al refrescar la página, y permitía lanzar otro encima | usando | 17:52
+  12 | El recuento del mensaje final no cuadraba con las filas del panel | usando | 18:12
+  13 | Las primeras filas capturadas no se alcanzaban con el scroll | usando | 18:15
+  14 | La etiqueta del desplegable de formularios insinuaba más de lo que había | usando | 18:15
+  15 | Los filtros escondían los formularios; filtrar por POST vaciaba la tabla entera | leyendo el código | 19:22
+  ",
+)
+
+*El patrón que se repite, y es el hallazgo de la jornada.* En once de los quince, el backend *ya sabía* la respuesta y no llegaba a la pantalla: de qué página salía cada formulario, cómo había terminado el rastreo, cuál era el objetivo, cuántas páginas habían fallado. No eran fallos de cálculo sino de *traslado*: funciones correctas que la interfaz no dejaba ver. Un producto puede estar entero por dentro y resultar inservible por fuera, y las pruebas que miran el backend no detectan nada de esto.
+
+*El decimoquinto se encontró de otra manera, y merece su propio comentario.* Apareció al escribir el manual de uso: para documentar el filtro hubo que leer cómo funcionaba, y leyéndolo se vio que filtraba las filas *antes* de agruparlas. Como cada formulario cuelga de su página, una página que no pasaba el filtro se llevaba por delante a sus formularios. Filtrar por POST —que es justo lo que se hace para ver formularios— vaciaba la tabla.
+
+#imagen("../capturas/fase3/RF-03-filtro-post-vacia-la-tabla.png", "RF-03 — ANTES: con el panel lleno de un rastreo y el filtro de método en POST, la tabla se queda vacía. Los formularios son POST, pero sus páginas son GET: al caer la página, el formulario se quedaba sin grupo donde colgar y desaparecía.")
+
+#imagen("../capturas/fase3/RF-03-filtro-post-muestra-formularios.png", "RF-03 — DESPUÉS: el mismo filtro muestra tres páginas con su formulario POST ya desplegado debajo. Una página entra ahora si coincide ella o si coincide alguno de sus formularios, y si entra solo como contenedor aparece abierta.")
+
+*Dos de los quince los introdujimos nosotros al arreglar otros.* Están contados en la tabla y se detallan en el apartado 12: un arreglo que hizo *desaparecer* formularios que antes solo sobraban, y un cambio de maquetación que recortó las últimas filas. Se señalan aquí porque el recuento honesto incluye los defectos propios, no solo los heredados.
+
 == Condición de carrera detectada antes de reiniciar el servidor
 El agente del cortafuegos y el servicio de contenedores no tenían orden de arranque entre sí. Si el segundo ganaba la carrera, *creaba una carpeta donde debía ir el canal de comunicación del agente* —comportamiento normal al montar un fichero que no existe— y el agente quedaba en un bucle de reinicios. El servidor llevaba sin reiniciarse desde mayo, así que nunca se había puesto a prueba. Se corrigió fijando el orden de arranque antes de reiniciar; tras el reinicio, el contador de reinicios del agente marcaba *cero*: la carrera no llegó a producirse.
 
@@ -614,11 +652,11 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
   (auto, 4fr, auto, 4fr, auto, 3fr),
   "
   Req. | Descripción | Estado | Implementación (ruta) | Prueba | Evidencia
-  RF-01 | Dashboard web sin instalación | Cumplido | `frontend/src/App.jsx` + `Layout.jsx` | PR-01 | fig. — · vídeo —:—
+  RF-01 | Dashboard web sin instalación | Cumplido (seis pestañas: se retira Red y se añade Manual el 11-oct) | `frontend/src/App.jsx` + `Layout.jsx` + `pages/manual/ManualPage.jsx` | PR-01 | apdo. 8 · vídeo —:—
   RF-02 | Proxy del lado servidor (`httpx`) | Modificado (2 errores de servidor corregidos en F1) | `backend/services/proxy_service.py` | PR-19 | justif. apdo. 4 · apdo. 6
-  RF-03 | Spider / rastreo | Cumplido (4 defectos corregidos en F1) | `backend/services/spider_service.py`, `frontend/.../ProxyPage.jsx` | PR-03 | figs. apdo. 8 · vídeo —:—
+  RF-03 | Spider / rastreo | Cumplido (4 defectos corregidos en F1; quince más en el pulido del 11-oct) | `backend/services/spider_service.py`, `frontend/.../ProxyPage.jsx`, `.../RequestsTable.jsx` | PR-03 | figs. apdo. 8 · vídeo —:—
   RF-04 | Auditoría autenticada (sesión compartida) | Cumplido | `backend/services/session_service.py` | PR-04 | fig. — · vídeo —:—
-  RF-05 | Repeater | Cumplido (parser y avisos de error corregidos en F1) | `backend/routes/repeater.py`, `backend/services/proxy_service.py` | PR-05 | apdo. 6 · vídeo —:—
+  RF-05 | Repeater | Cumplido (parser y avisos de error corregidos en F1; el importador de peticiones se traslada aquí desde el Spider el 11-oct) | `backend/routes/repeater.py`, `backend/services/proxy_service.py`, `frontend/src/pages/repeater/` | PR-05 | apdo. 6 · vídeo —:—
   RF-06 | Intruder / fuzzing | Cumplido (cancelación corregida en F1) | `backend/services/intruder_service.py` | PR-06 | apdo. 6 · vídeo —:—
   RF-07 | Utilidades (incl. JWT) | Cumplido | `frontend/src/pages/utilities/` | PR-07 | fig. — · vídeo —:—
   RF-08 | IA → panel Vulnerabilidades | Cumplido (recorrido verificado de punta a punta el 10-oct; techo de gasto ejecutado) | `ia/`, `backend/routes/playwright.py`, `backend/services/redis_consumer.py`, `frontend/.../VulnerabilitiesPage.jsx` | PR-08 | figs. apdo. 8 · vídeo —:—
@@ -680,6 +718,21 @@ Lo que *sí* queda, y es consciente:
 2. *La vía de identificación de servidor no lleva guarda*, porque no compara contra el umbral: entrega la respuesta del modelo sin filtrar, así que no hay descarte silencioso que cerrar.
 3. *No se cambiaron las instrucciones del modelo para pedir un entero*, que era la alternativa más limpia en el plano conceptual —instrucciones y esquema de acuerdo en un contrato más estricto—. Se descartó por el momento: son cuatro ficheros del material que no se vuelca a la conversación, se editarían sin verlos, y son prosa y no una línea de código, a tres días de la congelación. Queda como trabajo futuro de coste bajo.
 
+== El manual de uso nace con una pestaña escrita y cuatro por escribir
+
+El 11-oct se añadió una sexta pestaña, *Manual*, con el modo de uso de cada herramienta. Ataca de raíz el patrón descrito en el apartado 8 —funciones correctas que no se ven—, y por eso no es documentación accesoria sino parte del producto.
+
+Está escrita *solo la sección del Spider*, con los veinticinco controles de esa pantalla detallados uno a uno: de qué tipo es cada elemento (botón, campo de texto, desplegable, aviso, indicador, pestaña, columna), qué hace y *bajo qué condición aparece*, porque buena parte no está en pantalla desde el principio. Las otras cuatro secciones quedan marcadas como pendientes a la vista del usuario.
+
+La regla que se fijó es deliberada: *una sección se escribe cuando su pestaña se ha pulido y verificado*, nunca antes. Durante el pulido del Spider, lo que suponíamos de la pantalla y lo que el código hacía no coincidieron quince veces; un manual redactado sobre suposiciones induce a error, que es peor que no tenerlo. La propia redacción lo confirmó dos veces: destapó el defecto de los filtros (apdo. 8) y un error del manual mismo, que afirmaba que el botón «Iniciar spider» se sustituía por «Detener» cuando en realidad cambia a «Ejecutando…» y «Detener» aparece al lado.
+
+Queda pendiente decidir si el manual lleva capturas. Se montó el soporte y se descartó: las capturas de evidencia disponibles son recortes pensados para demostrar un arreglo, no para enseñar a usar, y las nuevas hay que tomarlas con ese propósito.
+
+== Dos cosas del Spider que se dejan dichas, no hechas
+
+- *Cuántas veces aparece un formulario.* Un formulario se cataloga una sola vez, bajo la primera página donde se encontró. Es lo correcto para no inflar el recuento, pero se pierde un dato útil para el auditor: en cuántas páginas está presente. La etiqueta actual dice «vistos aquí primero», que avisa del comportamiento sin dar el número.
+- *La etiqueta del desplegable.* Se corrigió para que no insinuara más de lo que hay, y josemax la dejó anotada para revisarla en la fase de diseño.
+
 == La herramienta que genera los esquemas no está versionada
 El generador de esquemas vive en la carpeta de trabajo de la práctica, *fuera del repositorio del producto*: no tiene historial, no pasó por revisión y su autoría no queda registrada, al contrario que todo el código. Es incoherente con la norma del equipo de que todo entra por petición de incorporación, y no es una incoherencia inocua: *el único sitio sin historial resultó ser exactamente donde estaba el defecto del apartado 8*, porque es el sitio donde nadie vio la lista incompleta.
 
@@ -708,6 +761,15 @@ Lo caro no fue el bloqueo, sino *la recuperación*. Para desatascar la sesión s
 De ahí sale el hallazgo que sí afecta al diseño de nuestros controles: *el rebobinado restaura la conversación y los ficheros, pero no los efectos sobre el servidor*. En la lista de puntos de retorno, el turno que había construido una imagen de contenedor figuraba como «sin cambios de código», porque esa función contabiliza ficheros. La imagen siguió existiendo después de rebobinar. Quien la construyó —el asistente— ya no recordaba haberlo hecho, y el único testigo del cambio fue un control externo que compara el estado del servidor contra lo que la documentación afirma. La consecuencia práctica es que *un control que mira ficheros no sustituye a uno que mira el sistema*, y que los avisos molestos de ese control no se pueden desactivar sin perder exactamente aquello para lo que sirve.
 
 *Qué fue generado y qué fue verificado.* La distinción no es teórica: ese mismo día, una afirmación escrita por el asistente en el plan del módulo de IA —que los cuatro conjuntos de instrucciones pedían un campo `descripcion`— resultó falsa para uno de ellos al releer el código fuente, y quedó corregida de forma declarada en vez de reescrita en silencio. El criterio que seguimos es que *nada entra en esta memoria por haberlo dicho la herramienta*: entra cuando se ha contrastado contra el código, la salida de un comando o el enunciado.
+
+== Dos defectos los introdujo el asistente al arreglar otros
+
+De los quince defectos del pulido del Spider (apdo. 8), *dos los causamos nosotros*, y los dos comparten forma: un arreglo correcto en lo suyo que rompe algo contiguo que nadie volvió a mirar.
+
+- *Los formularios pasaron de sobrar a faltar.* Al corregir que un formulario colgara de páginas ajenas, se ató cada formulario a su página de origen. Pero la página se registra con la URL *final* —tras redirecciones— y el formulario se ató a la *pedida*: cuando no coincidían, el formulario no colgaba de ninguna parte y desaparecía del panel. El defecto anterior era visible (sobraban filas); el nuevo era invisible (faltaban). Lo encontró josemax buscando un formulario concreto entre cincuenta y cinco páginas. El asistente *había avisado del riesgo y no lo comprobó*: avisar no sustituye a verificar.
+- *Las últimas filas dejaron de alcanzarse.* Al bajar las acciones a una barra propia, el panel pasó de uno a dos hijos y la tabla siguió pidiendo el 100% de la altura: desbordaba, y el recorte se comía las primeras filas capturadas.
+
+*Lo que se saca de aquí* es que la velocidad del asistente para aplicar un cambio no va acompañada de la misma velocidad para comprobar sus efectos laterales. Los dos se detectaron *usando* el producto, no revisando el código ni con pruebas automáticas.
 
 == Leer sin leer: delegar la lectura de lo que no debe entrar en la conversación
 El filtro descrito arriba obligó a una medida de método que vale la pena declarar, porque cambió la forma de trabajar. Las instrucciones que el producto envía al modelo son el material que más incomoda a ese filtro y, a la vez, eran lo único que faltaba por conocer para terminar el módulo de IA: *tres defectos abiertos dependían de saber qué formato piden*. El asistente principal no podía abrirlas sin arriesgar la sesión, y el permiso del operador no sirve de nada, porque el filtro no sabe nada de ese permiso: mide lo que entra en la conversación, no lo que alguien ha autorizado.
