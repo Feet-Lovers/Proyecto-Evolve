@@ -3191,3 +3191,22 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **Evidencia:** ⚠️ **FALTA: el indicador encendiéndose durante un rastreo, sin pasar por el Repeater
   [pantalla, josemax]**.
 - **Horas:** ~0,3 h de Claude.
+
+### Fase 3 (11-oct, 12:51) · El campo de URL bloqueado ya dice por qué lo está
+
+- **Qué se hizo.** Mientras hay un objetivo fijado, la pestaña muestra «objetivo fijado · pulsa
+  «nueva auditoria» para cambiarlo», y el campo explica al pasar el ratón si está libre o bloqueado.
+- **Por qué.** Al lanzar el spider, la URL se fija (`ProxyPage.jsx:24`) y el campo pasa a solo lectura
+  (`:162`); **solo `nueva auditoría` lo libera** (`:84`). No había ni un comentario que lo dijera, y
+  josemax —que conoce la herramienta— se quedó **atascado al intentar cambiar la URL para hacer una
+  captura**. Si le pasa a él, le pasa al evaluador.
+- **Qué se descartó, y por qué el comportamiento se queda.** Permitir editar la URL a media auditoría
+  dejaría **mezclar dos objetivos en el mismo panel** sin saber qué petición es de cuál; es la misma razón
+  del sello de objetivo del 10-oct. El bloqueo es correcto: lo que fallaba era que nadie lo contaba.
+- **El patrón del día, por cuarta vez:** el comportamiento estaba bien y era **invisible**. Van ya: la
+  sesión compartida de RF-04, la autenticación que se hereda del Repeater, el tope que no era velocidad, y
+  esto. En la memoria no son cuatro anécdotas sino **un patrón del apartado 8**: funciones correctas que
+  no se explican en la interfaz.
+- **A qué requisito toca:** **RF-01** (usabilidad), **RF-03**, y **apartado 8** como patrón.
+- **Evidencia:** ⚠️ **FALTA: la barra con el aviso de objetivo fijado [pantalla, josemax]**.
+- **Horas:** ~0,2 h de Claude.
