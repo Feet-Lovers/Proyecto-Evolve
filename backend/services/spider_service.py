@@ -237,7 +237,9 @@ class SpiderService:
                         'vulnerable': False,
                         'forms': [],
                         'source': 'spider-form',
-                        'pagina_origen': url,
+                        # La pagina se registra con str(response.url) -la URL FINAL tras redirecciones-,
+                        # asi que el formulario tiene que colgar de ESA, no de la pedida: si no, no casan.
+                        'pagina_origen': str(response.url),
                         'num_campos': len(form['fields'])
                     }
                     session['requests'].append(form_result)
