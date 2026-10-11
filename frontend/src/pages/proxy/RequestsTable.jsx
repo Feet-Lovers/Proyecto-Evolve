@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { Badge } from '@/components/ui'
 
 const METHOD_VARIANTS = {
@@ -59,7 +59,7 @@ export function RequestsTable({ requests, onSelect, selectedId }) {
     setExpanded(prev => ({ ...prev, [url]: !prev[url] }))
   }
 
-  const renderRow = (req, isForm = false) => (
+  const renderRow = (req, isForm = false, extra = null) => (
     <tr
       key={req.id}
       onClick={() => onSelect(req)}
@@ -74,23 +74,35 @@ export function RequestsTable({ requests, onSelect, selectedId }) {
           : 'transparent',
       }}
     >
-      <td className="px-3 py-2" style={{ paddingLeft: isForm ? '24px' : undefined }}>
+      <td
+        className="px-3 py-2 whitespace-nowrap text-[9px] uppercase tracking-wider"
+        style={{ color: 'var(--hs-text-dim)', paddingLeft: isForm ? '20px' : undefined }}
+      >
+        {isForm ? '\u2514 form' : 'pagina'}
+      </td>
+      <td className="px-3 py-2">
         <Badge variant={METHOD_VARIANTS[req.method] || 'default'}>{req.method}</Badge>
       </td>
       <td
         className="px-3 py-2 max-w-[180px] truncate"
         style={{ color: isForm ? 'var(--hs-text-dim)' : 'var(--hs-text-secondary)' }}
       >
-        {isForm ? '↳ ' : ''}{req.url}
+        {req.url}
+        {isForm && req.num_campos != null && (
+          <span style={{ color: 'var(--hs-text-dim)' }}>
+            {' \u00b7 ' + req.num_campos + (req.num_campos === 1 ? ' campo' : ' campos')}
+          </span>
+        )}
       </td>
-      <td className={"px-3 py-2 font-semibold " + STATUS_COLOR(req.status)}>
-        {req.status}
+      <td className={"px-3 py-2 font-semibold " + (isForm ? '' : STATUS_COLOR(req.status))}>
+        {isForm ? '\u2014' : req.status}
       </td>
       <td className="px-3 py-2" style={{ color: 'var(--hs-text-dim)' }}>
-        {req.status === 'FORM' ? '—' : (req.size / 1024).toFixed(1) + 'KB'}
+        {isForm ? '\u2014' : (req.size / 1024).toFixed(1) + 'KB'}
       </td>
       <td className="px-3 py-2" style={{ color: 'var(--hs-text-dim)' }}>
-        {req.status === 'FORM' ? '—' : req.time + 'ms'}
+        {isForm ? '\u2014' : req.time + 'ms'}
+        {extra}
       </td>
     </tr>
   )
@@ -138,7 +150,7 @@ export function RequestsTable({ requests, onSelect, selectedId }) {
             style={{ background: 'var(--hs-surface)', borderBottom: '1px solid var(--hs-border)' }}
           >
             <tr>
-              {['método', 'url', 'status', 'size', 'ms'].map(h => (
+              {['tipo', 'método', 'url', 'status', 'size', 'ms'].map(h => (
                 <th
                   key={h}
                   className="px-3 py-2 text-left text-[9px] font-semibold tracking-widest uppercase"
@@ -151,50 +163,18 @@ export function RequestsTable({ requests, onSelect, selectedId }) {
           </thead>
           <tbody>
             {groups.map(group => (
-              <>
-                <tr
-                  key={group.main.id}
-                  onClick={() => onSelect(group.main)}
-                  className="cursor-pointer transition-colors border-b"
-                  style={{
-                    borderColor: '#13161c',
-                    background: selectedId === group.main.id
-                      ? '#0d1a14'
-                      : group.main.vulnerable ? '#1a0d0d'
-                      : group.main.suspicious ? '#161410'
-                      : 'transparent',
-                  }}
-                >
-                  <td className="px-3 py-2">
-                    <Badge variant={METHOD_VARIANTS[group.main.method] || 'default'}>{group.main.method}</Badge>
-                  </td>
-                  <td
-                    className="px-3 py-2 max-w-[180px] truncate"
-                    style={{ color: 'var(--hs-text-secondary)' }}
+              <Fragment key={group.main.id}>
+                {renderRow(group.main, false, group.forms.length > 0 && (
+                  <span
+                    onClick={e => { e.stopPropagation(); toggleExpand(group.main.url) }}
+                    className="ml-2 cursor-pointer"
+                    style={{ color: 'var(--hs-accent)', fontSize: '9px' }}
                   >
-                    {group.main.url}
-                  </td>
-                  <td className={"px-3 py-2 font-semibold " + STATUS_COLOR(group.main.status)}>
-                    {group.main.status}
-                  </td>
-                  <td className="px-3 py-2" style={{ color: 'var(--hs-text-dim)' }}>
-                    {(group.main.size / 1024).toFixed(1)}KB
-                  </td>
-                  <td className="px-3 py-2" style={{ color: 'var(--hs-text-dim)' }}>
-                    {group.main.time}ms
-                    {group.forms.length > 0 && (
-                      <span
-                        onClick={e => { e.stopPropagation(); toggleExpand(group.main.url) }}
-                        className="ml-2 cursor-pointer"
-                        style={{ color: 'var(--hs-accent)', fontSize: '9px' }}
-                      >
-                        [{group.forms.length} FORM {expanded[group.main.url] ? '▲' : '▼'}]
-                      </span>
-                    )}
-                  </td>
-                </tr>
+                    {'[' + group.forms.length + (group.forms.length === 1 ? ' formulario ' : ' formularios ') + (expanded[group.main.url] ? '\u25b2' : '\u25bc') + ']'}
+                  </span>
+                ))}
                 {expanded[group.main.url] && group.forms.map(form => renderRow(form, true))}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>
@@ -204,7 +184,7 @@ export function RequestsTable({ requests, onSelect, selectedId }) {
             className="flex items-center justify-center h-32 text-[11px]"
             style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}
           >
-            no hay peticiones interceptadas
+            aun no se ha rastreado nada
           </div>
         )}
       </div>

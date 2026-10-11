@@ -237,7 +237,8 @@ class SpiderService:
                         'vulnerable': False,
                         'forms': [],
                         'source': 'spider-form',
-                        'pagina_origen': url
+                        'pagina_origen': url,
+                        'num_campos': len(form['fields'])
                     }
                     session['requests'].append(form_result)
                     await session_manager.emit(self.session_token, 'request_intercepted', form_result)
