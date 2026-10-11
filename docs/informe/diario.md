@@ -3073,3 +3073,30 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **Evidencia:** salida de terminal del recreado y de las dos comprobaciones (vacío + control + HTTP 200),
   reportada por josemax · `docs/capturas/fase3/RF-09-pestana-red-antes-de-retirar.png` para el «antes».
 - **Horas:** ~0,1 h de Claude.
+
+### Fase 3 (11-oct, 10:01) · La rama estuvo rota media hora y el build en verde no lo dijo
+
+- **Qué pasó.** El commit `55c483cb` («retirar la pestaña Red») **solo llevaba el borrado de
+  `NetworkPage.jsx`**. `App.jsx` y `Layout.jsx` se quedaron **sin commitear**, así que `develop`
+  estuvo ~30 min en un estado **que no compilaba**: `App.jsx` importaba dos veces un fichero que ya no
+  estaba en el árbol. Arreglado con un commit nuevo (`89cfaebc`), sin reescribir historial (R8).
+- **Por qué pasó.** `git rm` **stagea por sí mismo**; los cambios de `sed -i` **no**. Hice `git rm` de
+  la carpeta y `sed` de los otros dos ficheros, y commiteé sin `git add`. El aviso estaba **delante de
+  mis ojos**: imprimí `git diff --stat` y `git diff --cached --stat` seguidos, y sus salidas eran
+  distintas —3 líneas sin stagear frente a 113 stageadas—. Leí las dos como si fueran un único diff total.
+- **🔴 Por qué no lo cazó la comprobación.** Validé con `docker compose build frontend`, que **construye
+  desde el disco**, no desde lo commiteado. En disco los tres cambios estaban, así que dio verde. **Un
+  build verde en local no prueba que la rama compile**: es la lección del 10-oct —verificar por el código
+  y no por el efecto— trasladada a git, y esta vez el «efecto» era el propio build.
+- **Cómo se verifica bien, y así se hizo ahora.** `git ls-remote` para confirmar que remoto y local son
+  el mismo commit (R9), `git archive HEAD | tar -x` a un directorio limpio para obtener **el árbol exacto
+  de la rama**, y `docker build` sobre él: **exit 0**. Más el control de que el árbol extraído sí tiene
+  `pages/proxy/` y no `pages/network/`, para que el cero signifique algo.
+- **Qué se descartó.** Reescribir el historial para «limpiar» `55c483cb`: R8 pide punto de retorno antes
+  de tocar historial, y aquí no aporta nada —un commit de arreglo que explica el fallo vale más para la
+  memoria que un historial maquillado—.
+- **A qué requisito toca:** **apartado 8** (como patrón de método) y **apartado 12** (uso de IA, sin
+  disimulo).
+- **Evidencia:** mensaje del commit `89cfaebc`, que declara el fallo; salida del build desde el árbol de
+  la rama (exit 0).
+- **Horas:** ~0,3 h de Claude.
