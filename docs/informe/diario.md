@@ -3732,3 +3732,28 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
   como decisión («el estado de sesión es volátil, por diseño»), pero conviene recordarlo antes de cada
   recreado.
 - **A qué requisito toca:** **RF-05**. **Horas:** ~0,5 h de Claude.
+
+### Fase 3 (11-oct, 20:34) · El Repeater deja de perder la petición al cambiar de pestaña
+
+- **Defecto:** el router desmonta `RepeaterPage` al navegar, y con ella se iba **todo** su estado local
+  —método, URL, cabeceras, cuerpo, la respuesta recibida y el historial—. Volver dejaba el editor como
+  recién entrado. Evidencia tomada antes de tocar nada (R6): dos capturas.
+- **Decisión de josemax:** que sobreviva **también a un F5**, para que el Repeater se comporte igual que
+  el Spider, al que esta mañana le arreglamos justo eso con el objetivo.
+- **Arreglo, repartido según la vida útil de cada cosa:**
+  - el **borrador** (método, URL, cabeceras, cuerpo) → `sessionStorage`: vuelve tras cambiar de pestaña
+    **y tras recargar**. Se eligió `sessionStorage` y no `localStorage` a propósito: el estado de sesión
+    es volátil por diseño (apdo. 10) y no debe quedar **en disco** una petición contra un objetivo real
+    con sus cabeceras.
+  - la **respuesta** y el **historial** → `AppContext`, que envuelve al router (`App.jsx:31-45`) y no se
+    desmonta al navegar. No van al navegador porque una respuesta puede pesar megas.
+- **Lo que no cambia:** lo que llega del Spider sigue mandando sobre el borrador guardado.
+- 🟢 **Hallazgo lateral que reorienta el siguiente punto.** Un comentario de `AppContext.jsx` destapa que
+  **el backend ya guarda las peticiones del Repeater**: `/api/repeater/history/{token}` lee el mismo sitio
+  donde escribe el Spider. Es decir, el historial local de cien en memoria **duplica mal algo que ya
+  existe en el servidor**. Cuando se aborde el punto del historial invisible, la solución no es
+  persistir el local: es **mostrar el del servidor**, que además sobrevive a todo.
+- **Verificación:** por el código **dentro del bundle construido** (clave del borrador 1, estado del
+  contexto 2, control 1), no por el efecto.
+- **A qué requisito toca:** **RF-05** y **RF-01**. **Evidencia:** ⚠️ **FALTA: el editor conservando la
+  petición tras cambiar de pestaña y tras F5 [pantalla, josemax]**. **Horas:** ~0,3 h de Claude.
