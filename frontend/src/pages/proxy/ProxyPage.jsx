@@ -170,7 +170,7 @@ export function ProxyPage() {
             }}
           />
           <select
-            title="Máximo de páginas que rastreará el spider"
+            title="Máximo de páginas que visita el spider. Cada página puede generar varias peticiones en el panel, una por cada formulario."
             value={speed}
             onChange={e => setSpeed(e.target.value)}
             className="px-2 py-1.5 rounded text-[12px]"
@@ -211,14 +211,14 @@ export function ProxyPage() {
                 <>
                   <span className="w-2 h-2 rounded-full" style={{ background: '#3a7d4f', flexShrink: 0 }} />
                   <span className="text-[10px] truncate" style={{ fontFamily: 'var(--font-mono)', color: '#3a7d4f' }}>
-                    {'autenticado · ' + Object.keys(sessionCookies).join(', ')}
+                    {'con sesión · ' + Object.keys(sessionCookies).join(', ')}
                   </span>
                 </>
               ) : (
                 <>
                   <span className="w-2 h-2 rounded-full" style={{ background: 'var(--hs-text-dim)', flexShrink: 0 }} />
                   <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}>
-                    sin autenticar
+                    sin cookies de sesión
                   </span>
                 </>
               )}

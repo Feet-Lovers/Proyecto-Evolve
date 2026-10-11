@@ -193,6 +193,8 @@ class SpiderService:
             }
 
             session = session_manager.get_session(self.session_token)
+            if not session.get("spider_running", True):
+                return  # detenido mientras se pedia esta pagina: no se publica nada de ella
             session['requests'].append(result)
             await session_manager.emit(self.session_token, 'request_intercepted', result)
 
