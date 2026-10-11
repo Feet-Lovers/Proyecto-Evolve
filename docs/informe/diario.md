@@ -3500,3 +3500,31 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **A qué requisito toca:** **RF-03**, **apartado 8**.
 - **Evidencia:** ⚠️ **FALTA: el mensaje con el recuento correcto [pantalla, josemax]**.
 - **Horas:** ~0,3 h de Claude.
+
+### Fase 3 (11-oct, 18:15) · Las últimas filas vuelven a alcanzarse, y la etiqueta deja de insinuar
+
+- **🔴 El scroll era una regresión mía, de la pasada 3.** Al bajar las acciones a una barra sobre la
+  tabla, el panel izquierdo pasó de tener **un hijo a tener dos**, pero la tabla seguía pidiendo
+  `h-full` —el **100 %** del panel—. Sumada a la barra, desbordaba por abajo y el `overflow-hidden`
+  del panel **recortaba las últimas filas**: existían, pero no había forma de llegar a ellas. Ahora la
+  tabla ocupa **lo que queda** (`flex-1 min-h-0`) y el contenedor con scroll puede encogerse dentro del
+  flex.
+- **Cómo se manifestó, que es lo interesante:** josemax no veía `/tienda` por más que bajaba, **aunque
+  sabíamos que la fila existía** porque su formulario sí aparecía al filtrar. Un dato visible por una vía
+  e inalcanzable por otra.
+- **(a) La etiqueta del desplegable.** Decía `[3 formularios]`, dando a entender que eran los
+  formularios **de** esa página. No lo son: el catálogo **deduplica por huella**, así que un formulario
+  global —el buscador de cabecera— se cataloga una sola vez y cuelga de **la primera página donde se
+  vio**. Ahora dice **«vistos aquí primero»**, que es lo que significa.
+- **Qué se descartó y por qué:** la opción de contar en cuántas páginas aparece cada formulario. Es mejor
+  solución, pero el formulario **se emite la primera vez que se ve** y el recuento total no se conoce
+  hasta terminar el rastreo: exigiría emitir el dato al final y actualizar filas ya pintadas. **Va al
+  apartado 10.**
+- **Dos regresiones mías en el mismo día, con la misma firma:** ambas nacieron de un arreglo correcto que
+  **cambió una condición que otra parte daba por supuesta** —la URL con la que se empareja, y el número
+  de hijos de un contenedor—. Ninguna la detectó el build; las dos las encontró josemax **usando** la
+  herramienta.
+- **A qué requisito toca:** **RF-01**, **RF-03**, **apartado 8**.
+- **Evidencia:** ⚠️ **FALTA: el scroll llegando a las primeras capturadas y la etiqueta nueva
+  [pantalla, josemax]**.
+- **Horas:** ~0,4 h de Claude.
