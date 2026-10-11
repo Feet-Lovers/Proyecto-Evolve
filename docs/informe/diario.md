@@ -3058,3 +3058,18 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **Evidencia:** `docs/evidencias/rf09-sacrificado-11oct.md`, reescrito con la corrección declarada en
   su cabecera.
 - **Horas:** ~0,3 h de Claude. **0 € de API.**
+
+### Fase 3 (11-oct, 09:58) · RF-09 desplegado en la cocina: el front ya va con cinco pestañas
+
+- **Qué se hizo.** josemax recreó el contenedor `frontend` (`up -d --force-recreate`) una vez entregada
+  la captura de evidencia. La pestaña **Red** ya no existe en la interfaz.
+- **Cómo se verificó, y por qué así.** **Por el código dentro del contenedor**, no por el efecto: la ruta
+  `/network` **no aparece** en `/usr/share/nginx/html/`, y el control `Vulnerabilidades` **sí** aparece
+  en `assets/index-CGZKMQ1I.js`. Sin ese control, el vacío no probaría nada —sería indistinguible de un
+  escáner que no sabe buscar—. Es la lección del 10-oct aplicada: un proceso recién arrancado imita al
+  arreglo, así que se comprueba el código, y ante un cero se pregunta si habría salido un número.
+- **nginx responde HTTP 200**, sin el 502 por IP cacheada que apareció el 10-oct tras recrear el frontend.
+- **A qué requisito toca:** **RF-09** (retirado) y **RF-01** (la interfaz pasa de 6 a 5 pestañas).
+- **Evidencia:** salida de terminal del recreado y de las dos comprobaciones (vacío + control + HTTP 200),
+  reportada por josemax · `docs/capturas/fase3/RF-09-pestana-red-antes-de-retirar.png` para el «antes».
+- **Horas:** ~0,1 h de Claude.
