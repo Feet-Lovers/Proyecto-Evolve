@@ -140,16 +140,37 @@ export function ProxyPage() {
               {connected ? 'conectado' : 'sin conexion'}
             </span>
           </div>
-          <div className="flex gap-2">
-            <Button size="sm" variant="ghost" onClick={() => setShowImport(true)}>importar peticion</Button>
-            <Button size="sm" variant="ghost" title="Vacía la lista de peticiones y detiene el spider. Mantiene la sesión y el objetivo." onClick={async () => {
-              await apiFetch(`/api/spider/clear/${sessionToken}`, { method: 'POST' })
-              clearRequests()
-              setSelectedRequest(null)
-              setSpiderMessage('')
-            }}>limpiar</Button>
-            <Button size="sm" variant="danger" title="Empieza de cero: vacía la lista, suelta la sesión y libera el campo de URL." onClick={handleNewAudit}>nueva auditoria</Button>
+        {activeUrl && (
+          <div className="flex items-center gap-3 px-3 py-1.5 rounded" style={{ background: 'var(--hs-bg)', border: '1px solid var(--hs-border)' }}>
+            <div className="flex items-center gap-2 flex-1">
+              {Object.keys(sessionCookies).length > 0 ? (
+                <>
+                  <span className="w-2 h-2 rounded-full" style={{ background: '#3a7d4f', flexShrink: 0 }} />
+                  <span className="text-[10px] truncate" style={{ fontFamily: 'var(--font-mono)', color: '#3a7d4f' }}>
+                    {'con sesión · ' + Object.keys(sessionCookies).join(', ')}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="w-2 h-2 rounded-full" style={{ background: 'var(--hs-text-dim)', flexShrink: 0 }} />
+                  <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}>
+                    sin cookies de sesión
+                  </span>
+                </>
+              )}
+            </div>
+            {Object.keys(sessionCookies).length > 0 && (
+              <button
+                onClick={handleReleaseSession}
+                title="Suelta las cookies de sesión. Mantiene las peticiones capturadas y el objetivo."
+                className="text-[9px] px-2 py-0.5 rounded"
+                style={{ background: 'var(--hs-surface)', border: '1px solid var(--hs-accent)', color: 'var(--hs-accent)', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'var(--font-mono)' }}
+              >
+                liberar sesion
+              </button>
+            )}
           </div>
+        )}
         </div>
 
         <div className="flex gap-2">
@@ -211,41 +232,20 @@ export function ProxyPage() {
           </span>
         )}
 
-        {activeUrl && (
-          <div className="flex items-center gap-3 px-3 py-1.5 rounded" style={{ background: 'var(--hs-bg)', border: '1px solid var(--hs-border)' }}>
-            <div className="flex items-center gap-2 flex-1">
-              {Object.keys(sessionCookies).length > 0 ? (
-                <>
-                  <span className="w-2 h-2 rounded-full" style={{ background: '#3a7d4f', flexShrink: 0 }} />
-                  <span className="text-[10px] truncate" style={{ fontFamily: 'var(--font-mono)', color: '#3a7d4f' }}>
-                    {'con sesión · ' + Object.keys(sessionCookies).join(', ')}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span className="w-2 h-2 rounded-full" style={{ background: 'var(--hs-text-dim)', flexShrink: 0 }} />
-                  <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}>
-                    sin cookies de sesión
-                  </span>
-                </>
-              )}
-            </div>
-            {Object.keys(sessionCookies).length > 0 && (
-              <button
-                onClick={handleReleaseSession}
-                title="Suelta las cookies de sesión. Mantiene las peticiones capturadas y el objetivo."
-                className="text-[9px] px-2 py-0.5 rounded"
-                style={{ background: 'var(--hs-surface)', border: '1px solid var(--hs-accent)', color: 'var(--hs-accent)', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'var(--font-mono)' }}
-              >
-                liberar sesion
-              </button>
-            )}
-          </div>
-        )}
       </div>
 
       <div className="flex flex-1 overflow-hidden">
         <div className="w-1/2 border-r overflow-hidden flex flex-col" style={{ borderColor: 'var(--hs-border)' }}>
+          <div className="flex items-center gap-2 px-3 py-2 border-b" style={{ borderColor: 'var(--hs-border)' }}>
+              <Button size="sm" variant="ghost" onClick={() => setShowImport(true)}>importar peticion</Button>
+              <Button size="sm" variant="ghost" title="Vacía la lista de peticiones y detiene el spider. Mantiene la sesión y el objetivo." onClick={async () => {
+                await apiFetch(`/api/spider/clear/${sessionToken}`, { method: 'POST' })
+                clearRequests()
+                setSelectedRequest(null)
+                setSpiderMessage('')
+              }}>limpiar</Button>
+              <Button size="sm" variant="danger" title="Empieza de cero: vacía la lista, suelta la sesión y libera el campo de URL." onClick={handleNewAudit}>nueva auditoria</Button>
+          </div>
           <RequestsTable requests={requests} onSelect={setSelectedRequest} selectedId={selectedRequest?.id} />
         </div>
         <div className="w-1/2 overflow-hidden flex flex-col">
