@@ -108,12 +108,30 @@ export function ResponsePanel({ response, requestUrl }) {
           </div>
         )}
         {tab === 'Preview' && (
-          <iframe
-            srcDoc={previewHtml}
-            sandbox="allow-same-origin allow-scripts"
-            className="w-full h-full border-0 rounded"
-            title="preview"
-          />
+          <div className="flex flex-col h-full">
+            {/* El aviso va ANTES del marco, no después: quien pulsa Preview tiene que
+                saber por qué ve la página a medias antes de verla, no después. */}
+            <p
+              className="mb-2 text-[10px] leading-relaxed"
+              style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}
+            >
+              {'\u25B8 '}vista sin JavaScript: el código que venga en la respuesta{' '}
+              <b>no se ejecuta</b>. Una página que se construya sola con JavaScript puede
+              verse incompleta o en blanco; para eso están las pestañas Raw y Pretty.
+            </p>
+            {/* sandbox="" = todos los permisos denegados.
+                Antes llevaba 'allow-same-origin allow-scripts', y esa pareja se anula: el
+                contenido pasa a contar como del mismo origen que HookSuite y su codigo
+                alcanzaba el almacenamiento del navegador, donde vive la sesion del
+                auditor. Y lo que se pinta aqui viene del sitio AUDITADO, que es
+                precisamente del que no te fias. */}
+            <iframe
+              srcDoc={previewHtml}
+              sandbox=""
+              className="flex-1 w-full border-0 rounded"
+              title="preview"
+            />
+          </div>
         )}
       </div>
     </div>
