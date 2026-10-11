@@ -33,9 +33,6 @@ class RepeaterRequest(BaseModel):
 	body: Optional[str] = None
 	session_token: Optional[str] = None
 
-class ParseRequest(BaseModel):
-	text: str
-
 class IntruderConfig(BaseModel):
 	url: str
 	injection_point: str
