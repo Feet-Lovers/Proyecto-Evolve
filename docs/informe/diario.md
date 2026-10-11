@@ -3670,5 +3670,9 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **Verificación:** el bundle construido contiene la cadena nueva (1) y el control responde (1). ⚠️ El
   cero de la cadena vieja **no prueba nada**: el bundle va minificado.
 - **A qué requisito toca:** **RF-03** y **RF-01**. Va al **apartado 8** (funciones correctas pero invisibles).
-- **Evidencia:** ✅ la del defecto · ⚠️ **FALTA: el filtro en POST mostrando los formularios [pantalla,
-  josemax]**. **Horas:** ~0,4 h de Claude.
+- **Evidencia:** ✅ `RF-03-filtro-post-vacia-la-tabla.png` (el defecto) · ✅ `RF-03-filtro-post-muestra-formularios.png` (el arreglo: tres páginas GET con su formulario POST
+  ya desplegado debajo). **El par se lee junto**: misma pantalla, mismo filtro, antes y después.
+  La segunda vale además como evidencia del **nav con seis pestañas**, con `MANUAL` incluida.
+  ⚠️ Lleva la IP interna del servidor en la barra del navegador — privada, no alcanzable desde
+  fuera, y ya presente en otras capturas del repo; pendiente de decidir si se tapa al llevarla
+  a la memoria técnica. **Horas:** ~0,4 h de Claude.
