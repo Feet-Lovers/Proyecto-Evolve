@@ -3553,3 +3553,21 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **A qué requisito toca:** **RF-03**, **apartado 8**.
 - **Evidencia:** ⚠️ **FALTA: el mensaje distinguiendo visitadas de páginas distintas [pantalla, josemax]**.
 - **Horas:** ~0,3 h de Claude.
+
+### Fase 3 (11-oct, 18:30) · Hipótesis confirmada: eran redirecciones, no una pérdida
+
+- **Resultado del experimento.** Tras el rastreo, el mensaje dijo: *«55 URLs visitadas, 54 páginas
+  distintas (1 redirigía a otra ya vista)»*. **Confirmado:** la diferencia entre el contador y el panel
+  eran redirecciones. **No se perdía ninguna petición por el WebSocket**, que era la otra causa posible
+  y la única que habría sido un defecto.
+- **Lo que valida el método:** el arreglo se diseñó para **distinguir las dos causas**, no solo para
+  corregir el número. Si hubiera salido «55 páginas distintas» habríamos sabido inmediatamente que el
+  problema era otro. Es lo contrario de lo que falló dos veces hoy —identificar un riesgo plausible y
+  darlo por bueno sin comprobarlo—.
+- **Errata corregida en el acto:** el mensaje decía «1 **redirigian**»; el verbo iba siempre en plural.
+  Ahora concuerda con la cifra.
+- **Estado del Spider:** sin frentes funcionales abiertos. Quedan las capturas de josemax y llevar todo
+  al `.typ`. **El cierre de la pestaña lo decide él.**
+- **A qué requisito toca:** **RF-03**, **apartado 8**.
+- **Evidencia:** mensaje reportado por josemax, citado arriba.
+- **Horas:** ~0,1 h de Claude.
