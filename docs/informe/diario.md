@@ -3132,3 +3132,34 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
   y la prueba en vivo de la parada [pantalla, josemax]**, pendiente de recrear los contenedores.
   De (d) **no se pide captura del antes a propósito**: esa foto llevaría la cookie a la vista.
 - **Horas:** ~0,5 h de Claude.
+
+### Fase 3 (11-oct, 11:49) · PROXY pasada 1b: el indicador decía «autenticado» sin que nadie se autenticara
+
+- **De dónde sale esta pasada.** De que josemax **probara** la anterior. Las cuatro comprobaciones salieron
+  bien, pero dos dejaron cabos: una petición suelta en el panel tras limpiar, y un «autenticado» que
+  apareció **sin haberse autenticado en ningún sitio**.
+- **(B) La línea suelta tras limpiar.** `clear` vaciaba la lista y marcaba la bandera a la vez, pero el
+  crawler tenía una petición en vuelo que se publicaba **después** del vaciado: el panel quedaba con una
+  línea huérfana y parecía no haber limpiado. Ahora la bandera se mira **justo antes de publicar**
+  (`spider_service.py:196`), así que lo que llegue tras la parada se descarta. Son ya tres puntos de
+  comprobación: antes de cada página, entre formularios y antes de publicar.
+- **🔴 (C) El indicador de autenticación no comprobaba la autenticación.** El backend hace
+  `cookies = dict(client.cookies)` y publica **si hay alguna**, sin un solo filtro —cero menciones a
+  `login`, `auth` o `PHPSESSID` en `proxy_service.py`—. Es decir: **cualquier** cookie (una de sesión
+  anónima, de idioma, de consentimiento) encendía el cartel de «autenticado». josemax lo destapó de la
+  mejor manera posible: **probándolo y no reconociéndose en el resultado** («no he llegado a autenticarme
+  en ningún sitio»). Su POST desde el Repeater hizo que el servidor devolviera un `PHPSESSID` anónimo.
+- **Lo que sí era cierto, y se mantiene:** la **sesión compartida** de RF-04 existe de verdad — Repeater,
+  Spider e Intruder usan el mismo cliente HTTP (`get_session_client`), así que una autenticación real la
+  heredan los tres. Lo que fallaba era el cartel, no el mecanismo.
+- **Qué se descartó.** Detectar autenticación de verdad (heurística por nombre de cookie o detección del
+  formulario de login): es funcionalidad nueva y la línea acordó no añadir ninguna antes de congelar.
+  También se descartó **documentar el flujo como si fuera correcto**: se propuso añadir una pista de «haz
+  login desde el Repeater» y **se retiró al comprobar que la premisa era falsa**.
+- **Hallazgo colateral:** `POST`/`GET /api/network/session_cookie` son **dos endpoints huérfanos** —los
+  usaba el capturador DevTools de RF-09, retirado hoy—. Candidatos a limpieza.
+- **A qué requisito toca:** **RF-03**, **RF-04** (su indicador pasa a decir la verdad) y **apartado 10**
+  (la herramienta indica *presencia de cookies de sesión*, no autenticación verificada).
+- **Evidencia:** ⚠️ **FALTA: la barra con los textos nuevos y el panel limpio tras pulsar limpiar
+  [pantalla, josemax]**, pendiente de recrear.
+- **Horas:** ~0,4 h de Claude.
