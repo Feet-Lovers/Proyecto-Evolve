@@ -37,6 +37,7 @@ class SpiderService:
         self.cookie = cookie
         self.visited: Set[str] = set()
         self.con_error = 0  # visitadas que fallaron: cuentan en visited pero no se publican
+        self.paginas_finales: Set[str] = set()  # URL final tras redirecciones: es por la que agrupa la tabla
         self.queue: List[str] = [base_url]
         # Formularios ya emitidos (metodo+accion+campos). Sin esto, un formulario
         # repetido en cada pagina (o uno por producto) genera decenas de entradas
@@ -170,6 +171,7 @@ class SpiderService:
             new_urls = self._extract_urls(response_body, url)
             chosen_ua = random.choice(REALISTIC_USER_AGENTS)
 
+            self.paginas_finales.add(str(response.url))
             result = {
                 'id': str(uuid.uuid4()),
                 'method': 'GET',
@@ -271,17 +273,27 @@ class SpiderService:
             current_url = self.queue.pop(0)
             await self.crawl_page(current_url)
         limite_alcanzado = len(self.visited) >= self.max_pages and len(self.queue) > 0
+        analizadas = len(self.visited) - self.con_error
+        distintas = len(self.paginas_finales)
+        if detenido:
+            mensaje = f"Spider detenido manualmente — {analizadas} paginas analizadas antes de parar."
+        elif limite_alcanzado:
+            mensaje = f"Spider detenido — limite de {self.max_pages} paginas alcanzado. Pueden existir paginas sin analizar."
+        else:
+            # El contador cuenta URLs PEDIDAS; la tabla agrupa por URL FINAL. Si el sitio
+            # redirige, dos pedidas distintas pueden ser una sola fila: se dice, no se esconde.
+            mensaje = f"Spider completado — {analizadas} URLs visitadas"
+            if distintas and distintas != analizadas:
+                mensaje += f", {distintas} paginas distintas ({analizadas - distintas} redirigian a otra ya vista)"
+            if self.con_error:
+                mensaje += f", {self.con_error} con error"
+            mensaje += ". Auditoria completa."
         await session_manager.emit(self.session_token, 'spider_completed', {
             'base_url': self.base_url,
             'total': len(self.visited),
+            'paginas_distintas': distintas,
+            'con_error': self.con_error,
             'max_pages': self.max_pages,
             'completo': (not limite_alcanzado) and (not detenido),
-            'mensaje': (
-                f"Spider detenido manualmente — {len(self.visited) - self.con_error} paginas analizadas antes de parar."
-                if detenido else
-                f"Spider detenido — limite de {self.max_pages} paginas alcanzado. Pueden existir paginas sin analizar."
-                if limite_alcanzado else
-                f"Spider completado — {len(self.visited) - self.con_error} paginas analizadas"
-                + (f", {self.con_error} con error (de {len(self.visited)} visitadas)." if self.con_error else ". Auditoria completa.")
-            )
+            'mensaje': mensaje
         })
