@@ -47,13 +47,24 @@ export function RequestsTable({ requests, onSelect, selectedId }) {
   const [methodFilter, setMethodFilter] = useState('ALL')
   const [expanded, setExpanded] = useState({})
 
-  const filtered = requests.filter(r => {
-    const matchesUrl = r.url.toLowerCase().includes(filter.toLowerCase())
-    const matchesMethod = methodFilter === 'ALL' || r.method === methodFilter
-    return matchesUrl && matchesMethod
-  })
+  const casa = (r) =>
+    r.url.toLowerCase().includes(filter.toLowerCase()) &&
+    (methodFilter === 'ALL' || r.method === methodFilter)
 
-  const groups = groupRequests(filtered)
+  // El filtro se aplica DESPUES de agrupar. Al reves -como estaba- un formulario
+  // cuya pagina no pasaba el filtro se quedaba sin grupo donde colgar y
+  // desaparecia de la tabla entera: filtrar por POST la vaciaba, porque las
+  // paginas son GET y se llevaban por delante a sus formularios POST.
+  const groups = groupRequests(requests)
+    .map(g => {
+      const forms = g.forms.filter(casa)
+      // Una pagina puede entrar solo como contenedor de un formulario que si
+      // casa; en ese caso se muestra ya desplegada, porque lo que el usuario
+      // buscaba es lo de dentro, no ella.
+      const soloPorForms = !casa(g.main) && forms.length > 0
+      return { ...g, forms, abierto: expanded[g.main.url] ?? soloPorForms }
+    })
+    .filter(g => casa(g.main) || g.forms.length > 0)
 
   const toggleExpand = (url) => {
     setExpanded(prev => ({ ...prev, [url]: !prev[url] }))
@@ -173,7 +184,7 @@ export function RequestsTable({ requests, onSelect, selectedId }) {
                     {'[' + group.forms.length + (group.forms.length === 1 ? ' formulario · visto aqui primero ' : ' formularios · vistos aqui primero ') + (expanded[group.main.url] ? '\u25b2' : '\u25bc') + ']'}
                   </span>
                 ))}
-                {expanded[group.main.url] && group.forms.map(form => renderRow(form, true))}
+                {group.abierto && group.forms.map(form => renderRow(form, true))}
               </Fragment>
             ))}
           </tbody>
@@ -184,7 +195,9 @@ export function RequestsTable({ requests, onSelect, selectedId }) {
             className="flex items-center justify-center h-32 text-[11px]"
             style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}
           >
-            aun no se ha rastreado nada
+            {requests.length === 0
+              ? 'aun no se ha rastreado nada'
+              : 'ninguna peticion coincide con el filtro'}
           </div>
         )}
       </div>

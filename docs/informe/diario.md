@@ -3650,3 +3650,25 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
   destapa un defecto o un error de descripción.
 - **A qué requisito toca:** **RF-01**. **Evidencia:** ⚠️ **FALTA: el manual con las condiciones de
   aparición [pantalla, josemax]**. **Horas:** ~0,2 h de Claude.
+
+### Fase 3 (11-oct, 19:40) · Arreglado: los filtros ya no esconden los formularios
+
+- **Defecto** (encontrado leyendo el código para escribir el manual, no usando la herramienta): el panel
+  filtraba las filas **antes** de agruparlas, y cada formulario cuelga de su página (`pagina_origen`).
+  Si la página no pasaba el filtro, el formulario **se quedaba sin grupo donde colgar y desaparecía**.
+  Caso extremo: filtrar por `POST` **vaciaba la tabla entera** —las páginas se piden con `GET`, caían
+  todas y se llevaban por delante a sus formularios `POST`—, justo cuando lo que se busca son formularios.
+- **Evidencia del defecto ANTES de tocarlo (R6):** `evidencias/capturas/RF-03-filtro-post-vacia-la-tabla.png`.
+  El arreglo se escribió pero **no se construyó ni se commiteó** hasta tener esa captura.
+- **Arreglo** (`RequestsTable.jsx`, 21 líneas): el filtro se aplica **después** de agrupar · una página se
+  muestra si casa **ella o alguno de sus formularios** · si entra solo como contenedor, aparece **ya
+  desplegada** (pedir un clic más para ver lo que buscabas sería medio defecto otra vez) · y el mensaje de
+  tabla vacía distingue `aun no se ha rastreado nada` de `ninguna peticion coincide con el filtro`,
+  que antes se decían igual.
+- **Efecto:** filtrar por `POST` pasa de vaciar la tabla a ser **el atajo para ver solo los formularios**,
+  cada uno bajo su página. Documentado así en el Manual.
+- **Verificación:** el bundle construido contiene la cadena nueva (1) y el control responde (1). ⚠️ El
+  cero de la cadena vieja **no prueba nada**: el bundle va minificado.
+- **A qué requisito toca:** **RF-03** y **RF-01**. Va al **apartado 8** (funciones correctas pero invisibles).
+- **Evidencia:** ✅ la del defecto · ⚠️ **FALTA: el filtro en POST mostrando los formularios [pantalla,
+  josemax]**. **Horas:** ~0,4 h de Claude.

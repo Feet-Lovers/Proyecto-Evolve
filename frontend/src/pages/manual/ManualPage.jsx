@@ -229,11 +229,16 @@ export function ManualPage() {
             <Control tipo="campo de texto" nombre="filtrar por url...">
               deja a la vista solo las filas cuya URL contenga ese texto. No
               distingue mayúsculas y no hace falta pulsar nada: filtra según
-              escribes.
+              escribes. Si lo que coincide es un formulario, su página aparece
+              también y <b>ya desplegada</b>, para que no pierdas de dónde sale.
             </Control>
             <Control tipo="desplegable" nombre="ALL">
               filtra por método HTTP: <i>ALL</i>, <i>GET</i>, <i>POST</i>,{' '}
-              <i>PUT</i>, <i>DELETE</i> o <i>PATCH</i>.
+              <i>PUT</i>, <i>DELETE</i> o <i>PATCH</i>. Las páginas se piden
+              siempre con <i>GET</i> y los formularios suelen ser <i>POST</i>, así
+              que filtrar por <i>POST</i> es la forma rápida de quedarte solo con
+              los formularios: verás las páginas que los contienen, con el
+              formulario ya a la vista.
             </Control>
             <Control tipo="columna" nombre="tipo">
               <i>PAGINA</i> si es una página que se descargó; <i>FORM</i> si es un
