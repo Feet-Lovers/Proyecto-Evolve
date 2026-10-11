@@ -3290,3 +3290,21 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **A qué requisito toca:** **RF-01** (usabilidad), **RF-03**, **apartado 10**.
 - **Evidencia:** ⚠️ **FALTA: la cabecera reorganizada [pantalla, josemax]**.
 - **Horas:** ~0,5 h de Claude.
+
+### Fase 3 (11-oct, 13:46) · Norma para el resto del pulido: funcionalidad ahora, diseño al final
+
+- **Qué decidió josemax**, tras ver la cabecera reorganizada: *«prefiero que nos centremos en
+  funcionalidad… si terminamos los pendientes y queda tiempo, el diseño cambia por completo»*. Todo lo
+  que toque diseño se aparca en una lista y se decide al final, con el tiempo real delante.
+- **Por qué es una decisión de gestión y no una preferencia:** si al final hay margen para el rediseño
+  completo, **cualquier trabajo de diseño hecho antes se tira**. Prioriza lo que sobrevive a esa decisión.
+- **La línea de corte acordada**, para no consultar caso por caso: si cambia lo que la herramienta **hace**
+  o lo que **dice** → funcionalidad, se hace ahora; si solo cambia **cómo se ve** —color, posición,
+  espaciado, tipografía— → diseño, se aparca. Un texto que explica un botón entra ahora, porque sin él la
+  función es invisible; mover ese botón de sitio, no.
+- **Efecto inmediato:** la cabecera reorganizada **se queda** (funciona; revertirla sería gastar tiempo en
+  lo que se quiere evitar) pero no se toca más; y **mover el importador al Repeater se reclasifica como
+  diseño** y se aparca, pese a que estaba planificado como la siguiente pasada de PROXY.
+- **A qué requisito toca:** **apartado 10** (trabajo futuro) y **apartado 11** (gestión del trabajo).
+- **Evidencia:** sección «Aparcado para la fase de diseño» de la hoja de ruta · (no aplica captura).
+- **Horas:** ~0,1 h de Claude.
