@@ -98,6 +98,14 @@ export function RequestEditor({ initialRequest, onSend, onClear, loading, onInic
     onClear?.()
   }
 
+  // Quita SOLO las cabeceras de sesion. Probar la misma peticion con y sin sesion es LA
+  // operacion que un auditor necesita -es el experimento que costo media manana
+  // reconstruir a mano-, y hasta ahora habia que borrarlas una a una: el boton `limpiar`
+  // vacia la peticion entera y te deja sin nada que probar.
+  const quitarSesion = () => setHeaders(prev =>
+    prev.filter(h => !(h.key && CABECERAS_DE_SESION.includes(h.key.trim().toLowerCase())))
+  )
+
   const sesionHeredada = headers
     .filter(h => h.key && CABECERAS_DE_SESION.includes(h.key.trim().toLowerCase()))
     .map(h => h.key.trim())
@@ -128,8 +136,16 @@ export function RequestEditor({ initialRequest, onSend, onClear, loading, onInic
           >
             Lleva <b>{sesionHeredada.join(', ')}</b>. La respuesta depende de esa sesión y no
             solo de la URL y el método: la misma petición con y sin ella puede dar resultados
-            distintos. Si quieres probarla limpia, quita esas cabeceras.
+            distintos.
           </p>
+          <button
+            onClick={quitarSesion}
+            className="mt-2 text-[10px] px-2 py-0.5 rounded border transition-all"
+            style={{ fontFamily: 'var(--font-mono)', color: '#d9a93a', borderColor: '#3d2f10' }}
+            title="Quita solo las cabeceras de sesión. El método, la URL, el cuerpo y las demás cabeceras no se tocan"
+          >
+            quitar la sesión
+          </button>
         </div>
       )}
       <div className="flex gap-2">
