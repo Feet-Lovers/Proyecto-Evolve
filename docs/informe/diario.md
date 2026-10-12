@@ -4355,3 +4355,33 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   fabricadas a **0**, y el Repeater **sigue siendo independiente** (control positivo).
 - **A qué requisito toca:** **RF-03**, **RF-04**, **RF-05**. **Evidencia:** ⚠️ **FALTA [pantalla,
   josemax]**: el POST sin `419` y dos envíos idénticos con el mismo resultado. **Horas:** ~0,3 h de Claude.
+
+### Fase 3 (12-oct, 20:24) · «Preparar»: convertir la plantilla del Spider en una petición que funciona
+
+- **El problema, entendido por fin.** La petición POST que el Spider manda al Repeater **no es una petición
+  capturada**: es una **plantilla leída del HTML**. El Spider encuentra un `<form>`, apunta su método, su
+  destino y sus campos, y rellena los que no tienen valor **con su propio nombre** (de ahí
+  `password=password`). **Nunca se ha enviado**, y su token CSRF es el que había **cuando se rastreó**.
+  **Nace vieja.** Al enviarla, el servidor la rechaza (`419`) o la rebota (`302`).
+  🔑 **Y ahí está la diferencia con Burp, que no es el Repeater sino el ORIGEN de las peticiones:** en Burp
+  el POST llega **capturado del navegador**, con los datos que tú escribiste y un token recién emitido —
+  una petición **que ya funcionaba**. Aquí llega una propuesta que nunca funcionó.
+- **Qué se hizo.** Un botón **`preparar`** que hace lo que hace un navegador antes de enviar un formulario:
+  **pedir la página**. De la respuesta saca **todos los campos ocultos** —no solo `_token`, así sirve para
+  cualquier framework— y **sustituye en tu cuerpo los que coincidan por nombre**; si el servidor manda
+  cookie nueva, **actualiza la cabecera `Cookie`**. Solo toca campos que **ya estaban**: no inventa ni
+  reordena.
+- **Y la página se queda:** se guarda y se muestra en una **pestaña propia** del panel, junto a
+  Raw/Pretty/Preview/Headers. **Eso resuelve la queja de josemax**: antes, para volver a ver el formulario
+  había que **cambiar el método a GET, enviar y volver a POST**. Ahora se alterna entre el formulario y la
+  respuesta **sin reenviar nada**. Va con `sandbox=""`, como el Preview.
+- **Sin tocar el backend.** Reutiliza el endpoint de envío con un `GET`. **No hay que recrear el backend y
+  no se pierde la sesión del objetivo** — importante, porque cada recreado del backend obliga a volver a
+  autenticar y hoy ya han sido varios.
+- **Verificación: el linter POR DELANTE** —0 `no-undef`— y después el bundle, con las cadenas nuevas
+  presentes, los controles de lo anterior intactos y el control negativo a 0.
+- **Flujo que habilita:** traer el POST → **`preparar`** → ver el formulario en su pestaña → rellenar los
+  campos con datos reales → enviar → volver al formulario cuando haga falta. Que es, funcionalmente, lo
+  que se hace en Burp.
+- **A qué requisito toca:** **RF-05**, y **apdo. 8** y **10**. **Evidencia:** ⚠️ **FALTA [pantalla,
+  josemax]**. **Horas:** ~0,8 h de Claude.
