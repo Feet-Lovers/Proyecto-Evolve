@@ -75,7 +75,17 @@ async def forward_request(
     body: Optional[str],
     timeout: int = 30,
     session_token: str = None,
+    seguir_redirecciones: bool = True,
 ) -> dict:
+    """Reenvia una peticion y devuelve lo que paso, en crudo.
+
+    `seguir_redirecciones` por defecto en True porque el Spider lo NECESITA para rastrear
+    y el Proxy registra el resultado final. El REPEATER lo pone en False: alli interesa la
+    respuesta de TU peticion -el 302 con su Location y su Set-Cookie-, no la de la ultima
+    parada. Es como se comporta el Repeater de Burp, y no verlo fue lo que hizo parecer que
+    la herramienta mentia: se mostraba el resultado de seguir un salto que nadie habia
+    pedido ni veia.
+    """
     start = time.time()
     request_id = str(uuid.uuid4())
     protected_headers = ['host', 'content-length', 'transfer-encoding', 'connection']
@@ -93,9 +103,10 @@ async def forward_request(
                 url=url,
                 headers=clean_headers,
                 content=body.encode() if body else None,
+                follow_redirects=seguir_redirecciones,
             )
         else:
-            async with httpx.AsyncClient(verify=False, follow_redirects=True, timeout=timeout) as client:
+            async with httpx.AsyncClient(verify=False, follow_redirects=seguir_redirecciones, timeout=timeout) as client:
                 response = await client.request(
                     method=method,
                     url=url,

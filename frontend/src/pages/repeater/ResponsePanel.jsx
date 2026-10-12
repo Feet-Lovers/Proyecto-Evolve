@@ -43,6 +43,13 @@ export function ResponsePanel({ response, requestUrl }) {
   // el estado que se ven son los de la ULTIMA parada, no los de la direccion que pediste,
   // y hasta ahora nada lo decia: parecia que tu URL devolvia esto.
   const saltos = Array.isArray(response.redirecciones) ? response.redirecciones : []
+
+  // El Repeater NO sigue las redirecciones (como el de Burp), asi que un 3xx llega tal cual
+  // y hay que decir a donde apunta. Es la informacion que faltaba: viendo el 302 y su
+  // Location se entiende al instante lo que antes parecia que la herramienta se inventaba.
+  const esRedireccion = response.status >= 300 && response.status < 400
+  const cabeceras = response.headers || {}
+  const destino = cabeceras.location || cabeceras.Location || ''
   // No es lo mismo acabar en OTRA direccion que rebotar a la misma. El patron clasico
   // POST -> 302 -> GET de la misma URL (el servidor no devuelve contenido y te manda de
   // vuelta al formulario) tiene salto pero NO cambia de direccion: decir ahi "no es la
@@ -65,6 +72,30 @@ export function ResponsePanel({ response, requestUrl }) {
           no es una nota al pie: explica por que falta algo que se esperaba ver. Mismos colores
           que el aviso de 'sin analizar' de VulnerabilitiesPage, para que los dos avisos de la
           aplicacion se parezcan entre si. */}
+      {esRedireccion && (
+        <div
+          className="border-b px-4 py-2"
+          style={{ borderColor: '#3d2f10', background: '#1a1405' }}
+        >
+          <p
+            className="text-[10px] tracking-widest uppercase"
+            style={{ fontFamily: 'var(--font-mono)', color: '#d9a93a' }}
+          >
+            {'\u26A0 '}redirección no seguida · {response.status}
+          </p>
+          <p
+            className="text-[10px] mt-1 leading-relaxed break-all"
+            style={{ fontFamily: 'var(--font-mono)', color: '#d9a93a' }}
+          >
+            El servidor te manda a <b>{destino || '(sin cabecera Location)'}</b>. El Repeater
+            <b> no la sigue</b>: lo que ves es la respuesta a <b>tu</b> petición, con sus
+            cabeceras —incluido cualquier <b>Set-Cookie</b>—. Para ver la página de destino,
+            pon esa dirección y envía otra vez.
+          </p>
+        </div>
+      )}
+      {/* Este otro aviso es para cuando SI se siguen los saltos. En el Repeater ya no pasa,
+          pero se conserva: la funcion es compartida y el comportamiento es un parametro. */}
       {saltos.length > 0 && (
         <div
           className="border-b px-4 py-2"

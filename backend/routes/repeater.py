@@ -23,6 +23,10 @@ async def send_request(request: RepeaterRequest, espacio: str = Depends(usuario_
 		headers=request.headers,
 		body=request.body,
 		session_token=espacio,
+		# El Repeater NO sigue las redirecciones, igual que el de Burp: lo que interesa es la
+		# respuesta de ESTA peticion -el 302 con su Location y su Set-Cookie-, no la de la
+		# ultima parada. Seguirlas en silencio hacia parecer que la herramienta mentia.
+		seguir_redirecciones=False,
 	)
 	return result
 
