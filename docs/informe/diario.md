@@ -4176,3 +4176,37 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
 - **A qué requisito toca:** **RF-03** y **RF-05**. **Evidencia:** el «antes» es
   `evidencias/capturas/RF-03-spider-cabeceras-peticion-sin-cookie-censurada.png`. ⚠️ **FALTA el «después»
   [pantalla, josemax], y habrá que CENSURARLO.** **Horas:** ~0,4 h de Claude.
+
+### Fase 3 (12-oct, 16:49) · Respuestas que se cruzan, un aviso que mentía y un botón que faltaba
+
+- **(1) El Repeater mezclaba peticiones, y no era reproducible a voluntad.** josemax lo describió así:
+  «me aparecen del register en el login… no consigo ver el patrón». **No lo hay: depende de
+  milisegundos.** `handleSend` no tenía ninguna protección contra respuestas que se cruzan, y la
+  respuesta se guarda en el **contexto global**, que no se desmonta. Si te vas al Spider con una petición
+  en vuelo, al volver **esa respuesta se escribe igualmente**; y el bloqueo del botón `enviar` es local a
+  la pantalla, así que al remontarla **ya está libre** y puedes lanzar otra. Dos respuestas compitiendo y
+  **gana la que llega la última, no la que pediste la última**. Como la URL se escribe **al enviar** y el
+  cuerpo **al recibir**, acabas viendo una URL con el cuerpo de otra petición.
+  **Arreglo:** se numeran los envíos y la respuesta que llega tarde **no pisa el panel**. El **historial
+  sí la registra**, porque esa petición se envió de verdad y ocurrió. El contador vive **fuera del
+  componente** a propósito: un `useRef` se reiniciaría al remontar la pantalla, que es justo cuando se
+  cuela el fallo.
+- **(2) El aviso de redirección mentía cuando la URL final era la misma.** Lo vio josemax: un `POST` que
+  rebota sigue el patrón **POST → 302 → GET de la misma dirección** —el servidor no devuelve contenido y
+  te manda de vuelta al formulario—, así que **hay salto pero no cambio de dirección**, y el aviso decía
+  *«no es la dirección que pediste»*. Ahora distingue **«redirigido»** de **«rebotó»**, y en el segundo
+  caso dice lo que de verdad importa: **en una redirección el método pasa a GET**, así que lo que se ve
+  **no es la respuesta a tu POST** sino la de un GET posterior. Eso es información de auditoría, no un
+  detalle.
+- **(3) Botón «quitar la sesión».** El aviso de sesión heredada terminaba en *«si quieres probarla limpia,
+  quita esas cabeceras»*, pero el botón `limpiar` **vacía la petición entera** y te deja sin nada que
+  probar; la única vía era borrarlas una a una. Ahora un botón quita **solo** las cabeceras de sesión y
+  deja intactos método, URL, cuerpo y las demás. **Probar la misma petición con y sin sesión es LA
+  operación que un auditor necesita** — es literalmente el experimento que costó media mañana reconstruir
+  a mano.
+- **Verificación:** las tres cadenas nuevas están en el bundle y los controles de lo anterior siguen a 1.
+  ⚠️ **Dicho sin adornos: la guarda de (1) no deja ninguna cadena en el bundle** —es lógica, no texto—,
+  así que esa se verifica por el diff y usándola.
+- **A qué requisito toca:** **RF-05**. **Evidencia:** ⚠️ **FALTA [pantalla, josemax]**, y por decisión
+  suya las capturas se dejan **para el final**, porque las pantallas cambian en cada pasada.
+  **Horas:** ~0,6 h de Claude.
