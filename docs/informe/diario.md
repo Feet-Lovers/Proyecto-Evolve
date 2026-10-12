@@ -3968,3 +3968,27 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **A qué requisito toca:** **RF-05**.
   **Evidencia:** ⚠️ **FALTA: el historial con la ✕ y el botón vaciar armado [pantalla, josemax]**.
   **Horas:** ~0,4 h de Claude.
+
+### Fase 3 (12-oct, 10:33) · Los avisos y el borrado, en los colores del sistema
+
+- **Qué se hizo, y lo pidió josemax usando la herramienta:** las `✕` de cada fila y el botón `vaciar` pasan
+  al **rojo del sistema** (`#ef5a5a`, la variante `danger` del `Badge`), y el aviso de la pestaña
+  **Preview** —el que dice que no se ejecuta JavaScript— pasa del gris tenue a **bloque ámbar**, el mismo
+  del aviso del historial y del «sin analizar» de `VulnerabilitiesPage`.
+- **Por qué no se dejó «para el rediseño».** El 8-oct se decidió que el rediseño va al apdo. 10 como
+  trabajo futuro, y esto **no es rediseño**: son cuatro líneas de color, y una de ellas afecta a **una
+  advertencia de seguridad**. Si no se aprecia, no se lee; y lo que avisa es que el contenido que se pinta
+  viene del sitio auditado. Palabras de josemax: «o lo hacemos ahora o puede que se olvide después».
+- **Detalle del botón `vaciar`:** texto rojo en reposo y **bloque rojo entero cuando está armado**, para
+  que el estado «pulsa otra vez y borro todo» se distinga de un vistazo. El ámbar que tenía antes el estado
+  armado se retira: el ámbar es para advertir, el rojo para destruir.
+- **Qué falló en mi verificación, otra vez por el mismo sitio.** Primero comprobé con un `grep` de
+  `leading-relaxed"` que **no probaba nada**: esa cadena también está en el aviso del historial. Y los
+  recuentos de color **en el bundle no cuadran con el fuente** porque el minificador **deduplica literales
+  idénticos**, así que contar un color no dice *qué* elemento lo usa. Se cerró con una cadena **única** del
+  aviso del Preview: la clase de bloque aparece **1** y la versión antigua **0** — positivo y negativo
+  cruzados. Y un recuento del fuente que no cuadraba (3 rojos donde esperaba 2) resultó ser **mi
+  predicción mal hecha**: `colorEstado` ya usaba ese rojo para los estados ≥400.
+- **A qué requisito toca:** **RF-05** y **RNF-07** (la advertencia del Preview es del hallazgo de seguridad
+  del 11-oct). **Evidencia:** ⚠️ **FALTA: el aviso del Preview en ámbar y las aspas en rojo [pantalla,
+  josemax]**. **Horas:** ~0,2 h de Claude.
