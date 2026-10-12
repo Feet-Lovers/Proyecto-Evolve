@@ -169,7 +169,6 @@ class SpiderService:
 
             forms = self._extract_forms(response_body, str(response.url))
             new_urls = self._extract_urls(response_body, url)
-            chosen_ua = random.choice(REALISTIC_USER_AGENTS)
 
             self.paginas_finales.add(str(response.url))
             result = {
@@ -180,12 +179,12 @@ class SpiderService:
                 'size': len(response.content),
                 'time': elapsed_ms,
                 'timestamp': datetime.utcnow().isoformat(),
-                'request_headers': {
-                    'User-Agent': chosen_ua,
-                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                    'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-                    'Host': str(response.url).split('/')[2],
-                },
+                # Las cabeceras REALMENTE enviadas, no un diccionario fabricado aparte.
+                # Antes aqui se sorteaba OTRO User-Agent (asi que se ensenaba uno distinto
+                # del usado), no aparecia la Cookie aunque se enviara, y se anadia un Host
+                # que nadie habia puesto. En una herramienta de auditoria eso es grave: lo
+                # que se ensena como evidencia tiene que ser la peticion que salio.
+                'request_headers': dict(chosen_headers),
                 'request_body': None,
                 'response_headers': {**dict(response.headers), **({'set-cookie': '; '.join([f'{k}={v}' for k,v in client.cookies.items()])} if client.cookies else {})},
                 'response_body': response_body[:50000],
@@ -228,10 +227,13 @@ class SpiderService:
                         'size': 0,
                         'time': 0,
                         'timestamp': datetime.utcnow().isoformat(),
+                        # OJO: este formulario NO se ha enviado (status 'FORM'), asi que
+                        # estas cabeceras son las que se USARIAN, no un registro de lo que
+                        # paso. Se toma el User-Agent realmente usado al navegar para que
+                        # al reenviar desde el Repeater no cambie de identidad a mitad.
                         'request_headers': {
-                            'User-Agent': chosen_ua,
+                            'User-Agent': chosen_headers['User-Agent'],
                             'Content-Type': 'application/x-www-form-urlencoded',
-                            'Host': str(response.url).split('/')[2],
                         },
                         'request_body': form['body'] if form['method'] == 'POST' else None,
                         'response_headers': {},
