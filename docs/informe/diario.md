@@ -4329,3 +4329,29 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   positivo).
 - **A qué requisito toca:** **RF-04** (modificado), **RF-05**, y **apdo. 8** y **10**. **Evidencia:**
   ⚠️ **FALTA [pantalla, josemax]**: dos envíos iguales con el mismo resultado. **Horas:** ~0,5 h de Claude.
+
+### Fase 3 (12-oct, 18:45) · El 419: mi arreglo de las cabeceras se había quedado a medias
+
+- **Qué pasó.** Tras quitarle al Repeater el cliente compartido, **todos los POST empezaron a dar `419`**.
+  Lo dijo josemax con la intuición correcta: *«seguramente la persistencia existía para evitar esto»*.
+- **Causa, y es mía y de esta misma mañana.** Cuando arreglé las cabeceras del Spider para que fueran las
+  reales, **solo arreglé uno de los dos sitios**: la **página** que el Spider sí pide. Para los
+  **formularios descubiertos** (`status: 'FORM'`, que no se envían) dejé las cabeceras «propuestas»:
+  `User-Agent` y `Content-Type`, **sin `Cookie`**. Y las peticiones POST que se mandan al Repeater son
+  precisamente **formularios descubiertos**.
+  Mientras el cliente compartido ponía la sesión por detrás **eso no se notaba**. En cuanto se la quitamos,
+  el formulario viajaba **sin sesión** → Laravel no encontraba el token CSRF asociado → **419**.
+- 🔑 **La lección, que vale más que el arreglo: la persistencia no estaba tapando un capricho, estaba
+  tapando un dato incompleto.** Un mecanismo «de más» puede estar sosteniendo un fallo que nadie ve, y solo
+  se descubre al quitarlo. Por eso **preguntar «¿por qué está así?» antes de tocar** —como hizo josemax—
+  no es burocracia.
+- **Arreglo.** El formulario descubierto parte ahora de **las cabeceras realmente enviadas al pedir la
+  página** —que incluyen la **cookie de sesión**— y se les cambia el `Content-Type` por el del formulario.
+  Se quita el `Content-Length`, que era el del GET y el cuerpo que se envía es otro.
+- **Lo que esto conserva:** la sesión **se hereda igual**, pero **escrita en las cabeceras**, visible y
+  editable, y el envío **sigue siendo reproducible** porque la cookie la manda el usuario y no la pone
+  nadie por detrás. Es lo que persigue RF-04 por un canal explícito.
+- **Verificado dentro de la imagen:** cabeceras reales en **los dos** sitios, el filtro puesto, las
+  fabricadas a **0**, y el Repeater **sigue siendo independiente** (control positivo).
+- **A qué requisito toca:** **RF-03**, **RF-04**, **RF-05**. **Evidencia:** ⚠️ **FALTA [pantalla,
+  josemax]**: el POST sin `419` y dos envíos idénticos con el mismo resultado. **Horas:** ~0,3 h de Claude.
