@@ -4405,3 +4405,18 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   Van tres fallos hoy del mismo tipo. **Lo único que lo detecta es abrir la pantalla.**
 - **A qué requisito toca:** **RF-05**; al **apdo. 12**. **Evidencia:** `(no aplica)`, queda en git.
   **Horas:** ~0,2 h de Claude.
+
+### Fase 3 (12-oct, 20:43) · La pestaña del formulario salía sin estilos, y «limpiar» no la borraba
+
+- **Lo detectó josemax usando la herramienta, y con la pista incluida:** «sé que es posible renderizar
+  porque si envío un GET de login, en el Preview aparece bien». Exacto: el `Preview` **no pinta el HTML
+  tal cual**, antes **reescribe las rutas relativas a absolutas** para que el navegador encuentre los CSS
+  y las imágenes del sitio. Mi pestaña nueva se saltaba ese paso y mostraba la página en crudo.
+- **Segundo detalle del mismo informe:** `limpiar` vaciaba la petición y la respuesta **pero no el
+  formulario guardado**, que se quedaba a la vista. Se me pasó al añadirlo.
+- **Los dos arreglos son de una línea cada uno:** aplicar la misma reescritura que usa `Preview`, y que
+  `limpiar` borre también la página preparada.
+- 📌 **Y una observación suya que conviene dejar escrita porque evita un falso defecto:** cuando solo se ha
+  preparado y aún no se ha enviado, **las pestañas Raw/Pretty/Preview/Headers no responden — y es
+  correcto: no hay respuesta que enseñar.** Él mismo lo dedujo. En cuanto se envía algo, funcionan todas.
+- **A qué requisito toca:** **RF-05**. **Evidencia:** ⚠️ **FALTA [pantalla, josemax]**. **Horas:** ~0,2 h.
