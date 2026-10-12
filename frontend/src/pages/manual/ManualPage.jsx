@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Badge } from '@/components/ui'
 
 // Manual de uso. Se rellena UNA SECCION POR PESTANA, y solo cuando esa pestana
@@ -10,7 +11,10 @@ import { Badge } from '@/components/ui'
 // se citan LITERALES, tal y como aparecen en pantalla ('nueva auditoria', sin
 // tilde), para que se puedan buscar con la vista.
 
-function Seccion({ titulo, estado, children }) {
+function Seccion({ titulo, estado, activa, children }) {
+  // Solo se pinta la seccion elegida en las pastillas: el manual entero seguido era una
+  // tirada larguisima e imposible de leer.
+  if (activa !== titulo) return null
   return (
     <section className="mb-10">
       <div className="flex items-center gap-3 mb-3">
@@ -100,7 +104,16 @@ function Pendiente({ nombre }) {
   )
 }
 
+const SECCIONES = [
+  { id: 'Spider', pendiente: false },
+  { id: 'Repeater', pendiente: false },
+  { id: 'Intruder', pendiente: true },
+  { id: 'Utilidades', pendiente: true },
+  { id: 'Vulnerabilidades', pendiente: true },
+]
+
 export function ManualPage() {
+  const [activa, setActiva] = useState('Spider')
   return (
     <div className="flex flex-col h-full">
       <div
@@ -121,8 +134,30 @@ export function ManualPage() {
         </span>
       </div>
 
+      <div
+        className="flex items-center gap-2 px-5 py-2 border-b"
+        style={{ background: 'var(--hs-bg)', borderColor: 'var(--hs-border)' }}
+      >
+        {SECCIONES.map(s => (
+          <button
+            key={s.id}
+            onClick={() => setActiva(s.id)}
+            className="px-3 py-1 rounded border text-[10px] tracking-wide transition-all"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              background: activa === s.id ? 'var(--hs-accent-bg)' : 'transparent',
+              borderColor: activa === s.id ? 'var(--hs-accent-border)' : 'var(--hs-border)',
+              color: activa === s.id ? 'var(--hs-accent)' : (s.pendiente ? 'var(--hs-text-dim)' : 'var(--hs-text-muted)'),
+            }}
+            title={s.pendiente ? 'Sección aún no escrita' : 'Ver el manual de ' + s.id}
+          >
+            {s.id}{s.pendiente ? ' ·' : ''}
+          </button>
+        ))}
+      </div>
+
       <div className="flex-1 min-h-0 overflow-auto px-5 py-4">
-        <Seccion titulo="Spider">
+        <Seccion titulo="Spider" activa={activa}>
           <P>
             Parte de una URL, la descarga, extrae los enlaces que apuntan al mismo
             dominio y los sigue hasta un tope. De cada página anota los formularios
@@ -288,11 +323,16 @@ export function ManualPage() {
               el código de respuesta y el cuerpo que devolvió el servidor.
             </Control>
             <Control tipo="pestaña" nombre="Headers">
-              las cabeceras, en dos bloques: las que se enviaron y las que
+              las cabeceras, <b>las que de verdad salieron</b> —incluida la
+              <i>Cookie</i> de sesión si el rastreo iba autenticado—, en dos bloques: las
+              que se enviaron y las que
               contestó el servidor.
             </Control>
             <Control tipo="botón" nombre="enviar al repeater">
               lleva esa petición al Repeater para editarla y relanzarla a mano.
+              <b> El Repeater trabaja con una petición cada vez</b>: si ya tiene una
+              cargada, este botón pasa a poner <i>repeater en uso</i> y no deja pulsarlo.
+              Para liberarlo, ve al Repeater y pulsa <i>limpiar</i>.
             </Control>
             <Control tipo="botón" nombre="enviar al intruder">
               lleva esa petición al Intruder para probar muchos valores sobre ella.
@@ -326,7 +366,7 @@ export function ManualPage() {
           </P>
         </Seccion>
 
-        <Seccion titulo="Repeater">
+        <Seccion titulo="Repeater" activa={activa}>
           <P>
             Coge una petición, la edita y la vuelve a lanzar tantas veces como quieras.
             Es la herramienta para probar <b>una misma petición cambiando una cosa cada
@@ -472,10 +512,17 @@ export function ManualPage() {
             5. Cambia una cosa y repite. Si el servidor responde un 3xx, el aviso te dice a
             dónde te manda.
           </P>
+          <P>
+            <b>Si la respuesta no es un 200 y te redirige, vuelve a pulsar</b> <i>preparar</i>.
+            Además de refrescar el token, la página que trae viene con <b>los valores que
+            acabas de enviar</b>, así que en la pestaña <i>Formulario</i> ves lo que llegó al
+            servidor y los errores que haya marcado. Es la forma de ir corrigiendo campo a
+            campo sin salir de aquí.
+          </P>
         </Seccion>
-        <Seccion titulo="Intruder" estado="pendiente"><Pendiente nombre="Intruder" /></Seccion>
-        <Seccion titulo="Utilidades" estado="pendiente"><Pendiente nombre="Utilidades" /></Seccion>
-        <Seccion titulo="Vulnerabilidades" estado="pendiente"><Pendiente nombre="Vulnerabilidades" /></Seccion>
+        <Seccion titulo="Intruder" estado="pendiente" activa={activa}><Pendiente nombre="Intruder" /></Seccion>
+        <Seccion titulo="Utilidades" estado="pendiente" activa={activa}><Pendiente nombre="Utilidades" /></Seccion>
+        <Seccion titulo="Vulnerabilidades" estado="pendiente" activa={activa}><Pendiente nombre="Vulnerabilidades" /></Seccion>
       </div>
     </div>
   )
