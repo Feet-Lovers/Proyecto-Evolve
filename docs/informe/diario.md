@@ -4121,3 +4121,26 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
 - **A qué requisito toca:** **RF-05**, y **apdo. 8** como defecto encontrado usando la herramienta.
   **Evidencia:** ⚠️ **FALTA: el aviso de redirección en pantalla [pantalla, josemax]**; el «antes» es
   `/register` mostrando la tienda con su `200`. **Horas:** ~0,4 h de Claude.
+
+### Fase 3 (12-oct, 13:30) · Los rótulos del detalle no se leían como rótulos
+
+- **Qué pasó, y le pasó a un usuario real.** josemax miró el panel de detalle del Spider, leyó
+  `HEADERS DE PETICION`, contó las cabeceras **y siguió contando hacia abajo sin darse cuenta de que
+  debajo empezaba otra sección**, `HEADERS DE RESPUESTA`. De ahí salió un «esta URL tiene 15 cabeceras,
+  ¿por qué solo viajan 3?» que nos costó un buen rato a los dos. **Causa: los rótulos de sección iban en
+  el mismo gris tenue que el resto del contenido**, así que no se leían como títulos.
+- **Qué se hizo.** Los **cinco** rótulos del detalle (`peticion`, `body`, el de contenido dinámico,
+  `headers de peticion` y `headers de respuesta`) pasan al **acento del sistema** y llevan una **línea
+  divisoria** debajo. Se tratan los cinco por igual: resaltar solo dos habría quedado peor que no tocar
+  nada.
+- **Por qué no se aplaza al rediseño.** Porque no es estética: **un rótulo que no se distingue del
+  contenido hace que se lea mal la evidencia**, y aquí la evidencia es el producto. En una herramienta de
+  auditoría, confundir cabeceras de petición con las de respuesta lleva a conclusiones falsas en el
+  informe.
+- **Verificación:** **ningún** fichero del frontend conserva el estilo anterior (0), la clase nueva está
+  en el bundle y los dos rótulos siguen presentes. El recuento sale **1** porque el minificador deduplica
+  la cadena de clases, que es lo esperado cuando cinco elementos comparten exactamente el mismo
+  `className`.
+- **A qué requisito toca:** **RF-03**. **Evidencia:** el «antes» es
+  `evidencias/capturas/RF-03-spider-cabeceras-peticion-sin-cookie-censurada.png`, donde se ve que los dos
+  rótulos no destacan. ⚠️ **FALTA: el «después» [pantalla, josemax]**. **Horas:** ~0,2 h de Claude.
