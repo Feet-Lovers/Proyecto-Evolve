@@ -15,76 +15,21 @@ const WS_URL = config.API_BASE
 // el usuario del token, que emite y firma el servidor.
 const CLAVE_SESION_ANTIGUA = 'hooksuite_session'
 
-// El historial del Repeater vive en el NAVEGADOR, no en el servidor. El backend no
-// guarda las peticiones del Repeater: `routes/repeater.py` llama a `forward_request` y
-// devuelve el resultado sin guardarlo, asi que no hay nada que recuperar de alli.
-const CLAVE_HISTORIAL = 'repeater_historial'
+// El Repeater trabaja con UNA peticion cada vez (decision de josemax, 12-oct). Para que el
+// Spider pueda avisar de que esta ocupado hace falta saberlo desde fuera, y se deduce del
+// BORRADOR que el editor ya guarda: una sola fuente de verdad. Inventar una marca aparte
+// seria tener dos sitios diciendo cosas distintas, que es justo lo que costo el dia.
+export const CLAVE_BORRADOR_REPEATER = 'repeater_borrador'
 
-// Cabeceras que NO se guardan en el navegador. En una herramienta de auditoria estas
-// llevan credenciales del SITIO AUDITADO (la cookie de sesion, el token CSRF), y
-// persistirlas dejaria las credenciales de otro en el almacenamiento del navegador,
-// legibles por cualquier codigo que corra en esta pagina: justo el riesgo que cerro el
-// sandbox="" de la vista previa. La peticion recuperada tras un F5 se puede volver a
-// lanzar, pero sin sesion: habra que anadirla a mano.
-const CABECERAS_QUE_NO_SE_GUARDAN = ['cookie', 'authorization', 'proxy-authorization', 'x-xsrf-token', 'x-csrf-token']
-
-// Identificador estable de cada entrada. Antes la lista usaba la POSICION como clave y
-// borrar una fila mientras llegaba una respuesta nueva podia quitar la de al lado: la
-// entrante se inserta por delante y los indices se desplazan.
-let _contadorHistorial = 0
-export function nuevaIdHistorial() {
-  _contadorHistorial += 1
-  return String(Date.now()) + '-' + String(_contadorHistorial)
-}
-
-// Que se guarda y que no. La peticion entera (es pequena y es lo que permite repetirla);
-// de la respuesta, solo los metadatos. El cuerpo NO: `forward_request` devuelve hasta
-// 50.000 caracteres por respuesta y con el tope de 100 entradas eso son ~5 MB, justo la
-// cuota de sessionStorage. Las entradas recuperadas quedan marcadas para que el panel
-// avise de que su cuerpo no esta, en vez de ensenar una respuesta vacia sin explicacion.
-function sinCredenciales(peticion) {
-  const p = peticion || {}
-  if (!Array.isArray(p.headers)) return p
-  return { ...p, headers: p.headers.filter(([k]) => !CABECERAS_QUE_NO_SE_GUARDAN.includes(String(k).toLowerCase())) }
-}
-
-function aLigera(entrada) {
-  const r = entrada.response || {}
-  return {
-    id: entrada.id,
-    request: sinCredenciales(entrada.request),
-    response: {
-      status: r.status, time: r.time, size: r.size,
-      body: '', headers: {},
-      cuerpoNoConservado: true,
-    },
-    timestamp: entrada.timestamp,
-  }
-}
-
-function leerHistorialGuardado() {
+export function repeaterOcupado() {
   try {
-    const crudo = sessionStorage.getItem(CLAVE_HISTORIAL)
-    const lista = crudo ? JSON.parse(crudo) : []
-    if (!Array.isArray(lista)) return []
-    return lista.map(e => (e && e.id) ? e : { ...e, id: nuevaIdHistorial() })
+    const crudo = sessionStorage.getItem(CLAVE_BORRADOR_REPEATER)
+    if (!crudo) return false
+    const borrador = JSON.parse(crudo)
+    // Ocupado = hay una URL cargada. `limpiar` la vacia, y por eso libera el Repeater.
+    return !!(borrador && borrador.url && String(borrador.url).trim())
   } catch {
-    return []   // un historial corrupto no puede impedir usar el Repeater
-  }
-}
-
-// Si no cabe, se van soltando las MAS ANTIGUAS hasta que entre, en vez de petar con
-// QuotaExceededError y perderlo todo.
-function guardarHistorial(historial) {
-  let lista = historial.map(aLigera)
-  while (true) {
-    try {
-      sessionStorage.setItem(CLAVE_HISTORIAL, JSON.stringify(lista))
-      return
-    } catch {
-      if (lista.length === 0) return   // no cabe ni una: se sigue sin persistir
-      lista = lista.slice(0, -1)
-    }
+    return false   // un borrador corrupto no puede dejar el Spider bloqueado
   }
 }
 
@@ -117,17 +62,12 @@ export function AppProvider({ children }) {
   // RepeaterPage porque el router la desmonta al navegar y se perdia TODO: la peticion
   // que estabas editando, su respuesta y el historial.
   const [repeaterResponse, setRepeaterResponse] = useState(null)
-  const [repeaterHistory, setRepeaterHistory] = useState(leerHistorialGuardado)
   const [repeaterLastUrl, setRepeaterLastUrl] = useState('')
   const wsRef = useRef(null)
 
   // Limpieza del identificador que el navegador se inventaba antes: si se queda, no
   // hace daño, pero confunde a quien depure y es una pista falsa de como funciona esto.
   useEffect(() => { localStorage.removeItem(CLAVE_SESION_ANTIGUA) }, [])
-
-  // Guarda el historial del Repeater segun cambia, para que un F5 no lo borre. Lo que
-  // sobrevive es la peticion completa: lo util de un historial es poder repetirla.
-  useEffect(() => { guardarHistorial(repeaterHistory) }, [repeaterHistory])
 
   // Carga el historial YA GUARDADO al entrar.
   //
@@ -204,8 +144,6 @@ export function AppProvider({ children }) {
       setSessionCookies,
       repeaterResponse,
       setRepeaterResponse,
-      repeaterHistory,
-      setRepeaterHistory,
       repeaterLastUrl,
       setRepeaterLastUrl,
     }}>

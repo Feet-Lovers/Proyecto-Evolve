@@ -1,10 +1,15 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui'
+import { repeaterOcupado } from '@/AppContext'
 
 const TABS = ['Request', 'Response', 'Headers']
 
 export function RequestDetail({ request, onSendToRepeater, onSendToIntruder }) {
   const [activeTab, setActiveTab] = useState('Request')
+  // El Repeater trabaja con UNA peticion cada vez: mientras tenga una cargada no se le
+  // manda otra. Se consulta al pintar; basta porque al volver de otra pestana esta
+  // pantalla se vuelve a montar.
+  const ocupado = repeaterOcupado()
 
   if (!request) {
     return (
@@ -44,9 +49,20 @@ export function RequestDetail({ request, onSendToRepeater, onSendToIntruder }) {
           <Button size="sm" variant="secondary" onClick={() => onSendToIntruder(request)}>
             enviar al intruder →
           </Button>
-          <Button size="sm" onClick={() => onSendToRepeater(request)}>
-            enviar al repeater →
-          </Button>
+          {ocupado ? (
+            <Button
+              size="sm"
+              variant="warning"
+              disabled
+              title="El Repeater ya tiene una petición cargada. Ve al Repeater y pulsa «limpiar» para liberarlo."
+            >
+              repeater en uso
+            </Button>
+          ) : (
+            <Button size="sm" onClick={() => onSendToRepeater(request)}>
+              enviar al repeater →
+            </Button>
+          )}
         </div>
       </div>
 

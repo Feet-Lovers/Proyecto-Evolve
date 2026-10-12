@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react'
+// La clave la define AppContext, que es quien la usa para saber si el Repeater esta
+// ocupado. Una sola fuente de verdad: dos sitios con la misma cadena acaban separandose.
+import { CLAVE_BORRADOR_REPEATER as CLAVE_BORRADOR } from '@/AppContext'
 import { Button } from '@/components/ui'
 
 // El borrador se guarda en el navegador, no solo en memoria: asi vuelve tambien
@@ -6,7 +9,6 @@ import { Button } from '@/components/ui'
 // localStorage a proposito -el estado de sesion es volatil por diseno, apdo. 10-:
 // al cerrar la pestana del navegador se va, y no queda en disco una peticion contra
 // un objetivo real con sus cabeceras.
-const CLAVE_BORRADOR = 'repeater_borrador'
 
 const CABECERAS_POR_DEFECTO = { 'Content-Type': 'application/json' }
 

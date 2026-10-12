@@ -6,6 +6,9 @@ export function Button({ children, variant = 'primary', size = 'md', onClick, di
     secondary: 'bg-[#0d0f13] border border-[#2a3040] text-[#8a9aab] hover:border-[#3a4255] hover:text-[#9da8b5]',
     danger:    'bg-[#1f0d0d] border border-[#3d1a1a] text-[#ef7a7a] hover:bg-[#2a1010]',
     ghost:     'bg-transparent border border-[#2a3040] text-[#5a6170] hover:border-[#3a4255] hover:text-[#8a9aab]',
+    // Ambar del sistema, el mismo de los avisos. Para estados que no son un error ni
+    // una accion destructiva: "esto no se puede hacer AHORA, y te digo por que".
+    warning:   'bg-[#1a1405] border border-[#3d2f10] text-[#d9a93a]',
   }
 
   const sizes = {
