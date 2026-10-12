@@ -44,32 +44,33 @@ export function ResponsePanel({ response, requestUrl, formulario }) {
 
   // No existe el codigo HTTP 0: un 0 significa que la peticion no llego a tener respuesta
   // (fallo de red o tiempo agotado). Pintarlo como un numero mas lo disfrazaba de respuesta.
-  const sinRespuesta = !response.status
+  const sinRespuesta = !response || !response.status
 
   // El backend sigue las redirecciones (follow_redirects=True). Si las hubo, el cuerpo y
   // el estado que se ven son los de la ULTIMA parada, no los de la direccion que pediste,
   // y hasta ahora nada lo decia: parecia que tu URL devolvia esto.
-  const saltos = Array.isArray(response.redirecciones) ? response.redirecciones : []
+  const saltos = (response && Array.isArray(response.redirecciones)) ? response.redirecciones : []
 
   // El Repeater NO sigue las redirecciones (como el de Burp), asi que un 3xx llega tal cual
   // y hay que decir a donde apunta. Es la informacion que faltaba: viendo el 302 y su
   // Location se entiende al instante lo que antes parecia que la herramienta se inventaba.
-  const esRedireccion = response.status >= 300 && response.status < 400
-  const cabeceras = response.headers || {}
+  const esRedireccion = !!response && response.status >= 300 && response.status < 400
+  const cabeceras = (response && response.headers) || {}
   const destino = cabeceras.location || cabeceras.Location || ''
   // No es lo mismo acabar en OTRA direccion que rebotar a la misma. El patron clasico
   // POST -> 302 -> GET de la misma URL (el servidor no devuelve contenido y te manda de
   // vuelta al formulario) tiene salto pero NO cambia de direccion: decir ahi "no es la
   // direccion que pediste" es mentir. Y se perdia lo que mas importa a un auditor: en un
   // 302 el metodo se convierte en GET, asi que lo que se ve no es la respuesta a tu POST.
-  const mismaUrl = !!response.url_final && !!requestUrl && response.url_final === requestUrl
+  const mismaUrl = !!response && !!response.url_final && !!requestUrl && response.url_final === requestUrl
   const metodoCambiado = !mismaUrl ? null : (response.method && response.method !== 'GET' ? response.method : null)
 
   const statusColor = sinRespuesta ? '#ef5a5a'
     : response.status >= 200 && response.status < 300
     ? '#4a9a5a' : response.status >= 400 ? '#ef5a5a' : '#dfc050'
 
-  const previewHtml = requestUrl ? rewriteUrls(response.body || '', requestUrl) : (response.body || '')
+  const cuerpo = (response && response.body) || ''
+  const previewHtml = requestUrl ? rewriteUrls(cuerpo, requestUrl) : cuerpo
 
   return (
     <div className="flex flex-col h-full">
@@ -134,7 +135,7 @@ export function ResponsePanel({ response, requestUrl, formulario }) {
           </p>
         </div>
       )}
-      {response.cuerpoNoConservado && (
+      {response && response.cuerpoNoConservado && (
         <div
           className="border-b px-4 py-2"
           style={{ borderColor: '#3d2f10', background: '#1a1405' }}
