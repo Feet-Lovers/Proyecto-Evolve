@@ -4442,3 +4442,24 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   muerto se fue.
 - **A qué requisito toca:** **RF-05** y **RNF-02** (usabilidad/documentación). **Evidencia:** `(no
   aplica)`. **Horas:** ~0,5 h de Claude.
+
+### Fase 3 (12-oct, 21:13) · El manual, navegable por pastillas, y tres correcciones de uso real
+
+- **(1) Se lee por pastillas, no en una tirada.** josemax: «así es difícil de leer». Ahora hay **cinco
+  pastillas** —Spider, Repeater, Intruder, Utilidades, Vulnerabilidades— y **solo se pinta la sección
+  elegida**. Las tres no escritas se marcan con un punto y lo dicen al pasar por encima, así que **se
+  sigue viendo que el manual está incompleto**, que era la decisión del 11-oct.
+- **(2) Corrección del Spider: el botón «enviar al repeater» cambia de estado.** No estaba documentado
+  porque la función es de hoy: si el Repeater ya tiene una petición cargada, el botón pasa a
+  <i>repeater en uso</i> y hay que ir a liberar con <i>limpiar</i>.
+- **(3) Corrección del Spider: las cabeceras del detalle.** El manual ya decía «las que se enviaron» —era
+  **el código el que no lo cumplía**, y se arregló hoy—. Se añade el matiz que faltaba: **incluida la
+  `Cookie` de sesión** cuando el rastreo va autenticado.
+- **(4) Y una aportación de josemax probándolo, que no estaba en el guion:** si la respuesta no es un 200
+  y redirige, **volver a pulsar `preparar`** trae la página **con los valores que acabas de enviar**, así
+  que en la pestaña `Formulario` se ve lo que llegó al servidor y los errores marcados. **Es la forma de
+  corregir campo a campo sin salir del Repeater.** Lo descubrió usando la herramienta; yo no lo sabía.
+- **Verificación:** las 5 secciones reciben la pastilla activa, linter **sin un solo error en el manual**,
+  y las cadenas nuevas presentes en el bundle con control negativo a 0.
+- **A qué requisito toca:** **RF-03**, **RF-05**, **RNF-02**. **Evidencia:** `(no aplica)`.
+  **Horas:** ~0,4 h de Claude.
