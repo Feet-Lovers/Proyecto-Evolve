@@ -20,15 +20,39 @@ const CLAVE_SESION_ANTIGUA = 'hooksuite_session'
 // devuelve el resultado sin guardarlo, asi que no hay nada que recuperar de alli.
 const CLAVE_HISTORIAL = 'repeater_historial'
 
+// Cabeceras que NO se guardan en el navegador. En una herramienta de auditoria estas
+// llevan credenciales del SITIO AUDITADO (la cookie de sesion, el token CSRF), y
+// persistirlas dejaria las credenciales de otro en el almacenamiento del navegador,
+// legibles por cualquier codigo que corra en esta pagina: justo el riesgo que cerro el
+// sandbox="" de la vista previa. La peticion recuperada tras un F5 se puede volver a
+// lanzar, pero sin sesion: habra que anadirla a mano.
+const CABECERAS_QUE_NO_SE_GUARDAN = ['cookie', 'authorization', 'proxy-authorization', 'x-xsrf-token', 'x-csrf-token']
+
+// Identificador estable de cada entrada. Antes la lista usaba la POSICION como clave y
+// borrar una fila mientras llegaba una respuesta nueva podia quitar la de al lado: la
+// entrante se inserta por delante y los indices se desplazan.
+let _contadorHistorial = 0
+export function nuevaIdHistorial() {
+  _contadorHistorial += 1
+  return String(Date.now()) + '-' + String(_contadorHistorial)
+}
+
 // Que se guarda y que no. La peticion entera (es pequena y es lo que permite repetirla);
 // de la respuesta, solo los metadatos. El cuerpo NO: `forward_request` devuelve hasta
 // 50.000 caracteres por respuesta y con el tope de 100 entradas eso son ~5 MB, justo la
 // cuota de sessionStorage. Las entradas recuperadas quedan marcadas para que el panel
 // avise de que su cuerpo no esta, en vez de ensenar una respuesta vacia sin explicacion.
+function sinCredenciales(peticion) {
+  const p = peticion || {}
+  if (!Array.isArray(p.headers)) return p
+  return { ...p, headers: p.headers.filter(([k]) => !CABECERAS_QUE_NO_SE_GUARDAN.includes(String(k).toLowerCase())) }
+}
+
 function aLigera(entrada) {
   const r = entrada.response || {}
   return {
-    request: entrada.request,
+    id: entrada.id,
+    request: sinCredenciales(entrada.request),
     response: {
       status: r.status, time: r.time, size: r.size,
       body: '', headers: {},
@@ -42,7 +66,8 @@ function leerHistorialGuardado() {
   try {
     const crudo = sessionStorage.getItem(CLAVE_HISTORIAL)
     const lista = crudo ? JSON.parse(crudo) : []
-    return Array.isArray(lista) ? lista : []
+    if (!Array.isArray(lista)) return []
+    return lista.map(e => (e && e.id) ? e : { ...e, id: nuevaIdHistorial() })
   } catch {
     return []   // un historial corrupto no puede impedir usar el Repeater
   }

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { RequestEditor } from './RequestEditor'
 import { ResponsePanel } from './ResponsePanel'
 import { api, config } from '@/services/api'
-import { useAppContext } from '@/AppContext'
+import { useAppContext, nuevaIdHistorial } from '@/AppContext'
 
 function normalizeResponse(data) {
   return {
@@ -76,7 +76,10 @@ export function RepeaterPage() {
   // Borrar NO necesita tocar sessionStorage: el guardado esta atado a los cambios del
   // historial, asi que lo que se quita de la lista desaparece tambien de lo persistido y
   // no reaparece tras un F5.
-  const borrarEntrada = (i) => setHistory(prev => prev.filter((_, j) => j !== i))
+  // Se borra por ID y no por posicion: si llega una respuesta con el panel abierto, la
+  // entrante se inserta por DELANTE, los indices se desplazan y la aspa quitaria la fila
+  // de al lado.
+  const borrarEntrada = (id) => setHistory(prev => prev.filter(e => e.id !== id))
 
   const vaciarHistorial = () => {
     setHistory([])
@@ -93,7 +96,7 @@ export function RepeaterPage() {
       const res = await api.post(`/api/repeater/send`, request)
       const normalized = normalizeResponse(res.data)
       setResponse(normalized)
-      setHistory(prev => [{ request, response: normalized, timestamp: new Date() }, ...prev.slice(0, 99)])
+      setHistory(prev => [{ id: nuevaIdHistorial(), request, response: normalized, timestamp: new Date() }, ...prev.slice(0, 99)])
     } catch (e) {
       // Un fallo de red NO es una respuesta. Se marca para que el panel no lo pinte como
       // un "estado 0", que parece un codigo HTTP cuando no existe ninguno.
@@ -173,11 +176,11 @@ export function RepeaterPage() {
             </button>
           </div>
           <div className="overflow-auto" style={{ maxHeight: '11rem' }}>
-            {history.map((h, i) => (
+            {history.map(h => (
               /* La fila es un contenedor y no un boton: dentro va la zona pulsable y la ✕,
                  y un boton dentro de otro boton no es HTML valido. */
               <div
-                key={i}
+                key={h.id}
                 className="flex items-center border-b"
                 style={{ borderColor: 'var(--hs-border)' }}
               >
@@ -218,7 +221,7 @@ export function RepeaterPage() {
                   </span>
                 </button>
                 <button
-                  onClick={() => borrarEntrada(i)}
+                  onClick={() => borrarEntrada(h.id)}
                   className="px-3 py-1.5 text-[11px] shrink-0"
                   style={{ color: '#ef5a5a' }}
                   title="Quitar esta petición del historial"
@@ -233,8 +236,15 @@ export function RepeaterPage() {
 
       <div className="flex flex-1 overflow-hidden">
         <div className="w-1/2 border-r overflow-hidden flex flex-col" style={{ borderColor: 'var(--hs-border)' }}>
+          {/* `onInicialConsumida`: una vez el editor ha aplicado la peticion inicial, se
+              descarta. Si se queda puesta, el editor se repone desde ella cada vez que
+              vuelves a esta pestana y `limpiar` deja de ser definitivo: reaparecen la
+              peticion y sus cabeceras heredadas. Asi vuelve a ser lo que era antes del
+              historial: una orden de un solo uso. Lo que se conserva al volver es el
+              BORRADOR, que es lo ultimo que estabas editando. */}
           <RequestEditor
             initialRequest={initialRequest}
+            onInicialConsumida={() => setInitialRequest(null)}
             onSend={handleSend}
             onClear={() => { setResponse(null); setLastUrl('') }}
             loading={loading}

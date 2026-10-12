@@ -10,6 +10,12 @@ const CLAVE_BORRADOR = 'repeater_borrador'
 
 const CABECERAS_POR_DEFECTO = { 'Content-Type': 'application/json' }
 
+// Cabeceras que significan "esta peticion viaja con la sesion de otro". Importa
+// ensenarlo: una peticion traida del Spider llega con la cookie y el token del sitio
+// auditado, y entonces la respuesta ya no depende solo de la URL y el metodo. Estaban a
+// la vista en la lista de cabeceras, pero como una fila mas entre otras.
+const CABECERAS_DE_SESION = ['cookie', 'authorization', 'proxy-authorization', 'x-xsrf-token', 'x-csrf-token']
+
 // Acepta tanto un objeto de cabeceras (lo que manda el Spider) como una lista de
 // pares (lo que guarda el borrador), y devuelve siempre la lista editable.
 function aPares(cabeceras) {
@@ -27,7 +33,7 @@ function leerBorrador() {
   }
 }
 
-export function RequestEditor({ initialRequest, onSend, onClear, loading }) {
+export function RequestEditor({ initialRequest, onSend, onClear, loading, onInicialConsumida }) {
   // Lo que llega del Spider manda sobre el borrador guardado; si no hay nada nuevo,
   // se recupera lo que se estaba editando.
   const partida = initialRequest || leerBorrador()
@@ -61,6 +67,12 @@ export function RequestEditor({ initialRequest, onSend, onClear, loading }) {
     setUrl(initialRequest.url || '')
     setHeaders(aPares(initialRequest.requestHeaders) || aPares(CABECERAS_POR_DEFECTO))
     setBody(initialRequest.requestBody || '')
+    // Aplicada y consumida: el padre la descarta. Si siguiera puesta, cada vez que se
+    // vuelve a esta pestana el editor se repondria desde ella y `limpiar` no seria
+    // definitivo. No se anade a las dependencias a proposito: volveria a entrar aqui en
+    // cada render. El unico reentrada posible es con initialRequest ya a null, que sale
+    // por el return de arriba.
+    onInicialConsumida?.()
   }, [initialRequest])
 
   const addHeader = () => setHeaders(prev => [...prev, { key: '', value: '' }])
@@ -86,6 +98,10 @@ export function RequestEditor({ initialRequest, onSend, onClear, loading }) {
     onClear?.()
   }
 
+  const sesionHeredada = headers
+    .filter(h => h.key && CABECERAS_DE_SESION.includes(h.key.trim().toLowerCase()))
+    .map(h => h.key.trim())
+
   const inputStyle = {
     fontFamily: 'var(--font-mono)',
     background: 'var(--hs-bg)',
@@ -95,6 +111,27 @@ export function RequestEditor({ initialRequest, onSend, onClear, loading }) {
 
   return (
     <div className="flex flex-col gap-4 p-4 h-full overflow-auto">
+      {sesionHeredada.length > 0 && (
+        <div
+          className="px-3 py-2 rounded border"
+          style={{ borderColor: '#3d2f10', background: '#1a1405' }}
+        >
+          <p
+            className="text-[10px] tracking-widest uppercase"
+            style={{ fontFamily: 'var(--font-mono)', color: '#d9a93a' }}
+          >
+            {'\u26A0 '}viaja con una sesión heredada
+          </p>
+          <p
+            className="text-[10px] mt-1 leading-relaxed"
+            style={{ fontFamily: 'var(--font-mono)', color: '#d9a93a' }}
+          >
+            Lleva <b>{sesionHeredada.join(', ')}</b>. La respuesta depende de esa sesión y no
+            solo de la URL y el método: la misma petición con y sin ella puede dar resultados
+            distintos. Si quieres probarla limpia, quita esas cabeceras.
+          </p>
+        </div>
+      )}
       <div className="flex gap-2">
         <select
           value={method}
