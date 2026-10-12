@@ -179,12 +179,16 @@ class SpiderService:
                 'size': len(response.content),
                 'time': elapsed_ms,
                 'timestamp': datetime.utcnow().isoformat(),
-                # Las cabeceras REALMENTE enviadas, no un diccionario fabricado aparte.
-                # Antes aqui se sorteaba OTRO User-Agent (asi que se ensenaba uno distinto
-                # del usado), no aparecia la Cookie aunque se enviara, y se anadia un Host
-                # que nadie habia puesto. En una herramienta de auditoria eso es grave: lo
-                # que se ensena como evidencia tiene que ser la peticion que salio.
-                'request_headers': dict(chosen_headers),
+                # Las cabeceras que SALIERON POR EL CABLE, leidas de la propia peticion que
+                # guarda la respuesta. No vale con guardar las que ponemos a mano:
+                # - la libreria anade por su cuenta Host, Accept-Encoding, Connection...
+                # - y, sobre todo, LA COOKIE DE SESION, que la pone el cliente persistente y
+                #   nunca pasa por nuestro diccionario. Esa es justo la que decide como
+                #   responde el servidor, y faltaba.
+                # Antes se fabricaba un diccionario aparte que ademas sorteaba OTRO
+                # User-Agent distinto del usado. En una herramienta de auditoria lo que se
+                # ensena como evidencia tiene que ser la peticion que salio.
+                'request_headers': dict(response.request.headers),
                 'request_body': None,
                 'response_headers': {**dict(response.headers), **({'set-cookie': '; '.join([f'{k}={v}' for k,v in client.cookies.items()])} if client.cookies else {})},
                 'response_body': response_body[:50000],

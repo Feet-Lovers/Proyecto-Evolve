@@ -130,7 +130,11 @@ async def forward_request(
             "size": len(response.content),
             "time": elapsed_ms,
             "timestamp": datetime.utcnow().isoformat(),
-            "request_headers": dict(pares),   # para la vista: si se repitio una, se ve la ultima
+            # Igual que en el Spider: lo que SALIO, no lo que pedimos que saliera. Incluye
+            # la cookie de sesion que anade el cliente persistente -invisible hasta ahora- y
+            # las que pone la libreria (Host, Accept-Encoding...). Si una cabecera iba
+            # repetida, aqui se ve con sus valores unidos por coma en vez de perderse una.
+            "request_headers": dict(response.request.headers),
             "request_body": body,
             # follow_redirects=True sigue los saltos en silencio, asi que el cuerpo y el
             # estado que se ven pueden ser los de OTRA url. Hasta ahora eso se tiraba y el
