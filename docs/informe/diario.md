@@ -4210,3 +4210,38 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
 - **A qué requisito toca:** **RF-05**. **Evidencia:** ⚠️ **FALTA [pantalla, josemax]**, y por decisión
   suya las capturas se dejan **para el final**, porque las pantallas cambian en cada pasada.
   **Horas:** ~0,6 h de Claude.
+
+### Fase 3 (12-oct, 17:28) · Fuera el historial: el Repeater trabaja con una petición cada vez
+
+- **Qué se hizo.** Se **elimina el historial del Repeater** —panel desplegable, borrado por fila, botón de
+  vaciar, persistencia y el contador de la cabecera— y en su lugar el Repeater pasa a ser un **banco de
+  trabajo de una sola petición**. Mientras tenga una cargada, el Spider **no deja enviar otra**: su botón
+  `enviar al repeater →` se vuelve **ámbar** con el texto **`repeater en uso`** y explica que hay que ir al
+  Repeater y pulsar `limpiar`. **Diseño de josemax.**
+- **Por qué se retira algo terminado el mismo día.** El historial se añadió esta mañana y **todo el
+  comportamiento errático de la jornada giraba a su alrededor**: respuestas que se cruzaban, entradas con
+  la petición y la respuesta mal emparejadas, y el panel mostrando la respuesta de otra petición justo
+  después de traer una del historial. **Tres arreglos sucesivos no lo dejaron estable** —guarda de envíos,
+  aviso de rebote, identificadores estables— y la congelación es mañana. Un Repeater que mezcla respuestas
+  es **peor para el informe** que un Repeater sin historial.
+- **Por qué la solución es buena y no una retirada.** Convierte un estado **implícito** en **explícito**.
+  El caos venía de varias peticiones conviviendo sin que nada dijera cuál era la buena; ahora hay **una**,
+  se ve que el Repeater está ocupado **desde la otra pantalla**, y se libera con un gesto deliberado. En la
+  memoria esto **no es una carencia, es una decisión de diseño**, igual que «campos frente a edición en
+  crudo».
+- **Decisión de detalle, declarada:** «ocupado» se deduce del **borrador que el editor ya guarda**, no de
+  una marca nueva. **Una sola fuente de verdad** — tener dos sitios diciendo cosas distintas es justo lo
+  que ha costado el día. Por eso `limpiar`, que vacía la URL, es lo que libera el Repeater.
+- **De paso:** el `Button` gana una variante **ámbar** (`warning`), para estados que no son un error ni una
+  acción destructiva sino «esto no se puede hacer ahora, y te digo por qué». Y la clave del borrador pasa a
+  definirse en un solo sitio, en vez de estar repetida en dos ficheros.
+- **Lo que se conserva de hoy**, que funciona y es independiente: aviso de redirecciones, cabeceras reales
+  del Spider, rótulos del detalle, «sin respuesta», la URL en su línea, los colores del borrado, el aviso
+  de sesión heredada con su botón «quitar la sesión» y la guarda de respuestas tardías.
+- **Verificación con control cruzado:** en el bundle **está** lo que debía quedarse (`repeater en uso`,
+  `quitar la sesión`, `rebotó`, el aviso de sesión, «sin respuesta», la clave del borrador) y **ha
+  desaparecido** lo que debía irse (el contador del historial, el rótulo del panel, la confirmación de
+  vaciar y la clave de persistencia). Los ceros valen porque el mismo método da 1 en los otros.
+- **Balance del cambio:** **38 inserciones y 262 borrados**. `RepeaterPage.jsx` pasa de 275 a 92 líneas.
+- **A qué requisito toca:** **RF-05**, y al **apdo. 10** como decisión de diseño. **Evidencia:**
+  ⚠️ **FALTA [pantalla, josemax]**, pendiente de la tanda final de capturas. **Horas:** ~0,7 h de Claude.
