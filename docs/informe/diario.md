@@ -4021,3 +4021,24 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **A qué requisito toca:** **RF-05**; el punto (3) roza **RNF-07** por lo que documenta.
   **Evidencia:** ⚠️ **FALTA: el panel con «sin respuesta» y la URL en la barra [pantalla, josemax]**.
   **Horas:** ~0,5 h de Claude.
+
+### Fase 3 (12-oct, 11:08) · La URL del panel, a su propia línea
+
+- **Qué falló.** El arreglo de «el panel no dice a qué URL se envió» **solo funcionaba cuando la petición
+  fallaba**. La puse en la barra compitiendo con el estado, el tiempo, el tamaño y cuatro pestañas; con
+  `flex-1 truncate` le quedaban unos pocos píxeles. Al fallar la petición se ocultan el tiempo y el tamaño,
+  queda sitio y la URL aparece — de ahí que la primera captura pareciera darlo por bueno.
+- **Cómo se vio.** En la captura del Preview, con respuesta real (`200 · 255ms · 38.3KB`), **entre el
+  tamaño y las pestañas no se lee nada**. Lo destapó una **captura de josemax**, no mi verificación: yo
+  había contado que la cadena estaba en el bundle, y estaba. **Es la tercera vez hoy que un recuento
+  confirma la presencia de un texto que no se ve.**
+- **Qué se hizo.** La URL pasa a **su propia línea** bajo la barra, truncada, con la URL entera al pasar
+  por encima. Cuesta ~12 px de alto y se lee siempre. Se descartó dejarla en la barra mostrando solo la
+  ruta sin el host: ahorra espacio pero **sigue dependiendo de cuánto ocupen las pestañas**, que es el
+  problema de fondo.
+- **Verificación, esta vez con la expectativa comprobada antes de medir:** la clase del bloque nuevo existe
+  en **un único** fichero del frontend y aparece **1** vez en el bundle; la clase de la versión anterior da
+  **0** tanto en el fuente como en el bundle; y los controles de lo ya hecho siguen a 1.
+- **A qué requisito toca:** **RF-05**. **Evidencia:** `evidencias/capturas/RNF-07-preview-aviso-sin-javascript.png`
+  muestra el defecto (la barra sin URL legible) · ⚠️ **FALTA: el panel con la URL en su línea [pantalla,
+  josemax]**. **Horas:** ~0,2 h de Claude.
