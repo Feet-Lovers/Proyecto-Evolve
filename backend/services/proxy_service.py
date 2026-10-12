@@ -76,6 +76,7 @@ async def forward_request(
     timeout: int = 30,
     session_token: str = None,
     seguir_redirecciones: bool = True,
+    cliente_compartido: bool = True,
 ) -> dict:
     """Reenvia una peticion y devuelve lo que paso, en crudo.
 
@@ -85,6 +86,14 @@ async def forward_request(
     parada. Es como se comporta el Repeater de Burp, y no verlo fue lo que hizo parecer que
     la herramienta mentia: se mostraba el resultado de seguir un salto que nadie habia
     pedido ni veia.
+
+    `cliente_compartido` tambien por defecto en True (Spider y Proxy). El REPEATER lo pone
+    en False y envia una peticion INDEPENDIENTE, con exactamente las cabeceras que se ven en
+    pantalla. Motivo: el cliente compartido hacia dos cosas invisibles -mandaba cookies que
+    no estaban en la peticion, y se QUEDABA con las que devolvia el servidor-, asi que dos
+    envios identicos daban resultados distintos. Un Repeater tiene que ser reproducible.
+    La sesion se sigue heredando: desde el 12-oct la Cookie viaja en las cabeceras, a la
+    vista y editable, en vez de por un canal oculto.
     """
     start = time.time()
     request_id = str(uuid.uuid4())
@@ -96,7 +105,7 @@ async def forward_request(
     clean_headers = [(k, v) for k, v in pares if k.lower() not in protected_headers]
 
     try:
-        if session_token:
+        if session_token and cliente_compartido:
             client = get_session_client(session_token)
             response = await client.request(
                 method=method,
@@ -123,7 +132,7 @@ async def forward_request(
         suspicious = is_suspicious(url, response_body, response.status_code)
 
         # Detectar cookies de sesion y notificar al frontend
-        if session_token:
+        if session_token and cliente_compartido:
             cookies = dict(client.cookies)
             if cookies:
                 from services.session_service import session_manager

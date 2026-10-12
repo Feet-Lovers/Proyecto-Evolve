@@ -27,6 +27,16 @@ async def send_request(request: RepeaterRequest, espacio: str = Depends(usuario_
 		# respuesta de ESTA peticion -el 302 con su Location y su Set-Cookie-, no la de la
 		# ultima parada. Seguirlas en silencio hacia parecer que la herramienta mentia.
 		seguir_redirecciones=False,
+		# Peticion INDEPENDIENTE, no el cliente compartido. Este mandaba cookies que no estaban
+		# en la peticion y se quedaba con las que devolvia el servidor, asi que dos envios
+		# identicos daban resultados distintos (comprobado el 12-oct: un POST sin Cookie en las
+		# cabeceras recibia igualmente el estado de la sesion del Spider). Un Repeater tiene que
+		# ser reproducible: lo que se ve es lo que se manda.
+		#
+		# La sesion se SIGUE heredando, pero por las cabeceras: desde el 12-oct la Cookie real
+		# viaja en ellas, visible y editable. RF-04 se cumple en su proposito -auditoria
+		# autenticada- por un canal explicito en vez de uno oculto.
+		cliente_compartido=False,
 	)
 	return result
 
