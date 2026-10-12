@@ -132,6 +132,12 @@ async def forward_request(
             "timestamp": datetime.utcnow().isoformat(),
             "request_headers": dict(pares),   # para la vista: si se repitio una, se ve la ultima
             "request_body": body,
+            # follow_redirects=True sigue los saltos en silencio, asi que el cuerpo y el
+            # estado que se ven pueden ser los de OTRA url. Hasta ahora eso se tiraba y el
+            # auditor no podia saberlo: parecia que la URL pedida devolvia esto. Se
+            # devuelven la URL final y la cadena de saltos para que la interfaz lo diga.
+            "url_final": str(response.url),
+            "redirecciones": [{"status": r.status_code, "url": str(r.url)} for r in response.history],
             "response_headers": dict(response.headers),
             "response_body": response_body[:50000],
             "suspicious": suspicious,
@@ -148,6 +154,8 @@ async def forward_request(
             "timestamp": datetime.utcnow().isoformat(),
             "request_headers": dict(pares),   # para la vista: si se repitio una, se ve la ultima
             "request_body": body,
+            "url_final": url,
+            "redirecciones": [],
             "response_headers": {},
             "response_body": "Error: Timeout",
             "suspicious": False,
@@ -164,6 +172,8 @@ async def forward_request(
             "timestamp": datetime.utcnow().isoformat(),
             "request_headers": dict(pares),   # para la vista: si se repitio una, se ve la ultima
             "request_body": body,
+            "url_final": url,
+            "redirecciones": [],
             "response_headers": {},
             "response_body": _mensaje_de_error(e, url),
             "suspicious": False,

@@ -39,6 +39,11 @@ export function ResponsePanel({ response, requestUrl }) {
   // (fallo de red o tiempo agotado). Pintarlo como un numero mas lo disfrazaba de respuesta.
   const sinRespuesta = !response.status
 
+  // El backend sigue las redirecciones (follow_redirects=True). Si las hubo, el cuerpo y
+  // el estado que se ven son los de la ULTIMA parada, no los de la direccion que pediste,
+  // y hasta ahora nada lo decia: parecia que tu URL devolvia esto.
+  const saltos = Array.isArray(response.redirecciones) ? response.redirecciones : []
+
   const statusColor = sinRespuesta ? '#ef5a5a'
     : response.status >= 200 && response.status < 300
     ? '#4a9a5a' : response.status >= 400 ? '#ef5a5a' : '#dfc050'
@@ -53,6 +58,26 @@ export function ResponsePanel({ response, requestUrl }) {
           no es una nota al pie: explica por que falta algo que se esperaba ver. Mismos colores
           que el aviso de 'sin analizar' de VulnerabilitiesPage, para que los dos avisos de la
           aplicacion se parezcan entre si. */}
+      {saltos.length > 0 && (
+        <div
+          className="border-b px-4 py-2"
+          style={{ borderColor: '#3d2f10', background: '#1a1405' }}
+        >
+          <p
+            className="text-[10px] tracking-widest uppercase"
+            style={{ fontFamily: 'var(--font-mono)', color: '#d9a93a' }}
+          >
+            {'\u26A0 '}redirigido · {saltos.length} salto{saltos.length > 1 ? 's' : ''}
+          </p>
+          <p
+            className="text-[10px] mt-1 leading-relaxed break-all"
+            style={{ fontFamily: 'var(--font-mono)', color: '#d9a93a' }}
+          >
+            Lo que ves es la respuesta de <b>{response.url_final}</b>, no de la dirección que
+            pediste. Cadena: {saltos.map(s => s.status).join(' → ')} → {response.status}.
+          </p>
+        </div>
+      )}
       {response.cuerpoNoConservado && (
         <div
           className="border-b px-4 py-2"
