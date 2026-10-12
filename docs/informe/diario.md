@@ -4298,3 +4298,34 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
 - **A qué requisito toca:** **RF-05** y **apdo. 8** (defecto encontrado comparando con la herramienta de
   referencia). **Evidencia:** ⚠️ **FALTA [pantalla, josemax]** — el `302` con su `Location` a la vista, que
   es la imagen que explica todo el día. **Horas:** ~0,4 h de Claude.
+
+### Fase 3 (12-oct, 18:37) · El Repeater envía una petición independiente: lo que ves es lo que se manda
+
+- **El problema, confirmado con una prueba que no tocó código.** El Repeater usaba el **cliente HTTP
+  compartido** con Spider e Intruder, y ese cliente hacía **dos cosas invisibles**: mandaba cookies que
+  **no estaban en la petición** y **se quedaba con las que devolvía el servidor**. Resultado: **dos envíos
+  idénticos daban resultados distintos**. Lo que lo cerró fue un dato de josemax: sus POST **no llevaban
+  `Cookie`** en las cabeceras y aun así el servidor **le devolvía a la última página que visitó el
+  Spider** — si le reconoce sin que él mande sesión, la sesión la pone el backend.
+- **Antes de tocar, josemax preguntó por qué estaba así. Y menos mal:** `REQUISITOS.md` lo recoge como
+  **RF-04 literal** — «sesión httpx persistente **compartida por Spider/Repeater/Intruder** que hereda las
+  cookies del login», marcado **Cumplido**. No era un detalle de implementación: era el requisito.
+- **Por qué se cambia igualmente.** El requisito describe **un mecanismo**, pero lo que **persigue** es
+  auditar autenticado. Y eso se sigue cumpliendo, porque **desde esta misma mañana la `Cookie` real viaja
+  en las cabeceras**, visible y editable: la sesión se hereda **por un canal explícito** en vez de uno
+  oculto. **Antes de ese arreglo este cambio habría roto la herencia de verdad**; después de él, no.
+- **Qué se hizo.** `forward_request` gana **`cliente_compartido`** (por defecto `True`) y
+  **`routes/repeater.py` lo pone en `False`**: envía una petición independiente con exactamente las
+  cabeceras que se ven. **Spider, Proxy e Intruder no se tocan** y `get_session_client` sigue en pie para
+  ellos. También se condiciona a eso la emisión del evento de cookies, que no tendría sentido desde un
+  cliente de usar y tirar.
+- **Se actualiza la matriz, como el propio documento contempla:** RF-04 pasa de **Cumplido** a **«A
+  revisar (modificado)»** —la misma categoría donde ya estaban RF-02 y RNF-06— con su justificación en la
+  celda. Recuento: **Cumplidos 12 → 11**, **A revisar 2 → 3**. **No se maquilla: se declara.**
+- **Prueba de aceptación, y es la que decide si esto vale:** **enviar dos veces la misma petición debe dar
+  dos veces el mismo resultado.** Si no, el cambio no sirve.
+- **Verificado dentro de la imagen:** parámetro en la firma, las dos condiciones, el Repeater lo
+  desactiva, **Proxy y Spider intactos (0)** y `get_session_client` **sigue existiendo** (control
+  positivo).
+- **A qué requisito toca:** **RF-04** (modificado), **RF-05**, y **apdo. 8** y **10**. **Evidencia:**
+  ⚠️ **FALTA [pantalla, josemax]**: dos envíos iguales con el mismo resultado. **Horas:** ~0,5 h de Claude.
