@@ -4042,3 +4042,39 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **A qué requisito toca:** **RF-05**. **Evidencia:** `evidencias/capturas/RNF-07-preview-aviso-sin-javascript.png`
   muestra el defecto (la barra sin URL legible) · ⚠️ **FALTA: el panel con la URL en su línea [pantalla,
   josemax]**. **Horas:** ~0,2 h de Claude.
+
+### Fase 3 (12-oct, 12:37) · Cuatro arreglos del Repeater salidos de una sesión de uso real
+
+Los cuatro vienen de que josemax usara la herramienta y de una pasada de lectura del código. Van en un
+solo commit porque se entrelazan en los mismos ficheros y por separado no compilarían.
+
+- **(1) `Limpiar` vuelve a ser definitivo.** `initialRequest` se quedaba puesto tras cargar una fila del
+  historial, así que al volver a la pestaña el editor se reponía desde ella y **reaparecían la petición y
+  sus cabeceras heredadas después de haber limpiado**. Ahora es otra vez **una orden de un solo uso**: el
+  editor avisa de que la ha aplicado y el padre la descarta. Lo que se conserva al volver es el
+  **borrador**, que es lo último que estabas editando —eso sí es intencionado—.
+- **(2) Aviso de sesión heredada.** Si la petición lleva `Cookie`, `Authorization` o un token CSRF, sale un
+  bloque ámbar diciéndolo. **Nace del diagnóstico de hoy:** una petición traída del Spider responde
+  distinto a la misma escrita a mano, y las cabeceras estaban a la vista pero como una fila más. Un auditor
+  tiene que distinguir **«qué responde esta URL»** de **«qué responde esta URL con esta sesión»**.
+- **(3) Las credenciales del objetivo dejan de guardarse en el navegador.** Al persistir el historial yo
+  estaba metiendo en `sessionStorage` las cabeceras completas, y ahí viajan **la cookie de sesión y el
+  token del sitio auditado**: credenciales de otro, en el almacenamiento del navegador, legibles por
+  cualquier código que corra en la página — el riesgo que cerramos ayer con el `sandbox=""`. Se filtran al
+  guardar. **Contrapartida asumida:** una petición recuperada tras un F5 se puede relanzar pero **sin
+  sesión**; hay que volver a añadirla. Va al apdo. 10.
+- **(4) Las filas del historial se identifican por un id, no por su posición.** Con `key={i}` y borrado por
+  índice, **si llegaba una respuesta con el panel abierto la nueva se insertaba por delante, los índices se
+  desplazaban y la `✕` borraba la fila de al lado**. Las entradas ya guardadas reciben id al rehidratarse.
+- 🔑 **DOS FALLOS MÍOS EN ESTA MISMA PASADA, y el segundo es el que hay que recordar.**
+  1. **Un comentario `{/* … */}` entre los atributos de un componente**: ahí `{…}` significa *spread*, y el
+     compilador cantó `Expected '...' but found '}'`. El comentario va fuera del elemento. **El build lo
+     cazó.**
+  2. 🔴 **Mi comando de verificación escondió ese fallo.** Lancé `docker compose build … | tail -2 &&
+     docker run …`: **el `| tail` se queda con el código de salida del `tail`, que siempre es 0**, así que
+     el `&&` dejó pasar la comprobación **contra la imagen anterior**. Lo que me salvó fue que los
+     recuentos nuevos dieran **0** y el **nombre del bundle** fuera el de antes. **Regla: comprobar el
+     código de salida del build de verdad (`if docker compose build …; then`), y confirmar SIEMPRE que el
+     nombre del bundle ha cambiado antes de creerse una verificación.**
+- **A qué requisito toca:** **RF-05**; el (3) toca **RNF-07**. **Evidencia:** ⚠️ **FALTA: el aviso de
+  sesión heredada y el borrado de una fila del medio [pantalla, josemax]**. **Horas:** ~0,8 h de Claude.
