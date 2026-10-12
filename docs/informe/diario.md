@@ -4420,3 +4420,25 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   preparado y aún no se ha enviado, **las pestañas Raw/Pretty/Preview/Headers no responden — y es
   correcto: no hay respuesta que enseñar.** Él mismo lo dedujo. En cuanto se envía algo, funcionan todas.
 - **A qué requisito toca:** **RF-05**. **Evidencia:** ⚠️ **FALTA [pantalla, josemax]**. **Horas:** ~0,2 h.
+
+### Fase 3 (12-oct, 21:03) · El manual del Repeater, y lo que destapó escribirlo
+
+- **Cuándo tocaba.** La decisión del 11-oct es clara: **una sección por pestaña, y solo cuando esa pestaña
+  se ha pulido y verificado**. El Repeater lo está desde esta tarde, así que toca. Lo recordó josemax
+  antes de dar la pestaña por cerrada.
+- **Qué se ha escrito.** **26 controles**, cada uno diciendo **de qué tipo es** y **bajo qué condición
+  aparece**, siguiendo el formato del Spider: barra de la petición, avisos, cabeceras y cuerpo, panel de
+  respuesta, pestañas, y un apartado final de **cómo probar un formulario** paso a paso. **Sin capturas**,
+  como se decidió. Las otras tres secciones siguen marcadas **pendiente** en pantalla.
+- **Se documenta lo comprobado, no lo que creíamos.** Antes de escribir se hizo inventario **contra el
+  código**: los nombres literales de los controles, los métodos del selector, los avisos y sus
+  condiciones.
+- 🔑 **Y escribirlo destapó un defecto, igual que pasó con el Spider:** el aviso **«cuerpo no conservado»
+  ya no puede salir nunca**. Lo ponía el historial al recuperar una petición guardada, y el historial se
+  retiró esta tarde; quedaba solo el código que lo **lee**. **Código muerto, 20 líneas, retiradas.** Es la
+  segunda vez que redactar el manual encuentra algo que el uso no había encontrado.
+- **Verificación:** 26 controles en la sección, **3 pendientes** intactas, linter sin `no-undef`, el texto
+  del manual presente en el bundle y **`cuerpo no conservado` a 0**, que es la prueba de que el bloque
+  muerto se fue.
+- **A qué requisito toca:** **RF-05** y **RNF-02** (usabilidad/documentación). **Evidencia:** `(no
+  aplica)`. **Horas:** ~0,5 h de Claude.
