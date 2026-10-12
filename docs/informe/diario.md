@@ -4269,3 +4269,32 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   Vulnerabilidades. **El proyecto no pasa su propio linter**, y eso es un dato honesto para la memoria.
 - **A qué requisito toca:** **RF-05**; la deuda del linter va al **apdo. 10**, y el fallo propio al
   **apdo. 12**. **Evidencia:** `(no aplica)`, queda en git. **Horas:** ~0,3 h de Claude.
+
+### Fase 3 (12-oct, 18:03) · El Repeater deja de seguir las redirecciones, como el de Burp
+
+- **Qué lo motivó.** Lo señaló josemax después de que el diagnóstico del día se diera por cerrado: **«el
+  Repeater de Burp no se comporta así con las redirecciones»**. Y es cierto: Burp te enseña el **`302` tal
+  cual**, con su `Location`, y tú decides si seguirla. El nuestro llevaba «seguir redirecciones» **siempre
+  activado**, así que **nunca veías el `302`**: veías el resultado de la última parada.
+- **Por qué importa tanto, y no es un detalle.** Toda la confusión de la jornada —la que llevó a **retirar
+  el historial**— venía de ahí. Si al enviar el POST se hubiera visto `302 Found` con
+  `Location: /tienda`, se habría entendido en dos segundos: el servidor devuelve a la página anterior
+  porque la validación falla. **El aviso que se añadió por la mañana era un parche sobre un comportamiento
+  que, en un Repeater, no debería ser el predeterminado.**
+- **Qué se hizo.** `forward_request` gana el parámetro **`seguir_redirecciones`** (por defecto `True`), y
+  **`routes/repeater.py` lo pone en `False`**. El **Spider lo necesita en `True`** para rastrear y el
+  **Proxy no se toca**. httpx permite decidirlo **petición a petición**, así que **el cliente persistente
+  no se modifica** y las sesiones no cambian de comportamiento.
+- **Y en el panel**, un aviso ámbar cuando la respuesta es `3xx`: a dónde apunta el `Location`, que el
+  Repeater **no la sigue**, y que lo que se ve es la respuesta **a tu petición** con sus cabeceras —
+  **incluido cualquier `Set-Cookie`**, que en auditoría es justo lo que interesa y antes se perdía—.
+- **Lo que se deja fuera, dicho a propósito:** Burp ofrece además un botón «seguir esta redirección». Sería
+  lo redondo, pero es más trabajo y la congelación es mañana → va al **apdo. 10** como lo que falta para
+  igualar a la referencia.
+- **Verificación, y esta vez con el linter por delante** (la lección del tropiezo anterior): **0
+  `no-undef`** en todo el frontend; dentro de las imágenes, el parámetro en la firma, usado en **los dos**
+  clientes, **desactivado solo en el Repeater** y el **Proxy intacto**; y el aviso nuevo presente en el
+  bundle con control negativo a 0.
+- **A qué requisito toca:** **RF-05** y **apdo. 8** (defecto encontrado comparando con la herramienta de
+  referencia). **Evidencia:** ⚠️ **FALTA [pantalla, josemax]** — el `302` con su `Location` a la vista, que
+  es la imagen que explica todo el día. **Horas:** ~0,4 h de Claude.
