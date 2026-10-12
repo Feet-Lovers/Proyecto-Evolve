@@ -232,8 +232,10 @@ export function ResponsePanel({ response, requestUrl, formulario }) {
               {'\u25B8 '}página del formulario, traída por <b>preparar</b> desde <b>{formulario.url}</b>.
               Se queda aquí para consultarla sin reenviar nada. Tampoco ejecuta JavaScript.
             </p>
+            {/* Mismo tratamiento que Preview: sin reescribir las rutas relativas a absolutas,
+                el navegador no encuentra los CSS ni las imagenes y la pagina sale en crudo. */}
             <iframe
-              srcDoc={formulario.html}
+              srcDoc={rewriteUrls(formulario.html || '', formulario.url || '')}
               sandbox=""
               className="flex-1 w-full border-0 rounded"
               title="formulario"

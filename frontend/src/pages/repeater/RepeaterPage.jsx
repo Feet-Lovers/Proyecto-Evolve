@@ -141,7 +141,7 @@ export function RepeaterPage() {
             onInicialConsumida={() => setInitialRequest(null)}
             onSend={handleSend}
             onPreparar={prepararPeticion}
-            onClear={() => { setResponse(null); setLastUrl('') }}
+            onClear={() => { setResponse(null); setLastUrl(''); setFormulario(null) }}
             loading={loading}
           />
         </div>
