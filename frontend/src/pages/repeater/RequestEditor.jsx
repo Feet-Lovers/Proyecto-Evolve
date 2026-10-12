@@ -35,7 +35,7 @@ function leerBorrador() {
   }
 }
 
-export function RequestEditor({ initialRequest, onSend, onClear, loading, onInicialConsumida }) {
+export function RequestEditor({ initialRequest, onSend, onClear, loading, onInicialConsumida, onPreparar }) {
   // Lo que llega del Spider manda sobre el borrador guardado; si no hay nada nuevo,
   // se recupera lo que se estaba editando.
   const partida = initialRequest || leerBorrador()
@@ -104,6 +104,58 @@ export function RequestEditor({ initialRequest, onSend, onClear, loading, onInic
   // operacion que un auditor necesita -es el experimento que costo media manana
   // reconstruir a mano-, y hasta ahora habia que borrarlas una a una: el boton `limpiar`
   // vacia la peticion entera y te deja sin nada que probar.
+  const [preparando, setPreparando] = useState(false)
+  const [avisoPreparar, setAvisoPreparar] = useState(null)
+
+  // Pide la pagina del formulario y trae de ella lo que caduca: los campos ocultos (el
+  // token CSRF) y, si el servidor la cambia, la cookie. Es lo que hace un navegador antes
+  // de enviar un formulario, y lo que le falta a la peticion que trae el Spider: esa no es
+  // una peticion capturada, es una plantilla leida del HTML, y nace con el token de aquel
+  // momento.
+  const handlePreparar = async () => {
+    if (!onPreparar || !url) return
+    setPreparando(true)
+    setAvisoPreparar(null)
+    try {
+      const paresCabeceras = headers.filter(h => h.key).map(h => [h.key, h.value])
+      const { ocultos, cookies } = await onPreparar({ method, url, headers: paresCabeceras, body: body || null })
+
+      // Solo se tocan los campos que YA estaban en el cuerpo: no se inventan nuevos ni se
+      // reordenan, para que el cuerpo siga siendo el que tu editaste.
+      let cambiados = 0
+      const nuevoCuerpo = (body || '').split('&').map(par => {
+        const i = par.indexOf('=')
+        if (i < 0) return par
+        const k = par.slice(0, i)
+        if (Object.prototype.hasOwnProperty.call(ocultos, k)) { cambiados++; return k + '=' + ocultos[k] }
+        return par
+      }).join('&')
+      if (cambiados > 0) setBody(nuevoCuerpo)
+
+      const nombres = Object.keys(cookies || {})
+      if (nombres.length > 0) {
+        const texto = nombres.map(n => `${n}=${cookies[n]}`).join('; ')
+        setHeaders(prev => {
+          const idx = prev.findIndex(h => h.key && h.key.trim().toLowerCase() === 'cookie')
+          if (idx < 0) return [...prev, { key: 'Cookie', value: texto }]
+          const copia = [...prev]
+          copia[idx] = { ...copia[idx], value: texto }
+          return copia
+        })
+      }
+
+      setAvisoPreparar(
+        cambiados === 0 && nombres.length === 0
+          ? 'La página no traía campos ocultos ni cookie nueva: no había nada que actualizar.'
+          : `Actualizado: ${cambiados} campo(s) oculto(s)` + (nombres.length ? ' y la cookie.' : '.')
+      )
+    } catch (e) {
+      setAvisoPreparar('No se pudo preparar: ' + e.message)
+    } finally {
+      setPreparando(false)
+    }
+  }
+
   const quitarSesion = () => setHeaders(prev =>
     prev.filter(h => !(h.key && CABECERAS_DE_SESION.includes(h.key.trim().toLowerCase())))
   )
@@ -169,6 +221,15 @@ export function RequestEditor({ initialRequest, onSend, onClear, loading, onInic
           className="flex-1 px-3 py-2 rounded border outline-none text-[11px]"
           style={inputStyle}
         />
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={handlePreparar}
+          disabled={preparando || !url}
+          title="Pide la página del formulario y actualiza el token y la cookie con los valores de ahora. Es lo que hace un navegador antes de enviar."
+        >
+          {preparando ? 'preparando...' : 'preparar'}
+        </Button>
         <Button onClick={handleSend} disabled={loading || !url}>
           {loading ? 'enviando...' : 'enviar'}
         </Button>
@@ -182,6 +243,14 @@ export function RequestEditor({ initialRequest, onSend, onClear, loading, onInic
         </Button>
       </div>
 
+      {avisoPreparar && (
+        <p
+          className="text-[10px] leading-relaxed"
+          style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-muted)' }}
+        >
+          {avisoPreparar}
+        </p>
+      )}
       <div>
         <div className="flex items-center justify-between mb-2">
           <p className="text-[10px] tracking-widest uppercase" style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}>

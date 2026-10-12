@@ -18,6 +18,40 @@ function normalizeResponse(data) {
 // Numero del ultimo envio. Vive FUERA del componente A PROPOSITO: la pantalla se desmonta
 // al cambiar de pestana y un useRef se reiniciaria, que es justo cuando se cuela el fallo.
 // Sirve para que una respuesta que llega tarde no pise la que estas mirando.
+// Campos ocultos de un formulario HTML. Se leen TODOS (no solo `_token`) para que esto
+// valga con cualquier framework: Laravel usa `_token`, Rails `authenticity_token`, otros
+// `csrf_token`. Lo que tengan en comun es que van en <input type="hidden">.
+function extraerOcultos(html) {
+  const ocultos = {}
+  for (const tag of (html || '').match(/<input\b[^>]*>/gi) || []) {
+    const tipo = (tag.match(/type\s*=\s*["']([^"']+)["']/i) || [])[1]
+    if (!tipo || tipo.toLowerCase() !== 'hidden') continue
+    const nombre = (tag.match(/name\s*=\s*["']([^"']+)["']/i) || [])[1]
+    const valor = (tag.match(/value\s*=\s*["']([^"']*)["']/i) || [])[1]
+    if (nombre && valor !== undefined) ocultos[nombre] = valor
+  }
+  return ocultos
+}
+
+// Cookies de una cabecera Set-Cookie. El backend las entrega unidas por coma, y las fechas
+// de caducidad TAMBIEN llevan comas, asi que se toma solo el primer par de cada trozo y se
+// descartan los atributos conocidos. Si algo no encaja se ignora: preferible no tocar la
+// cookie a corromperla.
+const ATRIBUTOS_COOKIE = ['expires', 'path', 'domain', 'max-age', 'samesite', 'secure', 'httponly', 'version', 'comment']
+function cookiesDeSetCookie(cabeceras) {
+  const bruto = (cabeceras || {})['set-cookie'] || (cabeceras || {})['Set-Cookie'] || ''
+  const out = {}
+  for (const trozo of String(bruto).split(',')) {
+    const primero = trozo.split(';')[0].trim()
+    const i = primero.indexOf('=')
+    if (i <= 0) continue
+    const k = primero.slice(0, i).trim()
+    if (!k || ATRIBUTOS_COOKIE.includes(k.toLowerCase())) continue
+    out[k] = primero.slice(i + 1).trim()
+  }
+  return out
+}
+
 let _ultimoEnvio = 0
 
 export function RepeaterPage() {
@@ -27,14 +61,36 @@ export function RepeaterPage() {
   } = useAppContext()
   const [initialRequest, setInitialRequest] = useState(null)
   const [loading, setLoading] = useState(false)
+  // De que pagina cuelga el formulario (lo guarda el Spider) y el HTML que se trajo la
+  // ultima preparacion, para poder verlo sin reenviar nada.
+  const [urlFormulario, setUrlFormulario] = useState(null)
+  const [formulario, setFormulario] = useState(null)
 
   useEffect(() => {
     const stored = sessionStorage.getItem('repeater_request')
     if (stored) {
-      setInitialRequest(JSON.parse(stored))
+      const paquete = JSON.parse(stored)
+      setInitialRequest(paquete)
+      setUrlFormulario(paquete.pagina_origen || null)
       sessionStorage.removeItem('repeater_request')
     }
   }, [])
+
+  // "Preparar" hace lo que hace un navegador antes de enviar un formulario: pedir la
+  // pagina. De ahi salen el token fresco y, si el servidor la cambia, la cookie nueva.
+  //
+  // Hace falta porque la peticion que trae el Spider NO es una peticion capturada: es una
+  // plantilla leida del HTML, con el token que habia en ese momento. Nace vieja, y al
+  // enviarla el servidor la rechaza o la rebota.
+  //
+  // Se usa el mismo endpoint de envio: no hay nada nuevo en el backend.
+  const prepararPeticion = async (peticion) => {
+    const url = urlFormulario || peticion.url
+    const res = await api.post(`/api/repeater/send`, { method: 'GET', url, headers: peticion.headers })
+    const r = normalizeResponse(res.data)
+    setFormulario({ url, html: r.body || '', status: r.status })
+    return { ocultos: extraerOcultos(r.body), cookies: cookiesDeSetCookie(r.headers) }
+  }
 
   const handleSend = async (request) => {
     const miEnvio = ++_ultimoEnvio
@@ -84,12 +140,13 @@ export function RepeaterPage() {
             initialRequest={initialRequest}
             onInicialConsumida={() => setInitialRequest(null)}
             onSend={handleSend}
+            onPreparar={prepararPeticion}
             onClear={() => { setResponse(null); setLastUrl('') }}
             loading={loading}
           />
         </div>
         <div className="w-1/2 overflow-hidden flex flex-col">
-          <ResponsePanel response={response} requestUrl={lastUrl} />
+          <ResponsePanel response={response} requestUrl={lastUrl} formulario={formulario} />
         </div>
       </div>
     </div>

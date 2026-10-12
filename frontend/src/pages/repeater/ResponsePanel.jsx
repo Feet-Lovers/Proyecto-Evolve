@@ -21,10 +21,17 @@ function rewriteUrls(html, baseUrl) {
   }
 }
 
-export function ResponsePanel({ response, requestUrl }) {
+export function ResponsePanel({ response, requestUrl, formulario }) {
   const [tab, setTab] = useState('Pretty')
 
-  if (!response) {
+  // La pagina que trajo "preparar" se queda en su propia pestana. Asi se puede mirar el
+  // formulario y la respuesta del envio ALTERNANDO, sin reenviar nada ni cambiar el metodo:
+  // antes, para volver a ver el formulario habia que pasar a GET, enviar y volver a POST.
+  const pestanas = formulario ? [...TABS, 'Formulario'] : TABS
+  // Si aun no se ha enviado nada pero ya hay formulario preparado, se ensena ese.
+  const tabActivo = (!response && formulario) ? 'Formulario' : tab
+
+  if (!response && !formulario) {
     return (
       <div
         className="flex items-center justify-center h-full text-[11px]"
@@ -151,13 +158,18 @@ export function ResponsePanel({ response, requestUrl }) {
         className="flex items-center gap-4 px-3 py-2 border-b"
         style={{ background: 'var(--hs-surface)', borderColor: 'var(--hs-border)' }}
       >
-        <span
+        {!response && (
+          <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}>
+            sin enviar todavía
+          </span>
+        )}
+        {response && (<span
           className="text-[11px] font-bold px-2 py-0.5 rounded shrink-0"
           style={{ fontFamily: 'var(--font-mono)', color: statusColor, background: 'var(--hs-bg)' }}
           title={sinRespuesta ? 'La peticion no llego a obtener respuesta: fallo de red o tiempo agotado' : undefined}
         >
           {sinRespuesta ? 'sin respuesta' : response.status}
-        </span>
+        </span>)}
         {/* Tiempo y tamano se ocultan si no hubo respuesta: 0 ms y 0,0 KB no son medidas,
             son la ausencia de ellas, y puestos ahi se leen como si lo fueran. */}
         {!sinRespuesta && (
@@ -171,16 +183,16 @@ export function ResponsePanel({ response, requestUrl }) {
           </span>
         )}
         <div className="flex gap-1 ml-auto">
-          {TABS.map(t => (
+          {pestanas.map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className="px-3 py-1 rounded text-[10px] transition-all border"
               style={{
                 fontFamily: 'var(--font-mono)',
-                background: tab === t ? 'var(--hs-accent-bg)' : 'transparent',
-                borderColor: tab === t ? 'var(--hs-accent-border)' : 'transparent',
-                color: tab === t ? 'var(--hs-accent)' : 'var(--hs-text-muted)',
+                background: tabActivo === t ? 'var(--hs-accent-bg)' : 'transparent',
+                borderColor: tabActivo === t ? 'var(--hs-accent-border)' : 'transparent',
+                color: tabActivo === t ? 'var(--hs-accent)' : 'var(--hs-text-muted)',
               }}
             >
               {t}
@@ -210,12 +222,29 @@ export function ResponsePanel({ response, requestUrl }) {
       )}
 
       <div className="flex-1 overflow-auto p-4">
-        {tab === 'Raw' && (
+        {tabActivo === 'Formulario' && formulario && (
+          <div className="flex flex-col h-full">
+            <p
+              className="mb-2 text-[10px] leading-relaxed px-3 py-2 rounded border"
+              style={{ fontFamily: 'var(--font-mono)', color: '#d9a93a', background: '#1a1405', borderColor: '#3d2f10' }}
+            >
+              {'\u25B8 '}página del formulario, traída por <b>preparar</b> desde <b>{formulario.url}</b>.
+              Se queda aquí para consultarla sin reenviar nada. Tampoco ejecuta JavaScript.
+            </p>
+            <iframe
+              srcDoc={formulario.html}
+              sandbox=""
+              className="flex-1 w-full border-0 rounded"
+              title="formulario"
+            />
+          </div>
+        )}
+        {response && tabActivo === 'Raw' && (
           <pre className="text-[10px] whitespace-pre-wrap break-all" style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-secondary)' }}>
             {response.body}
           </pre>
         )}
-        {tab === 'Pretty' && (
+        {response && tabActivo === 'Pretty' && (
           <pre
             className="text-[10px] whitespace-pre-wrap break-all p-3 rounded border"
             style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-secondary)', background: 'var(--hs-surface)', borderColor: 'var(--hs-border)' }}
@@ -223,7 +252,7 @@ export function ResponsePanel({ response, requestUrl }) {
             {(() => { try { return JSON.stringify(JSON.parse(response.body), null, 2) } catch { return response.body } })()}
           </pre>
         )}
-        {tab === 'Headers' && (
+        {response && tabActivo === 'Headers' && (
           <div className="space-y-1">
             {Object.entries(response.headers || {}).length === 0 ? (
               <p className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}>
@@ -239,7 +268,7 @@ export function ResponsePanel({ response, requestUrl }) {
             )}
           </div>
         )}
-        {tab === 'Preview' && (
+        {response && tabActivo === 'Preview' && (
           <div className="flex flex-col h-full">
             {/* El aviso va ANTES del marco, no después: quien pulsa Preview tiene que
                 saber por qué ve la página a medias antes de verla, no después. */}
