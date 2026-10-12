@@ -3928,3 +3928,43 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
   **Evidencia:** `evidencias/capturas/RF-05-historial-cuenta-pero-no-se-abre.png` (el «antes», ya existía
   del 11-oct 20:18) + ⚠️ **FALTA: el historial abierto y el aviso ámbar tras un F5 [pantalla, josemax]**.
   **Horas:** ~1 h de Claude.
+
+### Fase 3 (12-oct, 10:24) · Defecto propio: el aviso ámbar mostraba los escapes en crudo
+
+- **Qué falló.** En el aviso del historial se leía literalmente `no se conservó al recargar la
+  página` y `tamaño`. **Lo detectó josemax leyéndolo en pantalla** tras recrear el frontend.
+- **Causa.** En JSX un `\uXXXX` **solo es un escape dentro de una cadena JS**; en texto plano (children de
+  un elemento) es texto literal. El `⚠` del título salió bien porque va como `{'⚠ '}`, entre comillas,
+  y las flechas ▸/▾ igual. Afectaba a **dos líneas** con tres escapes.
+- **Por qué lo escribí así, que es la parte aprovechable.** Puse escapes «por seguridad», para no depender
+  de la codificación del fichero. Fue justo lo que lo rompió: el fichero es **UTF-8 y el resto del código
+  ya lleva los acentos como carácter** —y el `✕` de las cabeceras del editor también—. **Lo seguro era
+  hacer lo que hace el código de alrededor.**
+- 🔑 **Y el fallo de mi verificación, que es lo importante.** Yo había comprobado el bundle y contado que
+  la cadena «cuerpo no conservado» estaba: **1**. Estaba. Pero **que una cadena esté no dice que se lea
+  bien**. Un recuento no sustituye a unos ojos en la pantalla, y de ahí que las capturas de producto las
+  saque josemax.
+- **A qué requisito toca:** **RF-05**; y al **apdo. 12** (defectos introducidos por el asistente: pasan de
+  dos a tres). **Evidencia:** `(no aplica)` — el estado anterior queda en git.
+  **Horas:** ~0,1 h de Claude.
+
+### Fase 3 (12-oct, 10:24) · Borrar peticiones del historial, una a una o todas
+
+- **Qué se hizo, y lo pidió josemax** al probar: una **`✕` por fila** y un botón **`vaciar`** en la cabecera
+  del panel.
+- **Criterio de confirmación, declarado porque no es obvio.** La `✕` de una fila **no pregunta** —mismo
+  patrón que las cabeceras del editor, y una petición suelta se reenvía en un clic—. `vaciar` **sí**: se
+  arma al primer clic y pide un segundo («¿seguro? pulsa otra vez»). Borrar cien peticiones no tiene vuelta
+  atrás y no debe irse en un clic distraído. **Se descartó el diálogo del navegador**: bloquea y es ajeno a
+  esta interfaz. Abrir o cerrar el panel **desarma** la confirmación.
+- **Un detalle de HTML que obligó a reestructurar.** La fila era un `<button>` entero; meter la `✕` dentro
+  habría dejado **un botón dentro de otro botón**, que no es HTML válido. La fila pasa a ser un contenedor
+  con la zona pulsable y la `✕` al lado.
+- **La persistencia no necesita nada.** El guardado está atado a los cambios del historial, así que lo
+  borrado desaparece también de `sessionStorage` y no reaparece tras un F5.
+- **Verificado en el bundle construido** (`index-BijFACSa.js`): `vaciar` 2 · `¿seguro? pulsa otra vez` 1 ·
+  `historial de esta sesión` 1 · `Quitar esta petición del historial` 1 · **y el escape literal `ó` a
+  0**, que era el defecto de la entrada anterior · control negativo 0.
+- **A qué requisito toca:** **RF-05**.
+  **Evidencia:** ⚠️ **FALTA: el historial con la ✕ y el botón vaciar armado [pantalla, josemax]**.
+  **Horas:** ~0,4 h de Claude.
