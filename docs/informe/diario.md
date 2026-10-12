@@ -3816,3 +3816,38 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
   configuración no hace falta captura para conservar el estado previo.
 - **A qué requisito toca:** **RNF-07** (seguridad del producto) y **RF-05**. Va al **apartado 7**.
 - **Horas:** ~0,3 h de Claude.
+
+### Fase 3 (12-oct, 09:07) · ¿Lo desplegado anoche es lo commiteado? Verificado por código, no por el reloj
+
+- **Qué se hizo.** Al retomar la sesión se comprobó si los dos contenedores que están corriendo
+  (`backend` y `frontend` de la cocina) llevan de verdad los dos arreglos commiteados al cierre del
+  11-oct: la **normalización de cabeceras a lista de pares** y el **`sandbox=""`** de la vista previa.
+  Los dos **sí los llevan**: `pares = list(headers.items()) if isinstance(headers, dict) else …` en
+  `/app/services/proxy_service.py:71` dentro del contenedor, y **0/0/1/1** en el bundle que sirve nginx
+  (`allow-same-origin` 0 · `allow-scripts` 0 · `sandbox` 1 · aviso 1).
+- **Por qué se comprobó, habiendo quedado «hecho» anoche.** Porque la nota del cierre advertía de que las
+  imágenes se habían construido con una **versión intermedia** (el primer script abortó a mitad), y eso
+  deja abierta la pregunta de qué código está sirviéndose. Un pendiente marcado como hecho no es una
+  verificación.
+- **Qué se descartó, y es la parte que importa del método.** (1) **El reloj de arranque**: los dos
+  contenedores arrancaron a las 21:04:41 y 21:19:54 locales, **después** de sus commits (21:02 y 21:19),
+  lo que invita a concluir que llevan el arreglo. Se rechazó como prueba: un proceso recién arrancado
+  **imita** al arreglo, y la hora no dice qué hay dentro de la imagen. Queda en la evidencia como
+  indicio, etiquetado como tal. (2) **El fuente del disco**: mis propios comentarios falsean el `grep`
+  —ya había ocurrido tres veces en dos días, una de ellas con este mismo atributo, donde el fuente daba
+  1 y 2 contando el comentario que explica lo retirado—. Se mide dentro del contenedor o no se mide.
+- **Qué podía haber fallado y se evitó a propósito.** Contar con `grep -c` sobre un bundle minificado,
+  que es **una sola línea**: devolvería `1` para cualquier cadena presente y no distinguiría cuántas
+  veces aparece. Se usó `grep -ao … | wc -l`. Y antes de aceptar los dos ceros se verificó que **el
+  detector sabe dar distinto de cero** (el mismo comando devuelve 1 dos veces). Un cero solo vale
+  cuando el medidor ha demostrado que sabría cantar otra cosa.
+- **Lo que NO se ha vuelto a medir, dicho sin tapar:** el schema de entrada de `/send`. Si declarara un
+  diccionario, aplastaría la lista antes de llegar a `forward_request`. La prueba de extremo a extremo
+  del 11-oct contra el servidor de eco (con control negativo) cubría ese camino completo, así que se da
+  por bueno; no se ha repetido hoy.
+- **Qué sigue pendiente.** La prueba **en pantalla** (botón `limpiar`, el aviso de la vista previa y que
+  las dos cabeceras repetidas lleguen), que es de josemax por R6. Y sigue vivo que el **panel de detalle
+  muestre una sola** de las repetidas, porque espera un objeto → apdo. 10.
+- **A qué requisito toca:** **RF-05** y **RNF-07**.
+  **Evidencia:** `evidencias/verificacion-imagenes-vivas-12oct.md` (salidas de terminal como texto).
+  **Horas:** ~0,3 h de Claude.
