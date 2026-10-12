@@ -156,9 +156,11 @@ export function RepeaterPage() {
               className="text-[10px] px-2 py-0.5 rounded border transition-all"
               style={{
                 fontFamily: 'var(--font-mono)',
-                color: confirmaVaciar ? '#d9a93a' : 'var(--hs-text-dim)',
-                borderColor: confirmaVaciar ? '#3d2f10' : 'transparent',
-                background: confirmaVaciar ? '#1a1405' : 'transparent',
+                // Rojo del sistema (variante `danger` del Badge): el borrado se tiene que
+                // ver. En reposo basta el texto; armado se enciende el bloque entero.
+                color: '#ef5a5a',
+                borderColor: confirmaVaciar ? '#4d1515' : 'transparent',
+                background: confirmaVaciar ? '#1f0a0a' : 'transparent',
               }}
               title={confirmaVaciar
                 ? 'Pulsa otra vez para borrar todo el historial'
@@ -215,7 +217,7 @@ export function RepeaterPage() {
                 <button
                   onClick={() => borrarEntrada(i)}
                   className="px-3 py-1.5 text-[11px] shrink-0"
-                  style={{ color: 'var(--hs-text-dim)' }}
+                  style={{ color: '#ef5a5a' }}
                   title="Quitar esta petición del historial"
                 >
                   ✕

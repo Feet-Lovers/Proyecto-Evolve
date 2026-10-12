@@ -137,9 +137,18 @@ export function ResponsePanel({ response, requestUrl }) {
           <div className="flex flex-col h-full">
             {/* El aviso va ANTES del marco, no después: quien pulsa Preview tiene que
                 saber por qué ve la página a medias antes de verla, no después. */}
+            {/* En ambar y como bloque, no en el gris tenue de las notas al pie: es una
+                advertencia de SEGURIDAD —que el codigo del sitio auditado no se ejecuta— y
+                josemax la vio pasar desapercibida usando la herramienta. Mismo ambar que el
+                aviso del historial y que el de 'sin analizar' de VulnerabilitiesPage. */}
             <p
-              className="mb-2 text-[10px] leading-relaxed"
-              style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}
+              className="mb-2 text-[10px] leading-relaxed px-3 py-2 rounded border"
+              style={{
+                fontFamily: 'var(--font-mono)',
+                color: '#d9a93a',
+                background: '#1a1405',
+                borderColor: '#3d2f10',
+              }}
             >
               {'\u25B8 '}vista sin JavaScript: el código que venga en la respuesta{' '}
               <b>no se ejecuta</b>. Una página que se construya sola con JavaScript puede
