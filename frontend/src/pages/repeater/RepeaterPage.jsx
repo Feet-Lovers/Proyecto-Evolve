@@ -18,6 +18,17 @@ function normalizeResponse(data) {
 // Replica el criterio de color de ResponsePanel. Se duplica a proposito y no se exporta:
 // a un dia de la congelacion no se toca un fichero ya cerrado solo por esto. Si algun dia
 // cambia el criterio, hay que cambiarlo en los dos sitios.
+// Numero del ultimo envio. Vive FUERA del componente A PROPOSITO: la pantalla se desmonta
+// al cambiar de pestana y un useRef se reiniciaria, que es justo cuando se cuela el fallo.
+//
+// El problema: la respuesta se guarda en el contexto GLOBAL, que no se desmonta. Si te vas
+// al Spider con una peticion en vuelo, al volver esa respuesta se escribe igualmente, y el
+// boton `enviar` ya esta libre (su bloqueo es local y se reinicia). Resultado: dos
+// respuestas compitiendo y gana la que llega la ultima, no la que pediste la ultima. Como
+// la URL se escribe al ENVIAR y el cuerpo al RECIBIR, acabas viendo una URL con el cuerpo
+// de otra peticion. No es reproducible a voluntad: depende de cual tarde mas.
+let _ultimoEnvio = 0
+
 function colorEstado(status) {
   if (!status) return '#ef5a5a'   // 0 = no hubo respuesta; en rojo, no en el ambar de los 3xx
   if (status >= 200 && status < 300) return '#4a9a5a'
@@ -86,6 +97,7 @@ export function RepeaterPage() {
     setConfirmaVaciar(false)
   }
   const handleSend = async (request) => {
+    const miEnvio = ++_ultimoEnvio
     setLoading(true)
     setLastUrl(request.url || '')
     try {
@@ -95,11 +107,15 @@ export function RepeaterPage() {
       // justo el hueco de autorizacion que se cerro ese dia.
       const res = await api.post(`/api/repeater/send`, request)
       const normalized = normalizeResponse(res.data)
-      setResponse(normalized)
+      // El historial SI la registra aunque llegue tarde: esa peticion se envio de verdad y
+      // ocurrio. Lo que no se hace es pisar lo que el usuario esta mirando.
       setHistory(prev => [{ id: nuevaIdHistorial(), request, response: normalized, timestamp: new Date() }, ...prev.slice(0, 99)])
+      if (miEnvio !== _ultimoEnvio) return   // llego tarde: ya hay otro envio mas reciente
+      setResponse(normalized)
     } catch (e) {
       // Un fallo de red NO es una respuesta. Se marca para que el panel no lo pinte como
       // un "estado 0", que parece un codigo HTTP cuando no existe ninguno.
+      if (miEnvio !== _ultimoEnvio) return   // un error viejo tampoco debe pisar
       setResponse({ status: 0, time: 0, size: 0, errorDeRed: true, body: 'No hubo respuesta: ' + e.message })
     } finally {
       setLoading(false)
