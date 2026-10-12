@@ -4463,3 +4463,25 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   y las cadenas nuevas presentes en el bundle con control negativo a 0.
 - **A qué requisito toca:** **RF-03**, **RF-05**, **RNF-02**. **Evidencia:** `(no aplica)`.
   **Horas:** ~0,4 h de Claude.
+
+### Fase 3 (12-oct, 21:24) · Limpieza de lo que quedó colgando, y un destrozo propio por el camino
+
+- **Qué se limpió**, a petición de josemax tras una revisión del código de Spider y Repeater:
+  1. Un **comentario que remitía a `CLAVE_HISTORIAL`**, constante borrada con el historial.
+  2. El **aviso «redirigido / rebotó»**, que **ya no podía salir nunca**: el Repeater va con «no seguir
+     redirecciones», así que esa lista llega siempre vacía. **Segundo caso del día** del mismo tipo, tras
+     el «cuerpo no conservado». 🔑 **Cada vez que se cambia un comportamiento hay que mirar qué avisos
+     dependían de él.**
+  3. El campo **`session_token` del esquema del Repeater**, huérfano desde que el frontend dejó de
+     mandarlo: ni se enviaba ni se leía, y **sugería que el cliente puede elegir espacio**, que es justo
+     el hueco de autorización cerrado el 6-oct.
+- 🔴 **Y un destrozo mío mientras limpiaba, que conviene dejar escrito.** Borré el aviso **por rango de
+  líneas, cortando por el primer `)}`** — y ese `)}` era el de un condicional **anidado**, así que dejé
+  **nueve líneas huérfanas** del bloque y tres variables sin uso. **Es el mismo error que ya cometí hoy**
+  al borrar `colorEstado()` y llevarme por delante la declaración de al lado.
+  **Lo cacé porque comprobé los usos de las variables después de limpiar**, no porque lo viera al hacerlo.
+  **Regla: borrar bloques de JSX por «hasta el primer cierre» no vale; hay que delimitarlos por contenido
+  y revisar qué queda huérfano.**
+- **Verificación:** build en verde —que es lo que de verdad valida que el JSX no quedó partido—, linter sin
+  `no-undef`, los avisos que deben seguir presentes y los retirados a **0**.
+- **A qué requisito toca:** **RF-05**; al **apdo. 12**. **Evidencia:** `(no aplica)`. **Horas:** ~0,3 h.
