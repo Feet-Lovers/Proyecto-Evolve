@@ -4245,3 +4245,27 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
 - **Balance del cambio:** **38 inserciones y 262 borrados**. `RepeaterPage.jsx` pasa de 275 a 92 líneas.
 - **A qué requisito toca:** **RF-05**, y al **apdo. 10** como decisión de diseño. **Evidencia:**
   ⚠️ **FALTA [pantalla, josemax]**, pendiente de la tanda final de capturas. **Horas:** ~0,7 h de Claude.
+
+### Fase 3 (12-oct, 17:35) · El botón enviar dejó de funcionar, y el proyecto tenía un linter sin usar
+
+- **Qué pasó.** Tras quitar el historial, josemax probó y **el botón `enviar` no hacía nada**: ni respuesta,
+  ni error, ni aviso. **Regresión mía**, introducida al eliminar el historial.
+- **Causa.** Borré `colorEstado()` y `hora()` **por rango de líneas**, y justo encima estaba la declaración
+  `let _ultimoEnvio = 0` —la del control de respuestas tardías—, que se fue con ellas. El `handleSend`
+  seguía haciendo `++_ultimoEnvio` en **su primera línea**, **fuera del `try`**: lanza un error antes de
+  empezar, nadie lo recoge, y el resultado visible es **nada en absoluto**.
+- 🔑 **Por qué no lo cacé: mis dos verificaciones son ciegas a esto.** El **build pasó en verde** —no
+  comprueba variables no declaradas— y mi comprobación en el bundle **cuenta cadenas de texto**, así que
+  confirmó alegremente que todo lo esperado «estaba». **Contar textos no detecta lógica rota.** Es el mismo
+  patrón que me ha mordido ya tres veces hoy en otras formas: que algo exista no dice que funcione.
+- ✅ **Y el proyecto TENÍA la herramienta que lo caza, sin usar: ESLint** (`npm run lint`, configurado en
+  `eslint.config.js`). **Probado a mordida** como manda la casa: un fichero con una variable inexistente
+  devuelve `'variableQueNoExiste' is not defined — no-undef`. **Ahora hay cero `no-undef` en todo el
+  frontend**, con control positivo para que ese cero signifique algo.
+  ⚠️ **No se puede ejecutar en el host** (no hay `node_modules`: el build va en Docker); se corre dentro de
+  la **etapa de build** de la imagen, que sí los tiene.
+- 📌 **Deuda que destapa el linter, para el apdo. 10:** el frontend acumula **23 errores y 2 avisos**
+  preexistentes, casi todos de reglas de React (`set-state-in-effect`, `purity`) y concentrados en
+  Vulnerabilidades. **El proyecto no pasa su propio linter**, y eso es un dato honesto para la memoria.
+- **A qué requisito toca:** **RF-05**; la deuda del linter va al **apdo. 10**, y el fallo propio al
+  **apdo. 12**. **Evidencia:** `(no aplica)`, queda en git. **Horas:** ~0,3 h de Claude.
