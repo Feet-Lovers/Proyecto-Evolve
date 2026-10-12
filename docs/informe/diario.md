@@ -3992,3 +3992,32 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **A qué requisito toca:** **RF-05** y **RNF-07** (la advertencia del Preview es del hallazgo de seguridad
   del 11-oct). **Evidencia:** ⚠️ **FALTA: el aviso del Preview en ámbar y las aspas en rojo [pantalla,
   josemax]**. **Horas:** ~0,2 h de Claude.
+
+### Fase 3 (12-oct, 10:50) · Los tres puntos que quedaban del Repeater, en una pasada
+
+- **(1) Un fallo de red ya no se disfraza de respuesta.** El `catch` del envío pintaba
+  `{ status: 0, time: 0, size: 0 }`, y el panel lo mostraba como un estado más. **No existe el código HTTP
+  0**: un 0 significa que no hubo respuesta (red caída o tiempo agotado). Ahora el panel pone **«sin
+  respuesta»** en rojo, con explicación al pasar por encima, y **oculta el tiempo y el tamaño** —0 ms y
+  0,0 KB no son medidas, son la ausencia de ellas, y ahí puestos se leen como si lo fueran—. En la lista
+  del historial, el 0 sale como **«sin resp.»** y **en rojo**: `colorEstado` lo mandaba al ámbar de los
+  3xx, que es justo el color de «algo intermedio pasó».
+- **(2) El panel ya dice a qué URL se envió.** El dato **lo tenía desde siempre** —`requestUrl`, que usa
+  para reescribir los enlaces del Preview— y no lo enseñaba. Con varias peticiones seguidas no había forma
+  de saber de cuál era la respuesta que estabas mirando. Va en la barra, truncada y con la URL entera al
+  pasar por encima.
+- **(3) Fuera el `session_token` del cuerpo de `/send`.** **Contrastado en la fuente antes de tocarlo**
+  (R9): `routes/repeater.py` toma el espacio de `Depends(usuario_actual)` —el token firmado— y **nunca lee
+  `request.session_token`**; y en el schema el campo es `Optional[str] = None`, así que quitarlo **no
+  provoca un 422**. Mandarlo era residuo **del malo**: sugiere que el cliente puede elegir espacio, que es
+  exactamente el hueco de autorización que se cerró el 6-oct (con el nombre de otro en el cuerpo se
+  reutilizaban **sus** cookies del login auditado). El campo sigue existiendo en el schema; **no se toca el
+  backend para no recrearlo y perder las sesiones** — queda anotado como deuda menor.
+- 🔑 **Un fallo de mi verificación que merece quedar escrito.** Al contar las cadenas en el bundle, el
+  patrón `No hubo respuesta: ` devolvió **232**. No era el código: mi propio comando partía los patrones
+  por el primer `:` para separar la etiqueta del valor, y **ese patrón llevaba dos puntos dentro**, así que
+  acabó contando espacios en blanco. **Cuando un recuento es absurdo, el sospechoso número uno es el
+  instrumento.** Repetido sin la trampa: `No hubo respuesta` 1 · `errorDeRed` 1 · versión antigua **0**.
+- **A qué requisito toca:** **RF-05**; el punto (3) roza **RNF-07** por lo que documenta.
+  **Evidencia:** ⚠️ **FALTA: el panel con «sin respuesta» y la URL en la barra [pantalla, josemax]**.
+  **Horas:** ~0,5 h de Claude.
