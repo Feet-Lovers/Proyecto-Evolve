@@ -15,6 +15,11 @@ function normalizeResponse(data) {
   }
 }
 
+// Numero del ultimo envio. Vive FUERA del componente A PROPOSITO: la pantalla se desmonta
+// al cambiar de pestana y un useRef se reiniciaria, que es justo cuando se cuela el fallo.
+// Sirve para que una respuesta que llega tarde no pise la que estas mirando.
+let _ultimoEnvio = 0
+
 export function RepeaterPage() {
   const {
     repeaterResponse: response, setRepeaterResponse: setResponse,
