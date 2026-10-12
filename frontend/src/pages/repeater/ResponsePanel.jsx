@@ -135,26 +135,6 @@ export function ResponsePanel({ response, requestUrl, formulario }) {
           </p>
         </div>
       )}
-      {response && response.cuerpoNoConservado && (
-        <div
-          className="border-b px-4 py-2"
-          style={{ borderColor: '#3d2f10', background: '#1a1405' }}
-        >
-          <p
-            className="text-[10px] tracking-widest uppercase"
-            style={{ fontFamily: 'var(--font-mono)', color: '#d9a93a' }}
-          >
-            {'\u26A0 '}cuerpo no conservado
-          </p>
-          <p
-            className="text-[10px] mt-1 leading-relaxed"
-            style={{ fontFamily: 'var(--font-mono)', color: '#d9a93a' }}
-          >
-            El cuerpo de esta respuesta no se conservó al recargar la página. Se guardan
-            el estado, el tiempo y el tamaño. Pulsa <b>enviar</b> para volver a obtenerla.
-          </p>
-        </div>
-      )}
       <div
         className="flex items-center gap-4 px-3 py-2 border-b"
         style={{ background: 'var(--hs-surface)', borderColor: 'var(--hs-border)' }}

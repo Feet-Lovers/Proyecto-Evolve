@@ -3,7 +3,8 @@ import { Badge } from '@/components/ui'
 // Manual de uso. Se rellena UNA SECCION POR PESTANA, y solo cuando esa pestana
 // se ha pulido y verificado: documentar lo que creemos que hace una pantalla, en
 // vez de lo que hemos comprobado que hace, produce un manual que miente.
-// Estado a 11-oct-2026: Spider verificado contra el codigo; las otras, pendientes.
+// Estado a 12-oct-2026: Spider y Repeater verificados contra el codigo; las otras,
+// pendientes.
 //
 // Criterio de redaccion: la prosa va acentuada, pero los nombres de los controles
 // se citan LITERALES, tal y como aparecen en pantalla ('nueva auditoria', sin
@@ -325,7 +326,153 @@ export function ManualPage() {
           </P>
         </Seccion>
 
-        <Seccion titulo="Repeater" estado="pendiente"><Pendiente nombre="Repeater" /></Seccion>
+        <Seccion titulo="Repeater">
+          <P>
+            Coge una petición, la edita y la vuelve a lanzar tantas veces como quieras.
+            Es la herramienta para probar <b>una misma petición cambiando una cosa cada
+            vez</b>: un parámetro, una cabecera, el método. Lo que se manda es
+            exactamente lo que ves en pantalla.
+          </P>
+          <P>
+            Trabaja con <b>una petición cada vez</b>. Mientras tenga una cargada, el
+            Spider no deja enviar otra: su botón pasa a poner <i>repeater en uso</i>.
+            Para liberarlo, pulsa <i>limpiar</i> aquí.
+          </P>
+          <P>
+            <b>No sigue las redirecciones.</b> Si el servidor responde un 3xx, verás ese
+            3xx con sus cabeceras, no la página de destino. Es deliberado: en una
+            auditoría interesa la respuesta de <b>tu</b> petición, incluida cualquier
+            <i>Set-Cookie</i>, y no la de la última parada.
+          </P>
+          <P>
+            Un aviso sobre lo que llega del Spider: esas peticiones <b>no son capturas
+            de tráfico real</b>, son plantillas leídas del HTML. El Spider encuentra un
+            formulario, anota sus campos y rellena los vacíos con el nombre del propio
+            campo. Nunca se han enviado, y su token lleva la fecha del rastreo. Por eso
+            existe <i>preparar</i>.
+          </P>
+
+          <Sub>Barra de la petición</Sub>
+          <Controles>
+            <Control tipo="selector" nombre="método">
+              GET, POST, PUT, DELETE, PATCH, HEAD y OPTIONS. Cambiarlo no toca el resto:
+              puedes pasar un POST a GET para ver la página del formulario y volver.
+            </Control>
+            <Control tipo="campo" nombre="URL">
+              dirección completa, con <i>https://</i>. Si está vacío, <i>enviar</i> y
+              <i>preparar</i> se quedan apagados.
+            </Control>
+            <Control tipo="botón" nombre="preparar">
+              pide la página del formulario y trae de ella lo que caduca: los campos
+              ocultos (el token) y, si el servidor la cambia, la cookie. Sustituye en tu
+              cuerpo <b>solo los campos que ya estaban</b>, por nombre. Debajo te dice qué
+              ha actualizado. Es lo que hace un navegador antes de enviar un formulario, y
+              es lo que convierte la plantilla del Spider en una petición que funciona.
+            </Control>
+            <Control tipo="botón" nombre="enviar" cuando="apagado mientras hay un envío en curso">
+              lanza la petición. Si llega una respuesta de un envío anterior cuando ya has
+              mandado otra, se descarta: el panel siempre enseña la última que pediste.
+            </Control>
+            <Control tipo="botón" nombre="limpiar">
+              vacía la petición, la respuesta y la página preparada. Es lo que <b>libera
+              el Repeater</b> para que el Spider vuelva a dejarte mandar peticiones.
+            </Control>
+          </Controles>
+
+          <Sub>Avisos de la petición</Sub>
+          <Controles>
+            <Control
+              tipo="aviso"
+              nombre="viaja con una sesión heredada"
+              cuando="solo si la petición lleva Cookie, Authorization o un token CSRF"
+            >
+              te recuerda que la respuesta depende de esa sesión y no solo de la URL y el
+              método: la misma petición con y sin ella puede dar resultados distintos.
+            </Control>
+            <Control tipo="botón" nombre="quitar la sesión" cuando="dentro de ese aviso">
+              borra <b>solo</b> esas cabeceras. El método, la URL, el cuerpo y las demás
+              cabeceras no se tocan. Sirve para comparar la misma petición autenticada y
+              anónima.
+            </Control>
+          </Controles>
+
+          <Sub>Cabeceras y cuerpo</Sub>
+          <Controles>
+            <Control tipo="lista" nombre="headers">
+              nombre y valor, uno por fila. <b>Se pueden repetir</b>: dos cabeceras con el
+              mismo nombre viajan las dos. Lo que ves aquí es lo que sale, salvo
+              <i>Host</i> y <i>Content-Length</i>, que los calcula el servidor porque
+              falsearlos rompe la petición.
+            </Control>
+            <Control tipo="botón" nombre="+ añadir">añade una fila vacía de cabecera.</Control>
+            <Control tipo="botón" nombre="✕" cuando="una por fila de cabecera">
+              quita esa cabecera. No pregunta.
+            </Control>
+            <Control tipo="campo" nombre="body">
+              el cuerpo tal cual se envía. Para un formulario va como
+              <i>campo=valor&amp;campo=valor</i>. Si viene del Spider, los campos sin valor
+              traen su propio nombre puesto: eso <b>no pasa ninguna validación</b>, hay que
+              sustituirlo por datos reales.
+            </Control>
+          </Controles>
+
+          <Sub>Panel de la respuesta</Sub>
+          <Controles>
+            <Control tipo="indicador" nombre="sin enviar todavía" cuando="antes del primer envío">
+              no hay respuesta que enseñar. Si has pulsado <i>preparar</i>, la pestaña
+              <i>Formulario</i> sí tiene contenido; las demás no, y es normal.
+            </Control>
+            <Control tipo="indicador" nombre="código de estado">
+              el que devuelve el servidor. Si pone <i>sin respuesta</i>, la petición no
+              llegó a obtener ninguna —red caída o tiempo agotado—: no existe el código 0,
+              y por eso no se muestra como si fuera uno.
+            </Control>
+            <Control tipo="indicador" nombre="tiempo y tamaño" cuando="solo si hubo respuesta">
+              milisegundos y kilobytes. Se ocultan cuando no hay respuesta, porque 0 ms y
+              0,0 KB no son medidas sino su ausencia.
+            </Control>
+            <Control tipo="indicador" nombre="URL enviada">
+              en su propia línea bajo la barra, para saber de qué petición es la respuesta
+              que estás mirando.
+            </Control>
+            <Control
+              tipo="aviso"
+              nombre="redirección no seguida"
+              cuando="si el estado es 3xx"
+            >
+              dice a dónde te manda la cabecera <i>Location</i>. Para ver esa página, pon
+              esa dirección y envía otra vez.
+            </Control>
+          </Controles>
+
+          <Sub>Pestañas de la respuesta</Sub>
+          <Controles>
+            <Control tipo="pestaña" nombre="Raw">el cuerpo tal cual llega.</Control>
+            <Control tipo="pestaña" nombre="Pretty">
+              igual, pero si el cuerpo es JSON lo formatea. Si no lo es, lo deja como está.
+            </Control>
+            <Control tipo="pestaña" nombre="Preview">
+              dibuja la respuesta como una página. <b>No ejecuta JavaScript</b> —lo avisa
+              encima—, así que una página que se construya sola puede verse incompleta. El
+              contenido viene del sitio auditado, que es precisamente del que no te fías.
+            </Control>
+            <Control tipo="pestaña" nombre="Headers">las cabeceras de la respuesta.</Control>
+            <Control tipo="pestaña" nombre="Formulario" cuando="solo tras pulsar preparar">
+              la página que se trajo al preparar, con sus estilos. Se queda ahí, así que
+              puedes enviar, mirar la respuesta y volver al formulario <b>sin reenviar
+              nada</b>. Tampoco ejecuta JavaScript.
+            </Control>
+          </Controles>
+
+          <Sub>Cómo probar un formulario</Sub>
+          <P>
+            1. Manda el POST desde el Spider. 2. Pulsa <i>preparar</i>: trae token y
+            cookie frescos y te deja la página en la pestaña <i>Formulario</i>. 3. Mira ahí
+            qué campos hay y rellénalos en <i>body</i> con datos reales. 4. <i>enviar</i>.
+            5. Cambia una cosa y repite. Si el servidor responde un 3xx, el aviso te dice a
+            dónde te manda.
+          </P>
+        </Seccion>
         <Seccion titulo="Intruder" estado="pendiente"><Pendiente nombre="Intruder" /></Seccion>
         <Seccion titulo="Utilidades" estado="pendiente"><Pendiente nombre="Utilidades" /></Seccion>
         <Seccion titulo="Vulnerabilidades" estado="pendiente"><Pendiente nombre="Vulnerabilidades" /></Seccion>
