@@ -80,8 +80,8 @@ export function AppProvider({ children }) {
   // ⚠️ CORREGIDO el 12-oct. Aquí se afirmaba que esto era «también la causa del historial
   // vacío del Repeater, el mismo fallo visto desde otra pantalla». Era FALSO: el Repeater
   // NO guarda sus peticiones en el servidor, así que este endpoint no puede llenar su
-  // historial —lo que devuelve son las del Spider y del Proxy—. El historial del Repeater
-  // vive en el navegador; ver CLAVE_HISTORIAL arriba.
+  // historial —lo que devuelve son las del Spider y del Proxy—. Y desde el 12-oct el
+  // Repeater NO tiene historial: trabaja con una peticion cada vez.
   useEffect(() => {
     if (config.USE_MOCKS || !sessionToken) return
     let cancelado = false

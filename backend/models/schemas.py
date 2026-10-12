@@ -34,7 +34,9 @@ class RepeaterRequest(BaseModel):
 	# diccionario hace imposible (la segunda pisa a la primera, en silencio).
 	headers: Union[Dict[str, str], List[Tuple[str, str]]] = {}
 	body: Optional[str] = None
-	session_token: Optional[str] = None
+	# Sin `session_token`: el espacio sale del token firmado desde el 6-oct (se cerro ahi un
+	# hueco de autorizacion) y el frontend dejo de mandarlo el 12-oct. El campo quedaba
+	# huerfano y sugeria que el cliente puede elegir espacio, que es justo lo que no debe.
 
 class IntruderConfig(BaseModel):
 	url: str

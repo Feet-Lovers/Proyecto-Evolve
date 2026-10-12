@@ -49,7 +49,6 @@ export function ResponsePanel({ response, requestUrl, formulario }) {
   // El backend sigue las redirecciones (follow_redirects=True). Si las hubo, el cuerpo y
   // el estado que se ven son los de la ULTIMA parada, no los de la direccion que pediste,
   // y hasta ahora nada lo decia: parecia que tu URL devolvia esto.
-  const saltos = (response && Array.isArray(response.redirecciones)) ? response.redirecciones : []
 
   // El Repeater NO sigue las redirecciones (como el de Burp), asi que un 3xx llega tal cual
   // y hay que decir a donde apunta. Es la informacion que faltaba: viendo el 302 y su
@@ -62,8 +61,6 @@ export function ResponsePanel({ response, requestUrl, formulario }) {
   // vuelta al formulario) tiene salto pero NO cambia de direccion: decir ahi "no es la
   // direccion que pediste" es mentir. Y se perdia lo que mas importa a un auditor: en un
   // 302 el metodo se convierte en GET, asi que lo que se ve no es la respuesta a tu POST.
-  const mismaUrl = !!response && !!response.url_final && !!requestUrl && response.url_final === requestUrl
-  const metodoCambiado = !mismaUrl ? null : (response.method && response.method !== 'GET' ? response.method : null)
 
   const statusColor = sinRespuesta ? '#ef5a5a'
     : response.status >= 200 && response.status < 300
@@ -99,39 +96,6 @@ export function ResponsePanel({ response, requestUrl, formulario }) {
             <b> no la sigue</b>: lo que ves es la respuesta a <b>tu</b> petición, con sus
             cabeceras —incluido cualquier <b>Set-Cookie</b>—. Para ver la página de destino,
             pon esa dirección y envía otra vez.
-          </p>
-        </div>
-      )}
-      {/* Este otro aviso es para cuando SI se siguen los saltos. En el Repeater ya no pasa,
-          pero se conserva: la funcion es compartida y el comportamiento es un parametro. */}
-      {saltos.length > 0 && (
-        <div
-          className="border-b px-4 py-2"
-          style={{ borderColor: '#3d2f10', background: '#1a1405' }}
-        >
-          <p
-            className="text-[10px] tracking-widest uppercase"
-            style={{ fontFamily: 'var(--font-mono)', color: '#d9a93a' }}
-          >
-            {'\u26A0 '}{mismaUrl ? 'rebotó' : 'redirigido'} · {saltos.length} salto{saltos.length > 1 ? 's' : ''}
-          </p>
-          <p
-            className="text-[10px] mt-1 leading-relaxed break-all"
-            style={{ fontFamily: 'var(--font-mono)', color: '#d9a93a' }}
-          >
-            {mismaUrl ? (
-              <>
-                Tu petición fue redirigida y acabó en <b>la misma dirección</b>.
-                {metodoCambiado && (
-                  <> En una redirección el método pasa a <b>GET</b>, así que lo que ves
-                  <b> no es la respuesta a tu {metodoCambiado}</b>, sino la de un GET posterior.</>
-                )}
-              </>
-            ) : (
-              <>Lo que ves es la respuesta de <b>{response.url_final}</b>, no de la dirección que
-              pediste.</>
-            )}{' '}
-            Cadena: {saltos.map(s => s.status).join(' → ')} → {response.status}.
           </p>
         </div>
       )}
