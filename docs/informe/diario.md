@@ -3851,3 +3851,80 @@ hora verificada, no estimada. Las otras no se reescriben: no consta de dónde sa
 - **A qué requisito toca:** **RF-05** y **RNF-07**.
   **Evidencia:** `evidencias/verificacion-imagenes-vivas-12oct.md` (salidas de terminal como texto).
   **Horas:** ~0,3 h de Claude.
+
+### Fase 3 (12-oct, 09:35) · Mapa del historial del Repeater: la pista que traíamos era falsa
+
+- **Qué se hizo.** Mapa del punto «historial invisible» **sin tocar una línea de código**, como manda la
+  forma de trabajar de esta línea. Cuatro ficheros lo mencionan: `AppContext.jsx`, `RepeaterPage.jsx`,
+  `RequestEditor.jsx` y `backend/routes/repeater.py`.
+- **Qué se encontró, y corrige lo que teníamos escrito (R9).** El pendiente decía que *el backend ya
+  guarda las peticiones del Repeater* y que bastaba *mostrar el del servidor*. **No es así:** en
+  `session["requests"]` escriben el **Spider** (`spider_service.py:201`, `:248`) y el **Proxy**
+  (`routes/proxy.py:36`); el **Repeater no escribe en ningún sitio** —`routes/repeater.py` llama a
+  `forward_request` y devuelve el resultado sin guardarlo—. El endpoint
+  `/api/repeater/history/{token}` devuelve las últimas 100 peticiones **de toda la sesión**, mezcladas,
+  y **ya se está usando** para alimentar la tabla del **Proxy** (`AppContext.jsx:67` → `setRequests`).
+  Es el historial de la sesión con nombre de Repeater.
+- **Tampoco hay forma de filtrarlo hoy:** el diccionario que devuelve `forward_request` tiene 14 campos y
+  **ninguno indica el origen** de la petición. Leído entero, no contado con un `grep`.
+- **Qué es el defecto de verdad.** No es un panel escondido: `repeaterHistory` existe en el contexto, la
+  cabecera lo cuenta (`RepeaterPage.jsx:71`) y **ningún componente lo pinta**. Falta **la vista entera**. Y
+  como solo se llena al enviar (tope 100) y no se persiste, **tras un F5 el contador dice 0** aunque el
+  servidor tenga peticiones del Spider guardadas.
+- **Un comentario del código que miente, anotado para corregirlo:** `AppContext.jsx:60-63` afirma que el
+  historial vacío del Repeater «era el mismo fallo visto desde otra pantalla». No puede serlo.
+- **Por qué importa el método.** Si se hubiera implementado la pista tal como estaba escrita, el
+  «historial del Repeater» habría mostrado **las peticiones del Spider**. Es la tercera vez en esta línea
+  que un pendiente describe lo que alguien entendió al escribirlo y no lo que el código hace.
+- **A qué requisito toca:** **RF-05**. **Evidencia:** `evidencias/capturas/RF-05-historial-cuenta-pero-no-se-abre.png`
+  (ya existía, del 11-oct 20:18). **Horas:** ~0,4 h de Claude.
+- ⏭️ **Queda a decisión de josemax** entre historial local con persistencia, guardarlo en el servidor con
+  campo de origen, o una lista separada en la sesión.
+
+### Fase 3 (12-oct, 10:08) · El contador del historial pasa a ser el botón que lo abre
+
+- **Qué se hizo.** Tres ficheros del frontend, 188 inserciones: el contador «N peticiones en historial» de
+  la cabecera del Repeater **se convierte en el botón** que despliega la lista (▸/▾, cerrada por defecto,
+  deshabilitado si no hay nada); la lista muestra método, URL, estado en color, tiempo y hora; **pulsar una
+  fila devuelve la petición al editor y su respuesta al panel**; y el historial **sobrevive a un F5**.
+- **Por qué así, y no de otras tres formas que se plantearon.** Elegido por josemax entre: franja fija
+  abajo (roba ~120 px permanentes al editor y a la respuesta) y columna lateral estilo Burp (la más
+  parecida a la herramienta de referencia, pero estrecha las dos mitades y **obligaba a tocar el reparto
+  50/50 del PROXY, una pantalla ya cerrada**). La elegida **convierte el defecto en la solución**: el
+  contador que no se podía abrir es justo el que ahora abre, y ocupa 0 px mientras está cerrado.
+- **Qué se descartó en el fondo del asunto.** Guardarlo **en el servidor** —lo que decía el pendiente—
+  queda descartado para esta entrega: exigía añadir un 15º campo de origen al registro que **comparten
+  Proxy y Spider**, filtrar en el endpoint y recrear el backend (que **borra las sesiones en memoria**). La
+  lista separada `repeater_requests` queda anotada como **el camino bueno si esto se retoma después del 16**.
+- **Qué NO sobrevive al F5, y por qué.** Se persiste la **petición entera** y solo los **metadatos** de la
+  respuesta. El cuerpo no: `forward_request` devuelve hasta **50.000 caracteres** por respuesta y el tope
+  del historial es de 100 → **~5 MB**, justo la cuota de `sessionStorage`. Lo que sobrevive es lo que da
+  valor a un historial: **poder repetir la petición**. Las entradas recuperadas llevan un **aviso en
+  ámbar** (decisión de josemax: resaltado, no un gris más) con los mismos colores que el aviso de «sin
+  analizar» de `VulnerabilitiesPage`, para que los dos avisos de la aplicación se parezcan.
+- **Un fallo que josemax evitó preguntando.** La primera propuesta persistía solo método, URL, estado y
+  hora. Él preguntó si al pulsar una fila se recargaban **los dos** lados; con esa versión, tras un F5 no
+  habría habido ni cabeceras ni cuerpo de la petición y **la lista habría quedado en adorno**. De ahí el
+  reparto actual.
+- **Un bug silencioso detectado leyendo antes de escribir.** El editor **envía** `{ method, url, headers,
+  body }` pero **lee** de `initialRequest` las claves `requestHeaders`/`requestBody` —ese formato nació
+  para recibir paquetes del Proxy, que vienen normalizados—. Pasar el objeto enviado tal cual habría
+  cargado método y URL **perdiendo cabeceras y cuerpo sin avisar**. Se traduce al cargar. Y el objeto se
+  construye **nuevo** cada vez porque el `useEffect` del editor depende de su identidad: reutilizarlo haría
+  que pulsar dos veces la misma fila no hiciera nada.
+- **Si no cabe, no peta:** el guardado va en `try/catch` y **suelta las entradas más antiguas** hasta que
+  entre, en vez de morir con `QuotaExceededError`.
+- **Qué falló por mi parte.** Dos comprobaciones de anclaje dejaron **dos líneas en blanco de más**, una
+  dentro de `normalizeResponse`. Se vieron **leyendo el propio diff antes de firmarlo** y se quitaron. Y
+  antes de escribir se midieron los finales de línea: `RepeaterPage.jsx` y `ResponsePanel.jsx` son
+  **CRLF** y `AppContext.jsx` LF; reescribirlos sin cuidado habría convertido el cambio en un diff de 229
+  líneas ilegible.
+- **Verificación.** `docker compose build frontend` en verde **no prueba nada por sí solo**, así que se
+  comprobó **dentro del bundle de la imagen nueva** (`index-Cb9uSIiM.js`, nombre distinto del anterior, así
+  que no es una capa cacheada): aviso 1 · clave de persistencia 1 · bandera 2 · ámbar 5 · traducción 12 ·
+  **control viejo `sandbox` 1** (no se pisó el arreglo del 11-oct) · **control negativo 0**, para que los
+  ceros signifiquen algo.
+- **A qué requisito toca:** **RF-05**.
+  **Evidencia:** `evidencias/capturas/RF-05-historial-cuenta-pero-no-se-abre.png` (el «antes», ya existía
+  del 11-oct 20:18) + ⚠️ **FALTA: el historial abierto y el aviso ámbar tras un F5 [pantalla, josemax]**.
+  **Horas:** ~1 h de Claude.
