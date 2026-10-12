@@ -63,8 +63,8 @@ export function ResponsePanel({ response, requestUrl }) {
             className="text-[10px] mt-1 leading-relaxed"
             style={{ fontFamily: 'var(--font-mono)', color: '#d9a93a' }}
           >
-            El cuerpo de esta respuesta no se conserv\u00f3 al recargar la p\u00e1gina. Se guardan
-            el estado, el tiempo y el tama\u00f1o. Pulsa <b>enviar</b> para volver a obtenerla.
+            El cuerpo de esta respuesta no se conservó al recargar la página. Se guardan
+            el estado, el tiempo y el tamaño. Pulsa <b>enviar</b> para volver a obtenerla.
           </p>
         </div>
       )}
