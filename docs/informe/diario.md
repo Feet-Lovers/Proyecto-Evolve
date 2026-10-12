@@ -4385,3 +4385,23 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   que se hace en Burp.
 - **A qué requisito toca:** **RF-05**, y **apdo. 8** y **10**. **Evidencia:** ⚠️ **FALTA [pantalla,
   josemax]**. **Horas:** ~0,8 h de Claude.
+
+### Fase 3 (12-oct, 20:31) · Pantalla en blanco al pulsar «preparar»
+
+- **Qué pasó.** josemax pulsó `preparar` y **la ventana se quedó en blanco**; al refrescar, volvía el
+  Repeater. Eso es un error de JavaScript que tumba el render entero.
+- **Causa, y es mía del cambio anterior.** Para que se pudiera ver el formulario **sin haber enviado
+  nada**, cambié la guarda del panel de `if (!response)` a `if (!response && !formulario)`. **Pero todo lo
+  que venía después seguía dando por hecho que había respuesta:** `response.status`, `response.headers`,
+  `response.redirecciones`… Con el formulario preparado y sin enviar, `response` es nulo y la primera de
+  esas líneas revienta.
+- 🔑 **La lección: cambiar una condición de nulidad obliga a revisar TODO lo que colgaba de ella.** Yo
+  moví la puerta de entrada y dejé dentro a gente que contaba con que nadie pasara sin respuesta.
+- **Arreglo:** los siete usos que se evaluaban siempre pasan a contemplar el nulo. Los demás se revisaron
+  **uno a uno** y ya estaban cubiertos, porque cuelgan de condiciones que sin respuesta valen `false` o
+  lista vacía.
+- ⚠️ **Y lo que esto deja claro sobre mis verificaciones: ni el build ni el linter cazan esto.** El build
+  compila sin problema y el linter no se queja: es un error **de ejecución**, y solo aparece **al usarlo**.
+  Van tres fallos hoy del mismo tipo. **Lo único que lo detecta es abrir la pantalla.**
+- **A qué requisito toca:** **RF-05**; al **apdo. 12**. **Evidencia:** `(no aplica)`, queda en git.
+  **Horas:** ~0,2 h de Claude.
