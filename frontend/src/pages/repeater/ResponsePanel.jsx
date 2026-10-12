@@ -96,18 +96,6 @@ export function ResponsePanel({ response, requestUrl }) {
             {(response.size / 1024).toFixed(1)}KB
           </span>
         )}
-        {/* A QUE URL se envio. El panel lo sabia desde siempre (lo usa para reescribir los
-            enlaces del Preview) y no lo ensenaba: con varias peticiones seguidas no habia
-            forma de saber de cual era la respuesta que estabas mirando. */}
-        {requestUrl && (
-          <span
-            className="flex-1 min-w-0 truncate text-[10px]"
-            style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-muted)' }}
-            title={requestUrl}
-          >
-            {requestUrl}
-          </span>
-        )}
         <div className="flex gap-1 ml-auto">
           {TABS.map(t => (
             <button
@@ -126,6 +114,26 @@ export function ResponsePanel({ response, requestUrl }) {
           ))}
         </div>
       </div>
+
+      {/* A QUE URL se envio, en SU PROPIA LINEA. Estuvo un rato en la barra, compitiendo
+          con el estado, el tiempo, el tamano y cuatro pestanas: con `flex-1 truncate` le
+          quedaban unos pocos pixeles y solo se leia cuando la peticion FALLABA, porque al
+          fallar se ocultan el tiempo y el tamano y queda sitio. Lo destapo una captura de
+          josemax, no un recuento: la cadena estaba en el bundle, pero no se veia. */}
+      {requestUrl && (
+        <div
+          className="px-3 py-1 border-b"
+          style={{ borderColor: 'var(--hs-border)', background: 'var(--hs-bg)' }}
+        >
+          <p
+            className="truncate text-[10px]"
+            style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-muted)' }}
+            title={requestUrl}
+          >
+            {requestUrl}
+          </p>
+        </div>
+      )}
 
       <div className="flex-1 overflow-auto p-4">
         {tab === 'Raw' && (
