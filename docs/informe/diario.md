@@ -4144,3 +4144,35 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
 - **A qué requisito toca:** **RF-03**. **Evidencia:** el «antes» es
   `evidencias/capturas/RF-03-spider-cabeceras-peticion-sin-cookie-censurada.png`, donde se ve que los dos
   rótulos no destacan. ⚠️ **FALTA: el «después» [pantalla, josemax]**. **Horas:** ~0,2 h de Claude.
+
+### Fase 3 (12-oct, 13:35) · Las cabeceras que se enseñan son por fin las que salen por el cable
+
+- **Por qué hacía falta un segundo intento.** Esta mañana cambié el Spider para que guardara las cabeceras
+  que pone a mano en vez de un diccionario fabricado. Arregló dos cosas reales —el `User-Agent` inventado
+  y un `Host` que nadie había puesto— pero **no la que más importaba**: la **cookie de sesión**. La pone
+  el **cliente HTTP persistente**, por debajo, y **nunca pasa por nuestro diccionario**. Le dije a josemax
+  que «ahora aparecerá la `Cookie` si hay sesión» y **era falso**; lo destapó él con una captura donde el
+  panel decía `con sesión · XSRF-TOKEN, vantek_session` y en `HEADERS DE PETICION` no había ninguna.
+- **El arreglo bueno.** Se leen las cabeceras **de la petición que la propia respuesta conserva**
+  (`response.request.headers`), que es lo que de verdad salió: incluye la **cookie de sesión**, el `Host`
+  real y lo que añade la librería (`Accept-Encoding`, `Connection`…). Aplicado en **los dos sitios**:
+  el Spider y `forward_request` —que es el que usan **Proxy, Repeater e Intruder**—, así que **los cuatro
+  quedan arreglados de una vez**. Lo apuntó josemax: «la cookie de sesión convive en Spider, Repeater e
+  Intruder por cómo está montado el código».
+- **Detalle de paso:** si una cabecera iba repetida, ahora se ve con sus valores unidos por coma en vez de
+  perderse una, que era lo que avisaba el comentario anterior.
+- **En los dos `return` de error no se toca:** ahí no hubo respuesta, así que no hay petición real que
+  leer; se conservan las cabeceras de entrada.
+- ⚠️ **CONSECUENCIA QUE HAY QUE TENER PRESENTE: a partir de ahora el panel de cabeceras MUESTRA LA COOKIE
+  DE SESIÓN.** Es lo correcto —es lo que se envía, y Burp también la enseña— pero **cualquier captura de
+  ese panel lleva credenciales a la vista y hay que censurarla antes de publicarla**. Hoy ha pasado ya dos
+  veces. Lo que sigue protegido es el navegador: el filtro que impide persistir credenciales en
+  `sessionStorage` sigue en pie.
+- **Efecto esperado y aún no visto:** con esto, el aviso **«viaja con una sesión heredada»** del Repeater
+  **debería saltar por fin**, porque ya habrá una `Cookie` que detectar. No se ha podido comprobar todavía.
+- **Verificado dentro de la imagen del backend:** `dict(response.request.headers)` presente en los dos
+  ficheros · el diccionario fabricado a **0** · los dos `return` de error intactos · el `url_final` del
+  cambio anterior sigue a 3.
+- **A qué requisito toca:** **RF-03** y **RF-05**. **Evidencia:** el «antes» es
+  `evidencias/capturas/RF-03-spider-cabeceras-peticion-sin-cookie-censurada.png`. ⚠️ **FALTA el «después»
+  [pantalla, josemax], y habrá que CENSURARLO.** **Horas:** ~0,4 h de Claude.
