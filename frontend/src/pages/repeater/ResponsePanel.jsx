@@ -35,7 +35,12 @@ export function ResponsePanel({ response, requestUrl }) {
     )
   }
 
-  const statusColor = response.status >= 200 && response.status < 300
+  // No existe el codigo HTTP 0: un 0 significa que la peticion no llego a tener respuesta
+  // (fallo de red o tiempo agotado). Pintarlo como un numero mas lo disfrazaba de respuesta.
+  const sinRespuesta = !response.status
+
+  const statusColor = sinRespuesta ? '#ef5a5a'
+    : response.status >= 200 && response.status < 300
     ? '#4a9a5a' : response.status >= 400 ? '#ef5a5a' : '#dfc050'
 
   const previewHtml = requestUrl ? rewriteUrls(response.body || '', requestUrl) : (response.body || '')
@@ -73,17 +78,36 @@ export function ResponsePanel({ response, requestUrl }) {
         style={{ background: 'var(--hs-surface)', borderColor: 'var(--hs-border)' }}
       >
         <span
-          className="text-[11px] font-bold px-2 py-0.5 rounded"
+          className="text-[11px] font-bold px-2 py-0.5 rounded shrink-0"
           style={{ fontFamily: 'var(--font-mono)', color: statusColor, background: 'var(--hs-bg)' }}
+          title={sinRespuesta ? 'La peticion no llego a obtener respuesta: fallo de red o tiempo agotado' : undefined}
         >
-          {response.status}
+          {sinRespuesta ? 'sin respuesta' : response.status}
         </span>
-        <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}>
-          {response.time}ms
-        </span>
-        <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}>
-          {(response.size / 1024).toFixed(1)}KB
-        </span>
+        {/* Tiempo y tamano se ocultan si no hubo respuesta: 0 ms y 0,0 KB no son medidas,
+            son la ausencia de ellas, y puestos ahi se leen como si lo fueran. */}
+        {!sinRespuesta && (
+          <span className="text-[10px] shrink-0" style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}>
+            {response.time}ms
+          </span>
+        )}
+        {!sinRespuesta && (
+          <span className="text-[10px] shrink-0" style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}>
+            {(response.size / 1024).toFixed(1)}KB
+          </span>
+        )}
+        {/* A QUE URL se envio. El panel lo sabia desde siempre (lo usa para reescribir los
+            enlaces del Preview) y no lo ensenaba: con varias peticiones seguidas no habia
+            forma de saber de cual era la respuesta que estabas mirando. */}
+        {requestUrl && (
+          <span
+            className="flex-1 min-w-0 truncate text-[10px]"
+            style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-muted)' }}
+            title={requestUrl}
+          >
+            {requestUrl}
+          </span>
+        )}
         <div className="flex gap-1 ml-auto">
           {TABS.map(t => (
             <button

@@ -19,6 +19,7 @@ function normalizeResponse(data) {
 // a un dia de la congelacion no se toca un fichero ya cerrado solo por esto. Si algun dia
 // cambia el criterio, hay que cambiarlo en los dos sitios.
 function colorEstado(status) {
+  if (!status) return '#ef5a5a'   // 0 = no hubo respuesta; en rojo, no en el ambar de los 3xx
   if (status >= 200 && status < 300) return '#4a9a5a'
   if (status >= 400) return '#ef5a5a'
   return '#dfc050'
@@ -31,7 +32,6 @@ function hora(ts) {
 }
 export function RepeaterPage() {
   const {
-    sessionToken,
     repeaterResponse: response, setRepeaterResponse: setResponse,
     repeaterHistory: history, setRepeaterHistory: setHistory,
     repeaterLastUrl: lastUrl, setRepeaterLastUrl: setLastUrl,
@@ -86,15 +86,18 @@ export function RepeaterPage() {
     setLoading(true)
     setLastUrl(request.url || '')
     try {
-      const res = await api.post(`/api/repeater/send`, {
-        ...request,
-        session_token: sessionToken,
-      })
+      // Sin `session_token` en el cuerpo. El backend NO lo lee desde el 6-oct: el espacio
+      // sale del token firmado (`Depends(usuario_actual)` en routes/repeater.py). Mandarlo
+      // era residuo, y del malo: sugiere que el cliente puede elegir espacio, que es
+      // justo el hueco de autorizacion que se cerro ese dia.
+      const res = await api.post(`/api/repeater/send`, request)
       const normalized = normalizeResponse(res.data)
       setResponse(normalized)
       setHistory(prev => [{ request, response: normalized, timestamp: new Date() }, ...prev.slice(0, 99)])
     } catch (e) {
-      setResponse({ status: 0, time: 0, size: 0, body: 'Error: ' + e.message })
+      // Un fallo de red NO es una respuesta. Se marca para que el panel no lo pinte como
+      // un "estado 0", que parece un codigo HTTP cuando no existe ninguno.
+      setResponse({ status: 0, time: 0, size: 0, errorDeRed: true, body: 'No hubo respuesta: ' + e.message })
     } finally {
       setLoading(false)
     }
@@ -199,7 +202,7 @@ export function RepeaterPage() {
                     className="text-[10px] font-bold"
                     style={{ fontFamily: 'var(--font-mono)', color: colorEstado(h.response?.status) }}
                   >
-                    {h.response?.status}
+                    {h.response?.status || 'sin resp.'}
                   </span>
                   <span
                     className="min-w-[52px] text-right text-[10px]"
