@@ -39,6 +39,7 @@ export function RepeaterPage() {
   const [initialRequest, setInitialRequest] = useState(null)
   const [loading, setLoading] = useState(false)
   const [histOpen, setHistOpen] = useState(false)
+  const [confirmaVaciar, setConfirmaVaciar] = useState(false)
 
   useEffect(() => {
     const stored = sessionStorage.getItem('repeater_request')
@@ -70,6 +71,16 @@ export function RepeaterPage() {
     setResponse(entrada.response || null)
     setLastUrl(r.url || '')
     setHistOpen(false)
+  }
+
+  // Borrar NO necesita tocar sessionStorage: el guardado esta atado a los cambios del
+  // historial, asi que lo que se quita de la lista desaparece tambien de lo persistido y
+  // no reaparece tras un F5.
+  const borrarEntrada = (i) => setHistory(prev => prev.filter((_, j) => j !== i))
+
+  const vaciarHistorial = () => {
+    setHistory([])
+    setConfirmaVaciar(false)
   }
   const handleSend = async (request) => {
     setLoading(true)
@@ -105,7 +116,7 @@ export function RepeaterPage() {
           {/* El contador ERA el defecto: decia cuantas habia y no habia forma de abrirlo.
               Ahora es el propio boton que las abre. */}
           <button
-            onClick={() => setHistOpen(v => !v)}
+            onClick={() => { setConfirmaVaciar(false); setHistOpen(v => !v) }}
             disabled={history.length === 0}
             className="text-[10px] px-2 py-0.5 rounded border transition-all"
             style={{
@@ -125,52 +136,96 @@ export function RepeaterPage() {
         </div>
       </div>
       {histOpen && history.length > 0 && (
-        <div
-          className="border-b overflow-auto"
-          style={{ maxHeight: '11rem', background: 'var(--hs-bg)', borderColor: 'var(--hs-border)' }}
-        >
-          {history.map((h, i) => (
-            <button
-              key={i}
-              onClick={() => cargarDelHistorial(h)}
-              className="w-full flex items-center gap-3 px-5 py-1.5 text-left"
-              style={{ borderBottom: '1px solid var(--hs-border)' }}
-              title="Cargar esta peticion en el editor"
+        <div className="border-b" style={{ background: 'var(--hs-bg)', borderColor: 'var(--hs-border)' }}>
+          {/* El boton de vaciar NO borra al primer clic: se arma y pide un segundo. Borrar
+              cien peticiones no tiene vuelta atras y no debe irse en un clic distraido. No se
+              usa el dialogo del navegador porque bloquea y es ajeno a esta interfaz. Abrir o
+              cerrar el panel lo desarma. */}
+          <div
+            className="flex items-center justify-between px-5 py-1 border-b"
+            style={{ borderColor: 'var(--hs-border)' }}
+          >
+            <span
+              className="text-[10px] tracking-widest uppercase"
+              style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}
             >
-              <span
-                className="min-w-[56px] text-[10px] font-bold"
-                style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-secondary)' }}
-              >
-                {h.request?.method}
-              </span>
-              <span
-                className="flex-1 truncate text-[10px]"
-                style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-secondary)' }}
-              >
-                {h.request?.url}
-              </span>
-              <span
-                className="text-[10px] font-bold"
-                style={{ fontFamily: 'var(--font-mono)', color: colorEstado(h.response?.status) }}
-              >
-                {h.response?.status}
-              </span>
-              <span
-                className="min-w-[52px] text-right text-[10px]"
-                style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}
-              >
-                {h.response?.time}ms
-              </span>
-              <span
-                className="text-[10px]"
-                style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}
-              >
-                {hora(h.timestamp)}
-              </span>
+              historial de esta sesión
+            </span>
+            <button
+              onClick={() => (confirmaVaciar ? vaciarHistorial() : setConfirmaVaciar(true))}
+              className="text-[10px] px-2 py-0.5 rounded border transition-all"
+              style={{
+                fontFamily: 'var(--font-mono)',
+                color: confirmaVaciar ? '#d9a93a' : 'var(--hs-text-dim)',
+                borderColor: confirmaVaciar ? '#3d2f10' : 'transparent',
+                background: confirmaVaciar ? '#1a1405' : 'transparent',
+              }}
+              title={confirmaVaciar
+                ? 'Pulsa otra vez para borrar todo el historial'
+                : 'Borrar todas las peticiones del historial'}
+            >
+              {confirmaVaciar ? '¿seguro? pulsa otra vez' : 'vaciar'}
             </button>
-          ))}
+          </div>
+          <div className="overflow-auto" style={{ maxHeight: '11rem' }}>
+            {history.map((h, i) => (
+              /* La fila es un contenedor y no un boton: dentro va la zona pulsable y la ✕,
+                 y un boton dentro de otro boton no es HTML valido. */
+              <div
+                key={i}
+                className="flex items-center border-b"
+                style={{ borderColor: 'var(--hs-border)' }}
+              >
+                <button
+                  onClick={() => cargarDelHistorial(h)}
+                  className="flex-1 min-w-0 flex items-center gap-3 px-5 py-1.5 text-left"
+                  title="Cargar esta petición en el editor"
+                >
+                  <span
+                    className="min-w-[56px] text-[10px] font-bold"
+                    style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-secondary)' }}
+                  >
+                    {h.request?.method}
+                  </span>
+                  <span
+                    className="flex-1 truncate text-[10px]"
+                    style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-secondary)' }}
+                  >
+                    {h.request?.url}
+                  </span>
+                  <span
+                    className="text-[10px] font-bold"
+                    style={{ fontFamily: 'var(--font-mono)', color: colorEstado(h.response?.status) }}
+                  >
+                    {h.response?.status}
+                  </span>
+                  <span
+                    className="min-w-[52px] text-right text-[10px]"
+                    style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}
+                  >
+                    {h.response?.time}ms
+                  </span>
+                  <span
+                    className="text-[10px]"
+                    style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}
+                  >
+                    {hora(h.timestamp)}
+                  </span>
+                </button>
+                <button
+                  onClick={() => borrarEntrada(i)}
+                  className="px-3 py-1.5 text-[11px] shrink-0"
+                  style={{ color: 'var(--hs-text-dim)' }}
+                  title="Quitar esta petición del historial"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
+
       <div className="flex flex-1 overflow-hidden">
         <div className="w-1/2 border-r overflow-hidden flex flex-col" style={{ borderColor: 'var(--hs-border)' }}>
           <RequestEditor
