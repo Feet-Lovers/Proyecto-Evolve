@@ -15,6 +15,54 @@ const WS_URL = config.API_BASE
 // el usuario del token, que emite y firma el servidor.
 const CLAVE_SESION_ANTIGUA = 'hooksuite_session'
 
+// El historial del Repeater vive en el NAVEGADOR, no en el servidor. El backend no
+// guarda las peticiones del Repeater: `routes/repeater.py` llama a `forward_request` y
+// devuelve el resultado sin guardarlo, asi que no hay nada que recuperar de alli.
+const CLAVE_HISTORIAL = 'repeater_historial'
+
+// Que se guarda y que no. La peticion entera (es pequena y es lo que permite repetirla);
+// de la respuesta, solo los metadatos. El cuerpo NO: `forward_request` devuelve hasta
+// 50.000 caracteres por respuesta y con el tope de 100 entradas eso son ~5 MB, justo la
+// cuota de sessionStorage. Las entradas recuperadas quedan marcadas para que el panel
+// avise de que su cuerpo no esta, en vez de ensenar una respuesta vacia sin explicacion.
+function aLigera(entrada) {
+  const r = entrada.response || {}
+  return {
+    request: entrada.request,
+    response: {
+      status: r.status, time: r.time, size: r.size,
+      body: '', headers: {},
+      cuerpoNoConservado: true,
+    },
+    timestamp: entrada.timestamp,
+  }
+}
+
+function leerHistorialGuardado() {
+  try {
+    const crudo = sessionStorage.getItem(CLAVE_HISTORIAL)
+    const lista = crudo ? JSON.parse(crudo) : []
+    return Array.isArray(lista) ? lista : []
+  } catch {
+    return []   // un historial corrupto no puede impedir usar el Repeater
+  }
+}
+
+// Si no cabe, se van soltando las MAS ANTIGUAS hasta que entre, en vez de petar con
+// QuotaExceededError y perderlo todo.
+function guardarHistorial(historial) {
+  let lista = historial.map(aLigera)
+  while (true) {
+    try {
+      sessionStorage.setItem(CLAVE_HISTORIAL, JSON.stringify(lista))
+      return
+    } catch {
+      if (lista.length === 0) return   // no cabe ni una: se sigue sin persistir
+      lista = lista.slice(0, -1)
+    }
+  }
+}
+
 function normalizePacket(p) {
   return {
     ...p,
@@ -44,13 +92,17 @@ export function AppProvider({ children }) {
   // RepeaterPage porque el router la desmonta al navegar y se perdia TODO: la peticion
   // que estabas editando, su respuesta y el historial.
   const [repeaterResponse, setRepeaterResponse] = useState(null)
-  const [repeaterHistory, setRepeaterHistory] = useState([])
+  const [repeaterHistory, setRepeaterHistory] = useState(leerHistorialGuardado)
   const [repeaterLastUrl, setRepeaterLastUrl] = useState('')
   const wsRef = useRef(null)
 
   // Limpieza del identificador que el navegador se inventaba antes: si se queda, no
   // hace daño, pero confunde a quien depure y es una pista falsa de como funciona esto.
   useEffect(() => { localStorage.removeItem(CLAVE_SESION_ANTIGUA) }, [])
+
+  // Guarda el historial del Repeater segun cambia, para que un F5 no lo borre. Lo que
+  // sobrevive es la peticion completa: lo util de un historial es poder repetirla.
+  useEffect(() => { guardarHistorial(repeaterHistory) }, [repeaterHistory])
 
   // Carga el historial YA GUARDADO al entrar.
   //
@@ -59,8 +111,12 @@ export function AppProvider({ children }) {
   // recargar la página o volver a entrar el panel aparecía vacío y parecía que no había
   // hecho nada. El endpoint ya existía (`/api/repeater/history/...`, que lee el mismo
   // sitio donde el Spider escribe); simplemente nadie lo llamaba. Es también la causa
-  // del «historial vacío del Repeater» que teníamos anotado como bug aparte: era el
-  // mismo fallo visto desde otra pantalla.
+  //
+  // ⚠️ CORREGIDO el 12-oct. Aquí se afirmaba que esto era «también la causa del historial
+  // vacío del Repeater, el mismo fallo visto desde otra pantalla». Era FALSO: el Repeater
+  // NO guarda sus peticiones en el servidor, así que este endpoint no puede llenar su
+  // historial —lo que devuelve son las del Spider y del Proxy—. El historial del Repeater
+  // vive en el navegador; ver CLAVE_HISTORIAL arriba.
   useEffect(() => {
     if (config.USE_MOCKS || !sessionToken) return
     let cancelado = false

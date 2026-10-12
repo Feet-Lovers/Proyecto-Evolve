@@ -15,6 +15,20 @@ function normalizeResponse(data) {
   }
 }
 
+// Replica el criterio de color de ResponsePanel. Se duplica a proposito y no se exporta:
+// a un dia de la congelacion no se toca un fichero ya cerrado solo por esto. Si algun dia
+// cambia el criterio, hay que cambiarlo en los dos sitios.
+function colorEstado(status) {
+  if (status >= 200 && status < 300) return '#4a9a5a'
+  if (status >= 400) return '#ef5a5a'
+  return '#dfc050'
+}
+
+// El timestamp es un Date mientras la entrada vive en memoria y una cadena ISO cuando
+// viene de sessionStorage tras un F5. new Date() traga las dos.
+function hora(ts) {
+  try { return new Date(ts).toLocaleTimeString('es-ES', { hour12: false }) } catch { return '' }
+}
 export function RepeaterPage() {
   const {
     sessionToken,
@@ -24,6 +38,7 @@ export function RepeaterPage() {
   } = useAppContext()
   const [initialRequest, setInitialRequest] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [histOpen, setHistOpen] = useState(false)
 
   useEffect(() => {
     const stored = sessionStorage.getItem('repeater_request')
@@ -33,6 +48,29 @@ export function RepeaterPage() {
     }
   }, [])
 
+  // Pulsar una fila del historial devuelve la peticion al editor (izquierda) y su
+  // respuesta al panel (derecha).
+  //
+  // La traduccion de nombres NO es cosmetica: el editor ENVIA { method, url, headers,
+  // body } pero LEE de initialRequest { requestHeaders, requestBody } —ese formato nacio
+  // para recibir paquetes del Proxy, que vienen normalizados—. Pasarle el objeto enviado
+  // tal cual cargaria metodo y URL y perderia cabeceras y cuerpo EN SILENCIO.
+  //
+  // Y se construye un objeto NUEVO cada vez a proposito: el useEffect del editor depende
+  // de la identidad de initialRequest, asi que reutilizarlo no volveria a dispararlo y
+  // pulsar dos veces la misma fila no haria nada.
+  const cargarDelHistorial = (entrada) => {
+    const r = entrada.request || {}
+    setInitialRequest({
+      method: r.method,
+      url: r.url,
+      requestHeaders: r.headers,   // ya es lista de pares; aPares() la acepta
+      requestBody: r.body || '',
+    })
+    setResponse(entrada.response || null)
+    setLastUrl(r.url || '')
+    setHistOpen(false)
+  }
   const handleSend = async (request) => {
     setLoading(true)
     setLastUrl(request.url || '')
@@ -64,14 +102,75 @@ export function RepeaterPage() {
           Repeater
         </h2>
         <div className="flex items-center gap-3">
-          <span
-            className="text-[10px]"
-            style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}
+          {/* El contador ERA el defecto: decia cuantas habia y no habia forma de abrirlo.
+              Ahora es el propio boton que las abre. */}
+          <button
+            onClick={() => setHistOpen(v => !v)}
+            disabled={history.length === 0}
+            className="text-[10px] px-2 py-0.5 rounded border transition-all"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              color: history.length === 0 ? 'var(--hs-text-dim)' : 'var(--hs-accent)',
+              background: histOpen ? 'var(--hs-accent-bg)' : 'transparent',
+              borderColor: histOpen ? 'var(--hs-accent-border)' : 'transparent',
+              cursor: history.length === 0 ? 'default' : 'pointer',
+            }}
+            title={history.length === 0
+              ? 'Todavia no has enviado ninguna peticion'
+              : 'Ver las peticiones enviadas en esta sesion'}
           >
             {history.length} peticiones en historial
-          </span>
+            {history.length > 0 && (histOpen ? ' \u25BE' : ' \u25B8')}
+          </button>
         </div>
       </div>
+      {histOpen && history.length > 0 && (
+        <div
+          className="border-b overflow-auto"
+          style={{ maxHeight: '11rem', background: 'var(--hs-bg)', borderColor: 'var(--hs-border)' }}
+        >
+          {history.map((h, i) => (
+            <button
+              key={i}
+              onClick={() => cargarDelHistorial(h)}
+              className="w-full flex items-center gap-3 px-5 py-1.5 text-left"
+              style={{ borderBottom: '1px solid var(--hs-border)' }}
+              title="Cargar esta peticion en el editor"
+            >
+              <span
+                className="min-w-[56px] text-[10px] font-bold"
+                style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-secondary)' }}
+              >
+                {h.request?.method}
+              </span>
+              <span
+                className="flex-1 truncate text-[10px]"
+                style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-secondary)' }}
+              >
+                {h.request?.url}
+              </span>
+              <span
+                className="text-[10px] font-bold"
+                style={{ fontFamily: 'var(--font-mono)', color: colorEstado(h.response?.status) }}
+              >
+                {h.response?.status}
+              </span>
+              <span
+                className="min-w-[52px] text-right text-[10px]"
+                style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}
+              >
+                {h.response?.time}ms
+              </span>
+              <span
+                className="text-[10px]"
+                style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}
+              >
+                {hora(h.timestamp)}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
       <div className="flex flex-1 overflow-hidden">
         <div className="w-1/2 border-r overflow-hidden flex flex-col" style={{ borderColor: 'var(--hs-border)' }}>
           <RequestEditor

@@ -42,6 +42,32 @@ export function ResponsePanel({ response, requestUrl }) {
 
   return (
     <div className="flex flex-col h-full">
+      {/* Aviso del historial recuperado tras un F5. Va ARRIBA, antes de la barra y de las
+          pestanas, por lo mismo que el del Preview: hay que saberlo ANTES de mirar un cuerpo
+          vacio, no despues de extranarse. En ambar (no en el gris de los textos tenues) porque
+          no es una nota al pie: explica por que falta algo que se esperaba ver. Mismos colores
+          que el aviso de 'sin analizar' de VulnerabilitiesPage, para que los dos avisos de la
+          aplicacion se parezcan entre si. */}
+      {response.cuerpoNoConservado && (
+        <div
+          className="border-b px-4 py-2"
+          style={{ borderColor: '#3d2f10', background: '#1a1405' }}
+        >
+          <p
+            className="text-[10px] tracking-widest uppercase"
+            style={{ fontFamily: 'var(--font-mono)', color: '#d9a93a' }}
+          >
+            {'\u26A0 '}cuerpo no conservado
+          </p>
+          <p
+            className="text-[10px] mt-1 leading-relaxed"
+            style={{ fontFamily: 'var(--font-mono)', color: '#d9a93a' }}
+          >
+            El cuerpo de esta respuesta no se conserv\u00f3 al recargar la p\u00e1gina. Se guardan
+            el estado, el tiempo y el tama\u00f1o. Pulsa <b>enviar</b> para volver a obtenerla.
+          </p>
+        </div>
+      )}
       <div
         className="flex items-center gap-4 px-3 py-2 border-b"
         style={{ background: 'var(--hs-surface)', borderColor: 'var(--hs-border)' }}
