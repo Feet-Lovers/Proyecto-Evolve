@@ -231,12 +231,22 @@ class SpiderService:
                         'size': 0,
                         'time': 0,
                         'timestamp': datetime.utcnow().isoformat(),
-                        # OJO: este formulario NO se ha enviado (status 'FORM'), asi que
-                        # estas cabeceras son las que se USARIAN, no un registro de lo que
-                        # paso. Se toma el User-Agent realmente usado al navegar para que
-                        # al reenviar desde el Repeater no cambie de identidad a mitad.
+                        # OJO: este formulario NO se ha enviado (status 'FORM'), asi que estas
+                        # cabeceras son las que se USARIAN, no un registro de lo que paso.
+                        #
+                        # Se parte de las REALMENTE enviadas al pedir la pagina -que incluyen la
+                        # COOKIE DE SESION- y se les cambia el Content-Type por el del formulario.
+                        # Antes aqui solo iban User-Agent y Content-Type: sin cookie. Mientras el
+                        # Repeater usaba el cliente compartido no se notaba, porque la sesion la
+                        # ponia el backend por detras; en cuanto se le quito, el formulario viajaba
+                        # sin sesion, Laravel no encontraba el token CSRF y respondia 419.
+                        #
+                        # Se quita Content-Length: era el del GET y el cuerpo que se envia es otro.
                         'request_headers': {
-                            'User-Agent': chosen_headers['User-Agent'],
+                            **{
+                                k: v for k, v in dict(response.request.headers).items()
+                                if k.lower() not in ('content-length', 'content-type')
+                            },
                             'Content-Type': 'application/x-www-form-urlencoded',
                         },
                         'request_body': form['body'] if form['method'] == 'POST' else None,
