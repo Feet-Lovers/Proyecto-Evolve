@@ -4078,3 +4078,46 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
      nombre del bundle ha cambiado antes de creerse una verificación.**
 - **A qué requisito toca:** **RF-05**; el (3) toca **RNF-07**. **Evidencia:** ⚠️ **FALTA: el aviso de
   sesión heredada y el borrado de una fila del medio [pantalla, josemax]**. **Horas:** ~0,8 h de Claude.
+
+### Fase 3 (12-oct, 12:50) · El Spider enseñaba unas cabeceras y enviaba otras
+
+- **Qué falló, y se encontró tirando de un hilo.** El aviso de «sesión heredada» añadido esta mañana no
+  saltaba nunca con una petición traída del Spider. Al mirar por qué apareció algo peor: **lo que el Spider
+  guarda y enseña como `request_headers` no son las cabeceras que envió**. Envía `chosen_headers`
+  (`spider_service.py:155-163`) con su `User-Agent` sorteado y la **`Cookie`** si hay sesión; y guarda
+  (líneas 183-187) un diccionario **fabricado aparte** con **otro `User-Agent` sorteado de nuevo**
+  (`random.choice` por segunda vez, línea 172), **sin la `Cookie`**, y con un **`Host`** que nadie puso.
+- **Por qué es grave aquí y no en otra aplicación.** Es una herramienta de auditoría: **la evidencia que
+  muestra tiene que ser la petición que salió**. Un auditor que copie esas cabeceras al informe documenta
+  algo que no ocurrió. Y al reenviar desde el Repeater se reenvía con una identidad distinta de la que
+  rastreó.
+- **Qué explica.** (a) Por qué no saltaba el aviso: en esa petición **no había ninguna cabecera de sesión
+  que detectar**. (b) **De dónde salía la sesión** en el diagnóstico de esta mañana: no de las cabeceras,
+  sino del **cliente persistente del backend**, que añade sus cookies por su cuenta. Por eso el POST del
+  Spider se completaba —su **body** llevaba el token CSRF— y el POST a mano daba 419, mientras la cookie
+  la ponía el backend en los dos casos.
+- **Arreglo.** Se guarda `dict(chosen_headers)`, lo realmente enviado, y **desaparece el segundo sorteo**.
+  En el bloque de **formularios descubiertos** (`status: 'FORM'`, que **no se han enviado**) las cabeceras
+  siguen siendo una **propuesta**, pero se toma el `User-Agent` que se usó de verdad al navegar, para no
+  cambiar de identidad a mitad; queda dicho en un comentario que ahí no son un registro.
+- **Efecto secundario que hay que mirar antes de la entrega:** las capturas del Spider que muestren
+  cabeceras pasan a enseñar otro `User-Agent` y, si había sesión, una `Cookie` que antes no salía.
+- **A qué requisito toca:** **RF-03** y **RF-05**. **Evidencia:** `(no aplica)`, el estado anterior queda
+  en git. **Horas:** ~0,4 h de Claude.
+
+### Fase 3 (12-oct, 12:50) · El Repeater ya dice cuándo te han redirigido
+
+- **Qué se hizo.** `forward_request` devuelve ahora la **URL final** y la **cadena de saltos con sus
+  códigos** (`response.history`, que hasta hoy se tiraba), en los tres `return` —también en los de error,
+  vacíos, para que la interfaz no tenga que adivinar—. El panel pinta un aviso ámbar: *«redirigido · N
+  saltos — lo que ves es la respuesta de X, no de la dirección que pediste»*, con la cadena `302 → 200`.
+- **Por qué importa.** El backend va con `follow_redirects=True`, así que el cuerpo y el estado que ves
+  pueden ser los de **otra dirección** y nada lo decía. El caso que lo destapó: un `POST /register` con el
+  token válido **se completaba y redirigía a la tienda**, y en pantalla parecía que `/register` devolvía
+  la tienda con un `200`. La diferencia entre «esta URL devuelve esto» y «esta URL **redirige** a esto» es
+  justo lo que se escribe en un informe. Burp las muestra.
+- **Alcance.** Beneficia también al Proxy y al Spider, que usan la misma función; añadir campos al
+  diccionario no rompe sus pantallas, que ignoran los que no conocen.
+- **A qué requisito toca:** **RF-05**, y **apdo. 8** como defecto encontrado usando la herramienta.
+  **Evidencia:** ⚠️ **FALTA: el aviso de redirección en pantalla [pantalla, josemax]**; el «antes» es
+  `/register` mostrando la tienda con su `200`. **Horas:** ~0,4 h de Claude.
