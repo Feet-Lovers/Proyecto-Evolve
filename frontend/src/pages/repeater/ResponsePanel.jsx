@@ -43,6 +43,13 @@ export function ResponsePanel({ response, requestUrl }) {
   // el estado que se ven son los de la ULTIMA parada, no los de la direccion que pediste,
   // y hasta ahora nada lo decia: parecia que tu URL devolvia esto.
   const saltos = Array.isArray(response.redirecciones) ? response.redirecciones : []
+  // No es lo mismo acabar en OTRA direccion que rebotar a la misma. El patron clasico
+  // POST -> 302 -> GET de la misma URL (el servidor no devuelve contenido y te manda de
+  // vuelta al formulario) tiene salto pero NO cambia de direccion: decir ahi "no es la
+  // direccion que pediste" es mentir. Y se perdia lo que mas importa a un auditor: en un
+  // 302 el metodo se convierte en GET, asi que lo que se ve no es la respuesta a tu POST.
+  const mismaUrl = !!response.url_final && !!requestUrl && response.url_final === requestUrl
+  const metodoCambiado = !mismaUrl ? null : (response.method && response.method !== 'GET' ? response.method : null)
 
   const statusColor = sinRespuesta ? '#ef5a5a'
     : response.status >= 200 && response.status < 300
@@ -67,14 +74,25 @@ export function ResponsePanel({ response, requestUrl }) {
             className="text-[10px] tracking-widest uppercase"
             style={{ fontFamily: 'var(--font-mono)', color: '#d9a93a' }}
           >
-            {'\u26A0 '}redirigido · {saltos.length} salto{saltos.length > 1 ? 's' : ''}
+            {'\u26A0 '}{mismaUrl ? 'rebotó' : 'redirigido'} · {saltos.length} salto{saltos.length > 1 ? 's' : ''}
           </p>
           <p
             className="text-[10px] mt-1 leading-relaxed break-all"
             style={{ fontFamily: 'var(--font-mono)', color: '#d9a93a' }}
           >
-            Lo que ves es la respuesta de <b>{response.url_final}</b>, no de la dirección que
-            pediste. Cadena: {saltos.map(s => s.status).join(' → ')} → {response.status}.
+            {mismaUrl ? (
+              <>
+                Tu petición fue redirigida y acabó en <b>la misma dirección</b>.
+                {metodoCambiado && (
+                  <> En una redirección el método pasa a <b>GET</b>, así que lo que ves
+                  <b> no es la respuesta a tu {metodoCambiado}</b>, sino la de un GET posterior.</>
+                )}
+              </>
+            ) : (
+              <>Lo que ves es la respuesta de <b>{response.url_final}</b>, no de la dirección que
+              pediste.</>
+            )}{' '}
+            Cadena: {saltos.map(s => s.status).join(' → ')} → {response.status}.
           </p>
         </div>
       )}
