@@ -1117,4 +1117,115 @@ página, y el servidor devuelve su portada a *cualquier ruta desconocida*: una d
 tipo de contenido —y es lo que evitó concluir que el esquema de la API seguía publicado cuando lo que
 respondía era la portada—. Las salidas completas están en `docs/evidencias/pruebas-reejecutadas-13oct.md`.
 
-#hueco("José María", "Manual de despliegue, usuarios de prueba del login nuevo (sustituyen a la credencial de Nginx), glosario y referencias.")
+== Manual de despliegue
+El despliegue es *manual y deliberadamente aburrido*: la instalación pública solo recibe versiones, nunca
+arreglos. Está prohibido editar ficheros en ella —fue la causa de que durante la Fase 0 lo desplegado no
+estuviera en ninguna rama— y por eso la actualización se hace con *traer y reponer a la fuerza* el estado de
+la rama principal, no con una fusión: si alguien hubiera editado algo allí, el siguiente despliegue se lo
+lleva. Es intencionado.
+
+*Orden de los pasos, y por qué este y no otro:*
+1. *Punto de retorno antes de tocar nada:* etiquetar las imágenes en servicio y copiar la configuración. No
+   cambia nada y es lo que permite volver en un minuto.
+2. *Fusionar la rama de trabajo en la principal* mediante solicitud de incorporación. La rama principal está
+   protegida y la solicitud sale bloqueada por la regla de revisión; la desbloquea quien administra.
+3. *Desplegar:* traer y reponer a la fuerza, y levantar *solo los servicios que el cambio toca*.
+4. *Verificar con sondas,* nunca por impresión visual.
+5. *Si falla,* volver al punto 1.
+6. *Etiquetar* la versión entregada.
+
+*Qué servicios se levantan, y esto se mide, no se supone.* Se listan los ficheros que cambian entre las dos
+ramas y se agrupan por carpeta. En el despliegue de la congelación: tres servicios se reconstruyeron
+(interfaz, API y módulo de IA), uno se *recreó sin reconstruir* —solo ganaba una línea de red, y su imagen
+pesa 2,4 GB—, y dos no se tocaron porque ni su imagen ni su configuración cambiaban. Dos lecciones que
+costaron tiempo y conviene no reaprender:
+- *Nombrar un servicio no basta para recrearlo.* Levantar con reconstrucción un servicio cuya imagen se
+  descarga y cuyo bloque no cambió *no lo recrea*: el despliegue sale «en verde» sin aplicar la
+  configuración nueva. Para eso hace falta pedir la recreación explícitamente.
+- *Quitar un servicio del fichero de composición no para su contenedor:* queda *huérfano* y sigue
+  corriendo. Para que desaparezca de verdad hay que pedir que se retiren los huérfanos — y eso es parar y
+  eliminar un contenedor, así que lo decide y lo lanza una persona, no el guion.
+
+*Verificación por sondas.* Cada sonda tiene un valor esperado *medido antes en el entorno de trabajo*, y la
+lista incluye *un control negativo*: un marcador que debe dar cero. Sin ese control, una sonda que no
+encuentra nada es indistinguible de una sonda mal apuntada. Dos de las sondas de la primera versión estaban
+mal dirigidas —preguntaban a la pieza equivocada— y se cazaron *probándolas*, que es para lo que se prueban.
+
+*Avisos que no son opcionales:*
+- La reposición a la fuerza *no toca el fichero de entorno* (está excluido del control de versiones): la
+  instalación pública conserva su clave y su código de invitación.
+- Las variables nuevas traen valor por omisión, así que no hay que tocar el entorno para desplegar. Pero el
+  tope de tokens por omisión *se queda corto* con el modelo actual: la respuesta se trunca y el análisis
+  sale como «no analizado» (RNF-06). Para auditar de verdad en producción hay que subirlo en el entorno.
+- La reconstrucción de la interfaz es la pesada: si queda poca memoria libre, conviene saberlo antes.
+
+== Usuarios de prueba y acceso para la corrección
+El producto ya no tiene una contraseña compartida: desde la Fase 2 cada persona *se da de alta ella misma*
+con un código de invitación y elige su contraseña, que nadie más conoce. Eso cambia cómo se entrega el
+acceso para corregir, y conviene decirlo con claridad:
+
+- *En este repositorio no hay ninguna credencial*, ni de prueba ni ficticia. El repositorio es *público*: una
+  contraseña escrita aquí sería una contraseña publicada, y la instalación a la que abre está en internet.
+- *Las credenciales de corrección se entregan por el canal del máster*, junto a la dirección de la
+  instalación. Incluyen lo necesario para entrar y, si se quiere crear una cuenta propia, el código de
+  invitación.
+- *Las cuentas que se usaron para probar* durante el desarrollo viven en el entorno de trabajo, no en la
+  instalación pública, y se retiran antes de la entrega. Se nombraron con prefijos reconocibles por
+  propósito —alta, rastreo, víctima y atacante— precisamente para poder localizarlas y borrarlas luego.
+- *Qué se puede comprobar con una sola cuenta:* todo el recorrido de auditoría. Para comprobar el
+  *aislamiento* hacen falta dos, y así se verificó: once de once comprobaciones con dos cuentas distintas.
+
+== Glosario
+- *Spider (rastreador):* recorre un sitio siguiendo enlaces y formularios para levantar su mapa.
+- *Repeater:* banco de trabajo de *una* petición: se modifica y se reenvía tal como se ve en pantalla.
+- *Intruder:* prueba muchos valores en un punto marcado de la petición (fuzzing) y señala las respuestas
+  que se salen del patrón.
+- *Proxy del lado servidor:* el producto hace la petición *en lugar* del navegador, de modo que no hace
+  falta instalar ni configurar nada en el equipo de quien audita.
+- *Fichero de autoconfiguración de proxy:* mecanismo de la primera versión para que el navegador enrutara
+  solo; se jubiló en la Fase 2 junto con sus rutas.
+- *Token firmado (JWT):* credencial que emite el servidor y que el cliente presenta en cada petición. Aquí
+  el algoritmo de firma está fijado en el servidor y *no se lee del propio token*.
+- *Hash de contraseña:* huella irreversible. Lo que se guarda es la huella, nunca la contraseña.
+- *Bus interno:* canal por el que los servicios se hablan sin exponerse a internet; sustituye a que un
+  módulo llame a la API como si fuera un cliente más.
+- *Operación degradada:* seguir dando servicio con menos garantías cuando una pieza falla, *y que se note*.
+  Un fallo silencioso que se disfraza de resultado correcto es peor que una caída.
+- *Techo de gasto:* límite de llamadas al modelo por auditoría; al agotarse, el resultado sale degradado y
+  visible en lugar de silencioso.
+- *Trampa de araña:* sitio que genera direcciones infinitas y hace que un rastreador no termine nunca.
+- *Fuga de aislamiento:* que los datos de un usuario aparezcan en la sesión de otro.
+- *Huella digital (fingerprint):* identificar la tecnología de un objetivo por sus respuestas.
+- *Entorno de trabajo y instalación pública:* las dos instalaciones del producto. Todo se monta y se prueba
+  en la primera; la segunda solo recibe versiones (apartado 5).
+- *Contenedor huérfano:* el que sigue corriendo después de que su definición desapareciera del fichero de
+  composición.
+- *RF / RNF:* requisito funcional (lo que el producto hace) y no funcional (cómo lo hace: seguridad,
+  rendimiento, despliegue).
+- *STRIDE:* modelo de amenazas que recorre seis familias —suplantación, manipulación, repudio, divulgación,
+  denegación de servicio y elevación de privilegio— para no olvidar ninguna (apartado 7).
+
+== Referencias
+*Fuentes del enunciado y de la práctica anterior* (material del máster, no redistribuido en este
+repositorio): el enunciado de esta práctica, el de la práctica anterior y el informe que el grupo entregó
+entonces. De ahí salen la estructura obligatoria de trece apartados, la numeración de requisitos que la
+práctica anterior no tenía y el plan de mejoras cuyos cinco primeros puntos delimitan el alcance (apartado 4).
+
+*Dentro de este repositorio* —y todas estas rutas existen, se comprobó al escribirlas—:
+`docs/informe/P3-memoria.typ` (fuente única de esta memoria), `docs/informe/diario.md` (registro de
+trabajo con el motivo de cada decisión, las horas y lo que se descartó), `docs/capturas/` (figuras, con el
+nombre atado al requisito que demuestran) y `docs/evidencias/` (salidas de terminal guardadas como texto,
+no como foto, para que sean buscables y comparables).
+
+*Taxonomías y modelos usados:* la clasificación de severidad que pide RF-08 se apoya en la taxonomía de
+OWASP, y el modelo de amenazas del apartado 7 sigue STRIDE.
+
+*Herramientas de medición citadas en la memoria,* para que cualquiera pueda reproducir las cifras: el
+auditor de dependencias de cada ecosistema (el del gestor de paquetes de la interfaz y `pip-audit` para los
+módulos en Python), `pdftotext` para escanear el PDF entregable en busca de secretos —sobre el PDF crudo el
+texto va comprimido y la búsqueda daría cero siempre—, y el compilador de documentos con el que se generan
+las dos salidas de esta memoria.
+
+*Material de trabajo del grupo que no vive en este repositorio* (protocolo de trabajo, flujo de ramas,
+procedimiento de despliegue y planes por fases) y que se cita en la memoria por su contenido, no por su
+ruta, precisamente para no dejar referencias que un lector del repositorio no podría abrir.
