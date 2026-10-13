@@ -4724,3 +4724,25 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   de Markdown donde Typst quiere `*negrita*` (Typst lo avisó: «no text within stars»).
 - **A que requisito toca:** **RF-04**, **RF-10**; apdos. **4** y **9**. **Evidencia:** `(no aplica)`, queda
   en git (`1c6c908d` y los tres anteriores). **Horas:** ~0,5 h de Claude.
+
+### Fase 3 (13-oct, 20:1x) · `main` al dia, y un cerco que se pone rojo por decirlo
+
+- **Que paso:** josemax **fusiono el PR #8** (12 commits, todos `docs`), asi que `origin/main` pasa de
+  `01c81ab3` a `5873f566`. La memoria tecnica, su PDF, su artefacto y el diario ya estan en la rama
+  principal, que es desde donde se entrega.
+- **Por que lo fusiono el y no yo:** el PR lo abri por API, pero **la fusion me la bloqueo el clasificador
+  del auto-mode**. No se insistio con otro comando equivalente; se le paso el enlace y lo hizo el.
+  (Ademas la rama esta protegida y hace falta su permiso de administracion.)
+- 🗂️ **Y acto seguido el cerco R1b salio en DESAJUSTE, con razon.** Compara por SSH el HEAD de la caja
+  contra el `main` **real** del remoto (`ls-remote`, no refs locales). La caja sigue en `01c81ab3` y el
+  remoto ya va por `5873f566`: **no coinciden**. Comprobado en vivo antes de llamarlo falso positivo.
+- **Es real y es benigno, y la diferencia entre las dos cosas importa.** Los 12 commits son `docs(...)`
+  —medido con `--invert-grep --grep=^docs`: **cero de codigo**—, asi que **el producto desplegado es
+  identico** al de la etiqueta `v1.0-practica3`. Lo unico desalineado es documentacion que ningun
+  contenedor usa.
+- **Como se cierra:** la caja se pone al dia con `fetch` + `reset --hard origin/main`, **sin reconstruir ni
+  reiniciar nada**. Se entrego a josemax como bloque copiable porque el `ssh` a la caja esta bloqueado para
+  el asistente. Hasta que lo lance, el cerco **se queda rojo a proposito**: un cerco rojo que se entiende es
+  mejor que uno verde que no mira.
+- **A que requisito toca:** **RNF-03** (despliegue); apdo. **13** (manual). **Evidencia:** `(no aplica)`.
+  **Horas:** ~0,2 h de Claude.
