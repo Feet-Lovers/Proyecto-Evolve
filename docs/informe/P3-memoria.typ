@@ -205,13 +205,12 @@ HookSuite se despliega como un conjunto de contenedores Docker coordinados por `
   (auto, 3fr, 5fr, auto),
   "
   Componente | Tecnología | Rol | Puerto (prod.)
-  *nginx* | `nginx:alpine` | Proxy inverso y único punto de entrada; enruta a frontend y backend (el laboratorio salió del proxy en la Fase 1 y el control de acceso pasó al backend en la Fase 2) | `80→80`
+  *nginx* | `nginx:alpine` | Proxy inverso y único punto de entrada; enruta a frontend y backend (el control de acceso pasó al backend en la Fase 2) | `80→80`
   *frontend* | React + Vite (build propio) | Dashboard web (SPA) servido como estático | `3000→80`
   *backend* | FastAPI + uvicorn (build propio) | API de auditoría: proxy `httpx`, Spider, Repeater, Intruder, utilidades, vulnerabilidades y WebSocket | `8000→8000`
   *redis* | `redis:7-alpine` | Bus de eventos y estado efímero entre servicios | interno
   *ia* | Python + SDK Anthropic (build propio) | Clasificador de vulnerabilidades con Claude (RF-08) | interno
   *playwright* | Python + Playwright (build propio) | Navegador real para ataques dirigidos (RF-10) | interno
-  *dvwa* | `vulnerables/web-dvwa` | Laboratorio de pruebas, solo accesible por la red interna | interno
   ",
 )
 
@@ -243,7 +242,7 @@ Toda la práctica se trabajó sobre *dos* instalaciones de HookSuite, y la separ
 
 *Y la regla nació de un fallo propio, que es la razón de que sea tan estricta.* La interfaz que corría en producción se había reescrito directamente en la caja y *no estaba en ninguna rama del repositorio*: existía solo allí, sin commitear, sin revisar y sin forma de reconstruirla si la máquina se perdía. Recuperarla fue una de las tareas de la Fase 0. La prohibición de editar en la caja no es prudencia abstracta: es la respuesta a haber estado a un fallo de disco de perder el frontend.
 
-*Por qué en esta herramienta pesa más que en otras.* HookSuite lanza tráfico contra sistemas de terceros —rastrea, repite peticiones y prueba cargas—. Ensayar eso en la instalación que otras personas están usando no arriesga solo nuestros datos: arriesga dirigir tráfico de ataque desde la infraestructura pública del grupo sin querer. El laboratorio vulnerable con el que se prueba vive, por eso, en la red interna de la cocina (apartado 7).
+*Por qué en esta herramienta pesa más que en otras.* HookSuite lanza tráfico contra sistemas de terceros —rastrea, repite peticiones y prueba cargas—. Ensayar eso en la instalación que otras personas están usando no arriesga solo nuestros datos: arriesga dirigir tráfico de ataque desde la infraestructura pública del grupo sin querer. El laboratorio vulnerable con el que se probaba vivía, por eso, en la red interna de la cocina; el *13-oct se retiró del producto por completo* (apartado 7) y las pruebas se hacen contra una web propia del equipo, autorizada para ello.
 
 *Lo que esta separación NO garantiza, dicho sin adornos.* La cocina no es idéntica a producción: comparte máquina con otros servicios y remapea puertos (ver la nota de reproducibilidad al final de este apartado). Por tanto «verificado en la cocina» es una afirmación más débil que «verificado en producción», y la memoria no las confunde en ningún sitio. El caso que lo demuestra se cuenta en el apartado 8: un despliegue que habría terminado sin errores *sin aplicar* la configuración del proxy, porque nombrar un servicio en un comando no prueba que el comando lo recree.
 
@@ -290,7 +289,9 @@ Cada funcionalidad con capturas: qué hace, cómo se usa y qué requisitos cubre
 - Proxy interceptor, Repeater, Intruder, Utilidades (hash/encoder/regex), Vulnerabilidades, Red/DevTools, módulo IA.
 
 == La auditoría con IA, por fin arrancable desde el panel (RF-08)
-Hasta el 10 de octubre el modulo de IA *no se podia usar*: existia, esperaba ordenes y no habia forma de darselas —ni un boton en ninguna pantalla—. Ahora la pantalla de vulnerabilidades lleva un campo de objetivo y un boton que lanza la auditoria. El objetivo por omision es el laboratorio interno, que es nuestro y no sale de la red interna.
+Hasta el 10 de octubre el modulo de IA *no se podia usar*: existia, esperaba ordenes y no habia forma de darselas —ni un boton en ninguna pantalla—. Ahora la pantalla de vulnerabilidades lleva un campo de objetivo y un boton que lanza la auditoria. *El objetivo se hereda del rastreo en curso*, y si no hay ninguno el campo queda vacío y el botón se deshabilita solo: ofrecer un valor plausible y equivocado sería peor, porque auditar un sitio distinto del que se rastreó gasta llamadas para nada y sin un solo aviso.
+
+> *Corrección declarada (13-oct, R9).* Este párrafo decía que «el objetivo por omisión es el laboratorio interno». Era falso *por partida doble*: el valor fijo se sustituyó por la herencia del rastreo el 10-oct, y el laboratorio salió del producto el 13-oct (apartado 7).
 
 Dos detalles que no son adorno:
 
@@ -372,8 +373,12 @@ Comprobado desde fuera tras el despliegue: los puertos directos *rechazan la con
 === Orígenes permitidos (CORS)
 El backend aceptaba *cualquier* origen con credenciales, combinación además inválida por especificación: en la práctica, el servidor *reflejaba el origen de quien preguntara*, de modo que cualquier web podía hacerle peticiones autenticadas. Se sustituyó por una *lista cerrada* configurable por entorno. Comprobado: un origen arbitrario ya no recibe permiso; uno legítimo sí.
 
-=== El laboratorio vulnerable, solo interno
-Se retiró del proxy la ruta que lo publicaba. Queda accesible únicamente desde la red interna, para las pruebas del propio producto.
+=== El laboratorio vulnerable: fuera del producto
+En la Fase 1 se le retiró del proxy la ruta que lo publicaba, de modo que quedó accesible solo desde la red interna. El *13-oct*, al congelar, se retiró del producto *entero*: no está en el despliegue ni en la caja —ni el servicio, ni el contenedor, ni la imagen—.
+
+*Por qué, y es una decisión del 1-oct que tardó doce días en aplicarse.* Las pruebas de este proyecto se hacen contra una web propia del equipo, autorizada para ello, y no contra el laboratorio clásico; mantenerlo en el despliegue significaba entregar un producto que arrastra un sistema *deliberadamente vulnerable* que ya nadie usaba. Se retiró de la composición de contenedores, del entorno del módulo de navegador, y del único punto del código que todavía caía a él cuando llegaba una orden sin objetivo: ahora esa orden *se descarta y se dice*, en lugar de auditar un host que ya no existe.
+
+*Lo que no se tocó, y se declara.* El módulo de navegador conserva una función de acceso a ese laboratorio, y los datos de ejemplo del frontend lo siguen nombrando. Son RF-10 —según alcance— y código que no se ejecuta en el producto entregado; reescribirlos el día de la congelación añadía riesgo sin ganar nada. Queda anotado en el apartado 10.
 
 === Endurecimiento del servidor
 - *Cortafuegos* activo, con política de denegación por defecto y únicamente el acceso remoto y el proxy permitidos.
@@ -672,7 +677,7 @@ Reproducible con `python3 ia/tests/test_tres_estados.py`. Evidencia completa, co
 == RNF-06 visto en el panel, que es donde tenía que verse
 Una prueba unitaria demuestra que el clasificador *devuelve* el estado degradado; no demuestra que alguien lo *enseñe*. Entre las dos cosas hubo un hueco real: durante un día el estado existió en el módulo de IA y no lo consumía nadie al otro lado, de modo que RNF-06 estaba cumplido y era invisible. El 10-oct se cerró el hueco y se comprobó en la interfaz, con una auditoría lanzada desde el panel y sesión real.
 
-#imagen("../capturas/ia/RNF-06-panel-no-analizado-techo0.png", "RNF-06 / RF-08 — el panel tras una auditoría truncada por el techo de gasto. El encabezado anuncia *48 sin analizar — la IA no pudo valorarlo* y cada entrada lleva su motivo, `techo de 0 llamadas por auditoria alcanzado`: el recorte se ve en lugar de pasar por «sin hallazgos». El recuento `0 detectadas · 48 sin analizar` distingue las dos cosas. Los cuarenta y ocho elementos provienen de un rastreo previo sobre *web.academyx.es*, web propia del equipo levantada para practicar; el objetivo que figura en la barra, `http://dvwa:80`, es el de la auditoría siguiente.")
+#imagen("../capturas/ia/RNF-06-panel-no-analizado-techo0.png", "RNF-06 / RF-08 — el panel tras una auditoría truncada por el techo de gasto. El encabezado anuncia *48 sin analizar — la IA no pudo valorarlo* y cada entrada lleva su motivo, `techo de 0 llamadas por auditoria alcanzado`: el recorte se ve en lugar de pasar por «sin hallazgos». El recuento `0 detectadas · 48 sin analizar` distingue las dos cosas. Los cuarenta y ocho elementos provienen de un rastreo previo sobre *web.academyx.es*, web propia del equipo levantada para practicar; el objetivo que figura en la barra, `http://dvwa:80`, era el *valor fijo* que el panel traía entonces: se sustituyó el 10-oct por la herencia del objetivo rastreado, y el laboratorio salió del producto el 13-oct (apartados 6 y 7). La figura se conserva porque lo que documenta es el recorte de gasto, no el objetivo.")
 
 Lo que la figura prueba, y que ninguna prueba unitaria alcanzaba: que el mensaje de lista vacía *dejó de mentir*. Antes, una auditoría que no había podido analizar nada y otra que había analizado y no encontrado nada producían la misma pantalla. Ahora el aviso va aparte de los hallazgos —en su propia tira, por encima— porque mezclarlo obligaría a inventarle una severidad a algo que precisamente *no se pudo valorar*.
 
@@ -856,6 +861,9 @@ Tres diferencias conocidas y no cerradas:
 El repositorio tiene configurado un analizador estático para el frontend y, hasta el 12-oct, *nunca se había ejecutado* (apartado 8). Puesto a funcionar, arroja *veintitrés errores y dos avisos* que no son del trabajo de estos días: casi todos de reglas del marco de interfaz —efectos que escriben estado, funciones con efectos secundarios donde se esperan puras— y concentrados en la pantalla de vulnerabilidades. Lo que sí quedó cerrado es la regla que caza el fallo que costó la regresión del botón de enviar: no queda ninguna variable no declarada en todo el frontend.
 
 *Por qué no se arreglan ahora:* son avisos de calidad sobre pantallas que funcionan y ya están capturadas, y tocarlas el día de la congelación arriesga el entregable sin mejorar el producto. Queda como *trabajo futuro con el dato ya medido*, que es lo que permite planificarlo en vez de prometerlo. Y una limitación del método, dicha entera: el analizador solo puede ejecutarse dentro de la etapa de construcción de la imagen, porque el proyecto no instala las dependencias del frontend en el servidor.
+
+== Restos del laboratorio retirado
+El laboratorio vulnerable salió del producto el 13-oct (apartado 7), pero *su nombre sigue en dos sitios que no se ejecutan*: la función de acceso del módulo de navegador (RF-10, según alcance) y los datos de ejemplo del frontend, que *sí viajan en el paquete* que se sirve al navegador aunque solo se usen cuando no hay servidor detrás. No es un riesgo —los valores son inventados— pero el entregable menciona un componente que ya no incluye. Es limpieza de diez minutos que no se hizo el día de la congelación a propósito: tocar código que funciona, el último día, para arreglar un nombre, es justo el cambio que no compensa.
 
 == La herramienta que genera los esquemas no está versionada
 El generador de esquemas vive en la carpeta de trabajo de la práctica, *fuera del repositorio del producto*: no tiene historial, no pasó por revisión y su autoría no queda registrada, al contrario que todo el código. Es incoherente con la norma del equipo de que todo entra por petición de incorporación, y no es una incoherencia inocua: *el único sitio sin historial resultó ser exactamente donde estaba el defecto del apartado 8*, porque es el sitio donde nadie vio la lista incompleta.
