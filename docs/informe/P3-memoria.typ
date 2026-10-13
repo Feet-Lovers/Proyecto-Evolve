@@ -74,7 +74,44 @@ Grupo: #estado("curso", "nº por confirmar"). Entrega: *16 de octubre de 2026*.
 
 = 2. Resumen ejecutivo
 HookSuite resuelve la auditoría web asistida por IA desde el navegador: interceptar y repetir peticiones, fuzzing, utilidades (hash/encoder/regex), análisis de vulnerabilidades y un módulo de IA que prioriza hallazgos. La P3 parte del prototipo de la P1 y lo lleva a un estado ejecutable, seguro y reproducible.
-#hueco("José María + Claude", "Cerrar a 1 página cuando el producto esté congelado: qué hace, para quién, y en qué estado final se entrega.")
+*Para quién.* El destinatario es quien audita aplicaciones web y no quiere depender de una
+herramienta instalada en su equipo: se abre una dirección, se entra con su usuario y trabaja con sus
+propios datos, aislados de los de los demás.
+
+*De dónde se parte, y por qué no era defendible.* La verificación en vivo del 29 de septiembre dejó el
+prototipo de la P1 en evidencia: la API respondía en el puerto 8000 *sin ninguna credencial* desde
+internet, de modo que cualquiera podía lanzar un rastreo o un ataque de fuerza bruta contra un tercero
+desde la dirección del grupo; la credencial documentada no abría el frontend; cuatro claves de la API
+de Anthropic estaban dentro del historial de git; y el módulo de IA no conseguía hablar con el backend.
+
+*Qué se ha hecho.* Primero la casa: historial de git limpiado y las cuatro claves revocadas y
+verificadas muertas; los puertos 8000 y 3000 retirados de internet, orígenes restringidos, WebSocket
+autenticado y el servidor endurecido con cortafuegos y `fail2ban`. Después la identidad: registro y
+acceso por usuario con JWT y aislamiento entre sesiones, donde se encontraron y cerraron *cuatro fugas*
+—y un quinto fallo que introdujo la propia corrección—, verificado once de once y desplegado en
+producción. Luego el módulo de IA: bus interno entre backend y modelo, disparo de la auditoría desde el
+panel, operación degradada cuando el modelo falla o no supera el umbral de confianza, y un *techo de
+gasto* que nace de una lección cara de la P1. Por último, el pulido con uso real: quince defectos en el
+Spider y dieciséis en el Repeater, la mayoría encontrados *usando* la herramienta, y la retirada del
+laboratorio vulnerable del producto entregable.
+
+*En qué estado se entrega.* De los *veintiún requisitos numerados*, quince se entregan *cumplidos*
+—uno con una limitación documentada en pantalla pequeña—, uno *modificado* y uno *descartado*, ambos
+justificados en el apartado 4, uno *parcial* (el grafo de contribuciones, partido por dos correos del
+mismo autor) y uno *pendiente declarado*: TLS. Dos filas de la matriz quedan marcadas a revisar. El
+código está *congelado y etiquetado* como `v1.0-practica3` y *desplegado en producción sobre esa misma
+etiqueta*: lo que se ve funcionando es lo que hay en el repositorio.
+
+*Cómo se puede comprobar.* El anexo del apartado 13 reconstruye los *dieciocho casos* de prueba que
+cita la matriz con dos columnas —lo que daba el prototipo en septiembre y lo que da el código
+congelado— y dice *de dónde sale cada resultado*: seis reejecutados contra producción, seis demostrados
+por una figura de esta memoria, cinco no reejecutados con su motivo escrito y uno con el procedimiento
+caducado. Lo que no se ha medido, no se afirma.
+
+*Lo que esta memoria no esconde.* El uso de herramientas de IA en la propia práctica se declara en el
+apartado 12, con la distinción entre lo generado y lo verificado; las limitaciones conocidas están en
+el apartado 10; y las afirmaciones que hubo que rectificar sobre la marcha quedan declaradas en el
+cuerpo del documento, no corregidas en silencio.
 
 = 3. Punto de partida
 HookSuite nació en la Práctica 1 como prototipo funcional de una suite de auditoría web «tipo Burp Suite» operada desde el navegador y asistida por IA. Quedó desplegado en un servidor Hetzner (`www.hooksuite.de`) con Docker Compose y, desde la entrega de mayo de 2026, *nadie volvió a tocarlo*: el máster encadenó otras actividades y la Práctica 3 lo retoma tal como quedó.
