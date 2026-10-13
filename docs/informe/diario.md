@@ -4606,3 +4606,39 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   descartado solo existen en el momento, y rellenarlas a posteriori seria inventarlas. **Lo decide josemax.**
 - **A que requisito toca:** apdo. **2** (cifras tomadas del **9**). **Evidencia:** `(no aplica)`, queda en
   git (`276d1a57`). **Horas:** ~0,5 h de Claude.
+
+### Fase 3 (13-oct, 18:5x) · El apartado 7 cierra su hueco: un STRIDE medido, no de plantilla
+
+- **Que se hizo:** las cuatro piezas que le faltaban al apdo. 7 —**modelo STRIDE**, validacion de entradas,
+  dependencias y datos personales—. Huecos: 13 → **12**. Diff de 93+/1-, las dos salidas regeneradas en la
+  misma pasada y artefacto republicado.
+- **Por que el STRIDE no se escribio de plantilla.** Se aplico a los **seis componentes reales** del apdo. 5
+  y a la frontera que movio la Fase 2 (antes autenticaba el proxy con una contrasena compartida; hoy el
+  backend, por persona). Y lleva delante una premisa que un lector echaria en falta: **HookSuite es una
+  herramienta ofensiva y su funcion es mandar trafico arbitrario**, asi que el control no puede ser «no
+  permitir destinos arbitrarios» —eso es desactivar el producto— sino que solo entren personas autenticadas
+  y que cada una responda de lo suyo. Lo que en otra aplicacion seria un fallo, aqui es RF-02.
+- 🔑 **Las dependencias se MIDIERON, no se describieron.** `pip-audit` no estaba instalado; se instalo en el
+  venv de herramientas. Frontend: 241 dependencias resueltas → **12 avisos** (9 altos), y **8** si se
+  restringe al arbol de produccion. Backend: **78 avisos en 12 paquetes**. El dato que mas pesa: **la
+  libreria que firma los tokens de la Fase 2 acumula trece avisos** en la version fijada.
+- 🔴 **Dos afirmaciones falsas evitadas, y las dos las caza comprobar en vez de suponer.**
+  1. Para separar produccion de construccion conte `npm ls … | grep nombre@`. Daba «si» para una
+     herramienta de desarrollo y **sospeche de mi propio dato**: ese recuento no mide el arbol, mide el
+     texto de la salida. Rehecho por la via canonica (`npm audit --omit=dev`) resulta que **si esta** en el
+     arbol de produccion, pero por un motivo distinto del que yo habria escrito: entra por el complemento
+     de estilos, que es dependencia de produccion. **El medidor estaba mal y la sospecha tambien.**
+  2. Iba a declarar el proxy de la P1 **codigo muerto** y a proponer sacarlo de los requisitos —arrastra
+     cinco paquetes mas—. `main.py` y la ruta de alta **importan el gestor que lo lanza como subproceso**
+     con su complemento. **Sigue cableado.** Las dos arquitecturas conviven, y esa convivencia es lo que
+     mantiene viva su superficie de avisos. Un `grep` de los imports costo diez segundos y evito proponer
+     un cambio que habria roto el arranque el dia de la congelacion.
+- **R7 aplicado al propio apartado:** los paquetes vulnerables se nombran **por su papel**, no por nombre +
+  version + numero de avisos. El repositorio es publico y el producto esta **sin TLS**: esa lista es un mapa.
+  Las versiones estan en los ficheros de requisitos para quien tenga acceso. **Y al escribirlo me contradije**
+  —dos lineas antes nombraba el proxy de la P1—, asi que la excepcion queda **declarada en el propio texto**
+  en vez de dejar la incoherencia (R9).
+- **Lo que NO se hizo, y es deliberado:** no se actualizo ninguna dependencia. Es el dia de la congelacion,
+  el video se graba sobre esta etiqueta y subir la libreria de tokens cambia el codigo que se entrega.
+- **A que requisito toca:** **RNF-07**; apdos. **7** y **10**. **Evidencia:** `(no aplica)`, queda en git
+  (`3d1212e3`). **Horas:** ~0,7 h de Claude.
