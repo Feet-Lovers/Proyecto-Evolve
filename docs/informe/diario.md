@@ -4485,3 +4485,54 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
 - **Verificación:** build en verde —que es lo que de verdad valida que el JSX no quedó partido—, linter sin
   `no-undef`, los avisos que deben seguir presentes y los retirados a **0**.
 - **A qué requisito toca:** **RF-05**; al **apdo. 12**. **Evidencia:** `(no aplica)`. **Horas:** ~0,3 h.
+
+### Fase 3 (13-oct, 08:26) · La jornada del Repeater entra en la memoria tecnica, y el destilado destapa una cookie en el navegador
+
+- **Por que se hizo esto y no otra cosa.** El cerco de la linea abrio con **R3b en rojo**: el `.typ`
+  llevaba **25 h** por detras del diario (ultimo cambio el 11-oct a las 20:24; el diario, el 12-oct a las
+  21:24). Es decir, las **25 entradas** de la jornada del Repeater no estaban destiladas, y hoy es la
+  **congelacion**: lo que se congela es lo que se entrega. Se arregla antes de seguir, que es lo que manda
+  el protocolo con un desajuste al arrancar.
+- **Que se hizo.** Destilado de las 25 entradas a **siete apartados**: RF-04 pasa a «a revisar
+  (modificado)» en el apdo. 4 con su version original, la nueva y el motivo; los dos interruptores de la
+  funcion de envio en el apdo. 5; el Repeater tal como queda —con `preparar` y sus tres avisos— en el
+  apdo. 6; el pulido del 12-oct en el apdo. 8, con **tabla de dieciseis defectos** y el relato del
+  historial anadido a las 10:08 y retirado a las 17:28; **cuatro limitaciones nuevas** en el apdo. 10; las
+  horas en el 11; y los **ocho defectos propios** en el 12, con que los detecto cada uno. Las dos salidas
+  **regeneradas en la misma pasada** (R4) y commit `804d1b4c` a nombre de josemax por la excepcion de la
+  memoria tecnica, empujado en el momento (R2 del 10-oct).
+- 🔑 **Lo que el destilado destapo, y no estaba en ningun pendiente.** El **borrador del Repeater guarda
+  la cookie de sesion del objetivo** en el almacenamiento del navegador. El filtro que lo impedia
+  (`sinCredenciales`) se anadio el 12-oct a las 12:37 **en la persistencia del historial**, y a las 17:28
+  el commit `a869bc54` lo **borro junto con el historial**. Lo que sigue escribiendo es el *borrador*
+  (`RequestEditor.jsx:58-62`), que nunca paso por ese filtro. **El patron que hay que recordar: una medida
+  de seguridad pegada a la funcion que la motivo desaparece con ella, y ninguna prueba lo nota** porque el
+  producto sigue funcionando igual. Atado al codigo y al historial de git antes de afirmarlo (R9).
+- **Y una frase mia que queda rectificada.** El diario del 12-oct a las 13:35 dice que «el filtro que
+  impide persistir credenciales en `sessionStorage` sigue en pie». **Dejo de ser cierto cuatro horas
+  despues, el mismo dia.** Queda declarado en el apdo. 10, no corregido en silencio.
+- **Que se descarto, y lo decidio josemax.** Arreglarlo hoy (son tres lineas: reutilizar al guardar la
+  lista de cabeceras de sesion que el editor ya usa para avisar). **Se declara como limitacion y no se
+  toca el producto el dia de la congelacion.** Tambien se le ofrecio llevarlo a produccion; descartado por
+  lo mismo. Riesgo acotado y escrito sin minimizarlo: hace falta ejecucion de codigo en el panel, la unica
+  superficie de ese tipo esta aislada desde el 11-oct y el almacen se vacia al cerrar la pestana.
+- 🔴 **Que fallo por mi parte, dos veces y las dos en la VERIFICACION, no en el cambio.**
+  1. Comprobe el PDF con `typst compile … | tail -20 && echo "salio con $?"`: **el `$?` es el del `tail`**,
+     que siempre es 0. **Es exactamente el fallo que yo mismo documente ayer a las 12:37** y lo repeti
+     veinte horas despues. Recompilado con `if typst compile …; then`.
+  2. Escanee secretos sobre el **PDF crudo** con `grep -a`. Daba 0 en los cinco patrones, pero el control
+     positivo dio **1** cuando en el `.typ` daba 15: el texto del PDF va **comprimido**, asi que un
+     secreto dentro del cuerpo **tambien** habria dado 0. Repetido sobre el texto de `pdftotext` (2.872
+     lineas, controles positivos a 13 y 8, los cinco patrones a 0). **Un cero solo vale cuando el medidor
+     ha demostrado que sabria cantar otra cosa — sobre el fichero que de verdad se escanea.**
+  3. Menor: un recuento de verificacion dio 0 para «A revisar: modificado el 12-oct» y la seccion **si
+     estaba**; era mi patron, que buscaba con mayuscula lo que el encabezado escribe en minuscula.
+- **Decision de forma, por si se repite.** El `.typ` se edito con un script de sustituciones exactas que
+  **exige una sola coincidencia por ancla y no escribe nada si alguna falla** (15/15), leyendo y
+  escribiendo con `newline=""` en los dos extremos. Diff resultante: **131 inserciones y 10 bajas** en el
+  `.typ`, que es el tamano del cambio y no un reescrito entero.
+- **A que requisito toca:** **RF-04** (modificado), **RF-05**, **RNF-07**, y a los apartados **4, 5, 6, 8,
+  10, 11 y 12** de la memoria.
+  **Evidencia:** `(no aplica)` — el destilado es documento, y queda en git. La limitacion de la cookie
+  esta atada a `RequestEditor.jsx:58-62` y a los commits `4fc8bdc7` y `a869bc54`.
+  **Horas:** ~1,2 h de Claude.
