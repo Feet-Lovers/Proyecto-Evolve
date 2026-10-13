@@ -4668,3 +4668,27 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   por su ruta**, para no dejarle al lector del repositorio referencias que no puede abrir.
 - **A que requisito toca:** apdo. **13**; las horas van al **11**. **Evidencia:** `(no aplica)`, queda en git
   (`4c920252`). **Horas:** ~0,6 h de Claude.
+
+### Fase 3 (13-oct, 19:3x) · El apartado 12: el reparto por fase sale del propio diario, contado
+
+- **Que se hizo:** el apdo. 12 cierra su hueco con tres piezas —**que aporto el asistente fase por fase**,
+  **generado frente a verificado** y **lo que el registro de horas no puede decir**—. Huecos: 11 → **10**.
+- **El reparto por fase se CONTO, no se estimo.** Se recorrieron las entradas de este diario una a una:
+  **176 entradas, 174 con campo de horas, 85,9 h registradas**. Por fase: Fase 0 → 9 entradas y 4,6 h;
+  Fase 1 → 19 y 9,0 h; Fase 2 → 21 y 15,9 h; **Fase 3 → 118 entradas y 47,1 h** (el pulido y RF-08 se comen
+  la practica).
+- 🔑 **Y el recuento destapo un limite del propio diario, que es el hallazgo de la entrada.** El campo de
+  horas **solo empezo a decir de quien eran** en la Fase 3: **39,5 h atribuidas al asistente en 99
+  entradas**, frente a **38,0 h de las Fases 0-2** (mas 8,5 h de entradas anteriores a la numeracion por
+  fases) **sin dueno anotado**. Es decir: **el apdo. 11 no puede repartir horas por persona desde aqui**.
+  Caben dos salidas honestas —aplicar el modelo de trabajo vigente (construyo el asistente, asi que la
+  mayor parte serian suyas) o declararlas no atribuibles— y la memoria **deja la decision a josemax** en vez
+  de rellenar una tabla que parezca medida. Rellenarla habria sido inventar un dato con aspecto de dato.
+- **Lo que NO se repitio:** el apartado ya contaba los limites del filtro del modelo, los ocho defectos que
+  el asistente introdujo en una jornada (seis de ellos cazados por josemax **usando** el producto) y la
+  delegacion de lectura. Las piezas nuevas **apuntan a eso en vez de repetirlo**.
+- **Las dos familias de error propio quedan nombradas**, porque se repiten: *un medidor que no sabria cantar
+  otra cosa* (el cero sobre el PDF comprimido; el recuento sobre el texto de una salida cuando lo que se
+  queria medir era un arbol) y *un documento que envejece en horas* (los tres pendientes caducados de hoy).
+- **A que requisito toca:** apdo. **12**, y da material al **11**. **Evidencia:** `(no aplica)`, queda en
+  git (`ab0ba4c5`). **Horas:** ~0,5 h de Claude.
