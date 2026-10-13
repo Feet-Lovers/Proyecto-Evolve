@@ -823,6 +823,8 @@ El Repeater no tiene historial: mantiene *una* petición cargada y, mientras la 
 
 *Por qué no se arregla ahora, y qué costaría.* La corrección son tres líneas: reutilizar al guardar la misma lista de cabeceras de sesión que el editor ya usa para avisar de que la petición viaja autenticada. Se decide no tocar el producto el día de la congelación. La contrapartida del arreglo también está medida: tras un refresco la petición volvería sin sesión y habría que pulsar `preparar` otra vez, que es la misma contrapartida que el grupo ya aceptó el 12-oct para el historial.
 
+*Y dos detalles del mismo borrador, menores pero medidos, para que no se lean como un olvido.* El borrador se *relee del almacenamiento en cada repintado* de la pantalla, aunque solo haga falta la primera vez —se vuelve a interpretar el mismo texto para descartarlo acto seguido—. Y `limpiar` borra la clave del almacenamiento, pero el guardado automático se dispara inmediatamente después, al vaciarse los campos, y *la vuelve a escribir con la petición en blanco*: no queda nada del trabajo anterior, pero la clave reaparece. Ninguno de los dos afecta al uso; se dejan escritos porque se encontraron leyendo el código y van al mismo sitio que su arreglo cuando se retome.
+
 == Lo que falta para igualar al Repeater de referencia
 Tres diferencias conocidas y no cerradas:
 
