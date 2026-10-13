@@ -4746,3 +4746,30 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   mejor que uno verde que no mira.
 - **A que requisito toca:** **RNF-03** (despliegue); apdo. **13** (manual). **Evidencia:** `(no aplica)`.
   **Horas:** ~0,2 h de Claude.
+
+### Fase 3 (13-oct, 20:3x) · El apartado 11: las horas, reconstruidas con la regla a la vista
+
+- **Que se hizo:** josemax eligio **reconstruir la atribucion** en vez de declararla no atribuible, asi que
+  se recorrieron **las 60 entradas sin dueno** y se escribio el apdo. 11 separando tres cosas que las tablas
+  de horas suelen mezclar: lo **escrito**, lo **inferido con una regla declarada** y lo que **no se registro**.
+- **El resultado.** 179 entradas, 177 con horas, **87,2 h**. Asistente: **87,1 h** = *40,7 escritas* con su
+  nombre (Fase 3 en adelante) + **46,4 inferidas** (entradas anteriores cuyo campo dice solo «~1 h»).
+  josemax: **sin horas registradas**, pero **43 entradas registran una intervencion suya** —23 decisiones,
+  5 revocaciones, 5 pruebas en produccion, 5 lotes de capturas, 3 ejecuciones en la caja y 2 fusiones—.
+  Los otros cuatro: **sin horas**, y por diseno: el modelo del 1-oct les asigna confirmar su parcela.
+- 🔑 **La regla de inferencia se escribe para que se pueda discutir**, no se esconde: desde la Fase 3 el
+  campo dice «de Claude» y antes decia «~1 h» a secas; **las entradas las redacto el mismo autor de principio
+  a fin**, con el mismo formato y el mismo proposito, asi que se infiere que el campo significaba lo mismo
+  antes de decirlo. **Son 46,4 de 87,2 h: mas de la mitad**, y por eso la cifra se da con su desglose
+  delante en vez de como un total redondo.
+- **Y se dice lo que la tabla NO es:** no es el esfuerzo del grupo en el producto (la P1 la escribieron los
+  cinco; este diario solo cubre las sesiones de la P3), y no mide valor — una decision de treinta segundos
+  («DVWA fuera», «las credenciales no van al repositorio») cambio el entregable mas que varias horas de
+  construccion.
+- **Lo que queda, en un hueco mas estrecho:** las horas de josemax y las de los otros cuatro. **No estan en
+  ningun registro y no se inventan aqui.**
+- **Nota de medicion, por si alguien repite el calculo:** un primer recuento dio «45,6 h sin dueno» y el
+  bueno es **46,4**; la diferencia son entradas cuyo campo dice «0,6 h de destilado» o «0,25 h de la …», que
+  el patron leyo como si «destilado» fuese una persona. **Un regex que busca personas encuentra palabras.**
+- **A que requisito toca:** apdo. **11** (y el **12** ya daba el material). **Evidencia:** `(no aplica)`,
+  queda en git (`5be8d6a8`). **Horas:** ~0,6 h de Claude.
