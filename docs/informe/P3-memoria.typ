@@ -397,7 +397,43 @@ El Repeater es la pantalla donde el auditor modifica una petición y la reenvía
 
 #imagen("../capturas/fase3/RF-05-repeater-sin-respuesta.png", "RF-05 — un fallo de red deja de disfrazarse de respuesta. Donde iría el código HTTP aparece «sin respuesta» en rojo, y el tiempo y el tamaño *desaparecen* de la barra: 0 ms y 0,0 KB no son medidas, son la ausencia de ellas. Debajo, la dirección a la que se envió y el motivo exacto —el host no se pudo resolver—.")
 
-#hueco("José María + Claude", "Documentar cada funcionalidad (qué hace, cómo se usa, qué requisitos cubre) con capturas de producto; las de pantalla las saca José María (R6), tras la Fase 3, cuando el login nuevo cambie las pantallas. El commit de cada módulo se firma a nombre de su responsable cuando toque (R2): Ivan/frontend, Macarena/backend, Nacho/playwright, Carlos/DevTools, José María/IA.")
+== Las funcionalidades, una a una: qué hace, cómo se usa y qué requisito cubre
+Lo anterior cuenta *lo que cambió* en cada fase. Esta tabla cuenta *lo que hay*, pantalla por pantalla, tal
+como queda en la versión congelada: el panel tiene *seis pestañas* más la pantalla de acceso, y la columna
+de la derecha dice dónde se ve cada una sin repetir aquí figuras que ya están en otros apartados.
+
+#tabla(
+  (auto, 6fr, auto, 3fr),
+  "
+  Pantalla | Qué hace y cómo se usa | Requisitos | Dónde se ve
+  *Spider* | Rastrea el objetivo siguiendo enlaces y formularios y levanta su mapa. Se escribe la dirección, se lanza, y la tabla se va llenando; se puede *detener* a medias, filtrar por método y mandar una petición al Repeater. Las cabeceras que muestra son *las que se enviaron de verdad*, no una plantilla | RF-03 | figuras del apdo. 8 (antes y después del pulido)
+  *Repeater* | Banco de trabajo de *una* petición: se modifica y se reenvía *exactamente lo que se ve en pantalla*. Avisa si la petición lleva sesión heredada y ofrece quitarla; el botón `preparar` convierte la plantilla de un formulario en una petición que funciona; la respuesta se lee en Raw, Pretty, Preview, Headers y la página preparada | RF-04 · RF-05 | cinco figuras en los apdos. 6 y 8
+  *Intruder* | Prueba muchos valores en un punto marcado de la petición y señala las respuestas que se salen del patrón. Se marca el campo, se elige diccionario, se lanza y se puede *cancelar* sin dejar el servidor trabajando | RF-06 | *falta captura del producto congelado*
+  *Utilidades* | Cuatro herramientas que no salen a la red: *codificador* (base64, URL, HTML y *lectura de JWT*), *generador de huellas*, *probador de expresiones regulares* y *generador de payloads*. Se pega el texto y se ve el resultado al lado | RF-07 | *falta captura del producto congelado*
+  *Vulnerabilidades* | Panel donde aterrizan los hallazgos con su severidad y su *confianza*, y desde donde se dispara la auditoría con IA. Si el modelo falla o no supera el umbral, el hallazgo aparece como *no analizado* en lugar de desaparecer | RF-08 · RNF-06 | figura del apdo. 8 (operación degradada)
+  *Manual* | Manual de uso *dentro del propio producto*, control por control y navegable por pastillas. No lo pide ningún requisito: salió del pulido, al comprobar que explicar una pantalla destapa sus defectos | — (mejora) | figura del apdo. 8
+  *Acceso* (fuera de la barra) | Alta con código de invitación y entrada con token firmado por el servidor. Cada cuenta ve *solo sus propios datos* | RF-11 · RF-12 | cuatro figuras de producción en el apdo. 7
+  ",
+)
+
+*Tres piezas trabajan sin pestaña propia*, y conviene decirlo porque quien busque su pantalla no la va a
+encontrar: el *proxy del lado servidor* (RF-02) es el que ejecuta las peticiones por debajo de Spider,
+Repeater e Intruder; el *navegador real* (RF-10) lo dirige el módulo de IA, no una persona; y el
+*cortafuegos por sesión* (RNF-08) es un agente del sistema. La séptima pestaña que hubo, *Red* (RF-09), se
+retiró al descartar ese requisito —su figura se capturó *antes* de retirarla, que es lo que exige R6—.
+
+*Dos notas de honestidad sobre esta tabla.*
+- *La pestaña que se llama Spider vive en la ruta `/proxy`*. Es un resto del nombre que tenía antes del
+  pivote de RF-02, y se deja dicho porque cualquiera que mire las rutas lo va a notar.
+- *El manual interno cubre dos de sus cinco secciones*: Spider y Repeater escritas, e Intruder, Utilidades y
+  Vulnerabilidades *marcadas como pendientes dentro del propio producto*. Es la misma regla que esta memoria
+  aplica a sus huecos: quien usa la herramienta ve que falta, en vez de encontrarse una sección vacía.
+
+*Y una corrección de lo que esta memoria dio por roto.* La verificación del 29 de septiembre anotó que
+«el codificador no soporta JWT aunque RF-07 lo promete». *Hoy sí lo soporta*: la lista de conversiones del
+codificador incluye la lectura de JWT, junto a base64, URL y HTML. RF-07 queda *cumplido* sin salvedades, y
+se dice aquí porque el defecto se declaró en su día y no se puede retirar en silencio (R9).
+#hueco("José María", "Dos capturas del producto congelado, y solo dos: Intruder con un ataque lanzado (diccionario elegido y resultados a la vista) y Utilidades con el codificador, dejando ver la lectura de JWT. Nombres atados al requisito: RF-06-intruder-lanzado.png y RF-07-utilidades-codificador-jwt.png. Las capturas de la P1 que hay en docs/capturas/frontend/ NO sirven: muestran la interfaz anterior al login nuevo y a la reforma del Repeater (R6).")
 
 = 7. Seguridad del producto
 Modelo de amenazas, secretos, autenticación, validación de entradas, dependencias y datos personales. (Base en `REQUISITOS.md` §3.) Contenido ya verificado en esta práctica:
