@@ -215,7 +215,7 @@ El enunciado pide que todo requisito modificado o descartado lleve su versión o
   el requisito describía un *mecanismo*, el mecanismo cambió con justificación y el objetivo —auditar
   autenticado— se sigue cumpliendo.
 - *Y al aplicarlo salió un defecto anterior, que se arregla en el mismo paso.* La columna de estado de las
-  listas de este apartado se titulaba *Estado P1*, pero **no** contenía solo estados de la P1: `RF-09`
+  listas de este apartado se titulaba *Estado P1*, pero *no* contenía solo estados de la P1: `RF-09`
   figuraba ahí como *Descartado*, que es una decisión del 11 de octubre. Es decir, la columna *se actualiza*
   —lo dice su propia entradilla— y el título mentía. Se corrige el título y se ponen al día las dos celdas
   que nunca se actualizaron: RF-02, que la matriz ya daba por modificado, y RNF-06, que la matriz da por
