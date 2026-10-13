@@ -106,7 +106,7 @@ Usando las cinco categorías del enunciado. El recuento es provisional, a valida
   *Cumplido* | Implementado en la P1 y funciona; en la P3 se verifica con prueba y evidencia | RF-01, RF-03, RF-04, RF-05, RF-06, RF-07, RF-11 · RNF-01, RNF-02, RNF-03, RNF-05, RNF-08 *(12)*
   *Parcial* | Existe algo, pero incompleto o con fallos; hay que terminarlo y probarlo | RF-08 · RNF-04, RNF-07 *(3)*
   *Pendiente* | Definido, pero sin implementar; se hace desde cero | RF-09, RF-10, RF-12 · RNF-09 *(4)*
-  *A revisar* | El feedback o la experiencia indican que estaba mal planteado; se reformula con justificación | RF-02 · RNF-06 *(2)*
+  *A revisar* | El feedback o la experiencia indican que estaba mal planteado; se reformula con justificación | RF-02 · RNF-06 *(2)* *en el punto de partida*; RF-04 se suma el 12-oct, durante la Fase 3 (§4)
   *Descartado* | Se decide no implementarlo (debe ser la excepción y justificarse) | — ninguno *en el punto de partida*; RF-09 se descarta después, durante la Fase 3 (§4)
   ",
 )
@@ -163,6 +163,14 @@ El enunciado pide que todo requisito modificado o descartado lleve su versión o
 - *Motivo:* en la P1, el modelo PAC quedó expuesto y se saturó con tráfico de bots. El pivote a `httpx` directo elimina esa superficie y simplifica el flujo. Es el caso de libro de «requisito reformulado con justificación».
 - *Cierre en la Fase 2 (6-oct): el PAC se retiró del código.* Hasta entonces el producto seguía sirviendo el fichero de autoconfiguración aunque el modelo estuviera abandonado desde la P1. Se comprobó que estaba muerto antes de tocarlo: su único consumidor en la interfaz era un componente *que ningún otro fichero importaba*, y el segundo (el lanzador de navegador de RF-09) no está integrado y además apunta a un puerto que la Fase 1 había cerrado, así que ya estaba roto por su cuenta. Se retiraron la ruta del backend, sus dos bloques en Nginx y el componente.
 - *Ganancia de seguridad no buscada.* El PAC era la *única* ruta que tenía que quedar sin autenticar, porque un navegador no envía credenciales al pedirlo, y por eso llevaba una excepción expresa en el guardián de la Fase 2. Al jubilarlo, *toda* `/api` exige token sin excepciones: no queda ningún hueco que mantener ni que explicar. Una excepción de seguridad que se puede eliminar vale más que una excepción bien documentada.
+
+=== RF-04 — auditoría autenticada con sesión compartida (*a revisar: modificado el 12-oct*)
+- *Versión original (P1), tal como está escrito el requisito:* sesión `httpx` persistente *compartida por Spider, Repeater e Intruder*, que hereda las cookies del login del objetivo.
+- *Versión nueva:* el Repeater deja de usar esa sesión compartida y envía una petición *independiente*, con exactamente las cabeceras que se ven en pantalla. Spider, Proxy e Intruder siguen compartiéndola.
+- *Motivo.* El requisito describe un *mecanismo*, pero lo que persigue es poder auditar autenticado; y ese mecanismo rompía en el Repeater algo que vale más: *la reproducibilidad*. El cliente compartido hacía dos cosas invisibles —enviaba cookies que no estaban en la petición y se quedaba con las que devolvía el servidor—, así que *dos envíos idénticos daban resultados distintos* y lo que se veía en pantalla no era lo que salía por el cable. Se descubrió porque un POST *sin* `Cookie` en sus cabeceras recibía la respuesta de la última página que había visitado el Spider: si el servidor reconoce al auditor sin que él mande sesión, la sesión la pone el producto por detrás.
+- *Por qué el requisito se sigue cumpliendo.* La sesión se hereda igual, pero *por un canal explícito*: desde el arreglo de esa misma mañana las cabeceras que el producto muestra son las realmente enviadas, de modo que la `Cookie` del objetivo viaja *en la petición*, visible y editable. Antes de ese arreglo este cambio habría roto la herencia de verdad; después de él, la traslada de un canal oculto a uno a la vista.
+- *Lo que el cambio destapó, y es la lección de la jornada.* Al quitarle el cliente compartido, *todos los POST empezaron a devolver `419`*. La causa no era el cambio: los formularios que el Spider descubre viajaban con unas cabeceras incompletas, sin la cookie de sesión, y *el cliente compartido lo estaba tapando*. Un mecanismo «de más» sostenía un dato incompleto que nadie veía, y solo se descubrió al quitarlo. Se arregló el origen —los formularios descubiertos parten ahora de las cabeceras realmente enviadas al pedir la página— y el `419` desapareció. De aquí sale una regla de trabajo: *preguntar por qué algo está así antes de tocarlo* no es burocracia.
+- *Estado en la matriz:* pasa de *Cumplido* a *A revisar (modificado)*, la misma categoría de RF-02 y RNF-06. Se declara en lugar de dejarlo como cumplido, que es lo que habría hecho el documento si nadie lo mirara.
 
 === RNF-06 — operación degradada (*a revisar*)
 - *Original:* enunciado como principio en la P1, sin demostrar.
@@ -252,6 +260,16 @@ Reconectarlo admitia tres caminos, y la eleccion dice mas del producto que la im
 *El detalle que ordena todo lo demas: el dueño viaja con la orden.* Cada mensaje lleva el espacio de datos de quien pidio la auditoria, tomado del control de acceso en el momento de publicar. El modulo de IA construye su trabajo con ese dato y lo devuelve tal cual, de modo que los hallazgos aterrizan en la sesion de quien los pidio. Eso resuelve de raiz un problema que arrastrabamos: el modulo usaba un identificador de sesion *fijo*, heredado de antes del sistema de usuarios, que no era de nadie. No habia que arbitrar entre cuatro identificadores: habia que hacer que el dato viajara.
 
 *Y la contrapartida de un bus, que es la opuesta a la de un control de acceso.* Un control de acceso falla cerrando; un bus falla *abriendo*: un mensaje que llega sin dueño podria repartirse «por si acaso», y eso es literalmente la fuga que cerro la Fase 2. Asi que un mensaje sin dueño *se descarta*, y hay pruebas de eso y de que dos auditores no ven lo del otro (apartado 8).
+=== El Repeater se separa de la sesión compartida y de las redirecciones (RF-05)
+Las cuatro herramientas que lanzan peticiones —Proxy, Spider, Repeater e Intruder— comparten una sola función de envío. Eso es bueno para el mantenimiento y malo para los matices: lo que conviene a un rastreador no conviene a un banco de pruebas manual. El 12-oct esa función gana *dos interruptores* en vez de duplicarse, y el Repeater es el único que los cambia:
+
+- *Seguir redirecciones (activado por omisión; el Repeater lo desactiva).* Un Repeater que las sigue *nunca te enseña el `302`*: muestra la última parada y pierde por el camino la cabecera `Location` y cualquier `Set-Cookie` del salto, que en auditoría es justo lo que interesa. La herramienta de referencia muestra el `302` tal cual y deja que el auditor decida si lo sigue. El Spider las necesita activadas para rastrear, y el Proxy no se toca.
+- *Cliente compartido (activado por omisión; el Repeater lo desactiva).* Separa el envío manual del cliente persistente que custodia las cookies del objetivo. La justificación completa está en RF-04 (apartado 4): sin esto, dos envíos idénticos no daban el mismo resultado.
+
+*Y un arreglo que beneficia a los cuatro a la vez.* Las cabeceras que el producto muestra como «enviadas» se leen ahora *de la petición que la propia respuesta conserva*, no de un diccionario construido aparte. Antes, el Spider enseñaba un `User-Agent` sorteado por segunda vez, un `Host` que nadie había puesto y ninguna `Cookie`, mientras enviaba otra cosa. En una herramienta de auditoría eso no es un defecto de presentación: *la evidencia que se muestra tiene que ser la petición que salió*, porque es la que acaba copiada en un informe.
+
+*Decisión de alcance, declarada.* La librería de red permite decidir las dos cosas *petición a petición*, así que el cliente persistente no se modifica y las otras tres herramientas conservan su comportamiento exacto. Se eligió eso antes que construir un segundo cliente para el Repeater, que habría duplicado la configuración de red —y con ella la desactivación de la verificación de certificados, que conviene tener en un solo sitio—.
+
 === Proxy del lado servidor: pivote PAC → httpx (RF-02)
 La decisión arquitectónica de más peso heredada de la P1. En origen, HookSuite interceptaba el tráfico del navegador con un archivo de autoconfiguración (PAC) + WebSockets; ese modelo quedó expuesto y se saturó con tráfico de bots. Se pivotó a que *el servidor ejecute las peticiones directamente con `httpx`*: menos superficie y un flujo más simple, a cambio de perder la captura pasiva del tráfico del navegador —justo lo que retoman después DevTools (RF-09) y Playwright (RF-10)—. Versión original/nueva/justificación detalladas en el apartado 4.
 
@@ -312,6 +330,19 @@ Funcionalidad nueva, no un defecto corregido: cada persona se crea su cuenta, en
 - *Cuentas persistentes.* Se guardan en un volumen propio, porque el despliegue reconstruye los contenedores y unas cuentas que se evaporasen en cada despliegue harían inútil el registro. El estado de sesión, en cambio, sigue siendo volátil a propósito (apartado 10): son cosas distintas.
 
 *Nota sobre el último:* no era el defecto que teníamos anotado. El pendiente decía «las sesiones no se conservan al reiniciar»; al abrirlo resultó que el problema real era el contrario y más grave —podían crecer sin límite desde fuera—. La volatilidad se justifica en el apartado 10; lo que se corrigió fue el crecimiento.
+== El Repeater: un banco de trabajo de una sola petición (Fase 3, 12-oct)
+El Repeater es la pantalla donde el auditor modifica una petición y la reenvía. Tras el pulido del 12-oct funciona así, y los criterios van explicados porque ninguno es evidente:
+
+- *Una petición cada vez.* Mientras el Repeater tiene una cargada, el Spider *no deja enviarle otra*: su botón pasa a `repeater en uso`, en ámbar, y dice cómo liberarlo. No es una limitación técnica sino una decisión de diseño, justificada en el apartado 10.
+- *Lo que se ve es lo que se manda.* Las cabeceras del editor son exactamente las que salen por el cable, y el envío no arrastra ninguna sesión por detrás. Reenviar dos veces la misma petición da dos veces el mismo resultado: esa es la prueba de aceptación de la pantalla.
+- *Tres avisos que el producto antes se guardaba.* (1) *Sesión heredada:* si la petición lleva `Cookie`, `Authorization` o un token CSRF, un bloque ámbar lo dice y ofrece un botón que quita *solo* esas cabeceras, dejando intactos método, dirección y cuerpo. Probar la misma petición con y sin sesión es la operación que un auditor necesita, y antes había que borrarlas una a una. (2) *Redirección:* si la respuesta es `3xx`, el aviso dice a dónde apunta el `Location` y que el Repeater no la sigue. (3) *Sin respuesta:* un fallo de red ya no se disfraza de código HTTP `0`, ni enseña «0 ms» y «0,0 KB», que no son medidas sino la ausencia de ellas.
+- *La dirección a la que se envió, siempre legible*, en su propia línea bajo la barra de estado. Con varias peticiones seguidas, saber de cuál es la respuesta que estás mirando no es un lujo.
+- *El botón `preparar`, que es la pieza que faltaba.* La petición que el Spider manda al Repeater *no es una petición capturada*: es una plantilla leída del HTML de un formulario, con los campos sin valor rellenos con su propio nombre y el token de cuando se rastreó. *Nace vieja*, y al enviarla el servidor la rechaza o la rebota. `preparar` hace lo que hace un navegador antes de enviar un formulario: pide la página, saca *todos* los campos ocultos —no solo el token, así vale para cualquier marco de trabajo—, sustituye en el cuerpo los que coincidan por nombre y actualiza la `Cookie` si el servidor la cambió. Solo toca campos que ya estaban: no inventa ni reordena.
+- *Y la página preparada se queda*, en una pestaña propia junto a Raw, Pretty, Preview y Headers, con el mismo aislamiento que la vista previa. Antes, para volver a ver el formulario había que cambiar el método a GET, enviar y volver a POST. Pulsar `preparar` otra vez tras un envío fallido trae la página *con los valores que acabas de mandar* y los errores marcados: es la forma de corregir campo a campo sin salir de la pantalla. Mientras solo se ha preparado y no se ha enviado nada, las cuatro pestañas de respuesta no responden, y es correcto: no hay respuesta que enseñar.
+
+*El manual de uso gana su segunda sección.* La del Repeater documenta sus *veintiséis* controles uno a uno —de qué tipo es cada uno, qué hace y bajo qué condición aparece— y el manual pasa a leerse por pastillas en vez de en una tirada, con las tres secciones sin escribir marcadas a la vista. La regla sigue siendo la del 11-oct: una sección se escribe cuando su pestaña está pulida y verificada, nunca antes.
+#hueco("José María", "Capturas de producto del Repeater para este apartado: (1) el editor con el aviso de sesión heredada y su botón de quitar la sesión; (2) una respuesta 3xx con el aviso de redirección y el Location a la vista; (3) la pestaña Formulario tras pulsar preparar; (4) el Spider con su botón en «repeater en uso». OJO (R7): el panel de cabeceras muestra ahora la cookie de sesión del objetivo, así que esas capturas se censuran antes de publicarse.")
+
 #hueco("José María + Claude", "Documentar cada funcionalidad (qué hace, cómo se usa, qué requisitos cubre) con capturas de producto; las de pantalla las saca José María (R6), tras la Fase 3, cuando el login nuevo cambie las pantallas. El commit de cada módulo se firma a nombre de su responsable cuando toque (R2): Ivan/frontend, Macarena/backend, Nacho/playwright, Carlos/DevTools, José María/IA.")
 
 = 7. Seguridad del producto
@@ -484,6 +515,43 @@ Cerrada la Fase 2, el 11-oct no se añadió funcionalidad: la jornada se dedicó
 
 *Dos de los quince los introdujimos nosotros al arreglar otros.* Están contados en la tabla y se detallan en el apartado 12: un arreglo que hizo *desaparecer* formularios que antes solo sobraban, y un cambio de maquetación que recortó las últimas filas. Se señalan aquí porque el recuento honesto incluye los defectos propios, no solo los heredados.
 
+== El pulido del Repeater (12-oct): dieciséis defectos, y una función retirada el mismo día
+
+El 12-oct repitió el método del día anterior sobre la segunda pestaña: no se añadió alcance, se pulió lo que había. El resultado se parece al del Spider en el número y se diferencia en algo que conviene contar entero, porque es lo más instructivo de la jornada: *una función se añadió por la mañana y se retiró por la tarde*.
+
+#tabla(
+  (auto, 5fr, 2fr, auto),
+  "
+  Nº | Qué pasaba | Cómo apareció | Diario
+  1 | Un fallo de red se mostraba como una respuesta más, con el código HTTP `0` y medidas de «0 ms» y «0,0 KB» | leyendo el código | 10:50
+  2 | El panel no decía a qué dirección se había enviado: con varias peticiones seguidas no se sabía de cuál era la respuesta | usando | 10:50
+  3 | El cuerpo de la petición de envío mandaba el identificador de espacio de datos, residuo del modelo anterior al login | leyendo el código | 10:50
+  4 | `Limpiar` no era definitivo: al volver a la pestaña reaparecían la petición y sus cabeceras heredadas | usando | 12:37
+  5 | El Spider guardaba y enseñaba como enviadas unas cabeceras *fabricadas aparte*: otro `User-Agent`, un `Host` que nadie puso y ninguna `Cookie` | tirando de un hilo | 12:50
+  6 | El arreglo anterior seguía sin mostrar la cookie de sesión, porque la pone el cliente de red por debajo y no pasaba por ese diccionario | captura de josemax | 13:35
+  7 | Los cinco rótulos del panel de detalle no se distinguían del contenido: se leían las cabeceras de respuesta como si fueran de petición | usando | 13:30
+  8 | Las respuestas se cruzaban: se veía una dirección con el cuerpo de otra petición, y no era reproducible a voluntad | usando | 16:49
+  9 | No había forma de probar la misma petición *sin* sesión: el único botón vaciaba la petición entera | usando | 16:49
+  10 | El Repeater seguía las redirecciones siempre, así que *nunca* se veía el `302` ni su `Location` | comparando con la herramienta de referencia | 18:03
+  11 | Dos envíos idénticos daban resultados distintos: el cliente compartido ponía cookies que no estaban en la petición | usando | 18:37
+  12 | Los formularios descubiertos por el Spider viajaban sin sesión, y todos los POST devolvían `419` | usando | 18:45
+  13 | La petición que el Spider manda al Repeater nace vieja: es una plantilla con el token del rastreo, no una petición capturada | usando | 20:24
+  14 | `Limpiar` no borraba la página preparada, que se quedaba a la vista | usando | 20:43
+  15 | Dos avisos que ya no podían aparecer nunca: quedaba el código que los lee, no lo que los provoca | escribiendo el manual | 21:03 y 21:24
+  16 | El manual del Spider afirmaba de las cabeceras lo que el código no cumplía, y no documentaba un botón nuevo | escribiendo el manual | 21:13
+  ",
+)
+
+*La función que no llegó a la noche, y por qué se cuenta en vez de omitirse.* A las 10:08 el Repeater ganó un *historial* de peticiones: el contador de la cabecera, que hasta entonces no se podía abrir, pasó a ser el botón que despliega la lista, con borrado por fila y supervivencia al refresco. A las 17:28 se retiró entero. El motivo es que *todo el comportamiento errático de la jornada giraba a su alrededor* —respuestas cruzadas, entradas con la petición y la respuesta mal emparejadas, el panel mostrando la respuesta de otra— y tres arreglos sucesivos no lo dejaron estable, con la congelación al día siguiente. Un Repeater que mezcla respuestas es peor para un informe que un Repeater sin historial. Lo que ocupó su lugar es la decisión de diseño del apartado 10: *una petición cada vez*, con el estado «ocupado» visible desde la otra pantalla.
+
+*Y la causa de fondo, que apareció cuatro horas después de retirarlo.* El `302` invisible explicaba la confusión entera: al enviar un formulario que rebota, el producto mostraba el resultado del GET posterior sin decir que había habido un salto, de modo que la respuesta parecía ser la del POST. Si el `302` se hubiera visto desde el principio, el historial probablemente no habría necesitado retirarse. Se deja escrito porque ese es el orden real de los hechos: *primero se retiró el síntoma y después se encontró la causa*.
+
+*El patrón de los dieciséis, comparado con el del Spider.* En el Spider, once de quince eran fallos de *traslado*: el servidor sabía la respuesta y la pantalla no la enseñaba. Aquí el patrón es otro y más incómodo: *siete de los dieciséis son fallos de fidelidad* —el producto mostraba algo distinto de lo que hacía—. Cabeceras que no eran las enviadas, un `302` que no se veía, dos envíos iguales con distinto resultado, un fallo de red disfrazado de respuesta, respuestas cruzadas y avisos que ya no podían salir. En una herramienta de auditoría ese es el defecto más caro, porque *lo que la herramienta muestra es la evidencia que acaba en el informe*: un auditor que copie esas cabeceras documenta algo que no ocurrió.
+
+*El proyecto tenía un verificador configurado y sin usar.* La regresión más tonta de la jornada —el botón de enviar dejó de hacer nada porque un borrado por rango de líneas se llevó la declaración de una variable— la habría cazado el analizador estático del propio repositorio, que *nunca se había ejecutado*. Se probó a mordida (un fichero con una variable inexistente devuelve el error esperado) y desde entonces va *por delante* de cada verificación: hoy no queda ninguna variable no declarada en el frontend, con control positivo para que ese cero signifique algo. Lo que destapa de paso va al apartado 10: el frontend acumula veintitrés errores y dos avisos de otras reglas. *El proyecto no pasa su propio analizador*, y conviene decirlo.
+
+*Lo que ninguna de las verificaciones del asistente cazaba, dicho con nombre.* Cada cambio de la jornada se verificó contando cadenas de texto dentro del paquete construido. Ese método confirma que un texto *está*; no dice que se *lea* bien ni que la lógica funcione. Tres veces el mismo día dio por bueno algo roto: escapes que se mostraban en crudo, una dirección presente pero ilegible por falta de sitio, y la regresión del botón de enviar. La construcción de la imagen no comprueba variables no declaradas, el analizador no detecta errores de ejecución, y contar textos no detecta ninguno de los dos. *Lo único que cazó esos tres fue abrir la pantalla*, y de ahí que las capturas de producto las tome una persona (R6). El detalle de los ocho defectos que introdujo el asistente está en el apartado 12.
+
 == Condición de carrera detectada antes de reiniciar el servidor
 El agente del cortafuegos y el servicio de contenedores no tenían orden de arranque entre sí. Si el segundo ganaba la carrera, *creaba una carpeta donde debía ir el canal de comunicación del agente* —comportamiento normal al montar un fichero que no existe— y el agente quedaba en un bucle de reinicios. El servidor llevaba sin reiniciarse desde mayo, así que nunca se había puesto a prueba. Se corrigió fijando el orden de arranque antes de reiniciar; tras el reinicio, el contador de reinicios del agente marcaba *cero*: la carrera no llegó a producirse.
 
@@ -654,9 +722,9 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
   Req. | Descripción | Estado | Implementación (ruta) | Prueba | Evidencia
   RF-01 | Dashboard web sin instalación | Cumplido (seis pestañas: se retira Red y se añade Manual el 11-oct) | `frontend/src/App.jsx` + `Layout.jsx` + `pages/manual/ManualPage.jsx` | PR-01 | apdo. 8 · vídeo —:—
   RF-02 | Proxy del lado servidor (`httpx`) | Modificado (2 errores de servidor corregidos en F1) | `backend/services/proxy_service.py` | PR-19 | justif. apdo. 4 · apdo. 6
-  RF-03 | Spider / rastreo | Cumplido (4 defectos corregidos en F1; quince más en el pulido del 11-oct) | `backend/services/spider_service.py`, `frontend/.../ProxyPage.jsx`, `.../RequestsTable.jsx` | PR-03 | figs. apdo. 8 · vídeo —:—
-  RF-04 | Auditoría autenticada (sesión compartida) | Cumplido | `backend/services/session_service.py` | PR-04 | fig. — · vídeo —:—
-  RF-05 | Repeater | Cumplido (parser y avisos de error corregidos en F1; el importador de peticiones se traslada aquí desde el Spider el 11-oct y se *retira* el mismo día, por redundante con «enviar al repeater») | `backend/routes/repeater.py`, `backend/services/proxy_service.py`, `frontend/src/pages/repeater/` | PR-05 | apdo. 6 · vídeo —:—
+  RF-03 | Spider / rastreo | Cumplido (4 defectos corregidos en F1; quince más en el pulido del 11-oct; el 12-oct las cabeceras que muestra pasan a ser las realmente enviadas) | `backend/services/spider_service.py`, `frontend/.../ProxyPage.jsx`, `.../RequestsTable.jsx` | PR-03 | figs. apdo. 8 · vídeo —:—
+  RF-04 | Auditoría autenticada (sesión compartida) | *A revisar* (modificado el 12-oct: el Repeater envía con cliente propio y la sesión se hereda por cabecera explícita) | `backend/services/session_service.py`, `backend/services/proxy_service.py`, `backend/routes/repeater.py` | PR-04 | justif. apdo. 4 · apdo. 5
+  RF-05 | Repeater | Cumplido (parser y avisos de error corregidos en F1; el importador de peticiones se traslada aquí desde el Spider el 11-oct y se *retira* el mismo día; dieciséis defectos corregidos en el pulido del 12-oct, con un historial añadido y retirado esa misma jornada) | `backend/routes/repeater.py`, `backend/services/proxy_service.py`, `frontend/src/pages/repeater/` | PR-05 | apdos. 6 y 8 · vídeo —:—
   RF-06 | Intruder / fuzzing | Cumplido (cancelación corregida en F1) | `backend/services/intruder_service.py` | PR-06 | apdo. 6 · vídeo —:—
   RF-07 | Utilidades (incl. JWT) | Cumplido | `frontend/src/pages/utilities/` | PR-07 | fig. — · vídeo —:—
   RF-08 | IA → panel Vulnerabilidades | Cumplido (recorrido verificado de punta a punta el 10-oct; techo de gasto ejecutado) | `ia/`, `backend/routes/playwright.py`, `backend/services/redis_consumer.py`, `frontend/.../VulnerabilitiesPage.jsx` | PR-08 | figs. apdo. 8 · vídeo —:—
@@ -718,13 +786,13 @@ Lo que *sí* queda, y es consciente:
 2. *La vía de identificación de servidor no lleva guarda*, porque no compara contra el umbral: entrega la respuesta del modelo sin filtrar, así que no hay descarte silencioso que cerrar.
 3. *No se cambiaron las instrucciones del modelo para pedir un entero*, que era la alternativa más limpia en el plano conceptual —instrucciones y esquema de acuerdo en un contrato más estricto—. Se descartó por el momento: son cuatro ficheros del material que no se vuelca a la conversación, se editarían sin verlos, y son prosa y no una línea de código, a tres días de la congelación. Queda como trabajo futuro de coste bajo.
 
-== El manual de uso nace con una pestaña escrita y cuatro por escribir
+== El manual de uso va por dos pestañas escritas y tres por escribir
 
 El 11-oct se añadió una sexta pestaña, *Manual*, con el modo de uso de cada herramienta. Ataca de raíz el patrón descrito en el apartado 8 —funciones correctas que no se ven—, y por eso no es documentación accesoria sino parte del producto.
 
-Está escrita *solo la sección del Spider*, con los veinticinco controles de esa pantalla detallados uno a uno: de qué tipo es cada elemento (botón, campo de texto, desplegable, aviso, indicador, pestaña, columna), qué hace y *bajo qué condición aparece*, porque buena parte no está en pantalla desde el principio. Las otras cuatro secciones quedan marcadas como pendientes a la vista del usuario.
+Están escritas *dos secciones de cinco*: la del Spider, con los veinticinco controles de esa pantalla detallados uno a uno —de qué tipo es cada elemento (botón, campo de texto, desplegable, aviso, indicador, pestaña, columna), qué hace y *bajo qué condición aparece*, porque buena parte no está en pantalla desde el principio—, y la del Repeater, con veintiséis, añadida el 12-oct en cuanto esa pestaña quedó pulida. Desde entonces el manual se lee *por pastillas* y no en una tirada, y las tres secciones sin escribir se marcan a la vista del usuario, que era la decisión del 11-oct: si falta, se ve que falta.
 
-La regla que se fijó es deliberada: *una sección se escribe cuando su pestaña se ha pulido y verificado*, nunca antes. Durante el pulido del Spider, lo que suponíamos de la pantalla y lo que el código hacía no coincidieron quince veces; un manual redactado sobre suposiciones induce a error, que es peor que no tenerlo. La propia redacción lo confirmó dos veces: destapó el defecto de los filtros (apdo. 8) y un error del manual mismo, que afirmaba que el botón «Iniciar spider» se sustituía por «Detener» cuando en realidad cambia a «Ejecutando…» y «Detener» aparece al lado.
+La regla que se fijó es deliberada: *una sección se escribe cuando su pestaña se ha pulido y verificado*, nunca antes. Durante el pulido del Spider, lo que suponíamos de la pantalla y lo que el código hacía no coincidieron quince veces; un manual redactado sobre suposiciones induce a error, que es peor que no tenerlo. La propia redacción lo ha confirmado tres veces: destapó el defecto de los filtros (apdo. 8); un error del manual mismo, que afirmaba que el botón «Iniciar spider» se sustituía por «Detener» cuando en realidad cambia a «Ejecutando…» y «Detener» aparece al lado; y, al escribir la sección del Repeater, veinte líneas de *código muerto* —un aviso que ya no podía aparecer nunca, porque lo provocaba el historial retirado esa misma tarde—. Documentar obliga a mirar el código con los ojos de quien lo usa, y eso encuentra cosas que el uso no encuentra.
 
 Queda pendiente decidir si el manual lleva capturas. Se montó el soporte y se descartó: las capturas de evidencia disponibles son recortes pensados para demostrar un arreglo, no para enseñar a usar, y las nuevas hay que tomarlas con ese propósito.
 
@@ -732,6 +800,36 @@ Queda pendiente decidir si el manual lleva capturas. Se montó el soporte y se d
 
 - *Cuántas veces aparece un formulario.* Un formulario se cataloga una sola vez, bajo la primera página donde se encontró. Es lo correcto para no inflar el recuento, pero se pierde un dato útil para el auditor: en cuántas páginas está presente. La etiqueta actual dice «vistos aquí primero», que avisa del comportamiento sin dar el número.
 - *La etiqueta del desplegable.* Se corrigió para que no insinuara más de lo que hay, y josemax la dejó anotada para revisarla en la fase de diseño.
+
+== El Repeater trabaja con una petición cada vez, y es una decisión
+El Repeater no tiene historial: mantiene *una* petición cargada y, mientras la tenga, el Spider no permite enviarle otra —su botón pasa a `repeater en uso` y explica cómo liberarlo—. Se cuenta aquí porque la ausencia de historial es lo primero que echará en falta quien conozca la herramienta de referencia, y porque el camino hasta aquí explica la decisión mejor que la decisión misma: *el historial existió durante nueve horas del 12-oct y se retiró* (apartado 8).
+
+*Por qué se sostiene como diseño y no como carencia.* El desorden que motivó la retirada venía de tener varias peticiones conviviendo sin que nada dijera cuál era la buena: un estado *implícito*. Ahora hay una sola, el estado ocupado se ve *desde la otra pantalla* y se libera con un gesto deliberado. Para una herramienta cuya salida acaba en un informe, que no se pueda confundir qué respuesta pertenece a qué petición vale más que poder recuperar la de hace diez minutos.
+
+*Trabajo futuro, con el camino ya identificado:* una lista propia en la sesión del servidor, separada de la que comparten el Proxy y el Spider. La vía que se descartó para esta entrega era añadir un campo de origen al registro *compartido* por esas dos herramientas y filtrar en el extremo del servidor: toca código común a tres pantallas y obliga a recrear el servidor, que borra las sesiones en memoria. Es trabajo para después de la entrega.
+
+== El borrador del Repeater guarda las credenciales del objetivo en el navegador
+*Limitación conocida y declarada, detectada el 13-oct al destilar la jornada anterior.* El editor del Repeater guarda lo que estás escribiendo —método, dirección, cabeceras y cuerpo— en el almacenamiento de sesión del navegador, para que no se pierda al cambiar de pestaña o refrescar. Ese guardado *no filtra las cabeceras de sesión*, así que la `Cookie` del sitio auditado —credenciales de un tercero— queda escrita en el navegador del auditor.
+
+*Cómo llegó a estar así, porque el recorrido es la parte aprovechable.* El 12-oct a las 12:37 se añadió exactamente esa protección, y se añadió donde hacía falta entonces: en la persistencia del *historial*. A las 17:28, al retirar el historial, la función de filtrado se fue con él. Lo que sigue escribiendo en el navegador es el *borrador*, que nunca pasó por ese filtro. Dicho de otro modo: *la protección no se eliminó por error, desapareció con la función a la que estaba pegada*. Conviene retener el patrón —una medida de seguridad acoplada a la función que la motivó se pierde cuando esa función se retira— porque no lo detecta ninguna prueba: el producto sigue funcionando igual.
+
+*Y una afirmación de este proyecto que queda rectificada (R9).* El diario del 12-oct, a las 13:35, dice que «el filtro que impide persistir credenciales en el almacenamiento del navegador sigue en pie». Dejó de ser cierto cuatro horas más tarde, el mismo día. Se declara aquí en vez de corregirse en silencio.
+
+*Riesgo real, acotado sin minimizarlo.* El almacenamiento de sesión es legible por cualquier código que se ejecute en la página, de modo que aprovecharlo exige antes una ejecución de código en el propio panel; la única superficie de ese tipo que el producto pinta —la vista previa de la respuesta del objetivo— está aislada desde el 11-oct, y el almacenamiento se vacía al cerrar la pestaña. No es una puerta abierta: es un dato que no debería estar ahí.
+
+*Por qué no se arregla ahora, y qué costaría.* La corrección son tres líneas: reutilizar al guardar la misma lista de cabeceras de sesión que el editor ya usa para avisar de que la petición viaja autenticada. Se decide no tocar el producto el día de la congelación. La contrapartida del arreglo también está medida: tras un refresco la petición volvería sin sesión y habría que pulsar `preparar` otra vez, que es la misma contrapartida que el grupo ya aceptó el 12-oct para el historial.
+
+== Lo que falta para igualar al Repeater de referencia
+Tres diferencias conocidas y no cerradas:
+
+- *No hay botón para seguir una redirección.* El Repeater muestra el `3xx` y no lo sigue, que es el comportamiento correcto; la herramienta de referencia ofrece además seguirla con un clic. Es trabajo de interfaz y de un extremo nuevo en el servidor, y quedó fuera por la fecha.
+- *El origen de las peticiones, que es la diferencia de fondo y no está en el Repeater.* En la herramienta de referencia el formulario llega *capturado del navegador*, con los datos que el auditor escribió y un token recién emitido: una petición que ya funcionaba. Aquí llega una *plantilla* leída del HTML por el Spider, que nunca se envió. El botón `preparar` cierra la distancia a mano —pide la página y refresca los campos ocultos y la cookie— pero no la elimina: eliminarla exige capturar el tráfico real del navegador, que es justamente lo que se descartó con RF-09.
+- *Las cabeceras repetidas se muestran unidas por coma*, no como dos filas, porque el panel de detalle espera un objeto. Se ven —antes se perdía una— pero no se editan por separado.
+
+== El frontend no pasa su propio analizador estático
+El repositorio tiene configurado un analizador estático para el frontend y, hasta el 12-oct, *nunca se había ejecutado* (apartado 8). Puesto a funcionar, arroja *veintitrés errores y dos avisos* que no son del trabajo de estos días: casi todos de reglas del marco de interfaz —efectos que escriben estado, funciones con efectos secundarios donde se esperan puras— y concentrados en la pantalla de vulnerabilidades. Lo que sí quedó cerrado es la regla que caza el fallo que costó la regresión del botón de enviar: no queda ninguna variable no declarada en todo el frontend.
+
+*Por qué no se arreglan ahora:* son avisos de calidad sobre pantallas que funcionan y ya están capturadas, y tocarlas el día de la congelación arriesga el entregable sin mejorar el producto. Queda como *trabajo futuro con el dato ya medido*, que es lo que permite planificarlo en vez de prometerlo. Y una limitación del método, dicha entera: el analizador solo puede ejecutarse dentro de la etapa de construcción de la imagen, porque el proyecto no instala las dependencias del frontend en el servidor.
 
 == La herramienta que genera los esquemas no está versionada
 El generador de esquemas vive en la carpeta de trabajo de la práctica, *fuera del repositorio del producto*: no tiene historial, no pasó por revisión y su autoría no queda registrada, al contrario que todo el código. Es incoherente con la norma del equipo de que todo entra por petición de incorporación, y no es una incoherencia inocua: *el único sitio sin historial resultó ser exactamente donde estaba el defecto del apartado 8*, porque es el sitio donde nadie vio la lista incompleta.
@@ -748,6 +846,8 @@ Quién hizo qué, con estimación de horas por persona.
 Esa excepcion deforma el recuento, y el dato concreto lo demuestra: de las 41 confirmaciones de la jornada del 10 de octubre, una persona figura en 19 —mas del doble que cualquier otra—, pero *11 de esas 19 son regeneraciones de la memoria*. Descontada la excepcion quedan 8, que es justo lo que cabe esperar de un sorteo entre cinco sobre 41. El reparto es uniforme; lo que no es uniforme es el documento.
 
 La estimacion de horas de este apartado sale del diario, no del historial de confirmaciones.
+
+*Dato del 12-oct, tomado del diario y no estimado a posteriori:* la jornada suma *unas diez horas y media de asistente* repartidas en veinticinco entradas, más el tiempo de pruebas de José María, que *no se cronometra* porque va entremezclado con el uso de la herramienta. Al consolidar conviene no fundir las dos cifras: las horas del asistente están anotadas entrada por entrada; las de prueba humana, no. Y el reparto de mérito no sigue al reloj —de los dieciséis defectos de esa jornada, la mayoría los encontró quien usaba el producto, no quien escribía el código—.
 #hueco("José María", "Consolidar las horas por persona al congelar (13-oct). El reparto real del trabajo queda trazado por los commits firmados por cada responsable (R2); José María cierra el recuento.")
 
 = 12. Uso de herramientas de IA
@@ -762,14 +862,35 @@ De ahí sale el hallazgo que sí afecta al diseño de nuestros controles: *el re
 
 *Qué fue generado y qué fue verificado.* La distinción no es teórica: ese mismo día, una afirmación escrita por el asistente en el plan del módulo de IA —que los cuatro conjuntos de instrucciones pedían un campo `descripcion`— resultó falsa para uno de ellos al releer el código fuente, y quedó corregida de forma declarada en vez de reescrita en silencio. El criterio que seguimos es que *nada entra en esta memoria por haberlo dicho la herramienta*: entra cuando se ha contrastado contra el código, la salida de un comando o el enunciado.
 
-== Dos defectos los introdujo el asistente al arreglar otros
+== Los defectos que introdujo el asistente al arreglar otros
 
-De los quince defectos del pulido del Spider (apdo. 8), *dos los causamos nosotros*, y los dos comparten forma: un arreglo correcto en lo suyo que rompe algo contiguo que nadie volvió a mirar.
+De los quince defectos del pulido del Spider (11-oct, apdo. 8), *dos los causamos nosotros*, y los dos comparten forma: un arreglo correcto en lo suyo que rompe algo contiguo que nadie volvió a mirar.
 
 - *Los formularios pasaron de sobrar a faltar.* Al corregir que un formulario colgara de páginas ajenas, se ató cada formulario a su página de origen. Pero la página se registra con la URL *final* —tras redirecciones— y el formulario se ató a la *pedida*: cuando no coincidían, el formulario no colgaba de ninguna parte y desaparecía del panel. El defecto anterior era visible (sobraban filas); el nuevo era invisible (faltaban). Lo encontró josemax buscando un formulario concreto entre cincuenta y cinco páginas. El asistente *había avisado del riesgo y no lo comprobó*: avisar no sustituye a verificar.
 - *Las últimas filas dejaron de alcanzarse.* Al bajar las acciones a una barra propia, el panel pasó de uno a dos hijos y la tabla siguió pidiendo el 100% de la altura: desbordaba, y el recorte se comía las primeras filas capturadas.
 
-*Lo que se saca de aquí* es que la velocidad del asistente para aplicar un cambio no va acompañada de la misma velocidad para comprobar sus efectos laterales. Los dos se detectaron *usando* el producto, no revisando el código ni con pruebas automáticas.
+*El 12-oct la cuenta subió a ocho en una sola jornada*, y lo que importa no es el número sino qué los detectó:
+
+#tabla(
+  (auto, 5fr, 3fr),
+  "
+  Nº | Qué rompió el asistente | Qué lo detectó
+  1 | Los escapes de un aviso nuevo se mostraban en crudo en la pantalla | los ojos de José María leyéndolo
+  2 | La dirección de destino se colocó en una barra sin sitio: solo se leía cuando la petición fallaba | una captura de José María
+  3 | Un comentario colocado entre los atributos de un componente rompió la construcción | la construcción de la imagen
+  4 | El arreglo de las cabeceras del Spider se aplicó a uno de los dos sitios, y todos los POST empezaron a dar `419` | usando el producto
+  5 | Un borrado por rango de líneas se llevó la declaración de una variable y el botón de enviar dejó de hacer nada, *sin error visible* | usando el producto
+  6 | Al permitir ver el formulario sin haber enviado nada, siete usos que daban la respuesta por segura tumbaron la pantalla entera | usando el producto
+  7 | La pestaña del formulario se pintaba sin estilos, y `limpiar` no la borraba | usando el producto
+  8 | Un borrado de bloque cortado por el primer cierre dejó nueve líneas huérfanas y tres variables sin uso | una comprobación posterior del propio asistente
+  ",
+)
+
+*El reparto es el hallazgo.* *Seis de los ocho* los encontró una persona *usando* el producto; uno lo cazó la construcción de la imagen; uno, una comprobación que el propio asistente hizo *después* de dar el cambio por terminado; y *ninguno* lo cazó el método con el que el asistente verificó sus cambios durante toda la jornada —contar cadenas de texto dentro del paquete construido—. Ese método confirma que algo *está*: no dice que se lea bien ni que funcione.
+
+*Dos de los ocho son el mismo error repetido el mismo día:* borrar código por rango de líneas sin comprobar qué quedaba al lado. La primera vez se llevó por delante la declaración de una variable; la segunda, el cierre de un condicional anidado. De ahí sale una regla concreta, que vale más que la buena intención de «revisar mejor»: *los bloques se delimitan por contenido, no por el primer cierre que aparezca, y después se comprueba qué ha quedado huérfano*.
+
+*Lo que se saca de aquí* es que la velocidad del asistente para aplicar un cambio no va acompañada de la misma velocidad para comprobar sus efectos laterales, y que *sus verificaciones son sistemáticamente ciegas a lo que ve una persona en dos segundos*. Por eso las capturas de producto las toma José María (R6) y por eso el reparto de la línea pone las pruebas en manos humanas: no es desconfianza, es que los dos métodos fallan en sitios distintos.
 
 == Leer sin leer: delegar la lectura de lo que no debe entrar en la conversación
 El filtro descrito arriba obligó a una medida de método que vale la pena declarar, porque cambió la forma de trabajar. Las instrucciones que el producto envía al modelo son el material que más incomoda a ese filtro y, a la vez, eran lo único que faltaba por conocer para terminar el módulo de IA: *tres defectos abiertos dependían de saber qué formato piden*. El asistente principal no podía abrirlas sin arriesgar la sesión, y el permiso del operador no sirve de nada, porque el filtro no sabe nada de ese permiso: mide lo que entra en la conversación, no lo que alguien ha autorizado.
