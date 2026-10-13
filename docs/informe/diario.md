@@ -4692,3 +4692,35 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   queria medir era un arbol) y *un documento que envejece en horas* (los tres pendientes caducados de hoy).
 - **A que requisito toca:** apdo. **12**, y da material al **11**. **Evidencia:** `(no aplica)`, queda en
   git (`ab0ba4c5`). **Horas:** ~0,5 h de Claude.
+
+### Fase 3 (13-oct, 20:0x) · Las dos filas sin estado de la matriz, cerradas por josemax
+
+- **Que se hizo:** las dos casillas que quedaban sin estado firme en la matriz pasan a tenerlo, por decision
+  de josemax: **RF-04 → *Modificado*** y **RF-10 → *Parcial***. Las veintiuna filas tienen estado.
+- **RF-04.** La matriz decia *A revisar*, que es el nombre que la clasificacion de partida usa para «estaba
+  mal planteado y se reformula con justificacion». En un entregable final esa palabra se lee como «no lo
+  sabemos». Decision: **Modificado**, como RF-02 — el requisito describia un mecanismo, el mecanismo cambio
+  con justificacion y el objetivo (auditar autenticado) se cumple.
+- **RF-10.** Decia **«segun alcance»**, que no es un estado. **Parcial** es la categoria que el propio
+  documento define —«existe algo, pero incompleto o con fallos; hay que terminarlo y probarlo»— y describe
+  esto con exactitud: el modulo esta construido y **en la red interna desde la Fase 3**, pero **PR-10 no se
+  ha ejecutado nunca** y el sondeo de instrucciones **devuelve `401` con sesion valida** (apdos. 7 y 8).
+- 🔴 **Y aqui me equivoque dos veces seguidas, las dos por leer de mas antes de medir.**
+  1. Propuse a josemax **renombrar la categoria entera** «A revisar» → «Modificado» en la tabla de
+     clasificacion, afectando a RF-02, RF-04 y RNF-06. **Lo aprobo, y no lo apliqué**: al mirar la tabla de
+     cerca, dice *«en el punto de partida»* — es **historica**, y reescribirla habria **falsificado** el
+     estado del que salimos. Se quedo intacta.
+  2. En la misma propuesta afirme que la lista del apdo. 4 y la matriz se contradecian («una decia Cumplido
+     y la otra A revisar»). **Tampoco era eso:** la columna se titulaba *Estado P1* pero su entradilla dice
+     que *se actualiza a medida que la P3 avanza*, y de hecho `RF-09` ya figuraba ahi como *Descartado*,
+     decision del 11-oct. **El defecto real era el titulo de la columna**, no una contradiccion de estados.
+     Se corrigio el titulo y se pusieron al dia las dos celdas que nunca se actualizaron (RF-02 y RNF-06).
+  🔑 **La leccion, que es la misma que ya me costo tres pendientes caducados hoy:** una tabla y su titulo
+  pueden contar cosas distintas, y antes de proponer un cambio de diez casillas hay que **leer que afirma
+  cada tabla sobre si misma**. Lo caro no fue el error, fue que josemax **aprobo una propuesta mal fundada**;
+  se le dijo en el momento y no se aplico.
+- **Dos defectos propios mas, menores y arreglados:** un bloque de sustitucion se solapo con el anterior y
+  dejo **la declaracion vieja a medias debajo de la nueva** (se borro la cola huerfana), y use `**negrita**`
+  de Markdown donde Typst quiere `*negrita*` (Typst lo avisó: «no text within stars»).
+- **A que requisito toca:** **RF-04**, **RF-10**; apdos. **4** y **9**. **Evidencia:** `(no aplica)`, queda
+  en git (`1c6c908d` y los tres anteriores). **Horas:** ~0,5 h de Claude.
