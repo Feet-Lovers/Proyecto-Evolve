@@ -95,12 +95,13 @@ gasto* que nace de una lección cara de la P1. Por último, el pulido con uso re
 Spider y dieciséis en el Repeater, la mayoría encontrados *usando* la herramienta, y la retirada del
 laboratorio vulnerable del producto entregable.
 
-*En qué estado se entrega.* De los *veintiún requisitos numerados*, quince se entregan *cumplidos*
-—uno con una limitación documentada en pantalla pequeña—, uno *modificado* y uno *descartado*, ambos
-justificados en el apartado 4, uno *parcial* (el grafo de contribuciones, partido por dos correos del
-mismo autor) y uno *pendiente declarado*: TLS. Queda una sola fila sin estado firme: RF-10. El
-código está *congelado y etiquetado* como `v1.0-practica3` y *desplegado en producción sobre esa misma
-etiqueta*: lo que se ve funcionando es lo que hay en el repositorio.
+*En qué estado se entrega.* De los *veintiún requisitos numerados*: *quince cumplidos* —uno con una
+limitación documentada en pantalla pequeña—, *dos modificados* y *uno descartado*, los tres justificados en
+el apartado 4, *dos parciales* —el módulo de navegador, construido y en la red interna pero sin su prueba
+ejecutada, y el historial de contribuciones, partido por dos correos del mismo autor— y *uno pendiente
+declarado*: TLS. Suman veintiuno, y ninguna fila de la matriz queda sin estado. El código está *congelado y
+etiquetado* como `v1.0-practica3` y *desplegado en producción sobre esa misma etiqueta*: lo que se ve
+funcionando es lo que hay en el repositorio.
 
 *Cómo se puede comprobar.* El anexo del apartado 13 reconstruye los *dieciocho casos* de prueba que
 cita la matriz con dos columnas —lo que daba el prototipo en septiembre y lo que da el código
@@ -166,7 +167,7 @@ Lista completa y numerada. Numeración fijada en la P3 (la P1 no la tenía) a pa
   RF-07 | Utilidades: Encoder/Decoder (Base64/URL/HTML/JWT), Hash (MD5/SHA1/SHA256/SHA512), Regex Tester, Payload Generator | Cumplido
   RF-08 | *Análisis y clasificación de vulnerabilidades con IA (Claude) según OWASP* → panel Vulnerabilidades | Parcial
   RF-09 | Captura de tráfico HTTP en tiempo real (DevTools / CDP) → panel Red con código de colores | *Descartado* (§4)
-  RF-10 | Ejecución de ataques con navegador real (Playwright) | Pendiente
+  RF-10 | Ejecución de ataques con navegador real (Playwright) | *Parcial* (construido y en red; sin prueba ejecutada — §§7-8)
   RF-11 | Soporte multi-usuario simultáneo mediante tokens de sesión UUID | Cumplido
   RF-12 | Registro y login individual con JWT + aislamiento de historial/auditorías por usuario | Pendiente (mejora)
   ",
@@ -896,7 +897,7 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
   RF-07 | Utilidades (incl. JWT) | Cumplido | `frontend/src/pages/utilities/` | PR-07 | fig. — · vídeo —:—
   RF-08 | IA → panel Vulnerabilidades | Cumplido (recorrido verificado de punta a punta el 10-oct; techo de gasto ejecutado) | `ia/`, `backend/routes/playwright.py`, `backend/services/redis_consumer.py`, `frontend/.../VulnerabilitiesPage.jsx` | PR-08 | figs. apdo. 8 · vídeo —:—
   RF-09 | DevTools → panel Red | *Descartado* (11-oct; justificado en §4) | `devtools/` conservado · `backend/routes/network.py` se mantiene (lo consumen IA y Playwright) | — | fig. apdo. 8 · vídeo —:—
-  RF-10 | Playwright | según alcance | `playwright/` + `backend/routes/playwright.py` | PR-10 | fig. — · vídeo —:—
+  RF-10 | Playwright | *Parcial* (construido y en la red interna desde la Fase 3; PR-10 sin ejecutar y el sondeo de instrucciones devuelve `401` con sesión válida — §§7 y 8) | `playwright/` + `backend/routes/playwright.py` | PR-10 | fig. — · vídeo —:—
   RF-11 | Multi-usuario | Cumplido (reimplementado en F2) | `backend/services/guardia.py` + `services/auth_service.py` | PR-11 | apdo. 7 · figs. apdo. 8
   RF-12 | Registro y login por usuario + aislamiento | Cumplido en F2 (verificado en cocina 11/11; pendiente de producción) | `backend/services/auth_service.py`, `guardia.py`, `usuarios_store.py`, `frontend/.../LoginPage.jsx` | PR-12 | apdo. 7 · figs. apdo. 8
   RNF-01 | Accesible desde navegador sin instalar nada en el cliente | Cumplido, con limitación documentada en móvil (apdo. 10) | `frontend/` servido por Nginx | PR-01 | apdo. 10
