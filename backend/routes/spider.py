@@ -34,6 +34,7 @@ async def start_spider(request: SpiderRequest, espacio: str = Depends(usuario_ac
         return {"status": "error", "message": "Ya hay un spider en ejecución para esta sesión"}
 
     session["spider_running"] = True
+    session["spider_target"] = request.url
 
     async def run_spider():
         try:
@@ -59,7 +60,8 @@ async def start_spider(request: SpiderRequest, espacio: str = Depends(usuario_ac
 async def spider_status(token: str):
     session = session_manager.get_session(token)
     return {
-        "running": session.get("spider_running", False)
+        "running": session.get("spider_running", False),
+        "target": session.get("spider_target")
     }
 
 @router.post("/stop/{token}")
@@ -95,4 +97,5 @@ async def reset_session(token: str):
     session = session_manager.get_session(token)
     session["requests"].clear()  # vaciar EN EL SITIO: reasignar perdia el tope de memoria
     session["spider_running"] = False
+    session["spider_target"] = None
     return {"status": "reset"}

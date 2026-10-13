@@ -8,7 +8,7 @@ import { RepeaterPage } from '@/pages/repeater/RepeaterPage'
 import { IntruderPage } from '@/pages/intruder/IntruderPage'
 import { UtilitiesPage } from '@/pages/utilities/UtilitiesPage'
 import { VulnerabilitiesPage } from '@/pages/vulnerabilities/VulnerabilitiesPage'
-import { NetworkPage } from '@/pages/network/NetworkPage'
+import { ManualPage } from '@/pages/manual/ManualPage'
 
 /** Decide qué se ve: el panel de entrada o la herramienta.
  *
@@ -38,7 +38,7 @@ function Puerta() {
             <Route path="intruder" element={<IntruderPage />} />
             <Route path="utilities" element={<UtilitiesPage />} />
             <Route path="vulnerabilities" element={<VulnerabilitiesPage />} />
-            <Route path="network" element={<NetworkPage />} />
+            <Route path="manual" element={<ManualPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

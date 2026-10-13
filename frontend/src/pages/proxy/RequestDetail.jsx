@@ -1,10 +1,15 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui'
+import { repeaterOcupado } from '@/AppContext'
 
 const TABS = ['Request', 'Response', 'Headers']
 
 export function RequestDetail({ request, onSendToRepeater, onSendToIntruder }) {
   const [activeTab, setActiveTab] = useState('Request')
+  // El Repeater trabaja con UNA peticion cada vez: mientras tenga una cargada no se le
+  // manda otra. Se consulta al pintar; basta porque al volver de otra pestana esta
+  // pantalla se vuelve a montar.
+  const ocupado = repeaterOcupado()
 
   if (!request) {
     return (
@@ -44,9 +49,20 @@ export function RequestDetail({ request, onSendToRepeater, onSendToIntruder }) {
           <Button size="sm" variant="secondary" onClick={() => onSendToIntruder(request)}>
             enviar al intruder →
           </Button>
-          <Button size="sm" onClick={() => onSendToRepeater(request)}>
-            enviar al repeater →
-          </Button>
+          {ocupado ? (
+            <Button
+              size="sm"
+              variant="warning"
+              disabled
+              title="El Repeater ya tiene una petición cargada. Ve al Repeater y pulsa «limpiar» para liberarlo."
+            >
+              repeater en uso
+            </Button>
+          ) : (
+            <Button size="sm" onClick={() => onSendToRepeater(request)}>
+              enviar al repeater →
+            </Button>
+          )}
         </div>
       </div>
 
@@ -57,7 +73,7 @@ export function RequestDetail({ request, onSendToRepeater, onSendToIntruder }) {
         {activeTab === 'Request' && (
           <div className="space-y-4">
             <div>
-              <p className="text-[9px] tracking-widest uppercase mb-2" style={{ color: 'var(--hs-text-dim)' }}>peticion</p>
+              <p className="text-[9px] tracking-widest uppercase mb-2 pb-1 border-b" style={{ color: 'var(--hs-accent)', borderColor: 'var(--hs-border)' }}>peticion</p>
               <p>
                 <span style={{ color: '#6adf9a' }}>{request.method} </span>
                 <span style={{ color: '#6aafef' }}>{request.url}</span>
@@ -65,7 +81,7 @@ export function RequestDetail({ request, onSendToRepeater, onSendToIntruder }) {
             </div>
             {request.requestBody && (
               <div>
-                <p className="text-[9px] tracking-widest uppercase mb-2" style={{ color: 'var(--hs-text-dim)' }}>body</p>
+                <p className="text-[9px] tracking-widest uppercase mb-2 pb-1 border-b" style={{ color: 'var(--hs-accent)', borderColor: 'var(--hs-border)' }}>body</p>
                 <pre
                   className="p-3 rounded border whitespace-pre-wrap break-all"
                   style={{ background: 'var(--hs-surface)', borderColor: 'var(--hs-border)', color: 'var(--hs-text-secondary)' }}
@@ -79,7 +95,7 @@ export function RequestDetail({ request, onSendToRepeater, onSendToIntruder }) {
 
         {activeTab === 'Response' && (
           <div>
-            <p className="text-[9px] tracking-widest uppercase mb-2" style={{ color: 'var(--hs-text-dim)' }}>
+            <p className="text-[9px] tracking-widest uppercase mb-2 pb-1 border-b" style={{ color: 'var(--hs-accent)', borderColor: 'var(--hs-border)' }}>
               respuesta <span style={{ color: '#4a9a5a' }}>{request.status}</span>
             </p>
             <pre
@@ -94,7 +110,7 @@ export function RequestDetail({ request, onSendToRepeater, onSendToIntruder }) {
         {activeTab === 'Headers' && (
           <div className="space-y-4">
             <div>
-              <p className="text-[9px] tracking-widest uppercase mb-2" style={{ color: 'var(--hs-text-dim)' }}>headers de peticion</p>
+              <p className="text-[9px] tracking-widest uppercase mb-2 pb-1 border-b" style={{ color: 'var(--hs-accent)', borderColor: 'var(--hs-border)' }}>headers de peticion</p>
               {Object.entries(request.requestHeaders || {}).map(([k, v]) => (
                 <div key={k} className="flex gap-3 py-1 border-b" style={{ borderColor: '#13161c' }}>
                   <span className="min-w-[120px]" style={{ color: 'var(--hs-text-dim)' }}>{k}</span>
@@ -103,7 +119,7 @@ export function RequestDetail({ request, onSendToRepeater, onSendToIntruder }) {
               ))}
             </div>
             <div>
-              <p className="text-[9px] tracking-widest uppercase mb-2" style={{ color: 'var(--hs-text-dim)' }}>headers de respuesta</p>
+              <p className="text-[9px] tracking-widest uppercase mb-2 pb-1 border-b" style={{ color: 'var(--hs-accent)', borderColor: 'var(--hs-border)' }}>headers de respuesta</p>
               {Object.entries(request.responseHeaders || {}).map(([k, v]) => (
                 <div key={k} className="flex gap-3 py-1 border-b" style={{ borderColor: '#13161c' }}>
                   <span className="min-w-[120px]" style={{ color: 'var(--hs-text-dim)' }}>{k}</span>

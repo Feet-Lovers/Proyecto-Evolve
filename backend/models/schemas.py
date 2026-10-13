@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List, Tuple, Union
 from datetime import datetime
 
 class ProxyRequest(BaseModel):
@@ -29,12 +29,14 @@ class ProxyResponse(BaseModel):
 class RepeaterRequest(BaseModel):
 	method: str
 	url: str
-	headers: Dict[str, str] = {}
+	# Lista de pares ademas de diccionario: es la unica forma de REPETIR una cabecera,
+	# y mandar la misma cabecera dos veces es una prueba de auditoria habitual que un
+	# diccionario hace imposible (la segunda pisa a la primera, en silencio).
+	headers: Union[Dict[str, str], List[Tuple[str, str]]] = {}
 	body: Optional[str] = None
-	session_token: Optional[str] = None
-
-class ParseRequest(BaseModel):
-	text: str
+	# Sin `session_token`: el espacio sale del token firmado desde el 6-oct (se cerro ahi un
+	# hueco de autorizacion) y el frontend dejo de mandarlo el 12-oct. El campo quedaba
+	# huerfano y sugeria que el cliente puede elegir espacio, que es justo lo que no debe.
 
 class IntruderConfig(BaseModel):
 	url: str

@@ -1,24 +1,80 @@
 import { useState, useEffect } from 'react'
+// La clave la define AppContext, que es quien la usa para saber si el Repeater esta
+// ocupado. Una sola fuente de verdad: dos sitios con la misma cadena acaban separandose.
+import { CLAVE_BORRADOR_REPEATER as CLAVE_BORRADOR } from '@/AppContext'
 import { Button } from '@/components/ui'
 
-export function RequestEditor({ initialRequest, onSend, loading }) {
-  const [method, setMethod] = useState(initialRequest?.method || 'GET')
-  const [url, setUrl] = useState(initialRequest?.url || '')
+// El borrador se guarda en el navegador, no solo en memoria: asi vuelve tambien
+// despues de un F5, igual que el objetivo del Spider. Va en sessionStorage y no en
+// localStorage a proposito -el estado de sesion es volatil por diseno, apdo. 10-:
+// al cerrar la pestana del navegador se va, y no queda en disco una peticion contra
+// un objetivo real con sus cabeceras.
+
+const CABECERAS_POR_DEFECTO = { 'Content-Type': 'application/json' }
+
+// Cabeceras que significan "esta peticion viaja con la sesion de otro". Importa
+// ensenarlo: una peticion traida del Spider llega con la cookie y el token del sitio
+// auditado, y entonces la respuesta ya no depende solo de la URL y el metodo. Estaban a
+// la vista en la lista de cabeceras, pero como una fila mas entre otras.
+const CABECERAS_DE_SESION = ['cookie', 'authorization', 'proxy-authorization', 'x-xsrf-token', 'x-csrf-token']
+
+// Acepta tanto un objeto de cabeceras (lo que manda el Spider) como una lista de
+// pares (lo que guarda el borrador), y devuelve siempre la lista editable.
+function aPares(cabeceras) {
+  if (!cabeceras) return null
+  if (Array.isArray(cabeceras)) return cabeceras.map(([k, v]) => ({ key: k, value: v }))
+  return Object.entries(cabeceras).map(([k, v]) => ({ key: k, value: v }))
+}
+
+function leerBorrador() {
+  try {
+    const crudo = sessionStorage.getItem(CLAVE_BORRADOR)
+    return crudo ? JSON.parse(crudo) : null
+  } catch {
+    return null   // un borrador corrupto no puede impedir usar el Repeater
+  }
+}
+
+export function RequestEditor({ initialRequest, onSend, onClear, loading, onInicialConsumida, onPreparar }) {
+  // Lo que llega del Spider manda sobre el borrador guardado; si no hay nada nuevo,
+  // se recupera lo que se estaba editando.
+  const partida = initialRequest || leerBorrador()
+
+  const [method, setMethod] = useState(partida?.method || 'GET')
+  const [url, setUrl] = useState(partida?.url || '')
   const [headers, setHeaders] = useState(
-    Object.entries(initialRequest?.requestHeaders || { 'Content-Type': 'application/json' })
-      .map(([k, v]) => ({ key: k, value: v }))
+    aPares(partida?.requestHeaders) || aPares(CABECERAS_POR_DEFECTO)
   )
-  const [body, setBody] = useState(initialRequest?.requestBody || '')
+  const [body, setBody] = useState(partida?.requestBody || '')
+
+  // Guarda segun se escribe. Se guarda el BORRADOR, no la respuesta: una respuesta
+  // puede pesar megas y no cabe aqui.
+  useEffect(() => {
+    const borrador = {
+      method,
+      url,
+      // Pares y no objeto: si no, dos cabeceras con el mismo nombre se fundirian en una
+      // al guardar el borrador, igual que pasaba al enviar.
+      requestHeaders: headers.filter(h => h.key).map(h => [h.key, h.value]),
+      requestBody: body,
+    }
+    try {
+      sessionStorage.setItem(CLAVE_BORRADOR, JSON.stringify(borrador))
+    } catch { /* sin sitio en el navegador se sigue trabajando, solo se pierde al navegar */ }
+  }, [method, url, headers, body])
 
   useEffect(() => {
     if (!initialRequest) return
     setMethod(initialRequest.method || 'GET')
     setUrl(initialRequest.url || '')
-    setHeaders(
-      Object.entries(initialRequest.requestHeaders || { 'Content-Type': 'application/json' })
-        .map(([k, v]) => ({ key: k, value: v }))
-    )
+    setHeaders(aPares(initialRequest.requestHeaders) || aPares(CABECERAS_POR_DEFECTO))
     setBody(initialRequest.requestBody || '')
+    // Aplicada y consumida: el padre la descarta. Si siguiera puesta, cada vez que se
+    // vuelve a esta pestana el editor se repondria desde ella y `limpiar` no seria
+    // definitivo. No se anade a las dependencias a proposito: volveria a entrar aqui en
+    // cada render. El unico reentrada posible es con initialRequest ya a null, que sale
+    // por el return de arriba.
+    onInicialConsumida?.()
   }, [initialRequest])
 
   const addHeader = () => setHeaders(prev => [...prev, { key: '', value: '' }])
@@ -28,9 +84,85 @@ export function RequestEditor({ initialRequest, onSend, loading }) {
   )
 
   const handleSend = () => {
-    const headersObj = Object.fromEntries(headers.filter(h => h.key).map(h => [h.key, h.value]))
-    onSend({ method, url, headers: headersObj, body: body || null })
+    // Lista de pares, no objeto: `Object.fromEntries` se quedaba solo con la ULTIMA de
+    // dos cabeceras con el mismo nombre, asi que la herramienta hacia imposible una
+    // prueba habitual -repetir una cabecera- y ademas en silencio.
+    const paresCabeceras = headers.filter(h => h.key).map(h => [h.key, h.value])
+    onSend({ method, url, headers: paresCabeceras, body: body || null })
   }
+
+  const handleClear = () => {
+    setMethod('GET')
+    setUrl('')
+    setHeaders(aPares(CABECERAS_POR_DEFECTO))
+    setBody('')
+    try { sessionStorage.removeItem(CLAVE_BORRADOR) } catch { /* nada que borrar */ }
+    onClear?.()
+  }
+
+  // Quita SOLO las cabeceras de sesion. Probar la misma peticion con y sin sesion es LA
+  // operacion que un auditor necesita -es el experimento que costo media manana
+  // reconstruir a mano-, y hasta ahora habia que borrarlas una a una: el boton `limpiar`
+  // vacia la peticion entera y te deja sin nada que probar.
+  const [preparando, setPreparando] = useState(false)
+  const [avisoPreparar, setAvisoPreparar] = useState(null)
+
+  // Pide la pagina del formulario y trae de ella lo que caduca: los campos ocultos (el
+  // token CSRF) y, si el servidor la cambia, la cookie. Es lo que hace un navegador antes
+  // de enviar un formulario, y lo que le falta a la peticion que trae el Spider: esa no es
+  // una peticion capturada, es una plantilla leida del HTML, y nace con el token de aquel
+  // momento.
+  const handlePreparar = async () => {
+    if (!onPreparar || !url) return
+    setPreparando(true)
+    setAvisoPreparar(null)
+    try {
+      const paresCabeceras = headers.filter(h => h.key).map(h => [h.key, h.value])
+      const { ocultos, cookies } = await onPreparar({ method, url, headers: paresCabeceras, body: body || null })
+
+      // Solo se tocan los campos que YA estaban en el cuerpo: no se inventan nuevos ni se
+      // reordenan, para que el cuerpo siga siendo el que tu editaste.
+      let cambiados = 0
+      const nuevoCuerpo = (body || '').split('&').map(par => {
+        const i = par.indexOf('=')
+        if (i < 0) return par
+        const k = par.slice(0, i)
+        if (Object.prototype.hasOwnProperty.call(ocultos, k)) { cambiados++; return k + '=' + ocultos[k] }
+        return par
+      }).join('&')
+      if (cambiados > 0) setBody(nuevoCuerpo)
+
+      const nombres = Object.keys(cookies || {})
+      if (nombres.length > 0) {
+        const texto = nombres.map(n => `${n}=${cookies[n]}`).join('; ')
+        setHeaders(prev => {
+          const idx = prev.findIndex(h => h.key && h.key.trim().toLowerCase() === 'cookie')
+          if (idx < 0) return [...prev, { key: 'Cookie', value: texto }]
+          const copia = [...prev]
+          copia[idx] = { ...copia[idx], value: texto }
+          return copia
+        })
+      }
+
+      setAvisoPreparar(
+        cambiados === 0 && nombres.length === 0
+          ? 'La página no traía campos ocultos ni cookie nueva: no había nada que actualizar.'
+          : `Actualizado: ${cambiados} campo(s) oculto(s)` + (nombres.length ? ' y la cookie.' : '.')
+      )
+    } catch (e) {
+      setAvisoPreparar('No se pudo preparar: ' + e.message)
+    } finally {
+      setPreparando(false)
+    }
+  }
+
+  const quitarSesion = () => setHeaders(prev =>
+    prev.filter(h => !(h.key && CABECERAS_DE_SESION.includes(h.key.trim().toLowerCase())))
+  )
+
+  const sesionHeredada = headers
+    .filter(h => h.key && CABECERAS_DE_SESION.includes(h.key.trim().toLowerCase()))
+    .map(h => h.key.trim())
 
   const inputStyle = {
     fontFamily: 'var(--font-mono)',
@@ -41,6 +173,35 @@ export function RequestEditor({ initialRequest, onSend, loading }) {
 
   return (
     <div className="flex flex-col gap-4 p-4 h-full overflow-auto">
+      {sesionHeredada.length > 0 && (
+        <div
+          className="px-3 py-2 rounded border"
+          style={{ borderColor: '#3d2f10', background: '#1a1405' }}
+        >
+          <p
+            className="text-[10px] tracking-widest uppercase"
+            style={{ fontFamily: 'var(--font-mono)', color: '#d9a93a' }}
+          >
+            {'\u26A0 '}viaja con una sesión heredada
+          </p>
+          <p
+            className="text-[10px] mt-1 leading-relaxed"
+            style={{ fontFamily: 'var(--font-mono)', color: '#d9a93a' }}
+          >
+            Lleva <b>{sesionHeredada.join(', ')}</b>. La respuesta depende de esa sesión y no
+            solo de la URL y el método: la misma petición con y sin ella puede dar resultados
+            distintos.
+          </p>
+          <button
+            onClick={quitarSesion}
+            className="mt-2 text-[10px] px-2 py-0.5 rounded border transition-all"
+            style={{ fontFamily: 'var(--font-mono)', color: '#d9a93a', borderColor: '#3d2f10' }}
+            title="Quita solo las cabeceras de sesión. El método, la URL, el cuerpo y las demás cabeceras no se tocan"
+          >
+            quitar la sesión
+          </button>
+        </div>
+      )}
       <div className="flex gap-2">
         <select
           value={method}
@@ -60,11 +221,36 @@ export function RequestEditor({ initialRequest, onSend, loading }) {
           className="flex-1 px-3 py-2 rounded border outline-none text-[11px]"
           style={inputStyle}
         />
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={handlePreparar}
+          disabled={preparando || !url}
+          title="Pide la página del formulario y actualiza el token y la cookie con los valores de ahora. Es lo que hace un navegador antes de enviar."
+        >
+          {preparando ? 'preparando...' : 'preparar'}
+        </Button>
         <Button onClick={handleSend} disabled={loading || !url}>
           {loading ? 'enviando...' : 'enviar'}
         </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={handleClear}
+          title="Vacía la petición y la respuesta. Mantiene el historial."
+        >
+          limpiar
+        </Button>
       </div>
 
+      {avisoPreparar && (
+        <p
+          className="text-[10px] leading-relaxed"
+          style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-muted)' }}
+        >
+          {avisoPreparar}
+        </p>
+      )}
       <div>
         <div className="flex items-center justify-between mb-2">
           <p className="text-[10px] tracking-widest uppercase" style={{ fontFamily: 'var(--font-mono)', color: 'var(--hs-text-dim)' }}>

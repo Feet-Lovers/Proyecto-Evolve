@@ -71,27 +71,51 @@ def _mensaje_de_error(exc: Exception, url: str) -> str:
 async def forward_request(
     method: str,
     url: str,
-    headers: Dict[str, str],
+    headers,
     body: Optional[str],
     timeout: int = 30,
     session_token: str = None,
+    seguir_redirecciones: bool = True,
+    cliente_compartido: bool = True,
 ) -> dict:
+    """Reenvia una peticion y devuelve lo que paso, en crudo.
+
+    `seguir_redirecciones` por defecto en True porque el Spider lo NECESITA para rastrear
+    y el Proxy registra el resultado final. El REPEATER lo pone en False: alli interesa la
+    respuesta de TU peticion -el 302 con su Location y su Set-Cookie-, no la de la ultima
+    parada. Es como se comporta el Repeater de Burp, y no verlo fue lo que hizo parecer que
+    la herramienta mentia: se mostraba el resultado de seguir un salto que nadie habia
+    pedido ni veia.
+
+    `cliente_compartido` tambien por defecto en True (Spider y Proxy). El REPEATER lo pone
+    en False y envia una peticion INDEPENDIENTE, con exactamente las cabeceras que se ven en
+    pantalla. Motivo: el cliente compartido hacia dos cosas invisibles -mandaba cookies que
+    no estaban en la peticion, y se QUEDABA con las que devolvia el servidor-, asi que dos
+    envios identicos daban resultados distintos. Un Repeater tiene que ser reproducible.
+    La sesion se sigue heredando: desde el 12-oct la Cookie viaja en las cabeceras, a la
+    vista y editable, en vez de por un canal oculto.
+    """
     start = time.time()
     request_id = str(uuid.uuid4())
     protected_headers = ['host', 'content-length', 'transfer-encoding', 'connection']
-    clean_headers = {k: v for k, v in headers.items() if k.lower() not in protected_headers}
+    # Las cabeceras llegan como diccionario (Spider y proxy) o como lista de pares
+    # (Repeater). Se trabaja siempre con pares: un diccionario no puede llevar la misma
+    # cabecera dos veces, y httpx si acepta la lista y las envia las dos.
+    pares = list(headers.items()) if isinstance(headers, dict) else [(k, v) for k, v in headers]
+    clean_headers = [(k, v) for k, v in pares if k.lower() not in protected_headers]
 
     try:
-        if session_token:
+        if session_token and cliente_compartido:
             client = get_session_client(session_token)
             response = await client.request(
                 method=method,
                 url=url,
                 headers=clean_headers,
                 content=body.encode() if body else None,
+                follow_redirects=seguir_redirecciones,
             )
         else:
-            async with httpx.AsyncClient(verify=False, follow_redirects=True, timeout=timeout) as client:
+            async with httpx.AsyncClient(verify=False, follow_redirects=seguir_redirecciones, timeout=timeout) as client:
                 response = await client.request(
                     method=method,
                     url=url,
@@ -108,7 +132,7 @@ async def forward_request(
         suspicious = is_suspicious(url, response_body, response.status_code)
 
         # Detectar cookies de sesion y notificar al frontend
-        if session_token:
+        if session_token and cliente_compartido:
             cookies = dict(client.cookies)
             if cookies:
                 from services.session_service import session_manager
@@ -126,8 +150,18 @@ async def forward_request(
             "size": len(response.content),
             "time": elapsed_ms,
             "timestamp": datetime.utcnow().isoformat(),
-            "request_headers": dict(headers),
+            # Igual que en el Spider: lo que SALIO, no lo que pedimos que saliera. Incluye
+            # la cookie de sesion que anade el cliente persistente -invisible hasta ahora- y
+            # las que pone la libreria (Host, Accept-Encoding...). Si una cabecera iba
+            # repetida, aqui se ve con sus valores unidos por coma en vez de perderse una.
+            "request_headers": dict(response.request.headers),
             "request_body": body,
+            # follow_redirects=True sigue los saltos en silencio, asi que el cuerpo y el
+            # estado que se ven pueden ser los de OTRA url. Hasta ahora eso se tiraba y el
+            # auditor no podia saberlo: parecia que la URL pedida devolvia esto. Se
+            # devuelven la URL final y la cadena de saltos para que la interfaz lo diga.
+            "url_final": str(response.url),
+            "redirecciones": [{"status": r.status_code, "url": str(r.url)} for r in response.history],
             "response_headers": dict(response.headers),
             "response_body": response_body[:50000],
             "suspicious": suspicious,
@@ -142,8 +176,10 @@ async def forward_request(
             "size": 0,
             "time": int((time.time() - start) * 1000),
             "timestamp": datetime.utcnow().isoformat(),
-            "request_headers": dict(headers),
+            "request_headers": dict(pares),   # para la vista: si se repitio una, se ve la ultima
             "request_body": body,
+            "url_final": url,
+            "redirecciones": [],
             "response_headers": {},
             "response_body": "Error: Timeout",
             "suspicious": False,
@@ -158,8 +194,10 @@ async def forward_request(
             "size": 0,
             "time": int((time.time() - start) * 1000),
             "timestamp": datetime.utcnow().isoformat(),
-            "request_headers": dict(headers),
+            "request_headers": dict(pares),   # para la vista: si se repitio una, se ve la ultima
             "request_body": body,
+            "url_final": url,
+            "redirecciones": [],
             "response_headers": {},
             "response_body": _mensaje_de_error(e, url),
             "suspicious": False,

@@ -15,6 +15,24 @@ const WS_URL = config.API_BASE
 // el usuario del token, que emite y firma el servidor.
 const CLAVE_SESION_ANTIGUA = 'hooksuite_session'
 
+// El Repeater trabaja con UNA peticion cada vez (decision de josemax, 12-oct). Para que el
+// Spider pueda avisar de que esta ocupado hace falta saberlo desde fuera, y se deduce del
+// BORRADOR que el editor ya guarda: una sola fuente de verdad. Inventar una marca aparte
+// seria tener dos sitios diciendo cosas distintas, que es justo lo que costo el dia.
+export const CLAVE_BORRADOR_REPEATER = 'repeater_borrador'
+
+export function repeaterOcupado() {
+  try {
+    const crudo = sessionStorage.getItem(CLAVE_BORRADOR_REPEATER)
+    if (!crudo) return false
+    const borrador = JSON.parse(crudo)
+    // Ocupado = hay una URL cargada. `limpiar` la vacia, y por eso libera el Repeater.
+    return !!(borrador && borrador.url && String(borrador.url).trim())
+  } catch {
+    return false   // un borrador corrupto no puede dejar el Spider bloqueado
+  }
+}
+
 function normalizePacket(p) {
   return {
     ...p,
@@ -37,8 +55,14 @@ export function AppProvider({ children }) {
   const [vulnerabilities, setVulnerabilities] = useState(config.USE_MOCKS ? mockVulnerabilities : [])
   const [connected, setConnected] = useState(config.USE_MOCKS)
   const [activeUrl, setActiveUrl] = useState(null)
+  const [spiderEvento, setSpiderEvento] = useState(null)
   const [sessionCookies, setSessionCookies] = useState({})
   const [wsKey, setWsKey] = useState(0)
+  // Estado del Repeater que debe sobrevivir a cambiar de pestana. Vive aqui y no en
+  // RepeaterPage porque el router la desmonta al navegar y se perdia TODO: la peticion
+  // que estabas editando, su respuesta y el historial.
+  const [repeaterResponse, setRepeaterResponse] = useState(null)
+  const [repeaterLastUrl, setRepeaterLastUrl] = useState('')
   const wsRef = useRef(null)
 
   // Limpieza del identificador que el navegador se inventaba antes: si se queda, no
@@ -52,8 +76,12 @@ export function AppProvider({ children }) {
   // recargar la página o volver a entrar el panel aparecía vacío y parecía que no había
   // hecho nada. El endpoint ya existía (`/api/repeater/history/...`, que lee el mismo
   // sitio donde el Spider escribe); simplemente nadie lo llamaba. Es también la causa
-  // del «historial vacío del Repeater» que teníamos anotado como bug aparte: era el
-  // mismo fallo visto desde otra pantalla.
+  //
+  // ⚠️ CORREGIDO el 12-oct. Aquí se afirmaba que esto era «también la causa del historial
+  // vacío del Repeater, el mismo fallo visto desde otra pantalla». Era FALSO: el Repeater
+  // NO guarda sus peticiones en el servidor, así que este endpoint no puede llenar su
+  // historial —lo que devuelve son las del Spider y del Proxy—. Y desde el 12-oct el
+  // Repeater NO tiene historial: trabaja con una peticion cada vez.
   useEffect(() => {
     if (config.USE_MOCKS || !sessionToken) return
     let cancelado = false
@@ -88,6 +116,10 @@ export function AppProvider({ children }) {
       if (data.type === 'request_intercepted') { console.log('packet:', data.payload.method, data.payload.url); setRequests(prev => [normalizePacket(data.payload), ...prev]) }
       if (data.type === 'vulnerability_detected') setVulnerabilities(prev => [data.payload, ...prev])
       if (data.type === 'session_cookies') setSessionCookies(data.payload.cookies)
+      // El backend distingue completado / detenido a mano / limite alcanzado y manda
+      // el recuento de paginas. Antes estos dos eventos llegaban y se descartaban.
+      if (data.type === 'spider_completed') setSpiderEvento({ tipo: 'completado', ...data.payload })
+      if (data.type === 'spider_started') setSpiderEvento({ tipo: 'iniciado', ...data.payload })
       if (data.type === 'network_packet') setNetworkPackets(prev => [normalizePacket(data.payload), ...prev])
     }
     return () => ws.close()
@@ -105,9 +137,15 @@ export function AppProvider({ children }) {
       clearRequests,
       resetWs: () => setWsKey(k => k + 1),
       activeUrl,
+      spiderEvento,
+      setSpiderEvento,
       setActiveUrl,
       sessionCookies,
       setSessionCookies,
+      repeaterResponse,
+      setRepeaterResponse,
+      repeaterLastUrl,
+      setRepeaterLastUrl,
     }}>
       {children}
     </AppContext.Provider>

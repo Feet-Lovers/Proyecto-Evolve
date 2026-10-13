@@ -36,6 +36,8 @@ class SpiderService:
         self.base_domain = urlparse(base_url).netloc
         self.cookie = cookie
         self.visited: Set[str] = set()
+        self.con_error = 0  # visitadas que fallaron: cuentan en visited pero no se publican
+        self.paginas_finales: Set[str] = set()  # URL final tras redirecciones: es por la que agrupa la tabla
         self.queue: List[str] = [base_url]
         # Formularios ya emitidos (metodo+accion+campos). Sin esto, un formulario
         # repetido en cada pagina (o uno por producto) genera decenas de entradas
@@ -167,8 +169,8 @@ class SpiderService:
 
             forms = self._extract_forms(response_body, str(response.url))
             new_urls = self._extract_urls(response_body, url)
-            chosen_ua = random.choice(REALISTIC_USER_AGENTS)
 
+            self.paginas_finales.add(str(response.url))
             result = {
                 'id': str(uuid.uuid4()),
                 'method': 'GET',
@@ -177,12 +179,16 @@ class SpiderService:
                 'size': len(response.content),
                 'time': elapsed_ms,
                 'timestamp': datetime.utcnow().isoformat(),
-                'request_headers': {
-                    'User-Agent': chosen_ua,
-                    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                    'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-                    'Host': str(response.url).split('/')[2],
-                },
+                # Las cabeceras que SALIERON POR EL CABLE, leidas de la propia peticion que
+                # guarda la respuesta. No vale con guardar las que ponemos a mano:
+                # - la libreria anade por su cuenta Host, Accept-Encoding, Connection...
+                # - y, sobre todo, LA COOKIE DE SESION, que la pone el cliente persistente y
+                #   nunca pasa por nuestro diccionario. Esa es justo la que decide como
+                #   responde el servidor, y faltaba.
+                # Antes se fabricaba un diccionario aparte que ademas sorteaba OTRO
+                # User-Agent distinto del usado. En una herramienta de auditoria lo que se
+                # ensena como evidencia tiene que ser la peticion que salio.
+                'request_headers': dict(response.request.headers),
                 'request_body': None,
                 'response_headers': {**dict(response.headers), **({'set-cookie': '; '.join([f'{k}={v}' for k,v in client.cookies.items()])} if client.cookies else {})},
                 'response_body': response_body[:50000],
@@ -193,11 +199,25 @@ class SpiderService:
             }
 
             session = session_manager.get_session(self.session_token)
+            if not session.get("spider_running", True):
+                return  # detenido mientras se pedia esta pagina: no se publica nada de ella
             session['requests'].append(result)
             await session_manager.emit(self.session_token, 'request_intercepted', result)
 
+            # El cliente HTTP es compartido con el Repeater y el Intruder, asi que aqui
+            # tambien se acumulan cookies: avisamos al panel igual que hace forward_request.
+            # Sin esto el indicador decia 'sin cookies' mientras el spider rastreaba con sesion.
+            cookies_sesion = dict(client.cookies)
+            if cookies_sesion:
+                await session_manager.emit(self.session_token, 'session_cookies', {
+                    'cookies': cookies_sesion,
+                    'url': url
+                })
+
             # Emitir peticiones de formularios como peticiones independientes
             for form in forms:
+                if not session_manager.get_session(self.session_token).get("spider_running", True):
+                    break
                 if form['body']:
                     huella = (form['method'], form['action'], form['body'])
                     if huella in self.forms_emitidos:
@@ -211,10 +231,23 @@ class SpiderService:
                         'size': 0,
                         'time': 0,
                         'timestamp': datetime.utcnow().isoformat(),
+                        # OJO: este formulario NO se ha enviado (status 'FORM'), asi que estas
+                        # cabeceras son las que se USARIAN, no un registro de lo que paso.
+                        #
+                        # Se parte de las REALMENTE enviadas al pedir la pagina -que incluyen la
+                        # COOKIE DE SESION- y se les cambia el Content-Type por el del formulario.
+                        # Antes aqui solo iban User-Agent y Content-Type: sin cookie. Mientras el
+                        # Repeater usaba el cliente compartido no se notaba, porque la sesion la
+                        # ponia el backend por detras; en cuanto se le quito, el formulario viajaba
+                        # sin sesion, Laravel no encontraba el token CSRF y respondia 419.
+                        #
+                        # Se quita Content-Length: era el del GET y el cuerpo que se envia es otro.
                         'request_headers': {
-                            'User-Agent': chosen_ua,
+                            **{
+                                k: v for k, v in dict(response.request.headers).items()
+                                if k.lower() not in ('content-length', 'content-type')
+                            },
                             'Content-Type': 'application/x-www-form-urlencoded',
-                            'Host': str(response.url).split('/')[2],
                         },
                         'request_body': form['body'] if form['method'] == 'POST' else None,
                         'response_headers': {},
@@ -222,7 +255,11 @@ class SpiderService:
                         'suspicious': False,
                         'vulnerable': False,
                         'forms': [],
-                        'source': 'spider-form'
+                        'source': 'spider-form',
+                        # La pagina se registra con str(response.url) -la URL FINAL tras redirecciones-,
+                        # asi que el formulario tiene que colgar de ESA, no de la pedida: si no, no casan.
+                        'pagina_origen': str(response.url),
+                        'num_campos': len(form['fields'])
                     }
                     session['requests'].append(form_result)
                     await session_manager.emit(self.session_token, 'request_intercepted', form_result)
@@ -232,6 +269,7 @@ class SpiderService:
                     self.queue.append(new_url)
 
         except Exception as e:
+            self.con_error += 1
             await session_manager.emit(self.session_token, 'spider_error', {
                 'url': url,
                 'error': str(e)
@@ -251,16 +289,29 @@ class SpiderService:
             current_url = self.queue.pop(0)
             await self.crawl_page(current_url)
         limite_alcanzado = len(self.visited) >= self.max_pages and len(self.queue) > 0
+        analizadas = len(self.visited) - self.con_error
+        distintas = len(self.paginas_finales)
+        if detenido:
+            mensaje = f"Spider detenido manualmente — {analizadas} paginas analizadas antes de parar."
+        elif limite_alcanzado:
+            mensaje = f"Spider detenido — limite de {self.max_pages} paginas alcanzado. Pueden existir paginas sin analizar."
+        else:
+            # El contador cuenta URLs PEDIDAS; la tabla agrupa por URL FINAL. Si el sitio
+            # redirige, dos pedidas distintas pueden ser una sola fila: se dice, no se esconde.
+            mensaje = f"Spider completado — {analizadas} URLs visitadas"
+            if distintas and distintas != analizadas:
+                repetidas = analizadas - distintas
+                verbo = "redirigia" if repetidas == 1 else "redirigian"
+                mensaje += f", {distintas} paginas distintas ({repetidas} {verbo} a otra ya vista)"
+            if self.con_error:
+                mensaje += f", {self.con_error} con error"
+            mensaje += ". Auditoria completa."
         await session_manager.emit(self.session_token, 'spider_completed', {
             'base_url': self.base_url,
             'total': len(self.visited),
+            'paginas_distintas': distintas,
+            'con_error': self.con_error,
             'max_pages': self.max_pages,
             'completo': (not limite_alcanzado) and (not detenido),
-            'mensaje': (
-                f"Spider detenido manualmente — {len(self.visited)} paginas analizadas antes de parar."
-                if detenido else
-                f"Spider detenido — limite de {self.max_pages} paginas alcanzado. Pueden existir paginas sin analizar."
-                if limite_alcanzado else
-                f"Spider completado — {len(self.visited)} paginas encontradas y analizadas. Auditoria completa."
-            )
+            'mensaje': mensaje
         })

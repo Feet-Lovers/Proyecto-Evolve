@@ -100,3 +100,55 @@ export async function salir() {
     guardarToken(null)
   }
 }
+
+// --- Modulo de IA (RF-08) --------------------------------------------------------
+// El boton de auditar pasa por aqui. La orden va al endpoint de instrucciones con el
+// espacio en la RUTA: el guardian comprueba que ese espacio es el tuyo (403 si no) y el
+// backend lo usa como dueño del trabajo, de modo que los hallazgos vuelven a tu sesion.
+// El `session_token` del cuerpo lo exige el modelo del backend, pero NO es el que decide
+// la propiedad — eso se lee de la ruta, que el guardian ya ha validado.
+
+export async function lanzarAuditoria({ espacio, url, selector }) {
+  const { data } = await api.post(
+    `/api/playwright/instruction/${encodeURIComponent(espacio)}`,
+    { type: 'full_audit', url, selector: selector || null, session_token: espacio },
+  )
+  return data
+}
+
+// RNF-06: lo que la IA no pudo analizar, con su motivo. Se consulta al entrar en la
+// pantalla; lo que llegue despues entra por el WebSocket.
+export async function obtenerNoAnalizados(espacio) {
+  const { data } = await api.get(
+    `/api/vulnerabilities/${encodeURIComponent(espacio)}/no-analizados`,
+  )
+  return data
+}
+
+// Las vulnerabilidades YA detectadas. Hasta el 10-oct esta llamada no existia y la
+// pantalla se alimentaba SOLO del WebSocket, de modo que lo encontrado mientras el
+// operador no estaba en esa pestana era invisible aunque el backend lo tuviera guardado:
+// bastaba cambiar de pestana para "perder" los hallazgos. El endpoint ya existia
+// (`vulnerabilities.py`), solo que nadie lo llamaba. Mismo criterio que los no
+// analizados: lo ya ocurrido se consulta al entrar, lo nuevo llega por el WebSocket.
+export async function obtenerVulnerabilidades(espacio) {
+  const { data } = await api.get(`/api/vulnerabilities/${encodeURIComponent(espacio)}`)
+  return data
+}
+
+// Vacia el panel de vulnerabilidades de la sesion (10-oct). Hace falta porque la limpieza
+// automatica al lanzar una auditoria no cubre el caso real: josemax limpio el proxy, el
+// campo de objetivo se vacio y los avisos de "no analizado" seguian ahi. Sin esto, limpiar
+// la pantalla obligaria a gastar una auditoria.
+export async function limpiarPanel(espacio) {
+  const { data } = await api.delete(`/api/vulnerabilities/${encodeURIComponent(espacio)}`)
+  return data
+}
+
+// El recibo de la ultima auditoria: cuantos analisis se hicieron de verdad. Sin este dato
+// "0 detectadas" es ambiguo — significa lo mismo si la IA examino 48 elementos y ninguno
+// era vulnerable que si no examino ninguno.
+export async function obtenerResumenIA(espacio) {
+  const { data } = await api.get(`/api/vulnerabilities/${encodeURIComponent(espacio)}/resumen`)
+  return data
+}

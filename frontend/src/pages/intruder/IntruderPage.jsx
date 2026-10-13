@@ -229,7 +229,7 @@ export function IntruderPage() {
               onInput={e => setUrl(e.currentTarget.textContent)}
               className="w-full px-3 py-2 rounded border text-[10px]"
               style={{ ...inputStyle, minHeight: '32px', wordBreak: 'break-all', lineHeight: '1.6', outline: 'none', whiteSpace: 'pre-wrap' }}
-              data-placeholder="http://dvwa/sqli/?id=1&Submit=Submit"
+              data-placeholder="https://ejemplo.com/buscar?q=texto"
             >
               <UrlDisplay url={url} />
             </div>

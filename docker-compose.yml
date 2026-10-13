@@ -14,9 +14,15 @@ volumes:
 services:
   backend:
     build: ./backend
+    # Sin esto los print() del backend se quedan en el buffer y NO salen en el log. El
+    # 10-oct costo un diagnostico: la linea del consumidor del bus no aparecia y parecia
+    # que no habia arrancado — Redis confirmo que si (`pubsub numsub ia:hallazgos` = 1).
+    # Un log que no distingue "funciona" de "roto" es el mismo fallo silencioso que RNF-06
+    # persigue, un nivel mas abajo. Los servicios `ia` y `playwright` ya lo tenian.
     # Sin 'ports': el backend NO se publica a internet. Nginx lo proxea (/api, /ws) y
     # ia/playwright le hablan por la red interna (http://backend:8000). Cierra el :8000 abierto.
     environment:
+      - PYTHONUNBUFFERED=1
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - HOST=0.0.0.0
       - PORT=8000
@@ -50,22 +56,17 @@ services:
       - BACKEND_URL=http://backend:8000
       - SESSION_TOKEN=hooksuite_session
       - PYTHONUNBUFFERED=1
-      - DVWA_URL=http://dvwa:80
     depends_on:
       - backend
     restart: unless-stopped
+    networks:
+      - hooksuite-net
   redis:
     image: redis:7-alpine
     container_name: hooksuite-redis-1
     restart: unless-stopped
     networks:
       - hooksuite-net
-  dvwa:
-    image: vulnerables/web-dvwa
-    restart: unless-stopped
-    networks:
-      - hooksuite-net
-
   ia:
     build: ./ia
     environment:
@@ -74,8 +75,27 @@ services:
       - MOCK_PLAYWRIGHT=false
       - SESSION_TOKEN=ia_session
       - PYTHONUNBUFFERED=1
+      # Techo de llamadas por auditoria (client.py). Hasta el 10-oct NO se pasaba al
+      # contenedor, asi que poner la variable en el shell no servia de nada: el modulo
+      # usaba su defecto de 40 y una prueba que se creia gratis habria gastado saldo.
+      # El defecto sigue siendo 40 y sigue declarado provisional: se fija con el dato de
+      # la primera auditoria real, no a ojo.
+      - HOOKSUITE_IA_MAX_LLAMADAS=${HOOKSUITE_IA_MAX_LLAMADAS:-40}
+      # Tope de tokens por llamada (client.py). En Claude 5 el pensamiento va activado y
+      # este tope cubre pensamiento Y respuesta, asi que 8000 se queda corto en paginas con
+      # contenido: la respuesta se trunca y el analisis sale como "no analizado" (RNF-06).
+      # Paso el 10-oct con las 4 paginas MAS sospechosas del objetivo (fi, xss_r, sqli y la
+      # raiz), que son justo las que no conviene dejar sin mirar.
+      #
+      # Se añade aqui porque `environment` es una lista EXPLICITA: ponerla solo en el .env
+      # no llega al contenedor. Mismo error que el de MAX_LLAMADAS de esta mañana.
+      - HOOKSUITE_IA_MAX_TOKENS=${HOOKSUITE_IA_MAX_TOKENS:-8000}
     depends_on:
-      - backend
+      # Desde el 10-oct el modulo escucha el BUS, no al backend: su dependencia real es
+      # redis. Dejarlo apuntando al backend hacia que arrancase antes que redis y muriese
+      # en el primer ping. (`depends_on` solo espera el arranque, no que este listo: por
+      # eso el modulo reintenta la conexion antes de rendirse.)
+      - redis
     restart: unless-stopped
     networks:
       - hooksuite-net

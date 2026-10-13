@@ -20,6 +20,11 @@ export function useWebSocket(sessionToken) {
   const [requests, setRequests] = useState(config.USE_MOCKS ? mockRequests : [])
   const [networkPackets, setNetworkPackets] = useState([])
   const [vulnerabilities, setVulnerabilities] = useState(config.USE_MOCKS ? mockVulnerabilities : [])
+  // RNF-06. Hasta el 10-oct el estado degradado no llegaba aqui: el modulo de IA lo
+  // calculaba y lo publicaba, y no habia consumidor ni en el backend ni en el panel.
+  // Un fallo de analisis era indistinguible de «no hay vulnerabilidades».
+  const [noAnalizados, setNoAnalizados] = useState([])
+  const [resumenIA, setResumenIA] = useState(null)
   const [connected, setConnected] = useState(config.USE_MOCKS)
   const wsRef = useRef(null)
 
@@ -42,11 +47,17 @@ export function useWebSocket(sessionToken) {
       const data = JSON.parse(event.data)
       if (data.type === 'request_intercepted') setRequests(prev => [normalizePacket(data.payload), ...prev])
       if (data.type === 'vulnerability_detected') setVulnerabilities(prev => [data.payload, ...prev])
+      if (data.type === 'ia_no_analizado') setNoAnalizados(prev => [data.payload, ...prev])
+      // El backend avisa de que el panel se ha vaciado (boton limpiar o auditoria nueva).
+      // Sin esto el boton no serviria de nada: se borraria en el servidor y en el estado
+      // local, pero lo que llego por aqui seguiria en pantalla hasta recargar.
+      if (data.type === 'panel_limpiado') { setVulnerabilities([]); setNoAnalizados([]); setResumenIA(null) }
+      if (data.type === 'ia_resumen') setResumenIA(data.payload)
       if (data.type === 'network_packet') setNetworkPackets(prev => [normalizePacket(data.payload), ...prev])
     }
     return () => ws.close()
   }, [sessionToken])
 
   const clearRequests = useCallback(() => setRequests([]), [])
-  return { requests, networkPackets, connected, clearRequests, vulnerabilities }
+  return { requests, networkPackets, connected, clearRequests, vulnerabilities, noAnalizados, resumenIA }
 }
