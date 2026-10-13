@@ -1029,7 +1029,37 @@ Esa excepcion deforma el recuento, y el dato concreto lo demuestra: de las 41 co
 La estimacion de horas de este apartado sale del diario, no del historial de confirmaciones.
 
 *Dato del 12-oct, tomado del diario y no estimado a posteriori:* la jornada suma *unas diez horas y media de asistente* repartidas en veinticinco entradas, más el tiempo de pruebas de José María, que *no se cronometra* porque va entremezclado con el uso de la herramienta. Al consolidar conviene no fundir las dos cifras: las horas del asistente están anotadas entrada por entrada; las de prueba humana, no. Y el reparto de mérito no sigue al reloj —de los dieciséis defectos de esa jornada, la mayoría los encontró quien usaba el producto, no quien escribía el código—.
-#hueco("José María", "Consolidar las horas por persona al congelar (13-oct). El reparto real del trabajo queda trazado por los commits firmados por cada responsable (R2); José María cierra el recuento.")
+=== Horas registradas: qué parte es medida y qué parte inferida
+El diario tiene *179 entradas*, *177* con campo de horas, y suma *87,2 h*. El reparto de abajo separa a
+propósito las tres cosas que suelen ir mezcladas en una tabla de horas: lo que está *escrito*, lo que está
+*inferido con una regla declarada*, y lo que simplemente *no se registró*.
+
+#tabla(
+  (3fr, auto, 6fr),
+  "
+  Quién | Horas en el diario | De dónde sale esa cifra
+  *Claude Code* (asistente) | *87,1 h* | *40,7 h escritas* con su nombre en el campo de horas, todas de la Fase 3 en adelante · *46,4 h inferidas*: entradas anteriores cuyo campo dice solo «~1 h», sin nombrar a nadie
+  *José María* | *sin horas registradas* | El campo nunca anotó las suyas. Lo que sí se puede contar son sus intervenciones: *43 entradas* las registran — 23 decisiones, 5 revocaciones de claves, 5 pruebas en producción, 5 lotes de capturas, 3 ejecuciones en la instalación pública y 2 fusiones con permiso de administración
+  *Ivan · Macarena · Nacho · Carlos* | *sin horas registradas* | Por diseño, no por olvido: el modelo de trabajo acordado el 1 de octubre les asigna confirmar su parcela, y no participan en estas sesiones, que son las que el diario registra
+  ",
+)
+
+*La regla de inferencia, dicha para que se pueda discutir.* Desde la Fase 3 el campo escribe «*~0,5 h de
+Claude*»; antes escribía «*~1 h*» a secas. Las entradas las redactó *el mismo autor de principio a fin*, con
+el mismo formato y el mismo propósito —medir el tiempo de la sesión—, así que *se infiere que el campo
+significaba lo mismo antes de decirlo*. No es una medida y no se presenta como tal: son *46,4 de las 87,2 h*,
+más de la mitad, y por eso la cifra del asistente se da como *87,1 h* con su desglose a la vista en lugar de
+como un total redondo. (40,7 + 46,4 = 87,1; la décima que falta hasta 87,2 es redondeo de cada entrada.)
+
+*Lo que esta tabla NO es, y conviene decirlo antes de que alguien la lea mal.* No es el esfuerzo del grupo
+en el producto: HookSuite lo escribieron los cinco en la práctica anterior, y este diario solo cubre las
+sesiones de la P3 —José María y el asistente—, que es donde se hizo el trabajo de esta entrega. Tampoco
+mide valor: una decisión de treinta segundos —«DVWA fuera del producto», «las credenciales no van al
+repositorio»— cambió el entregable más que varias horas de construcción.
+
+*Y el límite honesto:* las horas de José María y las de los otros cuatro *no están en ningún registro* y no
+se inventan aquí. Las tiene que poner quien las sabe.
+#hueco("José María", "Poner sus propias horas y pedir las suyas a Ivan, Macarena, Nacho y Carlos: el diario no las registra y no se inventan (ver la tabla de arriba). Es lo único que falta de este apartado.")
 
 = 12. Uso de herramientas de IA
 Declaración obligatoria de qué herramientas de IA se usaron y para qué.
