@@ -1068,7 +1068,59 @@ De ahí salieron los tres defectos del apartado 8. Es decir: el control que impi
 
 El límite del método también se declara: el asistente secundario es un modelo, no un control. Lo que devuelve tiene que revisarlo *una persona que conozca el material*, porque es la única que puede juzgar si cruzó la línea entre describir y reproducir; el asistente principal no puede, precisamente porque no conoce el contenido.
 
-#hueco("José María", "Detallar por fase qué aportó la IA y qué fue decisión/revisión humana; distinguir generado de verificado.")
+== Qué aportó el asistente, fase por fase
+El modelo de trabajo lo fijó el grupo el 1 de octubre: *se le ceden al asistente los mandos de
+construcción*, y lo que no puede hacer se reparte a personas y queda escrito. Las pruebas las hacen José
+María y el asistente; los otros cuatro integrantes confirman su parcela y no tocan infraestructura. El
+recuento de la última columna sale del diario, contando sus entradas una a una.
+
+#tabla(
+  (auto, 5fr, 5fr, auto),
+  "
+  Fase | Qué construyó el asistente | Qué fue decisión o verificación humana | Registro
+  *0* — Reconciliación e historial | Ensayo y ejecución de la reescritura del historial, el orden del empuje forzado de las siete ramas y la reconciliación de los ficheros sin confirmar | *La revocación de las claves*, repartidas en tres cuentas distintas: no es algo que el asistente pueda hacer. El visto bueno al empuje forzado y la decisión sobre la interfaz que solo existía en la instalación pública | 9 entradas · 4,6 h
+  *1* — Exposición y endurecimiento | Retirada de los puertos directos, orígenes permitidos, canal en tiempo real autenticado, topes del estado de sesión y endurecimiento del servidor | *Probar la web en producción*: nueve pruebas, tres hallazgos y una corrección al asistente. Y lanzar lo que los controles del servidor le frenan | 19 entradas · 9,0 h
+  *2* — Identidad y aislamiento | Alta y acceso por usuario, el guardián de los espacios de datos, las cuatro fugas y la quinta que introdujo la propia corrección | *El modelo de alta*: que no fuera abierto, sino con código de invitación. Y la verificación en la instalación pública | 21 entradas · 15,9 h
+  *3* — IA, pulido y congelación | RF-08 de punta a punta (bus interno, disparo desde el panel, techo de gasto, operación degradada), quince defectos del rastreador y dieciséis del banco de peticiones, el manual de uso, la congelación y esta memoria | *Encontrar la mayoría de los defectos usando el producto* —seis de los ocho de una sola jornada, arriba—, las capturas de pantalla, la clave de la API, la fusión con permiso de administración y las decisiones de *qué no se toca* el día de la congelación | 118 entradas · 47,1 h
+  ",
+)
+
+== Generado frente a verificado: la regla, y lo que cuesta sostenerla
+- *Todo el código añadido o modificado en esta práctica lo escribió el asistente* —el de la práctica
+  anterior lo escribió el grupo—, y *nada se dio por bueno por haberlo escrito*. Lo que lo valida es otra
+  cosa: sondas con valor esperado y *control negativo*, pruebas en el entorno de trabajo, y la verificación
+  en la instalación pública, que la hace una persona.
+- *Las cifras de esta memoria salen de medidas con herramienta, y donde no se ha medido, se dice.* El
+  apartado 7 es el ejemplo: se da el número de avisos que da el auditor de dependencias y se declara,
+  en la misma línea, que *no se ha medido* cuántos son alcanzables desde el camino de ejecución.
+- *Las afirmaciones del asistente que resultaron falsas están declaradas en el cuerpo del documento*, no
+  corregidas en silencio: el umbral que «había que añadir» y ya existía (apartado 4), el plan de pruebas
+  «completo, diecinueve casos» cuando eran dieciocho y seis no existían (apartado 9), y un recuento del
+  paquete entregado que el propio mensaje de confirmación contradecía (apartado 10).
+- *Las dos formas en que este asistente se equivoca, nombradas porque se repiten.* La primera es *un
+  medidor que no sabría cantar otra cosa*: un cero sobre un PDF cuyo texto va comprimido, o un recuento
+  sobre el texto de una salida cuando lo que se pretendía medir era un árbol de dependencias. La segunda es
+  *un documento que envejece en horas*: un pendiente describe lo que alguien entendió al escribirlo, no lo
+  que el código hace ahora, y fiarse de él produjo tres pendientes caducados en una sola respuesta.
+- *Y la limitación de fondo, que explica una norma de trabajo entera:* el asistente *no recuerda* las
+  sesiones anteriores. Lo que no quede escrito en el diario o en esta memoria no existe para la sesión
+  siguiente. De ahí que el diario se escriba *en el momento* y no al cerrar la fase: no es disciplina, es la
+  única forma de que el motivo de una decisión sobreviva a quien la tomó.
+
+== Lo que el registro de horas no puede decir
+El diario tiene *176 entradas*, *174* con el campo de horas, y suma *85,9 h registradas*. Pero el campo
+*solo empezó a nombrar a quién* en la Fase 3:
+
+- *39,5 h atribuidas* explícitamente al asistente, en 99 entradas.
+- *38,0 h de las Fases 0, 1 y 2* —más 8,5 h de entradas anteriores a la numeración por fases— *sin dueño
+  anotado*.
+
+Por eso el apartado 11 *no puede repartir esas horas por persona a partir de este registro*, y conviene
+decirlo en lugar de rellenar una tabla que parecería medida. Caben dos salidas honestas: aplicar el modelo
+de trabajo vigente —el asistente construyó, de modo que la mayor parte de esas horas serían suyas— o
+declararlas no atribuibles. *Esta memoria no lo resuelve por su cuenta:* lo anota como lo que es, un límite
+del registro, y deja la decisión a quien firma el apartado 11. Lo que sí está descartado es usar el número
+de confirmaciones como reparto, por el motivo que ese mismo apartado explica: la autoría se sortea.
 
 = 13. Anexos
 Manual de instalación ampliado, credenciales de prueba (ficticias), glosario y referencias.
