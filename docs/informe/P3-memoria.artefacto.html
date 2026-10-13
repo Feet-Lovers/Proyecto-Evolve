@@ -432,7 +432,94 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid var(--border);
 <ul>
 <li><strong>Modelo STRIDE, validación de entradas, dependencias y datos personales</strong>, abajo.</li>
 </ul>
-<div class="hueco"><div class="hueco-head"><span class="hueco-tag">Hueco</span><span class="hueco-resp">José María</span></div><p>Completar el modelo STRIDE, validación de entradas, dependencias y tratamiento de datos personales.</p></div></section><section id="ap-8"><h2 class="apartado"><span class="ap-num">8</span>Pruebas y evidencias<span class="ap-estado estado-con-evidencia">Con evidencia</span></h2><p>Plan de pruebas, casos ejecutados, resultados y las pruebas que fallaron con su explicación. El detalle caso a caso (PR-01…PR-20) se mantiene en la matriz del apartado 9 y en el diario del repo.</p>
+<h4>Modelo de amenazas (STRIDE)</h4>
+<p>El modelo se aplica a los seis componentes del apartado 5 y a la frontera que movió la Fase 2: hasta entonces autenticaba el proxy con una contraseña compartida; hoy autentica el backend, por persona.</p>
+<p><strong>Una premisa que conviene decir antes de la tabla, porque un lector la echaría en falta:</strong> HookSuite es una herramienta <strong>ofensiva</strong>, y su función es enviar tráfico arbitrario a un objetivo que elige quien la usa. Por eso el control no puede ser «no permitir destinos arbitrarios» —eso sería desactivar el producto— sino <strong>que solo entren personas autenticadas y que cada una responda de lo suyo</strong>. Lo que en otra aplicación sería una vulnerabilidad (hacer peticiones a donde diga el usuario) aquí es el requisito RF-02.</p>
+<div class="tabla-wrap"><table><thead><tr><th>Amenaza</th><th>Dónde aplica en HookSuite</th><th>Qué lo contiene hoy</th><th>Qué queda abierto</th></tr></thead><tbody><tr><td><strong>S</strong> — Suplantación</td><td>Entrar como otro auditor; hablar con la API sin ser nadie</td><td>Entrada única por el proxy; <code>/api/</code> y <code>/ws/</code> exigen token firmado por el servidor, con el algoritmo <strong>fijado en el servidor</strong> y no leído del token; alta con código de invitación; contraseñas en hash</td><td><strong>Sin TLS, el token es interceptable en el camino</strong> (RNF-09). El agente de navegador sondea sin credencial propia (arriba)</td></tr><tr><td><strong>T</strong> — Manipulación</td><td>Tocar datos de otra cuenta; manipular lo que recibe el agente de cortafuegos</td><td>El espacio de datos <strong>sale siempre del token</strong>, nunca de la ruta ni del cuerpo —es la lección del quinto fallo—; modelos declarados que rechazan la petición mal formada antes de la lógica; el canal del agente dejó de crearse con permisos para todo el sistema y valida lo que recibe</td><td>En claro y sin TLS, manipulable en tránsito</td></tr><tr><td><strong>R</strong> — Repudio</td><td>Saber quién lanzó qué contra un objetivo</td><td>Cada petición del historial, cookie capturada y hallazgo cuelga de la cuenta que lo generó; el repositorio identifica autoría por confirmación</td><td><strong>No hay registro de auditoría propio</strong>: los rastros son los del contenedor, que no se conservan ni se firman. Se declara, no se resuelve</td></tr><tr><td><strong>I</strong> — Divulgación</td><td>Ver auditorías ajenas; filtrar secretos o cookies del objetivo</td><td>Cuatro fugas de aislamiento cerradas y una quinta introducida y corregida; las cookies del objetivo cuelgan de su dueño y no de una tabla global; claves fuera del historial; orígenes restringidos; el paquete del frontend ya no lleva la dirección directa de la API</td><td>Sin TLS todo viaja en claro. El borrador del Repeater guarda la cookie del objetivo en el navegador (apartado 10)</td></tr><tr><td><strong>D</strong> — Denegación de servicio</td><td>Agotar el servidor, el saldo de la API o martillear al objetivo</td><td>Límite de peticiones simultáneas (RNF-05); <strong>techo de llamadas</strong> a la IA, configurable y con degradación visible en el panel; el recolector de sesiones, que existía y no se ejecutaba, ahora corre; en el host, cortafuegos y bloqueo de fuerza bruta</td><td>La vía de huella digital no compara contra el techo; el Spider no tiene límite de ritmo propio contra el objetivo</td></tr><tr><td><strong>E</strong> — Elevación de privilegio</td><td>Que un usuario del producto mande sobre el cortafuegos del host</td><td>El canal del agente pasó a tener permisos acotados y a validar; se retiró un segundo agente lanzado a mano en mayo, fuera del gestor de servicios y con permisos de administración; acceso remoto solo por clave</td><td>El agente de cortafuegos es, <strong>por diseño</strong>, un componente con privilegio sobre las reglas del host: su superficie es ese canal, y no desaparece</td></tr></tbody></table></div>
+<h4>Validación de entradas</h4>
+<ul>
+<li><strong>Modelos declarados en el borde, no comprobaciones dispersas.</strong> El backend declara su entrada con modelos</li>
+</ul>
+<p>en seis ficheros —el de esquemas comunes y las rutas de alta, red, navegador, rastreo y vulnerabilidades—, así que una petición mal formada se rechaza <strong>antes</strong> de llegar a la lógica.</p>
+<ul>
+<li><strong>Todas las rutas protegidas menos la puerta.</strong> En <code>main.py</code> se registran nueve grupos de rutas y <strong>todos</strong></li>
+</ul>
+<p>llevan la dependencia de protección salvo el de alta y entrada, que es por donde se consigue el token.</p>
+<ul>
+<li><strong>El identificador del espacio de datos no se acepta del cliente.</strong> Se descartó la corrección evidente</li>
+</ul>
+<p>—validar el campo contra el token— porque deja el dato en manos de quien llama; las rutas lo toman del token y punto. Es lo que cierra la familia entera del quinto fallo, no solo el caso encontrado.</p>
+<ul>
+<li><strong>Canonicalización en el Spider:</strong> decodificar entidades, normalizar y deduplicar la cadena de consulta. Sin</li>
+</ul>
+<p>eso, el rastreo generaba direcciones infinitas y martilleaba al objetivo (la trampa de araña del 1-oct).</p>
+<ul>
+<li><strong>El importador de comandos <code>curl</code></strong> corrigió una expresión regular que recortaba el esquema y convertía</li>
+</ul>
+<p>direcciones seguras en inseguras.</p>
+<ul>
+<li><strong>En el módulo de IA, la validación es doble:</strong> el esquema de respuesta se endureció tras *tres rechazos</li>
+</ul>
+<p>seguidos* de la API —validar contra una prueba propia no es validar— y el techo de llamadas corta por arriba, de modo que una entrada que dispare una auditoría enorme no se convierte en gasto ilimitado.</p>
+<ul>
+<li><strong>Lo que no se valida, y es deliberado:</strong> la dirección del objetivo. Es la función del producto; el control</li>
+</ul>
+<p>está en el acceso, no en el destino.</p>
+<h4>Dependencias</h4>
+<p>Medido el <strong>13-oct sobre el código congelado</strong>, con las herramientas puestas para ello (<code>npm audit</code> sobre el fichero de bloqueo y <code>pip-audit</code> sobre los requisitos declarados). Se dan los números que dan las herramientas, sin redondear hacia abajo.</p>
+<ul>
+<li><strong>Frontend:</strong> 241 dependencias resueltas (84 de producción, 113 de desarrollo, 45 opcionales) y <strong>12 avisos</strong></li>
+</ul>
+<p>—nueve altos, uno medio, dos bajos—. Restringido al árbol de producción, <strong>ocho</strong>: siete altos y uno bajo. Directas: el cliente HTTP del panel (alto), el enrutador (bajo, por su paquete interno) y la herramienta de construcción (alto, que entra en el árbol de producción a través del complemento de estilos).</p>
+<ul>
+<li><strong>Backend:</strong> <strong>78 avisos en 12 paquetes</strong> del árbol resuelto. Los que más pesan, y el primero importa más que</li>
+</ul>
+<p>los otros: <strong>la librería que firma los tokens de sesión acumula trece avisos</strong> en la versión fijada —es la pieza central de la Fase 2—, la de criptografía siete, la de formularios multiparte siete y el armazón ASGI bajo FastAPI otros siete.</p>
+<ul>
+<li><strong>El proxy de la P1 sigue pesando, y se comprobó antes de decirlo.</strong> <code>mitmproxy</code> aporta tres avisos propios</li>
+</ul>
+<p>y arrastra cinco paquetes más (servidor web, compresión, serialización, protocolo binario y TLS). La tentación era declararlo código muerto y proponer quitarlo: <strong>no lo es.</strong> <code>main.py</code> y la ruta de alta importan el gestor que lo lanza como subproceso con su complemento, aunque RF-02 se implemente hoy con el cliente HTTP nuevo y las rutas del fichero de autoconfiguración se retirasen en la Fase 2. *Las dos arquitecturas conviven*, y esa convivencia es lo que mantiene viva esta superficie.</p>
+<ul>
+<li><strong>Política de fijado, desigual:</strong> el backend fija sus doce versiones; el módulo de navegador tres de cuatro</li>
+</ul>
+<p>y el de herramientas de depuración las tres; <strong>el módulo de IA solo una de cuatro</strong>, así que su construcción no es reproducible al día de hoy. El frontend declara rangos, pero el fichero de bloqueo fija el árbol.</p>
+<ul>
+<li><strong>Qué no se ha hecho, y por qué:</strong> <strong>no se ha actualizado ninguna dependencia hoy.</strong> Es el día de la</li>
+</ul>
+<p>congelación, el vídeo se graba sobre esta etiqueta y subir la librería de tokens o el cliente HTTP cambia el código que se entrega. Queda declarado aquí y en el apartado 10.</p>
+<ul>
+<li><strong>Honestidad de método:</strong> <code>pip-audit</code> resuelve el árbol completo, así que esos 78 incluyen transitivas, y</li>
+</ul>
+<p><strong>no se ha medido cuáles son alcanzables</strong> desde el camino de ejecución del producto. Decir «78 avisos» no es decir «78 agujeros explotables»; es decir cuántos hay que mirar.</p>
+<ul>
+<li><strong>Por qué los paquetes se nombran aquí por su papel y no por nombre y versión.</strong> El repositorio es público</li>
+</ul>
+<p>y el producto está desplegado <strong>sin TLS</strong>: publicar la lista exacta de paquete, versión y número de avisos es publicar un mapa de por dónde entrar. Las versiones están en los ficheros de requisitos para quien tenga acceso al repositorio, y cualquiera puede reproducir la medida con las dos órdenes citadas arriba. Es la misma regla que se aplicó a las claves: se cuenta el incidente, no se publica el valor (R7). <strong>Única excepción:</strong> el proxy de la P1, que esta memoria ya nombra en los apartados 4 y 5 al explicar el pivote de RF-02; ocultarlo aquí no taparía nada.</p>
+<h4>Tratamiento de datos personales</h4>
+<ul>
+<li><strong>Qué guarda el producto, y de quién.</strong> De cada auditor: su cuenta —nombre y contraseña <strong>en hash</strong>, nunca en</li>
+</ul>
+<p>claro— en un volumen propio, y colgando de ella su historial de peticiones, las cookies que captura del objetivo y sus hallazgos. Desde la Fase 2 nada de eso se comparte entre cuentas.</p>
+<ul>
+<li><strong>De terceros, nada por iniciativa propia.</strong> El producto no recolecta datos personales por su cuenta: lo</li>
+</ul>
+<p>que entra es lo que el auditor captura del objetivo que decide auditar. Las pruebas de esta práctica se hacen contra una <strong>web propia del equipo y autorizada</strong>, de modo que no hay datos de terceros en juego.</p>
+<ul>
+<li><strong>La cookie del objetivo es el dato más sensible que pasa por aquí</strong>, porque equivale a una sesión abierta</li>
+</ul>
+<p>en la web auditada. Vive en el espacio de su dueño, y el editor avisa cuando una petición la lleva. Pero el <strong>borrador</strong> del Repeater la escribe en el almacenamiento del navegador: está declarado en el apartado 10 y no se tocó el día de la congelación.</p>
+<ul>
+<li><strong>Rastros a retirar antes de la entrega:</strong> los usuarios de prueba creados en la cocina, y una regla heredada</li>
+</ul>
+<p>de la P1 que contenía la dirección pública de un integrante —esa ya se retiró en la Fase 1—.</p>
+<ul>
+<li><strong>Conservación y borrado:</strong> no hay caducidad ni borrado automático de cuentas ni de historial; el recolector</li>
+</ul>
+<p>solo caduca el estado efímero de sesión. Se declara como lo que es: una decisión no tomada, no una medida.</p>
+<ul>
+<li><strong>Y el que lo atraviesa todo:</strong> sin TLS, todo lo anterior viaja en claro (RNF-09). Es la limitación que más</li>
+</ul>
+<p>pesa en este apartado.</p></section><section id="ap-8"><h2 class="apartado"><span class="ap-num">8</span>Pruebas y evidencias<span class="ap-estado estado-con-evidencia">Con evidencia</span></h2><p>Plan de pruebas, casos ejecutados, resultados y las pruebas que fallaron con su explicación. El detalle caso a caso (PR-01…PR-20) se mantiene en la matriz del apartado 9 y en el diario del repo.</p>
 <p><strong>Dónde se tomó cada evidencia, porque cambia lo que vale.</strong> Salvo cuando se dice lo contrario, <strong>toda</strong> la verificación de las Fases 1 y 2 se ejecutó en la cocina —el entorno de pruebas descrito en el apartado 5—, y se repitió después contra la instalación pública tras cada despliegue. Las dos se registran por separado y con su fecha: una prueba en la cocina dice que el arreglo funciona; solo la de producción dice que <strong>está puesto</strong>. Esa distinción no es formalismo: más abajo se cuenta un despliegue que habría pasado por correcto sin aplicar la configuración que se le pedía.</p>
 <h3>Evidencia de exposición (RNF-07 / PR-16), capturada el 4-oct</h3>
 <p>La prueba PR-16 —llamar a la API sin credenciales— y la verificación del frontend confirman que, antes de endurecer, el producto quedaba accesible sin autenticación. Capturas obtenidas antes de cualquier arreglo (R6: la evidencia de un fallo se captura antes de corregirlo, porque el propio arreglo la destruye):</p>

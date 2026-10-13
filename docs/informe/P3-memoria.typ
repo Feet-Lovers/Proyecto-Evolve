@@ -497,7 +497,99 @@ El flujo completo del acceso, capturado en la instalación pública el mismo dí
 
 > *Corrección declarada de este documento (R9).* Una versión anterior de este apartado justificaba lo anterior diciendo que ninguno de los dos módulos estaba en marcha. Era falso: valía para el entorno de pruebas, donde no se levantan, y se escribió sin comprobar la instalación de producción. La conclusión se sostiene, pero por un motivo distinto del que se dio, y la diferencia importa: uno de los dos está vivo y conectado al servidor.
 - *Modelo STRIDE, validación de entradas, dependencias y datos personales*, abajo.
-#hueco("José María", "Completar el modelo STRIDE, validación de entradas, dependencias y tratamiento de datos personales.")
+=== Modelo de amenazas (STRIDE)
+El modelo se aplica a los seis componentes del apartado 5 y a la frontera que movió la Fase 2: hasta
+entonces autenticaba el proxy con una contraseña compartida; hoy autentica el backend, por persona.
+
+*Una premisa que conviene decir antes de la tabla, porque un lector la echaría en falta:* HookSuite es una
+herramienta *ofensiva*, y su función es enviar tráfico arbitrario a un objetivo que elige quien la usa. Por
+eso el control no puede ser «no permitir destinos arbitrarios» —eso sería desactivar el producto— sino
+*que solo entren personas autenticadas y que cada una responda de lo suyo*. Lo que en otra aplicación sería
+una vulnerabilidad (hacer peticiones a donde diga el usuario) aquí es el requisito RF-02.
+
+#tabla(
+  (auto, 4fr, 5fr, 4fr),
+  "
+  Amenaza | Dónde aplica en HookSuite | Qué lo contiene hoy | Qué queda abierto
+  *S* — Suplantación | Entrar como otro auditor; hablar con la API sin ser nadie | Entrada única por el proxy; `/api/` y `/ws/` exigen token firmado por el servidor, con el algoritmo *fijado en el servidor* y no leído del token; alta con código de invitación; contraseñas en hash | *Sin TLS, el token es interceptable en el camino* (RNF-09). El agente de navegador sondea sin credencial propia (arriba)
+  *T* — Manipulación | Tocar datos de otra cuenta; manipular lo que recibe el agente de cortafuegos | El espacio de datos *sale siempre del token*, nunca de la ruta ni del cuerpo —es la lección del quinto fallo—; modelos declarados que rechazan la petición mal formada antes de la lógica; el canal del agente dejó de crearse con permisos para todo el sistema y valida lo que recibe | En claro y sin TLS, manipulable en tránsito
+  *R* — Repudio | Saber quién lanzó qué contra un objetivo | Cada petición del historial, cookie capturada y hallazgo cuelga de la cuenta que lo generó; el repositorio identifica autoría por confirmación | *No hay registro de auditoría propio*: los rastros son los del contenedor, que no se conservan ni se firman. Se declara, no se resuelve
+  *I* — Divulgación | Ver auditorías ajenas; filtrar secretos o cookies del objetivo | Cuatro fugas de aislamiento cerradas y una quinta introducida y corregida; las cookies del objetivo cuelgan de su dueño y no de una tabla global; claves fuera del historial; orígenes restringidos; el paquete del frontend ya no lleva la dirección directa de la API | Sin TLS todo viaja en claro. El borrador del Repeater guarda la cookie del objetivo en el navegador (apartado 10)
+  *D* — Denegación de servicio | Agotar el servidor, el saldo de la API o martillear al objetivo | Límite de peticiones simultáneas (RNF-05); *techo de llamadas* a la IA, configurable y con degradación visible en el panel; el recolector de sesiones, que existía y no se ejecutaba, ahora corre; en el host, cortafuegos y bloqueo de fuerza bruta | La vía de huella digital no compara contra el techo; el Spider no tiene límite de ritmo propio contra el objetivo
+  *E* — Elevación de privilegio | Que un usuario del producto mande sobre el cortafuegos del host | El canal del agente pasó a tener permisos acotados y a validar; se retiró un segundo agente lanzado a mano en mayo, fuera del gestor de servicios y con permisos de administración; acceso remoto solo por clave | El agente de cortafuegos es, *por diseño*, un componente con privilegio sobre las reglas del host: su superficie es ese canal, y no desaparece
+  ",
+)
+
+=== Validación de entradas
+- *Modelos declarados en el borde, no comprobaciones dispersas.* El backend declara su entrada con modelos
+  en seis ficheros —el de esquemas comunes y las rutas de alta, red, navegador, rastreo y vulnerabilidades—,
+  así que una petición mal formada se rechaza *antes* de llegar a la lógica.
+- *Todas las rutas protegidas menos la puerta.* En `main.py` se registran nueve grupos de rutas y *todos*
+  llevan la dependencia de protección salvo el de alta y entrada, que es por donde se consigue el token.
+- *El identificador del espacio de datos no se acepta del cliente.* Se descartó la corrección evidente
+  —validar el campo contra el token— porque deja el dato en manos de quien llama; las rutas lo toman del
+  token y punto. Es lo que cierra la familia entera del quinto fallo, no solo el caso encontrado.
+- *Canonicalización en el Spider:* decodificar entidades, normalizar y deduplicar la cadena de consulta. Sin
+  eso, el rastreo generaba direcciones infinitas y martilleaba al objetivo (la trampa de araña del 1-oct).
+- *El importador de comandos `curl`* corrigió una expresión regular que recortaba el esquema y convertía
+  direcciones seguras en inseguras.
+- *En el módulo de IA, la validación es doble:* el esquema de respuesta se endureció tras *tres rechazos
+  seguidos* de la API —validar contra una prueba propia no es validar— y el techo de llamadas corta por
+  arriba, de modo que una entrada que dispare una auditoría enorme no se convierte en gasto ilimitado.
+- *Lo que no se valida, y es deliberado:* la dirección del objetivo. Es la función del producto; el control
+  está en el acceso, no en el destino.
+
+=== Dependencias
+Medido el *13-oct sobre el código congelado*, con las herramientas puestas para ello (`npm audit` sobre el
+fichero de bloqueo y `pip-audit` sobre los requisitos declarados). Se dan los números que dan las
+herramientas, sin redondear hacia abajo.
+
+- *Frontend:* 241 dependencias resueltas (84 de producción, 113 de desarrollo, 45 opcionales) y *12 avisos*
+  —nueve altos, uno medio, dos bajos—. Restringido al árbol de producción, *ocho*: siete altos y uno bajo.
+  Directas: el cliente HTTP del panel (alto), el enrutador (bajo, por su paquete interno) y la herramienta
+  de construcción (alto, que entra en el árbol de producción a través del complemento de estilos).
+- *Backend:* *78 avisos en 12 paquetes* del árbol resuelto. Los que más pesan, y el primero importa más que
+  los otros: *la librería que firma los tokens de sesión acumula trece avisos* en la versión fijada —es la
+  pieza central de la Fase 2—, la de criptografía siete, la de formularios multiparte siete y el armazón
+  ASGI bajo FastAPI otros siete.
+- *El proxy de la P1 sigue pesando, y se comprobó antes de decirlo.* `mitmproxy` aporta tres avisos propios
+  y arrastra cinco paquetes más (servidor web, compresión, serialización, protocolo binario y TLS). La
+  tentación era declararlo código muerto y proponer quitarlo: *no lo es.* `main.py` y la ruta de alta
+  importan el gestor que lo lanza como subproceso con su complemento, aunque RF-02 se implemente hoy con el
+  cliente HTTP nuevo y las rutas del fichero de autoconfiguración se retirasen en la Fase 2. *Las dos
+  arquitecturas conviven*, y esa convivencia es lo que mantiene viva esta superficie.
+- *Política de fijado, desigual:* el backend fija sus doce versiones; el módulo de navegador tres de cuatro
+  y el de herramientas de depuración las tres; *el módulo de IA solo una de cuatro*, así que su construcción
+  no es reproducible al día de hoy. El frontend declara rangos, pero el fichero de bloqueo fija el árbol.
+- *Qué no se ha hecho, y por qué:* *no se ha actualizado ninguna dependencia hoy.* Es el día de la
+  congelación, el vídeo se graba sobre esta etiqueta y subir la librería de tokens o el cliente HTTP cambia
+  el código que se entrega. Queda declarado aquí y en el apartado 10.
+- *Honestidad de método:* `pip-audit` resuelve el árbol completo, así que esos 78 incluyen transitivas, y
+  *no se ha medido cuáles son alcanzables* desde el camino de ejecución del producto. Decir «78 avisos» no
+  es decir «78 agujeros explotables»; es decir cuántos hay que mirar.
+- *Por qué los paquetes se nombran aquí por su papel y no por nombre y versión.* El repositorio es público
+  y el producto está desplegado *sin TLS*: publicar la lista exacta de paquete, versión y número de avisos
+  es publicar un mapa de por dónde entrar. Las versiones están en los ficheros de requisitos para quien
+  tenga acceso al repositorio, y cualquiera puede reproducir la medida con las dos órdenes citadas arriba.
+  Es la misma regla que se aplicó a las claves: se cuenta el incidente, no se publica el valor (R7). *Única excepción:* el proxy de la P1, que esta memoria ya nombra en los apartados 4 y 5 al explicar el pivote de RF-02; ocultarlo aquí no taparía nada.
+
+=== Tratamiento de datos personales
+- *Qué guarda el producto, y de quién.* De cada auditor: su cuenta —nombre y contraseña *en hash*, nunca en
+  claro— en un volumen propio, y colgando de ella su historial de peticiones, las cookies que captura del
+  objetivo y sus hallazgos. Desde la Fase 2 nada de eso se comparte entre cuentas.
+- *De terceros, nada por iniciativa propia.* El producto no recolecta datos personales por su cuenta: lo
+  que entra es lo que el auditor captura del objetivo que decide auditar. Las pruebas de esta práctica se
+  hacen contra una *web propia del equipo y autorizada*, de modo que no hay datos de terceros en juego.
+- *La cookie del objetivo es el dato más sensible que pasa por aquí*, porque equivale a una sesión abierta
+  en la web auditada. Vive en el espacio de su dueño, y el editor avisa cuando una petición la lleva. Pero
+  el *borrador* del Repeater la escribe en el almacenamiento del navegador: está declarado en el apartado
+  10 y no se tocó el día de la congelación.
+- *Rastros a retirar antes de la entrega:* los usuarios de prueba creados en la cocina, y una regla heredada
+  de la P1 que contenía la dirección pública de un integrante —esa ya se retiró en la Fase 1—.
+- *Conservación y borrado:* no hay caducidad ni borrado automático de cuentas ni de historial; el recolector
+  solo caduca el estado efímero de sesión. Se declara como lo que es: una decisión no tomada, no una medida.
+- *Y el que lo atraviesa todo:* sin TLS, todo lo anterior viaja en claro (RNF-09). Es la limitación que más
+  pesa en este apartado.
 
 = 8. Pruebas y evidencias
 Plan de pruebas, casos ejecutados, resultados y las pruebas que fallaron con su explicación. El detalle caso a caso (PR-01…PR-20) se mantiene en la matriz del apartado 9 y en el diario del repo.
