@@ -4574,3 +4574,35 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   eso es parar y eliminar un contenedor → **lo decide y lo lanza josemax**.
 - **A que requisito toca:** **RNF-07** (superficie del producto), **RF-06** y **RF-10**; apdos. **5**, **6**
   y **10**. **Evidencia:** `(no aplica)`, queda en git. **Horas:** ~0,4 h de Claude.
+
+### Fase 3 (13-oct, 18:37) · El resumen ejecutivo, cerrado sobre el codigo ya congelado
+
+- **Que se hizo:** escrito el **apdo. 2** y retirado su `#hueco`. Seis parrafos: para quien es el producto,
+  de donde se parte, que se ha hecho, en que estado se entrega, como se puede comprobar y que no se esconde.
+- **Por que ahora.** El hueco decia literalmente «cerrar a 1 pagina **cuando el producto este congelado**».
+  El codigo se desplego a las 09:54 y se etiqueto a las 10:04, asi que la condicion ya estaba cumplida: era
+  el apartado mas maduro de los que quedaban y no dependia ni del video ni de la clave de API.
+- **De donde salen las cifras, y por que no de un resumen.** Los estados se contaron **uno a uno en la
+  matriz del apdo. 9**, no en ninguna lista de pendientes: 15 cumplidos (uno con la limitacion de movil),
+  1 modificado y 1 descartado justificados en el apdo. 4, 1 parcial (RNF-04, el grafo de contribuciones) y
+  1 pendiente declarado (RNF-09, TLS). Un resumen ejecutivo con cifras de segunda mano es relleno.
+- 🟠 **Lo que destapo contar, y no estaba en ningun pendiente:** **RF-04** figura como «*A revisar*» y
+  **RF-10** como «**segun alcance**», que no es un estado. Son 2 de las 21 filas, y la matriz es «la pieza
+  con la que se corrige la practica». **No se arregla escribiendo el resumen** → pendiente para antes del 16.
+  Mientras no se cierren, el resumen lo dice tal cual: «dos filas de la matriz quedan marcadas a revisar».
+- 🔴 **Lo que falle, y es la misma familia de siempre.** Antes de esto le di a josemax **tres pendientes
+  caducados** —PR #7 «por mergear», tag «por crear» y la contradiccion del apdo. 7 «abierta»— porque los lei
+  en `LINEA.md`, que se habia quedado en las 09:1x. Los tres estaban hechos (09:52, 10:04 y 12:27) y lo
+  demostro **git**, no un documento. Reconstruido desde `git log` y registrado en la memoria de la linea.
+  🔑 **La regla: para «que se hizo y por que», se le pregunta al codigo, no a un documento que puede ir por
+  detras.** Un documento envejece en horas; un commit no.
+- **R4 y R7 respetados en la misma pasada:** PDF con `typst compile --root`, artefacto con el python del
+  venv (el del sistema empotra las capturas sin reducir), y escaneo de secretos **antes** del commit —con
+  **control positivo** y sobre `pdftotext`, porque un `grep -a` sobre el PDF crudo daria ceros falsos: el
+  texto va comprimido. Unica coincidencia `XSRF`, identica antes y despues del cambio → prosa ya publicada.
+- ⚠️ **Hueco de diario detectado al escribir esto:** las cuatro tareas de las **11:56, 12:05, 12:17 y 12:27**
+  (figuras del producto, anexo de pruebas, laboratorio retirado de la memoria y contradiccion del apdo. 7)
+  **no tienen entrada aqui**; el diario se quedo en las 09:31. No las reconstruyo yo: el motivo y lo
+  descartado solo existen en el momento, y rellenarlas a posteriori seria inventarlas. **Lo decide josemax.**
+- **A que requisito toca:** apdo. **2** (cifras tomadas del **9**). **Evidencia:** `(no aplica)`, queda en
+  git (`276d1a57`). **Horas:** ~0,5 h de Claude.
