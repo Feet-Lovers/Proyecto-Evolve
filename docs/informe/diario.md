@@ -4773,3 +4773,31 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   el patron leyo como si «destilado» fuese una persona. **Un regex que busca personas encuentra palabras.**
 - **A que requisito toca:** apdo. **11** (y el **12** ya daba el material). **Evidencia:** `(no aplica)`,
   queda en git (`5be8d6a8`). **Horas:** ~0,6 h de Claude.
+
+### Fase 3 (13-oct, 21:0x) · El apartado 6: las seis pantallas una a una, leidas del codigo
+
+- **Que se hizo:** el apdo. 6 pasa de contar *lo que cambio en cada fase* a documentar tambien **lo que
+  hay**: tabla de las **seis pestanas** mas la pantalla de acceso, con que hace cada una, como se usa, que
+  requisitos cubre y **donde se ve** (apuntando a las figuras que ya estan en otros apartados, sin
+  duplicarlas). Huecos: 10 → 10, porque el hueco gordo se sustituye por **uno mucho mas estrecho**.
+- 🔑 **La tabla sale del codigo, no de la memoria de nadie.** Las pestanas se leyeron del `Layout.jsx` y del
+  router: *Spider, Repeater, Intruder, Utilidades, Vulnerabilidades y Manual*. Dos cosas que no sabiamos y
+  ahora estan escritas: **Utilidades tiene CUATRO herramientas** (codificador, huellas, regex y **generador
+  de payloads**, que la matriz no mencionaba) y **la pestana Spider vive en la ruta `/proxy`**, resto del
+  nombre anterior al pivote de RF-02.
+- ✅ **Y una correccion que vale un requisito: RF-07 ya soporta JWT.** La verificacion del 29-sep anoto que
+  «el codificador no soporta JWT aunque RF-07 lo promete». Hoy la lista de conversiones incluye `jwt decode`
+  (`frontend/src/pages/utilities/EncoderDecoder.jsx`). **Se dice en la memoria**, porque el defecto se
+  declaro en su dia y no se puede retirar en silencio (R9).
+- 🔑 **El hueco de capturas se reduce de seis a dos, y eso sale de cruzar lo que ya hay.** Inventariadas las
+  capturas: del **producto congelado** ya existen Spider, Repeater (cinco), Manual, Vulnerabilidades
+  degradadas y cuatro de acceso en produccion. **Solo faltan Intruder y Utilidades.** ⚠️ Y hay un monton de
+  capturas de producto **de la epoca de la P1** en `docs/capturas/frontend/` que **NO sirven**: muestran la
+  interfaz anterior al login nuevo y a la reforma del Repeater. Es exactamente lo que R6 avisa al separar
+  capturas de evidencia (ahora) de capturas de producto (despues de la Fase 3). **Pedirle a josemax seis
+  capturas cuando solo faltan dos habria sido hacerle perder el tiempo.**
+- **Defecto propio evitado a tiempo:** la tabla llevaba un `|` sobrante al final de **siete filas**, lo que
+  habria creado una quinta columna en una tabla de cuatro. Se conto antes de empalmar (`grep -c ' |$'`) y la
+  prueba de que importaba es que el `typst compile` es el que lo habria cazado despues, ya en el documento.
+- **A que requisito toca:** **RF-01** a **RF-08**, **RF-11**, **RF-12**, **RNF-06**, **RNF-08**; apdo. **6**.
+  **Evidencia:** ⚠️ FALTA: Intruder lanzado y Utilidades con el codificador [pantalla]. **Horas:** ~0,7 h.
