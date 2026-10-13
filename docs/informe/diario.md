@@ -4642,3 +4642,29 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   el video se graba sobre esta etiqueta y subir la libreria de tokens cambia el codigo que se entrega.
 - **A que requisito toca:** **RNF-07**; apdos. **7** y **10**. **Evidencia:** `(no aplica)`, queda en git
   (`3d1212e3`). **Horas:** ~0,7 h de Claude.
+
+### Fase 3 (13-oct, 19:1x) · Los cuatro anexos, y una decision de josemax sobre las credenciales
+
+- **Que se hizo:** el apdo. 13 completa sus anexos —**manual de despliegue**, **usuarios de prueba y acceso
+  para la correccion**, **glosario** (dieciocho terminos) y **referencias**—. Huecos: 12 → **11**.
+- 🔑 **Decision de josemax, y es la que da forma al anexo: las credenciales se entregan por el canal del
+  master y NO van al repositorio.** El repositorio es publico y la instalacion esta en internet, asi que una
+  contrasena escrita en el anexo seria una contrasena publicada, no una contrasena de prueba. El anexo
+  documenta el **mecanismo** —alta con codigo de invitacion, que se puede comprobar con una sola cuenta y
+  que exige dos (el aislamiento, once de once)— y deja constancia de que **aqui no hay ninguna credencial**.
+- **El manual se destilo del procedimiento ya probado, no se invento.** Lleva dentro las dos lecciones que
+  costaron tiempo: (1) *nombrar un servicio no lo recrea* si su imagen se descarga y su bloque no cambio
+  —el despliegue sale en verde sin aplicar la configuracion nueva—; (2) *quitar un servicio del fichero de
+  composicion no para su contenedor*, que queda huerfano y sigue corriendo. Y la verificacion por sondas
+  **con control negativo**, porque sin el una sonda que no encuentra nada es indistinguible de una sonda mal
+  apuntada; de hecho dos sondas de la primera version estaban mal dirigidas y se cazaron probandolas.
+- 🔑 **El empalme iba condicionado a una comprobacion, no a una promesa.** El anexo de referencias afirma
+  que todas las rutas que cita existen, asi que antes de insertarlo se comprobaron las cuatro: la fuente de
+  la memoria, el diario, `docs/capturas/` (12 entradas) y `docs/evidencias/` (49). Si alguna hubiera
+  faltado, el guion **no** escribia nada. Es el patron de las citas muertas, que ya nos ha mordido tres
+  veces, y esta vez la afirmacion se gano antes de hacerse.
+- **Decision de metodo que lo acompana:** el material de trabajo del grupo que **no vive en el repositorio**
+  (protocolo, flujo de ramas, procedimiento de despliegue, planes por fases) se cita **por su contenido y no
+  por su ruta**, para no dejarle al lector del repositorio referencias que no puede abrir.
+- **A que requisito toca:** apdo. **13**; las horas van al **11**. **Evidencia:** `(no aplica)`, queda en git
+  (`4c920252`). **Horas:** ~0,6 h de Claude.
