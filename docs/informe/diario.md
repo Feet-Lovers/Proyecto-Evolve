@@ -4536,3 +4536,41 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   **Evidencia:** `(no aplica)` — el destilado es documento, y queda en git. La limitacion de la cookie
   esta atada a `RequestEditor.jsx:58-62` y a los commits `4fc8bdc7` y `a869bc54`.
   **Horas:** ~1,2 h de Claude.
+
+### Fase 3 (13-oct, 09:31) · DVWA fuera del producto, y un numero falso en mi propio mensaje de commit
+
+- **Que se hizo, y lo pidio josemax** antes de mergear el PR #7: **sacar DVWA del producto**. Cuatro
+  puntos, que son todos los vivos: el **servicio del compose** (ningun servicio dependia de el), el
+  **`DVWA_URL`** del entorno de `playwright` (config muerta hacia un host que dejaria de existir), el
+  **fallback de `ia/main.py`** (`mensaje.get("url") or "http://dvwa:80"` → ahora descarta la orden y lo dice,
+  mismo criterio que el espacio tres lineas arriba) y el **placeholder del Intruder**, que anunciaba DVWA en
+  la interfaz del entregable.
+- **Por que ahora y no despues.** La decision es del **1-oct** (`DECISIONES.md`) y DVWA seguia en el compose
+  **doce dias despues**, asi que cada despliegue lo subia a produccion. Hacerlo **antes del merge** lo mete
+  en el PR #7; hacerlo despues costaria otro despliegue entero.
+- **Lo que NO se toca, y se declara:** `playwright/core/auth.py` (`login_dvwa`), `devtools/`, los tests del
+  bus y `mockData.js` siguen nombrandolo. Son RF-09 (descartado) y RF-10 (segun alcance), o codigo que no
+  esta en el camino de ejecucion del producto entregado; reescribirlos el dia de la congelacion anade riesgo
+  sin aportar nada. Va al apdo. 10.
+- **Comprobado antes de tocar, y es lo que dio via libre:** `infra/nginx.conf` solo lo menciona en
+  **comentarios** —la Fase 1 ya le quito la ruta—, asi que quitar el servicio **no reintroduce** el
+  crash-loop de `host not found in upstream` que costo la Fase 1. Y **ninguna captura del Intruder esta
+  referenciada en la memoria**, asi que cambiar el placeholder no desfasa ninguna figura (R6).
+- **Y una que estaba arreglada sin que el pendiente lo supiera:** el objetivo por omision del panel **ya no
+  es `http://dvwa:80`** desde el 10-oct — hereda la URL del rastreo en curso y, si no hay rastreo, queda
+  vacio con el boton deshabilitado. El pendiente que decia lo contrario estaba rancio.
+- 🔴 **Que fallo por mi parte, y es grave porque quedo publicado.** El mensaje del commit `9fbd8d40` afirma
+  que el bundle queda con **«`dvwa` a 0»**. **Es falso: son 5.** Monte el mensaje en el mismo turno que la
+  verificacion, antes de leer su salida. Los 5 salen de **`mockData.js`** (6 en el fuente; 5 en el bundle
+  porque el minificador deduplica literales identicos), que es justo el fichero que decidi NO tocar y que el
+  propio mensaje dice que no se toca — o sea que el mensaje **se contradice a si mismo**. Prueba cruzada: el
+  marcador `PHPSESSID` de ese fichero aparece en el bundle. **Lo que estaba mal era mi expectativa, no el
+  codigo.** No se reescribe el historial para taparlo: queda declarado aqui (R9).
+  🔑 **La regla que de aqui sale: no se redacta la verificacion y el commit en la misma orden.** Primero se
+  mira el numero, despues se escribe lo que dice el numero. Es la segunda vez hoy que apilar pasos en un
+  turno me cuesta un dato falso.
+- ⏭️ **Lo que arrastra al despliegue:** quitar un servicio del compose **no para el contenedor que ya corre**
+  en la caja; queda como huerfano. Para que DVWA desaparezca de produccion hace falta `--remove-orphans`, y
+  eso es parar y eliminar un contenedor → **lo decide y lo lanza josemax**.
+- **A que requisito toca:** **RNF-07** (superficie del producto), **RF-06** y **RF-10**; apdos. **5**, **6**
+  y **10**. **Evidencia:** `(no aplica)`, queda en git. **Horas:** ~0,4 h de Claude.
