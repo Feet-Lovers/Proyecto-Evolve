@@ -56,7 +56,6 @@ services:
       - BACKEND_URL=http://backend:8000
       - SESSION_TOKEN=hooksuite_session
       - PYTHONUNBUFFERED=1
-      - DVWA_URL=http://dvwa:80
     depends_on:
       - backend
     restart: unless-stopped
@@ -68,12 +67,6 @@ services:
     restart: unless-stopped
     networks:
       - hooksuite-net
-  dvwa:
-    image: vulnerables/web-dvwa
-    restart: unless-stopped
-    networks:
-      - hooksuite-net
-
   ia:
     build: ./ia
     environment:

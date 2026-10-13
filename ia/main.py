@@ -115,7 +115,14 @@ async def atender(r, mensaje: dict):
         print("  Orden SIN espacio, descartada")
         return
 
-    url = mensaje.get("url") or "http://dvwa:80"
+    url = mensaje.get("url")
+    if not url:
+        # Mismo criterio que el espacio: lo que falta se descarta, no se inventa. Antes
+        # caia a `http://dvwa:80`, el laboratorio que se retiro del producto el 13-oct:
+        # auditar un host que ya no existe habria gastado llamadas para nada y el informe
+        # habria hablado de un objetivo que el entregable no incluye.
+        print("  Orden SIN url, descartada")
+        return
     selector = mensaje.get("selector") or "input[name='id']"
     print(f"\n  -> Auditoria de {url} para el espacio {espacio[:8]}...")
 
