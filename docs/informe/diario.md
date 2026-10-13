@@ -4574,3 +4574,121 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   eso es parar y eliminar un contenedor → **lo decide y lo lanza josemax**.
 - **A que requisito toca:** **RNF-07** (superficie del producto), **RF-06** y **RF-10**; apdos. **5**, **6**
   y **10**. **Evidencia:** `(no aplica)`, queda en git. **Horas:** ~0,4 h de Claude.
+
+### Fase 3 (13-oct, 18:37) · El resumen ejecutivo, cerrado sobre el codigo ya congelado
+
+- **Que se hizo:** escrito el **apdo. 2** y retirado su `#hueco`. Seis parrafos: para quien es el producto,
+  de donde se parte, que se ha hecho, en que estado se entrega, como se puede comprobar y que no se esconde.
+- **Por que ahora.** El hueco decia literalmente «cerrar a 1 pagina **cuando el producto este congelado**».
+  El codigo se desplego a las 09:54 y se etiqueto a las 10:04, asi que la condicion ya estaba cumplida: era
+  el apartado mas maduro de los que quedaban y no dependia ni del video ni de la clave de API.
+- **De donde salen las cifras, y por que no de un resumen.** Los estados se contaron **uno a uno en la
+  matriz del apdo. 9**, no en ninguna lista de pendientes: 15 cumplidos (uno con la limitacion de movil),
+  1 modificado y 1 descartado justificados en el apdo. 4, 1 parcial (RNF-04, el grafo de contribuciones) y
+  1 pendiente declarado (RNF-09, TLS). Un resumen ejecutivo con cifras de segunda mano es relleno.
+- 🟠 **Lo que destapo contar, y no estaba en ningun pendiente:** **RF-04** figura como «*A revisar*» y
+  **RF-10** como «**segun alcance**», que no es un estado. Son 2 de las 21 filas, y la matriz es «la pieza
+  con la que se corrige la practica». **No se arregla escribiendo el resumen** → pendiente para antes del 16.
+  Mientras no se cierren, el resumen lo dice tal cual: «dos filas de la matriz quedan marcadas a revisar».
+- 🔴 **Lo que falle, y es la misma familia de siempre.** Antes de esto le di a josemax **tres pendientes
+  caducados** —PR #7 «por mergear», tag «por crear» y la contradiccion del apdo. 7 «abierta»— porque los lei
+  en `LINEA.md`, que se habia quedado en las 09:1x. Los tres estaban hechos (09:52, 10:04 y 12:27) y lo
+  demostro **git**, no un documento. Reconstruido desde `git log` y registrado en la memoria de la linea.
+  🔑 **La regla: para «que se hizo y por que», se le pregunta al codigo, no a un documento que puede ir por
+  detras.** Un documento envejece en horas; un commit no.
+- **R4 y R7 respetados en la misma pasada:** PDF con `typst compile --root`, artefacto con el python del
+  venv (el del sistema empotra las capturas sin reducir), y escaneo de secretos **antes** del commit —con
+  **control positivo** y sobre `pdftotext`, porque un `grep -a` sobre el PDF crudo daria ceros falsos: el
+  texto va comprimido. Unica coincidencia `XSRF`, identica antes y despues del cambio → prosa ya publicada.
+- ⚠️ **Hueco de diario detectado al escribir esto:** las cuatro tareas de las **11:56, 12:05, 12:17 y 12:27**
+  (figuras del producto, anexo de pruebas, laboratorio retirado de la memoria y contradiccion del apdo. 7)
+  **no tienen entrada aqui**; el diario se quedo en las 09:31. No las reconstruyo yo: el motivo y lo
+  descartado solo existen en el momento, y rellenarlas a posteriori seria inventarlas. **Lo decide josemax.**
+- **A que requisito toca:** apdo. **2** (cifras tomadas del **9**). **Evidencia:** `(no aplica)`, queda en
+  git (`276d1a57`). **Horas:** ~0,5 h de Claude.
+
+### Fase 3 (13-oct, 18:5x) · El apartado 7 cierra su hueco: un STRIDE medido, no de plantilla
+
+- **Que se hizo:** las cuatro piezas que le faltaban al apdo. 7 —**modelo STRIDE**, validacion de entradas,
+  dependencias y datos personales—. Huecos: 13 → **12**. Diff de 93+/1-, las dos salidas regeneradas en la
+  misma pasada y artefacto republicado.
+- **Por que el STRIDE no se escribio de plantilla.** Se aplico a los **seis componentes reales** del apdo. 5
+  y a la frontera que movio la Fase 2 (antes autenticaba el proxy con una contrasena compartida; hoy el
+  backend, por persona). Y lleva delante una premisa que un lector echaria en falta: **HookSuite es una
+  herramienta ofensiva y su funcion es mandar trafico arbitrario**, asi que el control no puede ser «no
+  permitir destinos arbitrarios» —eso es desactivar el producto— sino que solo entren personas autenticadas
+  y que cada una responda de lo suyo. Lo que en otra aplicacion seria un fallo, aqui es RF-02.
+- 🔑 **Las dependencias se MIDIERON, no se describieron.** `pip-audit` no estaba instalado; se instalo en el
+  venv de herramientas. Frontend: 241 dependencias resueltas → **12 avisos** (9 altos), y **8** si se
+  restringe al arbol de produccion. Backend: **78 avisos en 12 paquetes**. El dato que mas pesa: **la
+  libreria que firma los tokens de la Fase 2 acumula trece avisos** en la version fijada.
+- 🔴 **Dos afirmaciones falsas evitadas, y las dos las caza comprobar en vez de suponer.**
+  1. Para separar produccion de construccion conte `npm ls … | grep nombre@`. Daba «si» para una
+     herramienta de desarrollo y **sospeche de mi propio dato**: ese recuento no mide el arbol, mide el
+     texto de la salida. Rehecho por la via canonica (`npm audit --omit=dev`) resulta que **si esta** en el
+     arbol de produccion, pero por un motivo distinto del que yo habria escrito: entra por el complemento
+     de estilos, que es dependencia de produccion. **El medidor estaba mal y la sospecha tambien.**
+  2. Iba a declarar el proxy de la P1 **codigo muerto** y a proponer sacarlo de los requisitos —arrastra
+     cinco paquetes mas—. `main.py` y la ruta de alta **importan el gestor que lo lanza como subproceso**
+     con su complemento. **Sigue cableado.** Las dos arquitecturas conviven, y esa convivencia es lo que
+     mantiene viva su superficie de avisos. Un `grep` de los imports costo diez segundos y evito proponer
+     un cambio que habria roto el arranque el dia de la congelacion.
+- **R7 aplicado al propio apartado:** los paquetes vulnerables se nombran **por su papel**, no por nombre +
+  version + numero de avisos. El repositorio es publico y el producto esta **sin TLS**: esa lista es un mapa.
+  Las versiones estan en los ficheros de requisitos para quien tenga acceso. **Y al escribirlo me contradije**
+  —dos lineas antes nombraba el proxy de la P1—, asi que la excepcion queda **declarada en el propio texto**
+  en vez de dejar la incoherencia (R9).
+- **Lo que NO se hizo, y es deliberado:** no se actualizo ninguna dependencia. Es el dia de la congelacion,
+  el video se graba sobre esta etiqueta y subir la libreria de tokens cambia el codigo que se entrega.
+- **A que requisito toca:** **RNF-07**; apdos. **7** y **10**. **Evidencia:** `(no aplica)`, queda en git
+  (`3d1212e3`). **Horas:** ~0,7 h de Claude.
+
+### Fase 3 (13-oct, 19:1x) · Los cuatro anexos, y una decision de josemax sobre las credenciales
+
+- **Que se hizo:** el apdo. 13 completa sus anexos —**manual de despliegue**, **usuarios de prueba y acceso
+  para la correccion**, **glosario** (dieciocho terminos) y **referencias**—. Huecos: 12 → **11**.
+- 🔑 **Decision de josemax, y es la que da forma al anexo: las credenciales se entregan por el canal del
+  master y NO van al repositorio.** El repositorio es publico y la instalacion esta en internet, asi que una
+  contrasena escrita en el anexo seria una contrasena publicada, no una contrasena de prueba. El anexo
+  documenta el **mecanismo** —alta con codigo de invitacion, que se puede comprobar con una sola cuenta y
+  que exige dos (el aislamiento, once de once)— y deja constancia de que **aqui no hay ninguna credencial**.
+- **El manual se destilo del procedimiento ya probado, no se invento.** Lleva dentro las dos lecciones que
+  costaron tiempo: (1) *nombrar un servicio no lo recrea* si su imagen se descarga y su bloque no cambio
+  —el despliegue sale en verde sin aplicar la configuracion nueva—; (2) *quitar un servicio del fichero de
+  composicion no para su contenedor*, que queda huerfano y sigue corriendo. Y la verificacion por sondas
+  **con control negativo**, porque sin el una sonda que no encuentra nada es indistinguible de una sonda mal
+  apuntada; de hecho dos sondas de la primera version estaban mal dirigidas y se cazaron probandolas.
+- 🔑 **El empalme iba condicionado a una comprobacion, no a una promesa.** El anexo de referencias afirma
+  que todas las rutas que cita existen, asi que antes de insertarlo se comprobaron las cuatro: la fuente de
+  la memoria, el diario, `docs/capturas/` (12 entradas) y `docs/evidencias/` (49). Si alguna hubiera
+  faltado, el guion **no** escribia nada. Es el patron de las citas muertas, que ya nos ha mordido tres
+  veces, y esta vez la afirmacion se gano antes de hacerse.
+- **Decision de metodo que lo acompana:** el material de trabajo del grupo que **no vive en el repositorio**
+  (protocolo, flujo de ramas, procedimiento de despliegue, planes por fases) se cita **por su contenido y no
+  por su ruta**, para no dejarle al lector del repositorio referencias que no puede abrir.
+- **A que requisito toca:** apdo. **13**; las horas van al **11**. **Evidencia:** `(no aplica)`, queda en git
+  (`4c920252`). **Horas:** ~0,6 h de Claude.
+
+### Fase 3 (13-oct, 19:3x) · El apartado 12: el reparto por fase sale del propio diario, contado
+
+- **Que se hizo:** el apdo. 12 cierra su hueco con tres piezas —**que aporto el asistente fase por fase**,
+  **generado frente a verificado** y **lo que el registro de horas no puede decir**—. Huecos: 11 → **10**.
+- **El reparto por fase se CONTO, no se estimo.** Se recorrieron las entradas de este diario una a una:
+  **176 entradas, 174 con campo de horas, 85,9 h registradas**. Por fase: Fase 0 → 9 entradas y 4,6 h;
+  Fase 1 → 19 y 9,0 h; Fase 2 → 21 y 15,9 h; **Fase 3 → 118 entradas y 47,1 h** (el pulido y RF-08 se comen
+  la practica).
+- 🔑 **Y el recuento destapo un limite del propio diario, que es el hallazgo de la entrada.** El campo de
+  horas **solo empezo a decir de quien eran** en la Fase 3: **39,5 h atribuidas al asistente en 99
+  entradas**, frente a **38,0 h de las Fases 0-2** (mas 8,5 h de entradas anteriores a la numeracion por
+  fases) **sin dueno anotado**. Es decir: **el apdo. 11 no puede repartir horas por persona desde aqui**.
+  Caben dos salidas honestas —aplicar el modelo de trabajo vigente (construyo el asistente, asi que la
+  mayor parte serian suyas) o declararlas no atribuibles— y la memoria **deja la decision a josemax** en vez
+  de rellenar una tabla que parezca medida. Rellenarla habria sido inventar un dato con aspecto de dato.
+- **Lo que NO se repitio:** el apartado ya contaba los limites del filtro del modelo, los ocho defectos que
+  el asistente introdujo en una jornada (seis de ellos cazados por josemax **usando** el producto) y la
+  delegacion de lectura. Las piezas nuevas **apuntan a eso en vez de repetirlo**.
+- **Las dos familias de error propio quedan nombradas**, porque se repiten: *un medidor que no sabria cantar
+  otra cosa* (el cero sobre el PDF comprimido; el recuento sobre el texto de una salida cuando lo que se
+  queria medir era un arbol) y *un documento que envejece en horas* (los tres pendientes caducados de hoy).
+- **A que requisito toca:** apdo. **12**, y da material al **11**. **Evidencia:** `(no aplica)`, queda en
+  git (`ab0ba4c5`). **Horas:** ~0,5 h de Claude.

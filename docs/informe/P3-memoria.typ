@@ -74,7 +74,44 @@ Grupo: #estado("curso", "nº por confirmar"). Entrega: *16 de octubre de 2026*.
 
 = 2. Resumen ejecutivo
 HookSuite resuelve la auditoría web asistida por IA desde el navegador: interceptar y repetir peticiones, fuzzing, utilidades (hash/encoder/regex), análisis de vulnerabilidades y un módulo de IA que prioriza hallazgos. La P3 parte del prototipo de la P1 y lo lleva a un estado ejecutable, seguro y reproducible.
-#hueco("José María + Claude", "Cerrar a 1 página cuando el producto esté congelado: qué hace, para quién, y en qué estado final se entrega.")
+*Para quién.* El destinatario es quien audita aplicaciones web y no quiere depender de una
+herramienta instalada en su equipo: se abre una dirección, se entra con su usuario y trabaja con sus
+propios datos, aislados de los de los demás.
+
+*De dónde se parte, y por qué no era defendible.* La verificación en vivo del 29 de septiembre dejó el
+prototipo de la P1 en evidencia: la API respondía en el puerto 8000 *sin ninguna credencial* desde
+internet, de modo que cualquiera podía lanzar un rastreo o un ataque de fuerza bruta contra un tercero
+desde la dirección del grupo; la credencial documentada no abría el frontend; cuatro claves de la API
+de Anthropic estaban dentro del historial de git; y el módulo de IA no conseguía hablar con el backend.
+
+*Qué se ha hecho.* Primero la casa: historial de git limpiado y las cuatro claves revocadas y
+verificadas muertas; los puertos 8000 y 3000 retirados de internet, orígenes restringidos, WebSocket
+autenticado y el servidor endurecido con cortafuegos y `fail2ban`. Después la identidad: registro y
+acceso por usuario con JWT y aislamiento entre sesiones, donde se encontraron y cerraron *cuatro fugas*
+—y un quinto fallo que introdujo la propia corrección—, verificado once de once y desplegado en
+producción. Luego el módulo de IA: bus interno entre backend y modelo, disparo de la auditoría desde el
+panel, operación degradada cuando el modelo falla o no supera el umbral de confianza, y un *techo de
+gasto* que nace de una lección cara de la P1. Por último, el pulido con uso real: quince defectos en el
+Spider y dieciséis en el Repeater, la mayoría encontrados *usando* la herramienta, y la retirada del
+laboratorio vulnerable del producto entregable.
+
+*En qué estado se entrega.* De los *veintiún requisitos numerados*, quince se entregan *cumplidos*
+—uno con una limitación documentada en pantalla pequeña—, uno *modificado* y uno *descartado*, ambos
+justificados en el apartado 4, uno *parcial* (el grafo de contribuciones, partido por dos correos del
+mismo autor) y uno *pendiente declarado*: TLS. Dos filas de la matriz quedan marcadas a revisar. El
+código está *congelado y etiquetado* como `v1.0-practica3` y *desplegado en producción sobre esa misma
+etiqueta*: lo que se ve funcionando es lo que hay en el repositorio.
+
+*Cómo se puede comprobar.* El anexo del apartado 13 reconstruye los *dieciocho casos* de prueba que
+cita la matriz con dos columnas —lo que daba el prototipo en septiembre y lo que da el código
+congelado— y dice *de dónde sale cada resultado*: seis reejecutados contra producción, seis demostrados
+por una figura de esta memoria, cinco no reejecutados con su motivo escrito y uno con el procedimiento
+caducado. Lo que no se ha medido, no se afirma.
+
+*Lo que esta memoria no esconde.* El uso de herramientas de IA en la propia práctica se declara en el
+apartado 12, con la distinción entre lo generado y lo verificado; las limitaciones conocidas están en
+el apartado 10; y las afirmaciones que hubo que rectificar sobre la marcha quedan declaradas en el
+cuerpo del documento, no corregidas en silencio.
 
 = 3. Punto de partida
 HookSuite nació en la Práctica 1 como prototipo funcional de una suite de auditoría web «tipo Burp Suite» operada desde el navegador y asistida por IA. Quedó desplegado en un servidor Hetzner (`www.hooksuite.de`) con Docker Compose y, desde la entrega de mayo de 2026, *nadie volvió a tocarlo*: el máster encadenó otras actividades y la Práctica 3 lo retoma tal como quedó.
@@ -205,13 +242,12 @@ HookSuite se despliega como un conjunto de contenedores Docker coordinados por `
   (auto, 3fr, 5fr, auto),
   "
   Componente | Tecnología | Rol | Puerto (prod.)
-  *nginx* | `nginx:alpine` | Proxy inverso y único punto de entrada; enruta a frontend y backend (el laboratorio salió del proxy en la Fase 1 y el control de acceso pasó al backend en la Fase 2) | `80→80`
+  *nginx* | `nginx:alpine` | Proxy inverso y único punto de entrada; enruta a frontend y backend (el control de acceso pasó al backend en la Fase 2) | `80→80`
   *frontend* | React + Vite (build propio) | Dashboard web (SPA) servido como estático | `3000→80`
   *backend* | FastAPI + uvicorn (build propio) | API de auditoría: proxy `httpx`, Spider, Repeater, Intruder, utilidades, vulnerabilidades y WebSocket | `8000→8000`
   *redis* | `redis:7-alpine` | Bus de eventos y estado efímero entre servicios | interno
   *ia* | Python + SDK Anthropic (build propio) | Clasificador de vulnerabilidades con Claude (RF-08) | interno
   *playwright* | Python + Playwright (build propio) | Navegador real para ataques dirigidos (RF-10) | interno
-  *dvwa* | `vulnerables/web-dvwa` | Laboratorio de pruebas, solo accesible por la red interna | interno
   ",
 )
 
@@ -243,7 +279,7 @@ Toda la práctica se trabajó sobre *dos* instalaciones de HookSuite, y la separ
 
 *Y la regla nació de un fallo propio, que es la razón de que sea tan estricta.* La interfaz que corría en producción se había reescrito directamente en la caja y *no estaba en ninguna rama del repositorio*: existía solo allí, sin commitear, sin revisar y sin forma de reconstruirla si la máquina se perdía. Recuperarla fue una de las tareas de la Fase 0. La prohibición de editar en la caja no es prudencia abstracta: es la respuesta a haber estado a un fallo de disco de perder el frontend.
 
-*Por qué en esta herramienta pesa más que en otras.* HookSuite lanza tráfico contra sistemas de terceros —rastrea, repite peticiones y prueba cargas—. Ensayar eso en la instalación que otras personas están usando no arriesga solo nuestros datos: arriesga dirigir tráfico de ataque desde la infraestructura pública del grupo sin querer. El laboratorio vulnerable con el que se prueba vive, por eso, en la red interna de la cocina (apartado 7).
+*Por qué en esta herramienta pesa más que en otras.* HookSuite lanza tráfico contra sistemas de terceros —rastrea, repite peticiones y prueba cargas—. Ensayar eso en la instalación que otras personas están usando no arriesga solo nuestros datos: arriesga dirigir tráfico de ataque desde la infraestructura pública del grupo sin querer. El laboratorio vulnerable con el que se probaba vivía, por eso, en la red interna de la cocina; el *13-oct se retiró del producto por completo* (apartado 7) y las pruebas se hacen contra una web propia del equipo, autorizada para ello.
 
 *Lo que esta separación NO garantiza, dicho sin adornos.* La cocina no es idéntica a producción: comparte máquina con otros servicios y remapea puertos (ver la nota de reproducibilidad al final de este apartado). Por tanto «verificado en la cocina» es una afirmación más débil que «verificado en producción», y la memoria no las confunde en ningún sitio. El caso que lo demuestra se cuenta en el apartado 8: un despliegue que habría terminado sin errores *sin aplicar* la configuración del proxy, porque nombrar un servicio en un comando no prueba que el comando lo recree.
 
@@ -290,7 +326,9 @@ Cada funcionalidad con capturas: qué hace, cómo se usa y qué requisitos cubre
 - Proxy interceptor, Repeater, Intruder, Utilidades (hash/encoder/regex), Vulnerabilidades, Red/DevTools, módulo IA.
 
 == La auditoría con IA, por fin arrancable desde el panel (RF-08)
-Hasta el 10 de octubre el modulo de IA *no se podia usar*: existia, esperaba ordenes y no habia forma de darselas —ni un boton en ninguna pantalla—. Ahora la pantalla de vulnerabilidades lleva un campo de objetivo y un boton que lanza la auditoria. El objetivo por omision es el laboratorio interno, que es nuestro y no sale de la red interna.
+Hasta el 10 de octubre el modulo de IA *no se podia usar*: existia, esperaba ordenes y no habia forma de darselas —ni un boton en ninguna pantalla—. Ahora la pantalla de vulnerabilidades lleva un campo de objetivo y un boton que lanza la auditoria. *El objetivo se hereda del rastreo en curso*, y si no hay ninguno el campo queda vacío y el botón se deshabilita solo: ofrecer un valor plausible y equivocado sería peor, porque auditar un sitio distinto del que se rastreó gasta llamadas para nada y sin un solo aviso.
+
+> *Corrección declarada (13-oct, R9).* Este párrafo decía que «el objetivo por omisión es el laboratorio interno». Era falso *por partida doble*: el valor fijo se sustituyó por la herencia del rastreo el 10-oct, y el laboratorio salió del producto el 13-oct (apartado 7).
 
 Dos detalles que no son adorno:
 
@@ -341,7 +379,9 @@ El Repeater es la pantalla donde el auditor modifica una petición y la reenvía
 - *Y la página preparada se queda*, en una pestaña propia junto a Raw, Pretty, Preview y Headers, con el mismo aislamiento que la vista previa. Antes, para volver a ver el formulario había que cambiar el método a GET, enviar y volver a POST. Pulsar `preparar` otra vez tras un envío fallido trae la página *con los valores que acabas de mandar* y los errores marcados: es la forma de corregir campo a campo sin salir de la pantalla. Mientras solo se ha preparado y no se ha enviado nada, las cuatro pestañas de respuesta no responden, y es correcto: no hay respuesta que enseñar.
 
 *El manual de uso gana su segunda sección.* La del Repeater documenta sus *veintiséis* controles uno a uno —de qué tipo es cada uno, qué hace y bajo qué condición aparece— y el manual pasa a leerse por pastillas en vez de en una tirada, con las tres secciones sin escribir marcadas a la vista. La regla sigue siendo la del 11-oct: una sección se escribe cuando su pestaña está pulida y verificada, nunca antes.
-#hueco("José María", "Capturas de producto del Repeater para este apartado: (1) el editor con el aviso de sesión heredada y su botón de quitar la sesión; (2) una respuesta 3xx con el aviso de redirección y el Location a la vista; (3) la pestaña Formulario tras pulsar preparar; (4) el Spider con su botón en «repeater en uso». OJO (R7): el panel de cabeceras muestra ahora la cookie de sesión del objetivo, así que esas capturas se censuran antes de publicarse.")
+#imagen("../capturas/fase3/RF-05-repeater-preparar-formulario.png", "RF-05 — el Repeater tras pulsar `preparar` sobre un formulario traído del Spider, con cuatro cosas a la vez: el aviso de que la petición *viaja con una sesión heredada* y el botón que la retira; el acuse de `preparar` —«1 campo(s) oculto(s) y la cookie» actualizados—; el aviso de *redirección no seguida* con el `302` y la dirección a la que manda el servidor; y la pestaña *Formulario*, que muestra la página pedida con sus estilos sin reenviar nada. Los valores de sesión van tapados (R7).")
+
+#imagen("../capturas/fase3/RF-05-repeater-sin-respuesta.png", "RF-05 — un fallo de red deja de disfrazarse de respuesta. Donde iría el código HTTP aparece «sin respuesta» en rojo, y el tiempo y el tamaño *desaparecen* de la barra: 0 ms y 0,0 KB no son medidas, son la ausencia de ellas. Debajo, la dirección a la que se envió y el motivo exacto —el host no se pudo resolver—.")
 
 #hueco("José María + Claude", "Documentar cada funcionalidad (qué hace, cómo se usa, qué requisitos cubre) con capturas de producto; las de pantalla las saca José María (R6), tras la Fase 3, cuando el login nuevo cambie las pantallas. El commit de cada módulo se firma a nombre de su responsable cuando toque (R2): Ivan/frontend, Macarena/backend, Nacho/playwright, Carlos/DevTools, José María/IA.")
 
@@ -370,8 +410,12 @@ Comprobado desde fuera tras el despliegue: los puertos directos *rechazan la con
 === Orígenes permitidos (CORS)
 El backend aceptaba *cualquier* origen con credenciales, combinación además inválida por especificación: en la práctica, el servidor *reflejaba el origen de quien preguntara*, de modo que cualquier web podía hacerle peticiones autenticadas. Se sustituyó por una *lista cerrada* configurable por entorno. Comprobado: un origen arbitrario ya no recibe permiso; uno legítimo sí.
 
-=== El laboratorio vulnerable, solo interno
-Se retiró del proxy la ruta que lo publicaba. Queda accesible únicamente desde la red interna, para las pruebas del propio producto.
+=== El laboratorio vulnerable: fuera del producto
+En la Fase 1 se le retiró del proxy la ruta que lo publicaba, de modo que quedó accesible solo desde la red interna. El *13-oct*, al congelar, se retiró del producto *entero*: no está en el despliegue ni en la caja —ni el servicio, ni el contenedor, ni la imagen—.
+
+*Por qué, y es una decisión del 1-oct que tardó doce días en aplicarse.* Las pruebas de este proyecto se hacen contra una web propia del equipo, autorizada para ello, y no contra el laboratorio clásico; mantenerlo en el despliegue significaba entregar un producto que arrastra un sistema *deliberadamente vulnerable* que ya nadie usaba. Se retiró de la composición de contenedores, del entorno del módulo de navegador, y del único punto del código que todavía caía a él cuando llegaba una orden sin objetivo: ahora esa orden *se descarta y se dice*, en lugar de auditar un host que ya no existe.
+
+*Lo que no se tocó, y se declara.* El módulo de navegador conserva una función de acceso a ese laboratorio, y los datos de ejemplo del frontend lo siguen nombrando. Son RF-10 —según alcance— y código que no se ejecuta en el producto entregado; reescribirlos el día de la congelación añadía riesgo sin ganar nada. Queda anotado en el apartado 10.
 
 === Endurecimiento del servidor
 - *Cortafuegos* activo, con política de denegación por defecto y únicamente el acceso remoto y el proxy permitidos.
@@ -445,11 +489,107 @@ El flujo completo del acceso, capturado en la instalación pública el mismo dí
 
 === Lo que sigue sin cubrir
 - *Sin TLS* (RNF-09): el acceso viaja en claro, así que el token de sesión es interceptable por quien esté en el camino. Pendiente de configurar en el proxy.
-- *Credencial de servicio para los módulos internos* (Fase 3): el clasificador de IA y el agente de Playwright publican sus hallazgos en rutas que ahora exigen token, y no tienen credencial. Comprobado en la instalación de producción el 7-oct: los dos contenedores *sí están en marcha*, pero ninguno llega hoy a esas rutas — el clasificador está conectado al servidor y a la espera de instrucciones, que no llegan porque RF-08 todavía no tiene disparador, y el agente de Playwright no alcanza siquiera el servidor por el fallo de red descrito en el apartado 5. Es decir: el acceso por usuario no degrada nada que hoy funcione, pero en cuanto RF-08 tenga su disparador el clasificador recibirá `401` si no se le da credencial de servicio.
+- *Credencial de servicio para los módulos internos* (Fase 3). *Reescrito el 13-oct por R9: lo que decía aquí se había quedado atrás dos veces.* Afirmaba que ninguno de los dos módulos llegaba a las rutas protegidas —el clasificador porque RF-08 «todavía no tiene disparador», el agente de navegador porque ni siquiera alcanzaba el servidor— y que el `401` aparecería *en cuanto* RF-08 tuviera disparador. Las dos premisas caducaron: el disparador existe desde el *10-oct* y el fallo de red del agente se corrigió el *9-oct* y llegó a producción el *13-oct*.
+
+  *Lo que de verdad ocurre hoy, y son dos cosas distintas.* El *clasificador de IA ya no necesita credencial*: se le movió al bus interno precisamente para eso (apartado 5), recibe las órdenes por ahí y sus hallazgos vuelven por el mismo camino. Que RF-08 funcione de punta a punta —con los hallazgos en el panel, figura del apartado 8— es la prueba: si su camino de vuelta diera `401`, el panel estaría vacío. Para él esto no es un pendiente, está *resuelto por diseño*.
+
+  *El agente de navegador sí sigue sin credencial, y ese es el hueco real.* Sondea por HTTP la ruta de instrucciones y publica en la de resultados, las dos bajo el prefijo protegido y *sin cabecera de autorización*, así que recibe `401`. Hasta hoy el síntoma estaba tapado por el fallo de red —no llegaba ni a intentarlo—; desde el despliegue de hoy ya está en la red interna, de modo que el `401` es lo único que le separa de operar. Queda como trabajo pendiente de RF-10, y la salida no es repartir una credencial más: es pasarlo *al mismo bus que el clasificador*, por las tres razones del apartado 5.
 
 > *Corrección declarada de este documento (R9).* Una versión anterior de este apartado justificaba lo anterior diciendo que ninguno de los dos módulos estaba en marcha. Era falso: valía para el entorno de pruebas, donde no se levantan, y se escribió sin comprobar la instalación de producción. La conclusión se sostiene, pero por un motivo distinto del que se dio, y la diferencia importa: uno de los dos está vivo y conectado al servidor.
 - *Modelo STRIDE, validación de entradas, dependencias y datos personales*, abajo.
-#hueco("José María", "Completar el modelo STRIDE, validación de entradas, dependencias y tratamiento de datos personales.")
+=== Modelo de amenazas (STRIDE)
+El modelo se aplica a los seis componentes del apartado 5 y a la frontera que movió la Fase 2: hasta
+entonces autenticaba el proxy con una contraseña compartida; hoy autentica el backend, por persona.
+
+*Una premisa que conviene decir antes de la tabla, porque un lector la echaría en falta:* HookSuite es una
+herramienta *ofensiva*, y su función es enviar tráfico arbitrario a un objetivo que elige quien la usa. Por
+eso el control no puede ser «no permitir destinos arbitrarios» —eso sería desactivar el producto— sino
+*que solo entren personas autenticadas y que cada una responda de lo suyo*. Lo que en otra aplicación sería
+una vulnerabilidad (hacer peticiones a donde diga el usuario) aquí es el requisito RF-02.
+
+#tabla(
+  (auto, 4fr, 5fr, 4fr),
+  "
+  Amenaza | Dónde aplica en HookSuite | Qué lo contiene hoy | Qué queda abierto
+  *S* — Suplantación | Entrar como otro auditor; hablar con la API sin ser nadie | Entrada única por el proxy; `/api/` y `/ws/` exigen token firmado por el servidor, con el algoritmo *fijado en el servidor* y no leído del token; alta con código de invitación; contraseñas en hash | *Sin TLS, el token es interceptable en el camino* (RNF-09). El agente de navegador sondea sin credencial propia (arriba)
+  *T* — Manipulación | Tocar datos de otra cuenta; manipular lo que recibe el agente de cortafuegos | El espacio de datos *sale siempre del token*, nunca de la ruta ni del cuerpo —es la lección del quinto fallo—; modelos declarados que rechazan la petición mal formada antes de la lógica; el canal del agente dejó de crearse con permisos para todo el sistema y valida lo que recibe | En claro y sin TLS, manipulable en tránsito
+  *R* — Repudio | Saber quién lanzó qué contra un objetivo | Cada petición del historial, cookie capturada y hallazgo cuelga de la cuenta que lo generó; el repositorio identifica autoría por confirmación | *No hay registro de auditoría propio*: los rastros son los del contenedor, que no se conservan ni se firman. Se declara, no se resuelve
+  *I* — Divulgación | Ver auditorías ajenas; filtrar secretos o cookies del objetivo | Cuatro fugas de aislamiento cerradas y una quinta introducida y corregida; las cookies del objetivo cuelgan de su dueño y no de una tabla global; claves fuera del historial; orígenes restringidos; el paquete del frontend ya no lleva la dirección directa de la API | Sin TLS todo viaja en claro. El borrador del Repeater guarda la cookie del objetivo en el navegador (apartado 10)
+  *D* — Denegación de servicio | Agotar el servidor, el saldo de la API o martillear al objetivo | Límite de peticiones simultáneas (RNF-05); *techo de llamadas* a la IA, configurable y con degradación visible en el panel; el recolector de sesiones, que existía y no se ejecutaba, ahora corre; en el host, cortafuegos y bloqueo de fuerza bruta | La vía de huella digital no compara contra el techo; el Spider no tiene límite de ritmo propio contra el objetivo
+  *E* — Elevación de privilegio | Que un usuario del producto mande sobre el cortafuegos del host | El canal del agente pasó a tener permisos acotados y a validar; se retiró un segundo agente lanzado a mano en mayo, fuera del gestor de servicios y con permisos de administración; acceso remoto solo por clave | El agente de cortafuegos es, *por diseño*, un componente con privilegio sobre las reglas del host: su superficie es ese canal, y no desaparece
+  ",
+)
+
+=== Validación de entradas
+- *Modelos declarados en el borde, no comprobaciones dispersas.* El backend declara su entrada con modelos
+  en seis ficheros —el de esquemas comunes y las rutas de alta, red, navegador, rastreo y vulnerabilidades—,
+  así que una petición mal formada se rechaza *antes* de llegar a la lógica.
+- *Todas las rutas protegidas menos la puerta.* En `main.py` se registran nueve grupos de rutas y *todos*
+  llevan la dependencia de protección salvo el de alta y entrada, que es por donde se consigue el token.
+- *El identificador del espacio de datos no se acepta del cliente.* Se descartó la corrección evidente
+  —validar el campo contra el token— porque deja el dato en manos de quien llama; las rutas lo toman del
+  token y punto. Es lo que cierra la familia entera del quinto fallo, no solo el caso encontrado.
+- *Canonicalización en el Spider:* decodificar entidades, normalizar y deduplicar la cadena de consulta. Sin
+  eso, el rastreo generaba direcciones infinitas y martilleaba al objetivo (la trampa de araña del 1-oct).
+- *El importador de comandos `curl`* corrigió una expresión regular que recortaba el esquema y convertía
+  direcciones seguras en inseguras.
+- *En el módulo de IA, la validación es doble:* el esquema de respuesta se endureció tras *tres rechazos
+  seguidos* de la API —validar contra una prueba propia no es validar— y el techo de llamadas corta por
+  arriba, de modo que una entrada que dispare una auditoría enorme no se convierte en gasto ilimitado.
+- *Lo que no se valida, y es deliberado:* la dirección del objetivo. Es la función del producto; el control
+  está en el acceso, no en el destino.
+
+=== Dependencias
+Medido el *13-oct sobre el código congelado*, con las herramientas puestas para ello (`npm audit` sobre el
+fichero de bloqueo y `pip-audit` sobre los requisitos declarados). Se dan los números que dan las
+herramientas, sin redondear hacia abajo.
+
+- *Frontend:* 241 dependencias resueltas (84 de producción, 113 de desarrollo, 45 opcionales) y *12 avisos*
+  —nueve altos, uno medio, dos bajos—. Restringido al árbol de producción, *ocho*: siete altos y uno bajo.
+  Directas: el cliente HTTP del panel (alto), el enrutador (bajo, por su paquete interno) y la herramienta
+  de construcción (alto, que entra en el árbol de producción a través del complemento de estilos).
+- *Backend:* *78 avisos en 12 paquetes* del árbol resuelto. Los que más pesan, y el primero importa más que
+  los otros: *la librería que firma los tokens de sesión acumula trece avisos* en la versión fijada —es la
+  pieza central de la Fase 2—, la de criptografía siete, la de formularios multiparte siete y el armazón
+  ASGI bajo FastAPI otros siete.
+- *El proxy de la P1 sigue pesando, y se comprobó antes de decirlo.* `mitmproxy` aporta tres avisos propios
+  y arrastra cinco paquetes más (servidor web, compresión, serialización, protocolo binario y TLS). La
+  tentación era declararlo código muerto y proponer quitarlo: *no lo es.* `main.py` y la ruta de alta
+  importan el gestor que lo lanza como subproceso con su complemento, aunque RF-02 se implemente hoy con el
+  cliente HTTP nuevo y las rutas del fichero de autoconfiguración se retirasen en la Fase 2. *Las dos
+  arquitecturas conviven*, y esa convivencia es lo que mantiene viva esta superficie.
+- *Política de fijado, desigual:* el backend fija sus doce versiones; el módulo de navegador tres de cuatro
+  y el de herramientas de depuración las tres; *el módulo de IA solo una de cuatro*, así que su construcción
+  no es reproducible al día de hoy. El frontend declara rangos, pero el fichero de bloqueo fija el árbol.
+- *Qué no se ha hecho, y por qué:* *no se ha actualizado ninguna dependencia hoy.* Es el día de la
+  congelación, el vídeo se graba sobre esta etiqueta y subir la librería de tokens o el cliente HTTP cambia
+  el código que se entrega. Queda declarado aquí y en el apartado 10.
+- *Honestidad de método:* `pip-audit` resuelve el árbol completo, así que esos 78 incluyen transitivas, y
+  *no se ha medido cuáles son alcanzables* desde el camino de ejecución del producto. Decir «78 avisos» no
+  es decir «78 agujeros explotables»; es decir cuántos hay que mirar.
+- *Por qué los paquetes se nombran aquí por su papel y no por nombre y versión.* El repositorio es público
+  y el producto está desplegado *sin TLS*: publicar la lista exacta de paquete, versión y número de avisos
+  es publicar un mapa de por dónde entrar. Las versiones están en los ficheros de requisitos para quien
+  tenga acceso al repositorio, y cualquiera puede reproducir la medida con las dos órdenes citadas arriba.
+  Es la misma regla que se aplicó a las claves: se cuenta el incidente, no se publica el valor (R7). *Única excepción:* el proxy de la P1, que esta memoria ya nombra en los apartados 4 y 5 al explicar el pivote de RF-02; ocultarlo aquí no taparía nada.
+
+=== Tratamiento de datos personales
+- *Qué guarda el producto, y de quién.* De cada auditor: su cuenta —nombre y contraseña *en hash*, nunca en
+  claro— en un volumen propio, y colgando de ella su historial de peticiones, las cookies que captura del
+  objetivo y sus hallazgos. Desde la Fase 2 nada de eso se comparte entre cuentas.
+- *De terceros, nada por iniciativa propia.* El producto no recolecta datos personales por su cuenta: lo
+  que entra es lo que el auditor captura del objetivo que decide auditar. Las pruebas de esta práctica se
+  hacen contra una *web propia del equipo y autorizada*, de modo que no hay datos de terceros en juego.
+- *La cookie del objetivo es el dato más sensible que pasa por aquí*, porque equivale a una sesión abierta
+  en la web auditada. Vive en el espacio de su dueño, y el editor avisa cuando una petición la lleva. Pero
+  el *borrador* del Repeater la escribe en el almacenamiento del navegador: está declarado en el apartado
+  10 y no se tocó el día de la congelación.
+- *Rastros a retirar antes de la entrega:* los usuarios de prueba creados en la cocina, y una regla heredada
+  de la P1 que contenía la dirección pública de un integrante —esa ya se retiró en la Fase 1—.
+- *Conservación y borrado:* no hay caducidad ni borrado automático de cuentas ni de historial; el recolector
+  solo caduca el estado efímero de sesión. Se declara como lo que es: una decisión no tomada, no una medida.
+- *Y el que lo atraviesa todo:* sin TLS, todo lo anterior viaja en claro (RNF-09). Es la limitación que más
+  pesa en este apartado.
 
 = 8. Pruebas y evidencias
 Plan de pruebas, casos ejecutados, resultados y las pruebas que fallaron con su explicación. El detalle caso a caso (PR-01…PR-20) se mantiene en la matriz del apartado 9 y en el diario del repo.
@@ -556,6 +696,16 @@ El 12-oct repitió el método del día anterior sobre la segunda pestaña: no se
 
 *Lo que ninguna de las verificaciones del asistente cazaba, dicho con nombre.* Cada cambio de la jornada se verificó contando cadenas de texto dentro del paquete construido. Ese método confirma que un texto *está*; no dice que se *lea* bien ni que la lógica funcione. Tres veces el mismo día dio por bueno algo roto: escapes que se mostraban en crudo, una dirección presente pero ilegible por falta de sitio, y la regresión del botón de enviar. La construcción de la imagen no comprueba variables no declaradas, el analizador no detecta errores de ejecución, y contar textos no detecta ninguno de los dos. *Lo único que cazó esos tres fue abrir la pantalla*, y de ahí que las capturas de producto las tome una persona (R6). El detalle de los ocho defectos que introdujo el asistente está en el apartado 12.
 
+#imagen("../capturas/fase3/RF-05-repeater-post-sin-419.png", "RF-05 / RF-03 — el final de los `419`. La misma clase de petición que antes era rechazada llega ahora a la lógica de la aplicación: el servidor responde `302` y el formulario contesta que las credenciales no coinciden. Es decir, lo que fallaba no era el Repeater sino unas cabeceras incompletas en los formularios que descubre el Spider. Valores de sesión tapados (R7).")
+
+#imagen("../capturas/fase3/RF-04-repeater-dos-envios-mismo-resultado-1.png", "RF-04 — prueba de aceptación del Repeater con cliente propio, *primer envío*: `302`, 0,4 KB y destino `/tienda/205`.")
+
+#imagen("../capturas/fase3/RF-04-repeater-dos-envios-mismo-resultado-2.png", "RF-04 — *segundo envío de la misma petición, sin tocar nada*: idénticos el estado, el tamaño, el destino y el cuerpo de la respuesta. Lo único que cambia es el tiempo (56 ms → 73 ms), y ese cambio es justamente lo que demuestra que son dos envíos distintos y no la misma figura repetida. Con el cliente compartido anterior, dos envíos iguales podían no coincidir.")
+
+#imagen("../capturas/fase3/RF-03-spider-rotulos-despues.png", "RF-03 — el panel de detalle después del pulido, con los dos defectos de fidelidad corregidos: los rótulos de sección se distinguen del contenido —antes compartían el mismo gris, y eso llevó a leer las cabeceras de respuesta como si fueran de petición— y las cabeceras que se muestran son *las realmente enviadas*, con la `Cookie` de sesión incluida. Los cuatro valores de sesión van tapados (R7).")
+
+> *Nota de tratamiento de estas figuras (R7).* Todas se tomaron en producción, sobre el código congelado, contra una web propia del equipo autorizada para ello. Desde el 12-oct el panel de cabeceras muestra la cookie de sesión del objetivo —es lo correcto, porque es lo que se envía—, así que cada figura se publica con esos valores tapados y los originales no salen del almacén interno.
+
 == Condición de carrera detectada antes de reiniciar el servidor
 El agente del cortafuegos y el servicio de contenedores no tenían orden de arranque entre sí. Si el segundo ganaba la carrera, *creaba una carpeta donde debía ir el canal de comunicación del agente* —comportamiento normal al montar un fichero que no existe— y el agente quedaba en un bucle de reinicios. El servidor llevaba sin reiniciarse desde mayo, así que nunca se había puesto a prueba. Se corrigió fijando el orden de arranque antes de reiniciar; tras el reinicio, el contador de reinicios del agente marcaba *cero*: la carrera no llegó a producirse.
 
@@ -660,7 +810,7 @@ Reproducible con `python3 ia/tests/test_tres_estados.py`. Evidencia completa, co
 == RNF-06 visto en el panel, que es donde tenía que verse
 Una prueba unitaria demuestra que el clasificador *devuelve* el estado degradado; no demuestra que alguien lo *enseñe*. Entre las dos cosas hubo un hueco real: durante un día el estado existió en el módulo de IA y no lo consumía nadie al otro lado, de modo que RNF-06 estaba cumplido y era invisible. El 10-oct se cerró el hueco y se comprobó en la interfaz, con una auditoría lanzada desde el panel y sesión real.
 
-#imagen("../capturas/ia/RNF-06-panel-no-analizado-techo0.png", "RNF-06 / RF-08 — el panel tras una auditoría truncada por el techo de gasto. El encabezado anuncia *48 sin analizar — la IA no pudo valorarlo* y cada entrada lleva su motivo, `techo de 0 llamadas por auditoria alcanzado`: el recorte se ve en lugar de pasar por «sin hallazgos». El recuento `0 detectadas · 48 sin analizar` distingue las dos cosas. Los cuarenta y ocho elementos provienen de un rastreo previo sobre *web.academyx.es*, web propia del equipo levantada para practicar; el objetivo que figura en la barra, `http://dvwa:80`, es el de la auditoría siguiente.")
+#imagen("../capturas/ia/RNF-06-panel-no-analizado-techo0.png", "RNF-06 / RF-08 — el panel tras una auditoría truncada por el techo de gasto. El encabezado anuncia *48 sin analizar — la IA no pudo valorarlo* y cada entrada lleva su motivo, `techo de 0 llamadas por auditoria alcanzado`: el recorte se ve en lugar de pasar por «sin hallazgos». El recuento `0 detectadas · 48 sin analizar` distingue las dos cosas. Los cuarenta y ocho elementos provienen de un rastreo previo sobre *web.academyx.es*, web propia del equipo levantada para practicar; el objetivo que figura en la barra, `http://dvwa:80`, era el *valor fijo* que el panel traía entonces: se sustituyó el 10-oct por la herencia del objetivo rastreado, y el laboratorio salió del producto el 13-oct (apartados 6 y 7). La figura se conserva porque lo que documenta es el recorte de gasto, no el objetivo.")
 
 Lo que la figura prueba, y que ninguna prueba unitaria alcanzaba: que el mensaje de lista vacía *dejó de mentir*. Antes, una auditoría que no había podido analizar nada y otra que había analizado y no encontrado nada producían la misma pantalla. Ahora el aviso va aparte de los hallazgos —en su propia tira, por encima— porque mezclarlo obligaría a inventarle una severidad a algo que precisamente *no se pudo valorar*.
 
@@ -724,11 +874,11 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
   (auto, 4fr, auto, 4fr, auto, 3fr),
   "
   Req. | Descripción | Estado | Implementación (ruta) | Prueba | Evidencia
-  RF-01 | Dashboard web sin instalación | Cumplido (seis pestañas: se retira Red y se añade Manual el 11-oct) | `frontend/src/App.jsx` + `Layout.jsx` + `pages/manual/ManualPage.jsx` | PR-01 | apdo. 8 · vídeo —:—
+  RF-01 | Dashboard web sin instalación | Cumplido (seis pestañas: se retira Red y se añade Manual el 11-oct) | `frontend/src/App.jsx` + `Layout.jsx` + `pages/manual/ManualPage.jsx` | PR-01 | fig. apdo. 10 · vídeo —:—
   RF-02 | Proxy del lado servidor (`httpx`) | Modificado (2 errores de servidor corregidos en F1) | `backend/services/proxy_service.py` | PR-19 | justif. apdo. 4 · apdo. 6
   RF-03 | Spider / rastreo | Cumplido (4 defectos corregidos en F1; quince más en el pulido del 11-oct; el 12-oct las cabeceras que muestra pasan a ser las realmente enviadas) | `backend/services/spider_service.py`, `frontend/.../ProxyPage.jsx`, `.../RequestsTable.jsx` | PR-03 | figs. apdo. 8 · vídeo —:—
-  RF-04 | Auditoría autenticada (sesión compartida) | *A revisar* (modificado el 12-oct: el Repeater envía con cliente propio y la sesión se hereda por cabecera explícita) | `backend/services/session_service.py`, `backend/services/proxy_service.py`, `backend/routes/repeater.py` | PR-04 | justif. apdo. 4 · apdo. 5
-  RF-05 | Repeater | Cumplido (parser y avisos de error corregidos en F1; el importador de peticiones se traslada aquí desde el Spider el 11-oct y se *retira* el mismo día; dieciséis defectos corregidos en el pulido del 12-oct, con un historial añadido y retirado esa misma jornada) | `backend/routes/repeater.py`, `backend/services/proxy_service.py`, `frontend/src/pages/repeater/` | PR-05 | apdos. 6 y 8 · vídeo —:—
+  RF-04 | Auditoría autenticada (sesión compartida) | *A revisar* (modificado el 12-oct: el Repeater envía con cliente propio y la sesión se hereda por cabecera explícita) | `backend/services/session_service.py`, `backend/services/proxy_service.py`, `backend/routes/repeater.py` | PR-04 | justif. apdo. 4 · figs. apdo. 8
+  RF-05 | Repeater | Cumplido (parser y avisos de error corregidos en F1; el importador de peticiones se traslada aquí desde el Spider el 11-oct y se *retira* el mismo día; dieciséis defectos corregidos en el pulido del 12-oct, con un historial añadido y retirado esa misma jornada) | `backend/routes/repeater.py`, `backend/services/proxy_service.py`, `frontend/src/pages/repeater/` | PR-05 | figs. apdos. 6 y 8 · vídeo —:—
   RF-06 | Intruder / fuzzing | Cumplido (cancelación corregida en F1) | `backend/services/intruder_service.py` | PR-06 | apdo. 6 · vídeo —:—
   RF-07 | Utilidades (incl. JWT) | Cumplido | `frontend/src/pages/utilities/` | PR-07 | fig. — · vídeo —:—
   RF-08 | IA → panel Vulnerabilidades | Cumplido (recorrido verificado de punta a punta el 10-oct; techo de gasto ejecutado) | `ia/`, `backend/routes/playwright.py`, `backend/services/redis_consumer.py`, `frontend/.../VulnerabilitiesPage.jsx` | PR-08 | figs. apdo. 8 · vídeo —:—
@@ -753,11 +903,17 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
 
 > *Segunda corrección declarada (10-oct), por R9.* Esta matriz *no tenía fila* para RNF-01, RNF-04 ni RNF-06, pese a estar los tres declarados en el apartado 4. El caso de RNF-06 es el que más duele: se le dedican varias secciones del apartado 8 y aun así no se podía trazar desde aquí, que es precisamente la pieza con la que se corrige la práctica. Las tres filas se añaden ahora. El defecto no es de redacción sino de método —la matriz se rellenó requisito a requisito desde la lista de RF y los RNF se fueron añadiendo según aparecían en el trabajo—, y explica por qué faltaban justo los tres que ninguna fase tuvo como protagonista.
 
-*Tercera corrección declarada (10-oct), por R9, y es la más seria de las tres.* Aquí decía que «el estado de cada prueba (PR-xx) y su resultado detallado están en el apartado 8», y *no es cierto*: de los diecinueve códigos de prueba que cita esta columna, *solo tres* —PR-01, PR-16 y PR-20— aparecen en algún otro punto de esta memoria. Los dieciséis restantes son una *referencia a ninguna parte*: quien corrige lee «PR-08» en la fila de RF-08 y no tiene dónde ir a ver qué se probó ni con qué resultado.
+*Tercera corrección declarada (10-oct), por R9, y es la más seria de las tres.* Aquí decía que «el estado de cada prueba (PR-xx) y su resultado detallado están en el apartado 8», y *no es cierto*: de los *dieciocho* códigos de prueba que cita esta columna, solo *cuatro* —PR-01, PR-08, PR-16 y PR-20— aparecen en algún otro punto de esta memoria. Los catorce restantes son una *referencia a ninguna parte*: quien corrige lee «PR-05» en la fila de RF-05 y no tiene dónde ir a ver qué se probó ni con qué resultado.
 
-El plan existe y está completo —los diecinueve casos, con procedimiento, resultado esperado y resultado observado—, pero vive en un *documento de trabajo del equipo que no se entrega*. El defecto, por tanto, no es que las pruebas no se hicieran: es que la memoria cita un plan que el lector no tiene. Al arreglar cada fallo se reejecuta la prueba y se actualiza la fila.
+> *Cuarta corrección declarada (13-oct), y le toca a las cifras de la anterior.* Este mismo párrafo decía «diecinueve códigos» y «solo tres». Contados uno a uno al construir el anexo salen *dieciocho* y *cuatro* —el que faltaba por contar era PR-08—. Son errores de recuento propios, no del producto, y se corrigen aquí en lugar de cambiarse en silencio.
 
-#hueco("José María + Claude", "Traer el plan de pruebas (PR-01 a PR-20) a la memoria, como tabla del anexo, para que esta columna deje de apuntar a ninguna parte. OJO al hacerlo: los resultados observados del plan son del 29-sep y varios están desfasados —PR-01 figura como FALLA por un Basic Auth que la Fase 2 retiró—, así que se revisa caso por caso antes de copiarlo. Copiarlo tal cual metería afirmaciones falsas en el entregable.") La numeración RF/RNF es la fijada en el apartado 4 y #estado("curso", "PENDIENTE DE VALIDAR POR EL GRUPO").
+*Y la afirmación que había que corregir antes de copiar nada al anexo (13-oct, R9).* Aquí se decía que «el plan existe y está completo, los diecinueve casos, con procedimiento, resultado esperado y resultado observado». *No es así, y era la afirmación más engañosa de este apartado.* El plan de trabajo del equipo tiene *doce* casos —PR-01, 05, 06, 07, 08, 11, 13, 14, 16, 17, 18 y 19—, de modo que *seis de los códigos que esta columna cita (PR-03, PR-04, PR-10, PR-12, PR-15 y PR-20) no tienen caso escrito en ninguna parte*. No es que el lector no tenga el plan: es que de un tercio de lo citado no hay plan que tener.
+
+*Y los doce que sí existen llevan resultados del 29 de septiembre*, medidos contra el prototipo *antes* de las Fases 1 y 2, así que varios son hoy literalmente falsos: PR-01 figura como fallo por un Basic Auth que la Fase 2 retiró; PR-16 dice que «toda la API responde sin credenciales», que es justo lo que la Fase 2 cerró; y PR-19 da un error de servidor que la Fase 1 corrigió. Copiarlos tal cual habría metido tres afirmaciones falsas en el entregable.
+
+*Qué se hace con eso, y por qué el anexo no es un volcado.* Esos resultados del 29-sep *no son basura*: son la foto del punto de partida, y el enunciado pide expresamente las pruebas que fallaron con su explicación. El anexo del apartado 13 no copia el plan, lo reconstruye con *dos columnas* —qué daba el 29-sep y qué da hoy— y declara, caso por caso, de dónde sale el resultado de hoy: de una reejecución, de una figura de esta memoria, o de que no se ha podido reejecutar y por qué.
+
+> *Hecho el 13-oct.* El plan está ahora en el *anexo del apartado 13*, reconstruido caso por caso y no copiado: con el resultado del 29-sep, el de hoy y de dónde sale cada uno. Los tres desfases que habrían entrado como afirmaciones falsas —PR-01, PR-16 y PR-19— quedan corregidos con medida nueva. La numeración RF/RNF es la fijada en el apartado 4 y #estado("curso", "PENDIENTE DE VALIDAR POR EL GRUPO").
 #hueco("José María + Claude", "Al revisar el vídeo grabado, anotar el minuto exacto donde se demuestra cada requisito y el número de figura de su captura (R6: el nombre de la captura va atado al ID del requisito, p. ej. `RF-08-panel-ia.png`, para que esta columna se rellene sola).")
 
 = 10. Limitaciones y trabajo futuro
@@ -795,6 +951,8 @@ Lo que *sí* queda, y es consciente:
 El 11-oct se añadió una sexta pestaña, *Manual*, con el modo de uso de cada herramienta. Ataca de raíz el patrón descrito en el apartado 8 —funciones correctas que no se ven—, y por eso no es documentación accesoria sino parte del producto.
 
 Están escritas *dos secciones de cinco*: la del Spider, con los veinticinco controles de esa pantalla detallados uno a uno —de qué tipo es cada elemento (botón, campo de texto, desplegable, aviso, indicador, pestaña, columna), qué hace y *bajo qué condición aparece*, porque buena parte no está en pantalla desde el principio—, y la del Repeater, con veintiséis, añadida el 12-oct en cuanto esa pestaña quedó pulida. Desde entonces el manual se lee *por pastillas* y no en una tirada, y las tres secciones sin escribir se marcan a la vista del usuario, que era la decisión del 11-oct: si falta, se ve que falta.
+
+#imagen("../capturas/fase3/RF-01-manual-pastillas.png", "RF-01 — la pestaña Manual: cinco pastillas, la activa resaltada y las tres secciones sin escribir marcadas con un punto, de modo que el usuario ve que el manual está incompleto. Debajo, el modo de documentar: cada control con su tipo (indicador, botón, campo de texto, desplegable, aviso), qué hace y bajo qué condición aparece.")
 
 La regla que se fijó es deliberada: *una sección se escribe cuando su pestaña se ha pulido y verificado*, nunca antes. Durante el pulido del Spider, lo que suponíamos de la pantalla y lo que el código hacía no coincidieron quince veces; un manual redactado sobre suposiciones induce a error, que es peor que no tenerlo. La propia redacción lo ha confirmado tres veces: destapó el defecto de los filtros (apdo. 8); un error del manual mismo, que afirmaba que el botón «Iniciar spider» se sustituía por «Detener» cuando en realidad cambia a «Ejecutando…» y «Detener» aparece al lado; y, al escribir la sección del Repeater, veinte líneas de *código muerto* —un aviso que ya no podía aparecer nunca, porque lo provocaba el historial retirado esa misma tarde—. Documentar obliga a mirar el código con los ojos de quien lo usa, y eso encuentra cosas que el uso no encuentra.
 
@@ -836,6 +994,9 @@ Tres diferencias conocidas y no cerradas:
 El repositorio tiene configurado un analizador estático para el frontend y, hasta el 12-oct, *nunca se había ejecutado* (apartado 8). Puesto a funcionar, arroja *veintitrés errores y dos avisos* que no son del trabajo de estos días: casi todos de reglas del marco de interfaz —efectos que escriben estado, funciones con efectos secundarios donde se esperan puras— y concentrados en la pantalla de vulnerabilidades. Lo que sí quedó cerrado es la regla que caza el fallo que costó la regresión del botón de enviar: no queda ninguna variable no declarada en todo el frontend.
 
 *Por qué no se arreglan ahora:* son avisos de calidad sobre pantallas que funcionan y ya están capturadas, y tocarlas el día de la congelación arriesga el entregable sin mejorar el producto. Queda como *trabajo futuro con el dato ya medido*, que es lo que permite planificarlo en vez de prometerlo. Y una limitación del método, dicha entera: el analizador solo puede ejecutarse dentro de la etapa de construcción de la imagen, porque el proyecto no instala las dependencias del frontend en el servidor.
+
+== Restos del laboratorio retirado
+El laboratorio vulnerable salió del producto el 13-oct (apartado 7), pero *su nombre sigue en dos sitios que no se ejecutan*: la función de acceso del módulo de navegador (RF-10, según alcance) y los datos de ejemplo del frontend, que *sí viajan en el paquete* que se sirve al navegador aunque solo se usen cuando no hay servidor detrás. No es un riesgo —los valores son inventados— pero el entregable menciona un componente que ya no incluye. Es limpieza de diez minutos que no se hizo el día de la congelación a propósito: tocar código que funciona, el último día, para arreglar un nombre, es justo el cambio que no compensa.
 
 == La herramienta que genera los esquemas no está versionada
 El generador de esquemas vive en la carpeta de trabajo de la práctica, *fuera del repositorio del producto*: no tiene historial, no pasó por revisión y su autoría no queda registrada, al contrario que todo el código. Es incoherente con la norma del equipo de que todo entra por petición de incorporación, y no es una incoherencia inocua: *el único sitio sin historial resultó ser exactamente donde estaba el defecto del apartado 8*, porque es el sitio donde nadie vio la lista incompleta.
@@ -907,8 +1068,216 @@ De ahí salieron los tres defectos del apartado 8. Es decir: el control que impi
 
 El límite del método también se declara: el asistente secundario es un modelo, no un control. Lo que devuelve tiene que revisarlo *una persona que conozca el material*, porque es la única que puede juzgar si cruzó la línea entre describir y reproducir; el asistente principal no puede, precisamente porque no conoce el contenido.
 
-#hueco("José María", "Detallar por fase qué aportó la IA y qué fue decisión/revisión humana; distinguir generado de verificado.")
+== Qué aportó el asistente, fase por fase
+El modelo de trabajo lo fijó el grupo el 1 de octubre: *se le ceden al asistente los mandos de
+construcción*, y lo que no puede hacer se reparte a personas y queda escrito. Las pruebas las hacen José
+María y el asistente; los otros cuatro integrantes confirman su parcela y no tocan infraestructura. El
+recuento de la última columna sale del diario, contando sus entradas una a una.
+
+#tabla(
+  (auto, 5fr, 5fr, auto),
+  "
+  Fase | Qué construyó el asistente | Qué fue decisión o verificación humana | Registro
+  *0* — Reconciliación e historial | Ensayo y ejecución de la reescritura del historial, el orden del empuje forzado de las siete ramas y la reconciliación de los ficheros sin confirmar | *La revocación de las claves*, repartidas en tres cuentas distintas: no es algo que el asistente pueda hacer. El visto bueno al empuje forzado y la decisión sobre la interfaz que solo existía en la instalación pública | 9 entradas · 4,6 h
+  *1* — Exposición y endurecimiento | Retirada de los puertos directos, orígenes permitidos, canal en tiempo real autenticado, topes del estado de sesión y endurecimiento del servidor | *Probar la web en producción*: nueve pruebas, tres hallazgos y una corrección al asistente. Y lanzar lo que los controles del servidor le frenan | 19 entradas · 9,0 h
+  *2* — Identidad y aislamiento | Alta y acceso por usuario, el guardián de los espacios de datos, las cuatro fugas y la quinta que introdujo la propia corrección | *El modelo de alta*: que no fuera abierto, sino con código de invitación. Y la verificación en la instalación pública | 21 entradas · 15,9 h
+  *3* — IA, pulido y congelación | RF-08 de punta a punta (bus interno, disparo desde el panel, techo de gasto, operación degradada), quince defectos del rastreador y dieciséis del banco de peticiones, el manual de uso, la congelación y esta memoria | *Encontrar la mayoría de los defectos usando el producto* —seis de los ocho de una sola jornada, arriba—, las capturas de pantalla, la clave de la API, la fusión con permiso de administración y las decisiones de *qué no se toca* el día de la congelación | 118 entradas · 47,1 h
+  ",
+)
+
+== Generado frente a verificado: la regla, y lo que cuesta sostenerla
+- *Todo el código añadido o modificado en esta práctica lo escribió el asistente* —el de la práctica
+  anterior lo escribió el grupo—, y *nada se dio por bueno por haberlo escrito*. Lo que lo valida es otra
+  cosa: sondas con valor esperado y *control negativo*, pruebas en el entorno de trabajo, y la verificación
+  en la instalación pública, que la hace una persona.
+- *Las cifras de esta memoria salen de medidas con herramienta, y donde no se ha medido, se dice.* El
+  apartado 7 es el ejemplo: se da el número de avisos que da el auditor de dependencias y se declara,
+  en la misma línea, que *no se ha medido* cuántos son alcanzables desde el camino de ejecución.
+- *Las afirmaciones del asistente que resultaron falsas están declaradas en el cuerpo del documento*, no
+  corregidas en silencio: el umbral que «había que añadir» y ya existía (apartado 4), el plan de pruebas
+  «completo, diecinueve casos» cuando eran dieciocho y seis no existían (apartado 9), y un recuento del
+  paquete entregado que el propio mensaje de confirmación contradecía (apartado 10).
+- *Las dos formas en que este asistente se equivoca, nombradas porque se repiten.* La primera es *un
+  medidor que no sabría cantar otra cosa*: un cero sobre un PDF cuyo texto va comprimido, o un recuento
+  sobre el texto de una salida cuando lo que se pretendía medir era un árbol de dependencias. La segunda es
+  *un documento que envejece en horas*: un pendiente describe lo que alguien entendió al escribirlo, no lo
+  que el código hace ahora, y fiarse de él produjo tres pendientes caducados en una sola respuesta.
+- *Y la limitación de fondo, que explica una norma de trabajo entera:* el asistente *no recuerda* las
+  sesiones anteriores. Lo que no quede escrito en el diario o en esta memoria no existe para la sesión
+  siguiente. De ahí que el diario se escriba *en el momento* y no al cerrar la fase: no es disciplina, es la
+  única forma de que el motivo de una decisión sobreviva a quien la tomó.
+
+== Lo que el registro de horas no puede decir
+El diario tiene *176 entradas*, *174* con el campo de horas, y suma *85,9 h registradas*. Pero el campo
+*solo empezó a nombrar a quién* en la Fase 3:
+
+- *39,5 h atribuidas* explícitamente al asistente, en 99 entradas.
+- *38,0 h de las Fases 0, 1 y 2* —más 8,5 h de entradas anteriores a la numeración por fases— *sin dueño
+  anotado*.
+
+Por eso el apartado 11 *no puede repartir esas horas por persona a partir de este registro*, y conviene
+decirlo en lugar de rellenar una tabla que parecería medida. Caben dos salidas honestas: aplicar el modelo
+de trabajo vigente —el asistente construyó, de modo que la mayor parte de esas horas serían suyas— o
+declararlas no atribuibles. *Esta memoria no lo resuelve por su cuenta:* lo anota como lo que es, un límite
+del registro, y deja la decisión a quien firma el apartado 11. Lo que sí está descartado es usar el número
+de confirmaciones como reparto, por el motivo que ese mismo apartado explica: la autoría se sortea.
 
 = 13. Anexos
 Manual de instalación ampliado, credenciales de prueba (ficticias), glosario y referencias.
-#hueco("José María", "Manual de despliegue, usuarios de prueba del login nuevo (sustituyen a la credencial de Nginx), glosario y referencias.")
+== Plan de pruebas: los dieciocho casos que cita la matriz
+
+Esta tabla existe porque la columna «Prueba» del apartado 9 citaba dieciocho códigos y el lector no tenía
+dónde ir a verlos. Se reconstruye aquí con *dos resultados*: el del *29-sep*, medido sobre el prototipo
+antes de las Fases 1 y 2, y el de *hoy*, sobre el código congelado. La última columna dice *de dónde sale
+el resultado de hoy*, que es lo que permite juzgarlo: una reejecución, una figura de esta memoria, o nada
+—y entonces se dice—.
+
+#tabla(
+  (auto, auto, 4fr, 3fr, 4fr),
+  "
+  ID | Req. | Qué prueba | 29-sep (prototipo) | Hoy (código congelado)
+  PR-01 | RF-01 | Abrir la URL pública en un navegador limpio | `401` Basic Auth: la credencial documentada no entra | *200*, sirve el panel · reejecutada en producción
+  PR-03 | RF-03 | Rastrear un objetivo y revisar el panel de detalle | no ejecutada | *pasa* · figura del apdo. 8: rótulos legibles y cabeceras reales
+  PR-04 | RF-04 | Enviar dos veces la misma petición y comparar | *sin caso escrito* | *pasa* · figuras del apdo. 8: mismo estado, tamaño y cuerpo; distinto tiempo
+  PR-05 | RF-05 | Modificar y reenviar una petición; ver la respuesta | envío correcto, historial vacío | *pasa* · figuras de los apdos. 6 y 8; el historial se retiró por diseño (apdo. 10)
+  PR-06 | RF-06 | Marcar un campo y lanzar el Intruder | diccionarios servidos; ejecución sin probar | *no reejecutada*: exige lanzar tráfico de ataque real, y su procedimiento del 29-sep nombraba el laboratorio retirado el 13-oct
+  PR-07 | RF-07 | Hash, codificadores y regex con casos conocidos | hash y codificadores correctos; JWT no soportado | *no reejecutada*: exige credencial de usuario
+  PR-08 | RF-08 | Publicar un hallazgo y recuperarlo por el panel | backend correcto; faltaba el productor | *pasa* · recorrido completo verificado el 10-oct y figura del apdo. 8 (techo a 0 €)
+  PR-10 | RF-10 | Ejercitar el módulo de navegador | *sin caso escrito* | *no reejecutada*: hasta hoy el módulo ni siquiera estaba en la red interna; el despliegue del 13-oct lo corrige, pero no se ha ejercitado
+  PR-11 | RF-11 | Que cada usuario tenga su espacio de datos | tokens correctos por `/api/session/new` | *procedimiento caducado*: esa ruta se retiró en la Fase 2. Lo que hoy cumple RF-11 es el acceso por usuario, y se prueba con PR-12
+  PR-12 | RF-12 | Que un usuario no vea los datos de otro | *sin caso escrito* | *pasa* · cuatro figuras del apdo. 7, verificado 11/11 en la cocina
+  PR-13 | RNF-03 | Servicio en pie y API publicada en la caja | `/health` correcto; esquema de la API *abierto* | *pasa y mejora*: `/health` 200 y el esquema *ya no se publica* · reejecutada
+  PR-14 | RNF-07 | Sin claves en lo que se publica | por ejecutar | *pasa* · cero ficheros seguidos por git con clave, con control positivo · reejecutada
+  PR-15 | RNF-08 | Cortafuegos por sesión | *sin caso escrito* | *no reejecutada*: el agente está operativo y endurecido (apdos. 7-8), pero no se ha vuelto a ejercitar
+  PR-16 | RNF-07 | Llamar a la API sin ninguna credencial | *toda la API respondía* | *pasa*: `401`, y los puertos 8000 y 3000 rechazan conexión desde fuera · reejecutada
+  PR-17 | RNF-02 | Conexión en tiempo real con el servidor | enlace correcto, sin autenticar | *pasa* · el indicador «conectado» de las figuras lo prueba ya autenticado
+  PR-18 | RNF-09 | Responder por TLS | sin HTTPS | *sigue sin TLS* · reejecutada. RNF-09 es el único requisito declarado pendiente
+  PR-19 | RF-02 | Estado del proxy del lado servidor | *500*, error de servidor | *pasa*: `401`, el extremo responde y exige credencial · reejecutada
+  PR-20 | RNF-05 | Límite de peticiones simultáneas | *sin caso escrito* | *no reejecutada*: el límite está implementado y citado en el apdo. 8, pero sin prueba propia
+  ",
+)
+
+*Cómo leer esta tabla, dicho sin adornos.* De los dieciocho casos, *seis se han reejecutado hoy* contra
+producción, *seis los demuestra una figura* de esta memoria, *cinco no se han reejecutado* y se dice por
+qué, y *uno —PR-11— tiene el procedimiento caducado* porque cita una ruta que la Fase 2 retiró. Seis de los
+dieciocho *no tenían caso escrito en ninguna parte* antes de hoy (PR-03, 04, 10, 12, 15 y 20): se redactan
+aquí por primera vez.
+
+*Un aviso de método que vale para quien repita estas medidas.* El frontend es una aplicación de una sola
+página, y el servidor devuelve su portada a *cualquier ruta desconocida*: una dirección inventada responde
+`200` igual que una real. Por eso, en las filas reejecutadas, un `200` no se ha dado por bueno sin mirar el
+tipo de contenido —y es lo que evitó concluir que el esquema de la API seguía publicado cuando lo que
+respondía era la portada—. Las salidas completas están en `docs/evidencias/pruebas-reejecutadas-13oct.md`.
+
+== Manual de despliegue
+El despliegue es *manual y deliberadamente aburrido*: la instalación pública solo recibe versiones, nunca
+arreglos. Está prohibido editar ficheros en ella —fue la causa de que durante la Fase 0 lo desplegado no
+estuviera en ninguna rama— y por eso la actualización se hace con *traer y reponer a la fuerza* el estado de
+la rama principal, no con una fusión: si alguien hubiera editado algo allí, el siguiente despliegue se lo
+lleva. Es intencionado.
+
+*Orden de los pasos, y por qué este y no otro:*
+1. *Punto de retorno antes de tocar nada:* etiquetar las imágenes en servicio y copiar la configuración. No
+   cambia nada y es lo que permite volver en un minuto.
+2. *Fusionar la rama de trabajo en la principal* mediante solicitud de incorporación. La rama principal está
+   protegida y la solicitud sale bloqueada por la regla de revisión; la desbloquea quien administra.
+3. *Desplegar:* traer y reponer a la fuerza, y levantar *solo los servicios que el cambio toca*.
+4. *Verificar con sondas,* nunca por impresión visual.
+5. *Si falla,* volver al punto 1.
+6. *Etiquetar* la versión entregada.
+
+*Qué servicios se levantan, y esto se mide, no se supone.* Se listan los ficheros que cambian entre las dos
+ramas y se agrupan por carpeta. En el despliegue de la congelación: tres servicios se reconstruyeron
+(interfaz, API y módulo de IA), uno se *recreó sin reconstruir* —solo ganaba una línea de red, y su imagen
+pesa 2,4 GB—, y dos no se tocaron porque ni su imagen ni su configuración cambiaban. Dos lecciones que
+costaron tiempo y conviene no reaprender:
+- *Nombrar un servicio no basta para recrearlo.* Levantar con reconstrucción un servicio cuya imagen se
+  descarga y cuyo bloque no cambió *no lo recrea*: el despliegue sale «en verde» sin aplicar la
+  configuración nueva. Para eso hace falta pedir la recreación explícitamente.
+- *Quitar un servicio del fichero de composición no para su contenedor:* queda *huérfano* y sigue
+  corriendo. Para que desaparezca de verdad hay que pedir que se retiren los huérfanos — y eso es parar y
+  eliminar un contenedor, así que lo decide y lo lanza una persona, no el guion.
+
+*Verificación por sondas.* Cada sonda tiene un valor esperado *medido antes en el entorno de trabajo*, y la
+lista incluye *un control negativo*: un marcador que debe dar cero. Sin ese control, una sonda que no
+encuentra nada es indistinguible de una sonda mal apuntada. Dos de las sondas de la primera versión estaban
+mal dirigidas —preguntaban a la pieza equivocada— y se cazaron *probándolas*, que es para lo que se prueban.
+
+*Avisos que no son opcionales:*
+- La reposición a la fuerza *no toca el fichero de entorno* (está excluido del control de versiones): la
+  instalación pública conserva su clave y su código de invitación.
+- Las variables nuevas traen valor por omisión, así que no hay que tocar el entorno para desplegar. Pero el
+  tope de tokens por omisión *se queda corto* con el modelo actual: la respuesta se trunca y el análisis
+  sale como «no analizado» (RNF-06). Para auditar de verdad en producción hay que subirlo en el entorno.
+- La reconstrucción de la interfaz es la pesada: si queda poca memoria libre, conviene saberlo antes.
+
+== Usuarios de prueba y acceso para la corrección
+El producto ya no tiene una contraseña compartida: desde la Fase 2 cada persona *se da de alta ella misma*
+con un código de invitación y elige su contraseña, que nadie más conoce. Eso cambia cómo se entrega el
+acceso para corregir, y conviene decirlo con claridad:
+
+- *En este repositorio no hay ninguna credencial*, ni de prueba ni ficticia. El repositorio es *público*: una
+  contraseña escrita aquí sería una contraseña publicada, y la instalación a la que abre está en internet.
+- *Las credenciales de corrección se entregan por el canal del máster*, junto a la dirección de la
+  instalación. Incluyen lo necesario para entrar y, si se quiere crear una cuenta propia, el código de
+  invitación.
+- *Las cuentas que se usaron para probar* durante el desarrollo viven en el entorno de trabajo, no en la
+  instalación pública, y se retiran antes de la entrega. Se nombraron con prefijos reconocibles por
+  propósito —alta, rastreo, víctima y atacante— precisamente para poder localizarlas y borrarlas luego.
+- *Qué se puede comprobar con una sola cuenta:* todo el recorrido de auditoría. Para comprobar el
+  *aislamiento* hacen falta dos, y así se verificó: once de once comprobaciones con dos cuentas distintas.
+
+== Glosario
+- *Spider (rastreador):* recorre un sitio siguiendo enlaces y formularios para levantar su mapa.
+- *Repeater:* banco de trabajo de *una* petición: se modifica y se reenvía tal como se ve en pantalla.
+- *Intruder:* prueba muchos valores en un punto marcado de la petición (fuzzing) y señala las respuestas
+  que se salen del patrón.
+- *Proxy del lado servidor:* el producto hace la petición *en lugar* del navegador, de modo que no hace
+  falta instalar ni configurar nada en el equipo de quien audita.
+- *Fichero de autoconfiguración de proxy:* mecanismo de la primera versión para que el navegador enrutara
+  solo; se jubiló en la Fase 2 junto con sus rutas.
+- *Token firmado (JWT):* credencial que emite el servidor y que el cliente presenta en cada petición. Aquí
+  el algoritmo de firma está fijado en el servidor y *no se lee del propio token*.
+- *Hash de contraseña:* huella irreversible. Lo que se guarda es la huella, nunca la contraseña.
+- *Bus interno:* canal por el que los servicios se hablan sin exponerse a internet; sustituye a que un
+  módulo llame a la API como si fuera un cliente más.
+- *Operación degradada:* seguir dando servicio con menos garantías cuando una pieza falla, *y que se note*.
+  Un fallo silencioso que se disfraza de resultado correcto es peor que una caída.
+- *Techo de gasto:* límite de llamadas al modelo por auditoría; al agotarse, el resultado sale degradado y
+  visible en lugar de silencioso.
+- *Trampa de araña:* sitio que genera direcciones infinitas y hace que un rastreador no termine nunca.
+- *Fuga de aislamiento:* que los datos de un usuario aparezcan en la sesión de otro.
+- *Huella digital (fingerprint):* identificar la tecnología de un objetivo por sus respuestas.
+- *Entorno de trabajo y instalación pública:* las dos instalaciones del producto. Todo se monta y se prueba
+  en la primera; la segunda solo recibe versiones (apartado 5).
+- *Contenedor huérfano:* el que sigue corriendo después de que su definición desapareciera del fichero de
+  composición.
+- *RF / RNF:* requisito funcional (lo que el producto hace) y no funcional (cómo lo hace: seguridad,
+  rendimiento, despliegue).
+- *STRIDE:* modelo de amenazas que recorre seis familias —suplantación, manipulación, repudio, divulgación,
+  denegación de servicio y elevación de privilegio— para no olvidar ninguna (apartado 7).
+
+== Referencias
+*Fuentes del enunciado y de la práctica anterior* (material del máster, no redistribuido en este
+repositorio): el enunciado de esta práctica, el de la práctica anterior y el informe que el grupo entregó
+entonces. De ahí salen la estructura obligatoria de trece apartados, la numeración de requisitos que la
+práctica anterior no tenía y el plan de mejoras cuyos cinco primeros puntos delimitan el alcance (apartado 4).
+
+*Dentro de este repositorio* —y todas estas rutas existen, se comprobó al escribirlas—:
+`docs/informe/P3-memoria.typ` (fuente única de esta memoria), `docs/informe/diario.md` (registro de
+trabajo con el motivo de cada decisión, las horas y lo que se descartó), `docs/capturas/` (figuras, con el
+nombre atado al requisito que demuestran) y `docs/evidencias/` (salidas de terminal guardadas como texto,
+no como foto, para que sean buscables y comparables).
+
+*Taxonomías y modelos usados:* la clasificación de severidad que pide RF-08 se apoya en la taxonomía de
+OWASP, y el modelo de amenazas del apartado 7 sigue STRIDE.
+
+*Herramientas de medición citadas en la memoria,* para que cualquiera pueda reproducir las cifras: el
+auditor de dependencias de cada ecosistema (el del gestor de paquetes de la interfaz y `pip-audit` para los
+módulos en Python), `pdftotext` para escanear el PDF entregable en busca de secretos —sobre el PDF crudo el
+texto va comprimido y la búsqueda daría cero siempre—, y el compilador de documentos con el que se generan
+las dos salidas de esta memoria.
+
+*Material de trabajo del grupo que no vive en este repositorio* (protocolo de trabajo, flujo de ramas,
+procedimiento de despliegue y planes por fases) y que se cita en la memoria por su contenido, no por su
+ruta, precisamente para no dejar referencias que un lector del repositorio no podría abrir.
