@@ -765,11 +765,17 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
 
 > *Segunda corrección declarada (10-oct), por R9.* Esta matriz *no tenía fila* para RNF-01, RNF-04 ni RNF-06, pese a estar los tres declarados en el apartado 4. El caso de RNF-06 es el que más duele: se le dedican varias secciones del apartado 8 y aun así no se podía trazar desde aquí, que es precisamente la pieza con la que se corrige la práctica. Las tres filas se añaden ahora. El defecto no es de redacción sino de método —la matriz se rellenó requisito a requisito desde la lista de RF y los RNF se fueron añadiendo según aparecían en el trabajo—, y explica por qué faltaban justo los tres que ninguna fase tuvo como protagonista.
 
-*Tercera corrección declarada (10-oct), por R9, y es la más seria de las tres.* Aquí decía que «el estado de cada prueba (PR-xx) y su resultado detallado están en el apartado 8», y *no es cierto*: de los diecinueve códigos de prueba que cita esta columna, *solo tres* —PR-01, PR-16 y PR-20— aparecen en algún otro punto de esta memoria. Los dieciséis restantes son una *referencia a ninguna parte*: quien corrige lee «PR-08» en la fila de RF-08 y no tiene dónde ir a ver qué se probó ni con qué resultado.
+*Tercera corrección declarada (10-oct), por R9, y es la más seria de las tres.* Aquí decía que «el estado de cada prueba (PR-xx) y su resultado detallado están en el apartado 8», y *no es cierto*: de los *dieciocho* códigos de prueba que cita esta columna, solo *cuatro* —PR-01, PR-08, PR-16 y PR-20— aparecen en algún otro punto de esta memoria. Los catorce restantes son una *referencia a ninguna parte*: quien corrige lee «PR-05» en la fila de RF-05 y no tiene dónde ir a ver qué se probó ni con qué resultado.
 
-El plan existe y está completo —los diecinueve casos, con procedimiento, resultado esperado y resultado observado—, pero vive en un *documento de trabajo del equipo que no se entrega*. El defecto, por tanto, no es que las pruebas no se hicieran: es que la memoria cita un plan que el lector no tiene. Al arreglar cada fallo se reejecuta la prueba y se actualiza la fila.
+> *Cuarta corrección declarada (13-oct), y le toca a las cifras de la anterior.* Este mismo párrafo decía «diecinueve códigos» y «solo tres». Contados uno a uno al construir el anexo salen *dieciocho* y *cuatro* —el que faltaba por contar era PR-08—. Son errores de recuento propios, no del producto, y se corrigen aquí en lugar de cambiarse en silencio.
 
-#hueco("José María + Claude", "Traer el plan de pruebas (PR-01 a PR-20) a la memoria, como tabla del anexo, para que esta columna deje de apuntar a ninguna parte. OJO al hacerlo: los resultados observados del plan son del 29-sep y varios están desfasados —PR-01 figura como FALLA por un Basic Auth que la Fase 2 retiró—, así que se revisa caso por caso antes de copiarlo. Copiarlo tal cual metería afirmaciones falsas en el entregable.") La numeración RF/RNF es la fijada en el apartado 4 y #estado("curso", "PENDIENTE DE VALIDAR POR EL GRUPO").
+*Y la afirmación que había que corregir antes de copiar nada al anexo (13-oct, R9).* Aquí se decía que «el plan existe y está completo, los diecinueve casos, con procedimiento, resultado esperado y resultado observado». *No es así, y era la afirmación más engañosa de este apartado.* El plan de trabajo del equipo tiene *doce* casos —PR-01, 05, 06, 07, 08, 11, 13, 14, 16, 17, 18 y 19—, de modo que *seis de los códigos que esta columna cita (PR-03, PR-04, PR-10, PR-12, PR-15 y PR-20) no tienen caso escrito en ninguna parte*. No es que el lector no tenga el plan: es que de un tercio de lo citado no hay plan que tener.
+
+*Y los doce que sí existen llevan resultados del 29 de septiembre*, medidos contra el prototipo *antes* de las Fases 1 y 2, así que varios son hoy literalmente falsos: PR-01 figura como fallo por un Basic Auth que la Fase 2 retiró; PR-16 dice que «toda la API responde sin credenciales», que es justo lo que la Fase 2 cerró; y PR-19 da un error de servidor que la Fase 1 corrigió. Copiarlos tal cual habría metido tres afirmaciones falsas en el entregable.
+
+*Qué se hace con eso, y por qué el anexo no es un volcado.* Esos resultados del 29-sep *no son basura*: son la foto del punto de partida, y el enunciado pide expresamente las pruebas que fallaron con su explicación. El anexo del apartado 13 no copia el plan, lo reconstruye con *dos columnas* —qué daba el 29-sep y qué da hoy— y declara, caso por caso, de dónde sale el resultado de hoy: de una reejecución, de una figura de esta memoria, o de que no se ha podido reejecutar y por qué.
+
+> *Hecho el 13-oct.* El plan está ahora en el *anexo del apartado 13*, reconstruido caso por caso y no copiado: con el resultado del 29-sep, el de hoy y de dónde sale cada uno. Los tres desfases que habrían entrado como afirmaciones falsas —PR-01, PR-16 y PR-19— quedan corregidos con medida nueva. La numeración RF/RNF es la fijada en el apartado 4 y #estado("curso", "PENDIENTE DE VALIDAR POR EL GRUPO").
 #hueco("José María + Claude", "Al revisar el vídeo grabado, anotar el minuto exacto donde se demuestra cada requisito y el número de figura de su captura (R6: el nombre de la captura va atado al ID del requisito, p. ej. `RF-08-panel-ia.png`, para que esta columna se rellene sola).")
 
 = 10. Limitaciones y trabajo futuro
@@ -925,4 +931,49 @@ El límite del método también se declara: el asistente secundario es un modelo
 
 = 13. Anexos
 Manual de instalación ampliado, credenciales de prueba (ficticias), glosario y referencias.
+== Plan de pruebas: los dieciocho casos que cita la matriz
+
+Esta tabla existe porque la columna «Prueba» del apartado 9 citaba dieciocho códigos y el lector no tenía
+dónde ir a verlos. Se reconstruye aquí con *dos resultados*: el del *29-sep*, medido sobre el prototipo
+antes de las Fases 1 y 2, y el de *hoy*, sobre el código congelado. La última columna dice *de dónde sale
+el resultado de hoy*, que es lo que permite juzgarlo: una reejecución, una figura de esta memoria, o nada
+—y entonces se dice—.
+
+#tabla(
+  (auto, auto, 4fr, 3fr, 4fr),
+  "
+  ID | Req. | Qué prueba | 29-sep (prototipo) | Hoy (código congelado)
+  PR-01 | RF-01 | Abrir la URL pública en un navegador limpio | `401` Basic Auth: la credencial documentada no entra | *200*, sirve el panel · reejecutada en producción
+  PR-03 | RF-03 | Rastrear un objetivo y revisar el panel de detalle | no ejecutada | *pasa* · figura del apdo. 8: rótulos legibles y cabeceras reales
+  PR-04 | RF-04 | Enviar dos veces la misma petición y comparar | *sin caso escrito* | *pasa* · figuras del apdo. 8: mismo estado, tamaño y cuerpo; distinto tiempo
+  PR-05 | RF-05 | Modificar y reenviar una petición; ver la respuesta | envío correcto, historial vacío | *pasa* · figuras de los apdos. 6 y 8; el historial se retiró por diseño (apdo. 10)
+  PR-06 | RF-06 | Marcar un campo y lanzar el Intruder | diccionarios servidos; ejecución sin probar | *no reejecutada*: exige lanzar tráfico de ataque real, y su procedimiento del 29-sep nombraba el laboratorio retirado el 13-oct
+  PR-07 | RF-07 | Hash, codificadores y regex con casos conocidos | hash y codificadores correctos; JWT no soportado | *no reejecutada*: exige credencial de usuario
+  PR-08 | RF-08 | Publicar un hallazgo y recuperarlo por el panel | backend correcto; faltaba el productor | *pasa* · recorrido completo verificado el 10-oct y figura del apdo. 8 (techo a 0 €)
+  PR-10 | RF-10 | Ejercitar el módulo de navegador | *sin caso escrito* | *no reejecutada*: hasta hoy el módulo ni siquiera estaba en la red interna; el despliegue del 13-oct lo corrige, pero no se ha ejercitado
+  PR-11 | RF-11 | Que cada usuario tenga su espacio de datos | tokens correctos por `/api/session/new` | *procedimiento caducado*: esa ruta se retiró en la Fase 2. Lo que hoy cumple RF-11 es el acceso por usuario, y se prueba con PR-12
+  PR-12 | RF-12 | Que un usuario no vea los datos de otro | *sin caso escrito* | *pasa* · cuatro figuras del apdo. 7, verificado 11/11 en la cocina
+  PR-13 | RNF-03 | Servicio en pie y API publicada en la caja | `/health` correcto; esquema de la API *abierto* | *pasa y mejora*: `/health` 200 y el esquema *ya no se publica* · reejecutada
+  PR-14 | RNF-07 | Sin claves en lo que se publica | por ejecutar | *pasa* · cero ficheros seguidos por git con clave, con control positivo · reejecutada
+  PR-15 | RNF-08 | Cortafuegos por sesión | *sin caso escrito* | *no reejecutada*: el agente está operativo y endurecido (apdos. 7-8), pero no se ha vuelto a ejercitar
+  PR-16 | RNF-07 | Llamar a la API sin ninguna credencial | *toda la API respondía* | *pasa*: `401`, y los puertos 8000 y 3000 rechazan conexión desde fuera · reejecutada
+  PR-17 | RNF-02 | Conexión en tiempo real con el servidor | enlace correcto, sin autenticar | *pasa* · el indicador «conectado» de las figuras lo prueba ya autenticado
+  PR-18 | RNF-09 | Responder por TLS | sin HTTPS | *sigue sin TLS* · reejecutada. RNF-09 es el único requisito declarado pendiente
+  PR-19 | RF-02 | Estado del proxy del lado servidor | *500*, error de servidor | *pasa*: `401`, el extremo responde y exige credencial · reejecutada
+  PR-20 | RNF-05 | Límite de peticiones simultáneas | *sin caso escrito* | *no reejecutada*: el límite está implementado y citado en el apdo. 8, pero sin prueba propia
+  ",
+)
+
+*Cómo leer esta tabla, dicho sin adornos.* De los dieciocho casos, *seis se han reejecutado hoy* contra
+producción, *seis los demuestra una figura* de esta memoria, *cinco no se han reejecutado* y se dice por
+qué, y *uno —PR-11— tiene el procedimiento caducado* porque cita una ruta que la Fase 2 retiró. Seis de los
+dieciocho *no tenían caso escrito en ninguna parte* antes de hoy (PR-03, 04, 10, 12, 15 y 20): se redactan
+aquí por primera vez.
+
+*Un aviso de método que vale para quien repita estas medidas.* El frontend es una aplicación de una sola
+página, y el servidor devuelve su portada a *cualquier ruta desconocida*: una dirección inventada responde
+`200` igual que una real. Por eso, en las filas reejecutadas, un `200` no se ha dado por bueno sin mirar el
+tipo de contenido —y es lo que evitó concluir que el esquema de la API seguía publicado cuando lo que
+respondía era la portada—. Las salidas completas están en `docs/evidencias/pruebas-reejecutadas-13oct.md`.
+
 #hueco("José María", "Manual de despliegue, usuarios de prueba del login nuevo (sustituyen a la credencial de Nginx), glosario y referencias.")
