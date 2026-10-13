@@ -98,7 +98,7 @@ laboratorio vulnerable del producto entregable.
 *En qué estado se entrega.* De los *veintiún requisitos numerados*, quince se entregan *cumplidos*
 —uno con una limitación documentada en pantalla pequeña—, uno *modificado* y uno *descartado*, ambos
 justificados en el apartado 4, uno *parcial* (el grafo de contribuciones, partido por dos correos del
-mismo autor) y uno *pendiente declarado*: TLS. Dos filas de la matriz quedan marcadas a revisar. El
+mismo autor) y uno *pendiente declarado*: TLS. Queda una sola fila sin estado firme: RF-10. El
 código está *congelado y etiquetado* como `v1.0-practica3` y *desplegado en producción sobre esa misma
 etiqueta*: lo que se ve funcionando es lo que hay en el repositorio.
 
@@ -156,11 +156,11 @@ Lista completa y numerada. Numeración fijada en la P3 (la P1 no la tenía) a pa
 #tabla(
   (auto, 7fr, auto),
   "
-  ID | Requisito | Estado P1
+  ID | Requisito | Estado (de partida, puesto al día durante la P3)
   RF-01 | Dashboard web accesible desde cualquier navegador, sin instalar nada en el cliente | Cumplido
-  RF-02 | El servidor ejecuta las peticiones HTTP en nombre del auditor (proxy del lado servidor) | A revisar
+  RF-02 | El servidor ejecuta las peticiones HTTP en nombre del auditor (proxy del lado servidor) | *Modificado* (§4)
   RF-03 | Spider: rastreo automático del objetivo (BFS, scope al dominio, extrae formularios), velocidad configurable | Cumplido
-  RF-04 | Auditoría autenticada: sesión `httpx` persistente compartida por Spider/Repeater/Intruder que hereda las cookies del login | Cumplido
+  RF-04 | Auditoría autenticada: sesión `httpx` persistente compartida por Spider/Repeater/Intruder que hereda las cookies del login | *Modificado* (12-oct, justificado abajo)
   RF-05 | Repeater: modificar y reenviar cualquier petición; respuesta en 4 vistas (Raw/Pretty/Preview/Headers) | Cumplido
   RF-06 | Intruder: fuzzing de parámetros marcados con `*`; 4 tipos (SQLi, Blind SQLi, XSS, genérico); resultados en tiempo real | Cumplido
   RF-07 | Utilidades: Encoder/Decoder (Base64/URL/HTML/JWT), Hash (MD5/SHA1/SHA256/SHA512), Regex Tester, Payload Generator | Cumplido
@@ -178,13 +178,13 @@ Lista completa y numerada. Numeración fijada en la P3 (la P1 no la tenía) a pa
 #tabla(
   (auto, 7fr, auto),
   "
-  ID | Requisito | Estado P1
+  ID | Requisito | Estado (de partida, puesto al día durante la P3)
   RNF-01 | Accesible desde navegador sin instalar software en el cliente | Cumplido
   RNF-02 | Actualización en tiempo real vía WebSocket (pings cada 30 s, eventos `{type,payload}`) | Cumplido
   RNF-03 | Desplegado en servidor Hetzner con contenedores Docker | Cumplido
   RNF-04 | Código en GitHub con historial de commits que refleje el trabajo del grupo | Parcial
   RNF-05 | Estabilidad ante carga: límite de concurrencia para no saturar producción | Cumplido
-  RNF-06 | Operación degradada cuando la IA no responde o no supera el umbral de confianza | A revisar
+  RNF-06 | Operación degradada cuando la IA no responde o no supera el umbral de confianza | *Cumplido* (§4; demostrado el 10-oct)
   RNF-07 | *Seguridad del propio producto*: secretos fuera del repo, control de acceso, validación de entradas, dependencias sin CVEs | Parcial
   RNF-08 | Firewall dinámico por sesión (abre un puerto por sesión, lo cierra al logout o tras 4 h) | Cumplido (a verificar)
   RNF-09 | TLS/HTTPS en los endpoints públicos (Let's Encrypt) | Pendiente
@@ -201,15 +201,28 @@ El enunciado pide que todo requisito modificado o descartado lleve su versión o
 - *Cierre en la Fase 2 (6-oct): el PAC se retiró del código.* Hasta entonces el producto seguía sirviendo el fichero de autoconfiguración aunque el modelo estuviera abandonado desde la P1. Se comprobó que estaba muerto antes de tocarlo: su único consumidor en la interfaz era un componente *que ningún otro fichero importaba*, y el segundo (el lanzador de navegador de RF-09) no está integrado y además apunta a un puerto que la Fase 1 había cerrado, así que ya estaba roto por su cuenta. Se retiraron la ruta del backend, sus dos bloques en Nginx y el componente.
 - *Ganancia de seguridad no buscada.* El PAC era la *única* ruta que tenía que quedar sin autenticar, porque un navegador no envía credenciales al pedirlo, y por eso llevaba una excepción expresa en el guardián de la Fase 2. Al jubilarlo, *toda* `/api` exige token sin excepciones: no queda ningún hueco que mantener ni que explicar. Una excepción de seguridad que se puede eliminar vale más que una excepción bien documentada.
 
-=== RF-04 — auditoría autenticada con sesión compartida (*a revisar: modificado el 12-oct*)
+=== RF-04 — auditoría autenticada con sesión compartida (*modificado el 12-oct*)
 - *Versión original (P1), tal como está escrito el requisito:* sesión `httpx` persistente *compartida por Spider, Repeater e Intruder*, que hereda las cookies del login del objetivo.
 - *Versión nueva:* el Repeater deja de usar esa sesión compartida y envía una petición *independiente*, con exactamente las cabeceras que se ven en pantalla. Spider, Proxy e Intruder siguen compartiéndola.
 - *Motivo.* El requisito describe un *mecanismo*, pero lo que persigue es poder auditar autenticado; y ese mecanismo rompía en el Repeater algo que vale más: *la reproducibilidad*. El cliente compartido hacía dos cosas invisibles —enviaba cookies que no estaban en la petición y se quedaba con las que devolvía el servidor—, así que *dos envíos idénticos daban resultados distintos* y lo que se veía en pantalla no era lo que salía por el cable. Se descubrió porque un POST *sin* `Cookie` en sus cabeceras recibía la respuesta de la última página que había visitado el Spider: si el servidor reconoce al auditor sin que él mande sesión, la sesión la pone el producto por detrás.
 - *Por qué el requisito se sigue cumpliendo.* La sesión se hereda igual, pero *por un canal explícito*: desde el arreglo de esa misma mañana las cabeceras que el producto muestra son las realmente enviadas, de modo que la `Cookie` del objetivo viaja *en la petición*, visible y editable. Antes de ese arreglo este cambio habría roto la herencia de verdad; después de él, la traslada de un canal oculto a uno a la vista.
 - *Lo que el cambio destapó, y es la lección de la jornada.* Al quitarle el cliente compartido, *todos los POST empezaron a devolver `419`*. La causa no era el cambio: los formularios que el Spider descubre viajaban con unas cabeceras incompletas, sin la cookie de sesión, y *el cliente compartido lo estaba tapando*. Un mecanismo «de más» sostenía un dato incompleto que nadie veía, y solo se descubrió al quitarlo. Se arregló el origen —los formularios descubiertos parten ahora de las cabeceras realmente enviadas al pedir la página— y el `419` desapareció. De aquí sale una regla de trabajo: *preguntar por qué algo está así antes de tocarlo* no es burocracia.
-- *Estado en la matriz:* pasa de *Cumplido* a *A revisar (modificado)*, la misma categoría de RF-02 y RNF-06. Se declara en lugar de dejarlo como cumplido, que es lo que habría hecho el documento si nadie lo mirara.
+- *Estado en la matriz:* *Modificado*, la misma categoría que RF-02.
+- *Corrección declarada de este documento (13-oct, por R9), y la hubo que buscar dos veces.* La matriz del
+  apartado 9 daba a este requisito el estado *A revisar*, que es el nombre que la clasificación de partida
+  usa para «estaba mal planteado y se reformula con justificación». En un entregable final esa palabra se lee
+  como «no lo sabemos», así que *por decisión de José María (13-oct) el estado final se escribe Modificado*:
+  el requisito describía un *mecanismo*, el mecanismo cambió con justificación y el objetivo —auditar
+  autenticado— se sigue cumpliendo.
+- *Y al aplicarlo salió un defecto anterior, que se arregla en el mismo paso.* La columna de estado de las
+  listas de este apartado se titulaba *Estado P1*, pero **no** contenía solo estados de la P1: `RF-09`
+  figuraba ahí como *Descartado*, que es una decisión del 11 de octubre. Es decir, la columna *se actualiza*
+  —lo dice su propia entradilla— y el título mentía. Se corrige el título y se ponen al día las dos celdas
+  que nunca se actualizaron: RF-02, que la matriz ya daba por modificado, y RNF-06, que la matriz da por
+  cumplido y demostrado desde el 10 de octubre. *La clasificación de partida (arriba) no se toca:* esa sí es
+  histórica, lo dice expresamente, y reescribirla habría falsificado el punto del que salimos.
 
-=== RNF-06 — operación degradada (*a revisar*)
+=== RNF-06 — operación degradada (*a revisar en la P1; cumplido y demostrado en la P3*)
 - *Original:* enunciado como principio en la P1, sin demostrar.
 - *Nuevo:* la operación degradada se demuestra haciendo que un fallo de la IA sea *distinguible* de un análisis correcto. El clasificador pasa a devolver tres estados donde hoy hay dos: _vulnerable_ (con confianza suficiente), _analizado y limpio_, y _no analizado_, este último acompañado del motivo. Encaja con el criterio P3 «se comporta razonablemente ante errores», y se prueba a propósito: con una clave de API inválida el panel debe decir _no analizado_, no _limpio_.
 - *Corrección de este documento (8-oct).* Este apartado prometía demostrar RNF-06 «con un umbral sobre el campo `confianza`». Ese umbral *ya existía* en el código desde la P1 —`CONFIDENCE_THRESHOLD = 60`, aplicado en los dos analizadores—, así que la demostración prometida no demostraba nada: se iba a presentar como mejora de la P3 algo ya construido. Se deja escrito en vez de corregirlo en silencio, porque el error está en lo que este documento prometió, no en el producto.
@@ -877,7 +890,7 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
   RF-01 | Dashboard web sin instalación | Cumplido (seis pestañas: se retira Red y se añade Manual el 11-oct) | `frontend/src/App.jsx` + `Layout.jsx` + `pages/manual/ManualPage.jsx` | PR-01 | fig. apdo. 10 · vídeo —:—
   RF-02 | Proxy del lado servidor (`httpx`) | Modificado (2 errores de servidor corregidos en F1) | `backend/services/proxy_service.py` | PR-19 | justif. apdo. 4 · apdo. 6
   RF-03 | Spider / rastreo | Cumplido (4 defectos corregidos en F1; quince más en el pulido del 11-oct; el 12-oct las cabeceras que muestra pasan a ser las realmente enviadas) | `backend/services/spider_service.py`, `frontend/.../ProxyPage.jsx`, `.../RequestsTable.jsx` | PR-03 | figs. apdo. 8 · vídeo —:—
-  RF-04 | Auditoría autenticada (sesión compartida) | *A revisar* (modificado el 12-oct: el Repeater envía con cliente propio y la sesión se hereda por cabecera explícita) | `backend/services/session_service.py`, `backend/services/proxy_service.py`, `backend/routes/repeater.py` | PR-04 | justif. apdo. 4 · figs. apdo. 8
+  RF-04 | Auditoría autenticada (sesión compartida) | *Modificado* (12-oct: el Repeater envía con cliente propio y la sesión se hereda por cabecera explícita) | `backend/services/session_service.py`, `backend/services/proxy_service.py`, `backend/routes/repeater.py` | PR-04 | justif. apdo. 4 · figs. apdo. 8
   RF-05 | Repeater | Cumplido (parser y avisos de error corregidos en F1; el importador de peticiones se traslada aquí desde el Spider el 11-oct y se *retira* el mismo día; dieciséis defectos corregidos en el pulido del 12-oct, con un historial añadido y retirado esa misma jornada) | `backend/routes/repeater.py`, `backend/services/proxy_service.py`, `frontend/src/pages/repeater/` | PR-05 | figs. apdos. 6 y 8 · vídeo —:—
   RF-06 | Intruder / fuzzing | Cumplido (cancelación corregida en F1) | `backend/services/intruder_service.py` | PR-06 | apdo. 6 · vídeo —:—
   RF-07 | Utilidades (incl. JWT) | Cumplido | `frontend/src/pages/utilities/` | PR-07 | fig. — · vídeo —:—
