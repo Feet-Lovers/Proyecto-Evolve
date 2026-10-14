@@ -4801,3 +4801,42 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   prueba de que importaba es que el `typst compile` es el que lo habria cazado despues, ya en el documento.
 - **A que requisito toca:** **RF-01** a **RF-08**, **RF-11**, **RF-12**, **RNF-06**, **RNF-08**; apdo. **6**.
   **Evidencia:** ⚠️ FALTA: Intruder lanzado y Utilidades con el codificador [pantalla]. **Horas:** ~0,7 h.
+
+## Fase 3 (14-oct, tarde-noche) — el reparto del trabajo como fue, y un README que no servia para instalar
+
+- 🔑 **El apartado 11 deja de sostenerse sobre una premisa falsa.** La justificacion del sorteo de autorias
+  decia que «el trabajo se reparte por tareas y no por ficheros». **No hubo reparto de tareas**, asi que esa
+  frase no solo era inexacta: era **la razon** que sostenia todo el argumento. Sustituida por la verdadera —
+  las decisiones salian de una consulta de grupo continua y la ejecucion paso por una sola via, de modo que
+  **ninguna confirmacion es atribuible a una persona**—. La tabla de horas pasa a tres filas honestas: la
+  reunion inicial de ~1 h por cabeza y la consulta continua **declarada como no cuantificable**, en vez de
+  inventar un numero por persona. **Hueco de horas cerrado sin pedirle nada a nadie.**
+- **Se declara que no hubo feedback docente de la P1** (apdo. 3) y de donde salen entonces las mejoras: el
+  plan que la propia P1 dejo escrito y la revision critica del 29-sep. De paso precisa la tabla de ese
+  apartado: la categoria «A revisar» se define como «el feedback *o la experiencia*», y aqui fue **siempre
+  la experiencia**.
+- **Portada completa** con el grupo Feet Lovers y **siete areas de trabajo** «asumidas en comun y sin
+  reparto por persona» — describen el trabajo en vez de etiquetar personas. El PDF pasa a llamarse
+  `P3_GrupoFeetLovers_Memoria.pdf`, como exige el enunciado. El grupo **no tiene numero asignado**:
+  verificado en el campus.
+- ✅ **Empotradas las dos capturas que faltaban** (apdo. 6). La del Intruder iba con el **testigo CSRF
+  completo a la vista, dos veces**: tapada con Pillow, solo entra la copia censurada. La del JWT **no**
+  necesitaba tapado y se comprobo descodificando la carga util: es el ejemplo publico de la documentacion.
+  **Huecos del documento: de 10 a 6.**
+- 🔴 **El README no servia para instalar, y se descubrio ejecutandolo.** Su unica instruccion era un enlace
+  a `docs/guia_despliegue.md`, **que no existe en el repositorio**. Reescrito de 72 a 203 lineas a partir
+  del `docker-compose.yml` real. Al probarlo paso a paso salieron **dos fallos que impedian instalar**:
+  (1) los pasos 2 y 3 eran **incompatibles** —`cp .env.example .env` deja `JWT_SECRET=` vacia y el script de
+  credenciales aborta al ver esa cadena, sin mirar si tiene valor—, y (2) `redis` tenia un `container_name`
+  **fijo**, que anula el aislamiento por proyecto de Compose e impide levantar una segunda copia.
+- **Y una barrera que no era un fallo pero si un obstaculo:** el puerto estaba clavado en `"80:80"`. Quien
+  lo tenga ocupado se encontraba `address already in use` **sin salida documentada**. Pasa a
+  `${HOOKSUITE_PUERTO:-80}`, con el patron que ese fichero ya usa cuatro veces; **el defecto sigue siendo 80
+  y el despliegue publico no cambia**. El repositorio ya lo delataba: habia un `docker-compose.override.yml`
+  **sin versionar** remapeando a 8880 — el apaño existia, pero solo en local.
+- ⚠️ **La prueba de instalacion queda a medias a proposito**, con el punto de retorno escrito. Y **no tacha
+  la casilla del enunciado**: la hizo quien escribio el README, no una persona ajena al grupo. Comprueba
+  que las instrucciones se sostienen, que es el 30 % de la nota, pero no sustituye a esa casilla.
+- **A que requisito toca:** apdos. **1**, **3**, **6**, **11** y **12**; **RNF-03** (despliegue
+  reproducible) y **RNF-04** (reparto del trabajo). **Evidencia:** `P3_GrupoFeetLovers_Memoria.pdf`,
+  `README.md`, commits `a39b8870`, `97c2ca10`, `31216ec5`, `702e928d`. **Horas:** ~6 h de Claude.
