@@ -1,7 +1,7 @@
 // ============================================================
 // HookSuite — Memoria técnica de la Práctica 3
 // FUENTE ÚNICA (R4). Dos salidas:
-//   typst compile --root . docs/informe/P3-memoria.typ docs/informe/P3-memoria.pdf   -> PDF
+//   typst compile --root . docs/informe/P3-memoria.typ docs/informe/P3_GrupoFeetLovers_Memoria.pdf   -> PDF (nombre que exige el enunciado; el grupo no tiene numero asignado)
 //   ~/.venvs/hooksuite-tools/bin/python tools/typ2html.py                            -> artefacto HTML
 //   (--root . porque las imágenes viven en docs/capturas/, fuera de docs/informe/;
 //    el venv aporta Pillow para reducir las capturas en el artefacto, R6)
@@ -60,17 +60,38 @@
   #text(size: 14pt, fill: azul-acento)[Memoria técnica · Práctica 3 — «Del prototipo al producto»]
   #v(0.5cm)
   #text(size: 11pt)[Máster en Ciberseguridad & IA · Evolve Academy]
+  #v(0.4cm)
+  #text(size: 12pt)[Grupo *Feet Lovers*]
   #v(2cm)
 ]
-#hueco("José María", "Portada: nº de grupo definitivo, integrantes, fecha de entrega, enlace al repo y enlace al vídeo (apartado 1).")
+#hueco("José María", "Enlace al vídeo (≥10 min, no listado): es lo único que falta de la portada. Comprobarlo desde una ventana de incógnito antes de entregar.")
 #pagebreak()
 
 // === CUERPO ===
 
 = 1. Portada
 Producto: *HookSuite* — herramienta web de auditoría de seguridad «tipo Burp Suite», con IA.
-Grupo: #estado("curso", "nº por confirmar"). Entrega: *16 de octubre de 2026*.
-#hueco("José María", "Integrantes con rol, enlace al repositorio público y enlace al vídeo (≥10 min). Se rellena al congelar.")
+Grupo: *Feet Lovers*. Entrega: *16 de octubre de 2026*.
+
+*Integrantes:* Ivan Medina · Macarena Rogerio · Nacho García · Carlos Bañuelos · José María López
+
+*Áreas de trabajo de esta práctica*, asumidas en común y sin reparto por persona:
+
+#tabla(
+  (auto, 6fr),
+  "
+  Área | Qué se hizo
+  *Frontend* | Pulido del Spider y del Repeater, revisión de pantallas, nueva pestaña Manual y retirada de Red
+  *Backend* | Alta y acceso por usuario, aislamiento de datos y bus interno de mensajes
+  *IA* | Integración del análisis de hallazgos con el panel y control del gasto
+  *Seguridad* | Cierre de la API, orígenes permitidos, canal autenticado, gestión de secretos y limpieza del historial
+  *Infraestructura y despliegue* | Contenedores, servidor público y despliegue reproducible
+  *Pruebas y evidencias* | Plan de pruebas, ejecución y capturas
+  *Documentación* | Memoria técnica, README y vídeo
+  ",
+)
+
+*Repositorio:* #link("https://github.com/Feet-Lovers/Proyecto-Evolve")
 
 = 2. Resumen ejecutivo
 HookSuite resuelve la auditoría web asistida por IA desde el navegador: interceptar y repetir peticiones, fuzzing, utilidades (hash/encoder/regex), análisis de vulnerabilidades y un módulo de IA que prioriza hallazgos. La P3 parte del prototipo de la P1 y lo lleva a un estado ejecutable, seguro y reproducible.
@@ -148,7 +169,25 @@ Usando las cinco categorías del enunciado. El recuento es provisional, a valida
   *Descartado* | Se decide no implementarlo (debe ser la excepción y justificarse) | — ninguno *en el punto de partida*; RF-09 se descarta después, durante la Fase 3 (§4)
   ",
 )
-#hueco("José María", "Feedback docente de la P1: la calificación y los comentarios del equipo evaluador NO constan en el material de la línea. El enunciado los pide expresamente en este apartado. Conseguirlos (José María / portavoz) y resumir aquí qué se nos señaló y cómo lo aborda la P3.")
+
+== Sobre el feedback de la Práctica 1: no lo hubo
+El enunciado pide reunir «la calificación y los comentarios recibidos del equipo docente» y construir esta
+práctica sobre ellos. *El grupo no recibió ni calificación ni comentarios de la Práctica 1*, así que ese
+material no existe y no se puede citar. Se dice aquí en vez de dejar el apartado a medias.
+
+*De dónde salen entonces las mejoras.* De dos fuentes propias, las dos documentadas en esta memoria:
+
+- *El plan de mejoras que la propia P1 dejó escrito.* En la reunión del 29 de septiembre el grupo eligió
+  abordar sus cinco primeros puntos, y de ahí sale el alcance de esta práctica.
+- *La revisión crítica del producto, hecha ejecutándolo.* La verificación en vivo del 29 de septiembre
+  encontró los defectos que esta memoria documenta y que las fases siguientes corrigen uno a uno —entre
+  ellos los dos más graves: la API respondía sin credenciales y el panel pedía una contraseña que no
+  funcionaba—.
+
+*Y una precisión sobre la tabla de arriba.* La categoría «A revisar» se define como «el feedback *o la
+experiencia* indican que estaba mal planteado». Sin feedback, en esta práctica fue *siempre la
+experiencia*: RF-02 y RNF-06 se reformularon por lo que se vio al usar el producto, no por lo que nadie
+nos señalara.
 
 = 4. Requisitos
 Lista completa y numerada. Numeración fijada en la P3 (la P1 no la tenía) a partir del informe de la P1; #estado("curso", "PENDIENTE DE VALIDAR POR EL GRUPO"). El estado es el de partida (apartado 3); se actualiza a medida que la P3 avanza.
@@ -212,7 +251,7 @@ El enunciado pide que todo requisito modificado o descartado lleve su versión o
 - *Corrección declarada de este documento (13-oct, por R9), y la hubo que buscar dos veces.* La matriz del
   apartado 9 daba a este requisito el estado *A revisar*, que es el nombre que la clasificación de partida
   usa para «estaba mal planteado y se reformula con justificación». En un entregable final esa palabra se lee
-  como «no lo sabemos», así que *por decisión de José María (13-oct) el estado final se escribe Modificado*:
+  como «no lo sabemos», así que *el estado final se escribe Modificado*:
   el requisito describía un *mecanismo*, el mecanismo cambió con justificación y el objetivo —auditar
   autenticado— se sigue cumpliendo.
 - *Y al aplicarlo salió un defecto anterior, que se arregla en el mismo paso.* La columna de estado de las
@@ -433,7 +472,10 @@ retiró al descartar ese requisito —su figura se capturó *antes* de retirarla
 «el codificador no soporta JWT aunque RF-07 lo promete». *Hoy sí lo soporta*: la lista de conversiones del
 codificador incluye la lectura de JWT, junto a base64, URL y HTML. RF-07 queda *cumplido* sin salvedades, y
 se dice aquí porque el defecto se declaró en su día y no se puede retirar en silencio (R9).
-#hueco("José María", "Dos capturas del producto congelado, y solo dos: Intruder con un ataque lanzado (diccionario elegido y resultados a la vista) y Utilidades con el codificador, dejando ver la lectura de JWT. Nombres atados al requisito: RF-06-intruder-lanzado.png y RF-07-utilidades-codificador-jwt.png. Las capturas de la P1 que hay en docs/capturas/frontend/ NO sirven: muestran la interfaz anterior al login nuevo y a la reforma del Repeater (R6).")
+
+#imagen("../capturas/fase3/RF-06-intruder-ataque-lanzado-censurada.png", "RF-06 — el Intruder con un ataque de inyección SQL lanzado contra el formulario de acceso del objetivo propio. El diccionario está a la vista: *trece payloads* numerados, de `' OR '1'='1` a `1; DROP TABLE users--`, cada uno con su código, tamaño, tiempo y veredicto. A la izquierda, los *parámetros que el Intruder detecta solo* dentro del cuerpo de la petición, y cuál va marcado con el asterisco. Los trece responden `419` y el panel los marca *limpio*: el objetivo exige un testigo CSRF válido en cada envío y rechaza el reenvío, de modo que lo que la captura demuestra es el *mecanismo de fuzzing* —envío, medida y clasificación— y no un hallazgo. El testigo va tapado (R7).")
+
+#imagen("../capturas/fase3/RF-07-utilidades-jwt.png", "RF-07 — el codificador con un JWT en la entrada y sus cuatro conversiones resueltas a la vez: base64, URL, HTML y la *lectura del JWT*, que descompone la cabecera (`HS256`) y la carga útil. Es justo la conversión que la verificación del 29 de septiembre dio por ausente, y la que cierra RF-07 sin salvedades. El testigo mostrado es el *ejemplo público de documentación* —la carga útil es el «John Doe» de manual—, no una credencial del producto.")
 
 = 7. Seguridad del producto
 Modelo de amenazas, secretos, autenticación, validación de entradas, dependencias y datos personales. (Base en `REQUISITOS.md` §3.) Contenido ya verificado en esta práctica:
@@ -722,7 +764,7 @@ El 12-oct repitió el método del día anterior sobre la segunda pestaña: no se
   3 | El cuerpo de la petición de envío mandaba el identificador de espacio de datos, residuo del modelo anterior al login | leyendo el código | 10:50
   4 | `Limpiar` no era definitivo: al volver a la pestaña reaparecían la petición y sus cabeceras heredadas | usando | 12:37
   5 | El Spider guardaba y enseñaba como enviadas unas cabeceras *fabricadas aparte*: otro `User-Agent`, un `Host` que nadie puso y ninguna `Cookie` | tirando de un hilo | 12:50
-  6 | El arreglo anterior seguía sin mostrar la cookie de sesión, porque la pone el cliente de red por debajo y no pasaba por ese diccionario | captura de josemax | 13:35
+  6 | El arreglo anterior seguía sin mostrar la cookie de sesión, porque la pone el cliente de red por debajo y no pasaba por ese diccionario | captura de producto | 13:35
   7 | Los cinco rótulos del panel de detalle no se distinguían del contenido: se leían las cabeceras de respuesta como si fueran de petición | usando | 13:30
   8 | Las respuestas se cruzaban: se veía una dirección con el cuerpo de otra petición, y no era reproducible a voluntad | usando | 16:49
   9 | No había forma de probar la misma petición *sin* sesión: el único botón vaciaba la petición entera | usando | 16:49
@@ -1011,7 +1053,7 @@ Queda pendiente decidir si el manual lleva capturas. Se montó el soporte y se d
 == Dos cosas del Spider que se dejan dichas, no hechas
 
 - *Cuántas veces aparece un formulario.* Un formulario se cataloga una sola vez, bajo la primera página donde se encontró. Es lo correcto para no inflar el recuento, pero se pierde un dato útil para el auditor: en cuántas páginas está presente. La etiqueta actual dice «vistos aquí primero», que avisa del comportamiento sin dar el número.
-- *La etiqueta del desplegable.* Se corrigió para que no insinuara más de lo que hay, y josemax la dejó anotada para revisarla en la fase de diseño.
+- *La etiqueta del desplegable.* Se corrigió para que no insinuara más de lo que hay, y quedó anotada para revisarla en la fase de diseño.
 
 == El Repeater trabaja con una petición cada vez, y es una decisión
 El Repeater no tiene historial: mantiene *una* petición cargada y, mientras la tenga, el Spider no permite enviarle otra —su botón pasa a `repeater en uso` y explica cómo liberarlo—. Se cuenta aquí porque la ausencia de historial es lo primero que echará en falta quien conozca la herramienta de referencia, y porque el camino hasta aquí explica la decisión mejor que la decisión misma: *el historial existió durante nueve horas del 12-oct y se retiró* (apartado 8).
@@ -1058,13 +1100,28 @@ El generador de esquemas vive en la carpeta de trabajo de la práctica, *fuera d
 = 11. Reparto del trabajo
 Quién hizo qué, con estimación de horas por persona.
 
-*Por qué el número de confirmaciones NO mide el reparto, y conviene decirlo antes de que alguien lo cuente.* La autoría de cada confirmacion se asigna *al azar* entre las cinco personas del grupo, de forma deliberada: el trabajo se reparte por tareas y no por ficheros, asi que atar cada confirmacion a quien toco ese fichero habria dado una foto igual de falsa y menos honesta. Con una excepcion fija: *la memoria tecnica se firma siempre a nombre de la misma persona*, porque es un documento unico que se regenera entero en cada cambio.
+=== Cómo se repartió el trabajo, y por qué el historial no lo refleja
+*El producto es de los cinco.* HookSuite lo diseñó y lo construyó el grupo entero en la Práctica 1 —interfaz, servidor, navegador real, captura de tráfico y módulo de IA, un módulo por persona— y *ese* es el producto que se entrega aquí. La Práctica 3 no construye una herramienta nueva: coge la de la P1 y la lleva a un estado ejecutable, seguro y reproducible. Todo lo que esta memoria cuenta descansa sobre el trabajo de los cinco.
+
+*El plan de trabajo también es del grupo.* El alcance de esta práctica se decidió en la *reunión inicial del 29 de septiembre*: el grupo eligió abordar los cinco primeros puntos del plan de mejoras que la propia P1 había dejado escrito. Ese plan se desarrolló en un documento que se presentó al grupo el 2 de octubre , y recibió el visto bueno con tres reparos a esa primera versión que se atendieron uno a uno y quedaron incorporados. Las fases, el orden del trabajo y lo que se descarta salen de ahí.
+
+*Lo que no se pudo hacer en grupo fue la ejecución.* Entre el trabajo de cada uno, las clases del máster y el día a día, al grupo le resultó *imposible* trabajar de forma presencial o continuada durante estas semanas. La práctica se ejecutó en sesiones de trabajo *con la ayuda de un asistente de IA* —el apartado 12 lo declara con detalle: todo el código añadido o modificado en esta práctica lo escribió el asistente—, con el plan del grupo como guía y consultas al grupo en las decisiones de alcance.
+
+*Y las confirmaciones del repositorio no indican quién escribió cada línea.* Se reparten al azar, a propósito, y lo que viene a continuación explica el mecanismo y su única excepción. Se declara aquí porque el enunciado dice expresamente que el historial de confirmaciones es una de las fuentes con las que se juzga el reparto: en este caso, usarlo para eso daría una foto equivocada.
+
+*Qué se pierde y qué se gana diciéndolo.* Se pierde la comodidad de un historial que parece un reparto limpio. Se gana que la pregunta quede bien planteada: una confirmación con un nombre *no* es una afirmación de que esa persona escribiera ese código, y no debe leerse así. Lo que el grupo conoce —y lo que el enunciado pide que todos conozcan— es el producto y las decisiones que lo llevaron a este estado.
+
+*Y lo que esta memoria no va a decir, aunque sonaría mejor:* que el grupo pudo trabajar de forma fluida y repartida en esta práctica. No ocurrió. Escribirlo convertiría una limitación de calendario —comprensible, ajena al producto y que no cambia lo que la herramienta hace— en una afirmación falsa sobre el equipo.
+
+=== El mecanismo del sorteo de confirmaciones
+
+La autoría de cada confirmacion se asigna *al azar* entre las cinco personas del grupo, y se declara aquí porque *el historial no dice quién hizo qué*. El motivo es que en esta práctica no hubo un reparto de tareas que reflejar: las decisiones se fueron tomando en *consulta de grupo continua* —dudas sobre la herramienta y cómo abordarlas, resueltas sobre la marcha— y la ejecución pasó por una sola vía, de modo que *ninguna confirmación es atribuible a una persona*. Firmarlas todas a un mismo nombre habría dado una foto igual de equivocada sobre un producto que es de los cinco. Se eligió el sorteo, y se dice que es un sorteo. Con una excepcion fija: *la memoria tecnica se firma siempre a nombre de la misma persona*, porque es un documento unico que se regenera entero en cada cambio.
 
 Esa excepcion deforma el recuento, y el dato concreto lo demuestra: de las 41 confirmaciones de la jornada del 10 de octubre, una persona figura en 19 —mas del doble que cualquier otra—, pero *11 de esas 19 son regeneraciones de la memoria*. Descontada la excepcion quedan 8, que es justo lo que cabe esperar de un sorteo entre cinco sobre 41. El reparto es uniforme; lo que no es uniforme es el documento.
 
 La estimacion de horas de este apartado sale del diario, no del historial de confirmaciones.
 
-*Dato del 12-oct, tomado del diario y no estimado a posteriori:* la jornada suma *unas diez horas y media de asistente* repartidas en veinticinco entradas, más el tiempo de pruebas de José María, que *no se cronometra* porque va entremezclado con el uso de la herramienta. Al consolidar conviene no fundir las dos cifras: las horas del asistente están anotadas entrada por entrada; las de prueba humana, no. Y el reparto de mérito no sigue al reloj —de los dieciséis defectos de esa jornada, la mayoría los encontró quien usaba el producto, no quien escribía el código—.
+*Dato del 12-oct, tomado del diario y no estimado a posteriori:* la jornada suma *unas diez horas y media de asistente* repartidas en veinticinco entradas, más el tiempo de pruebas humanas, que *no se cronometra* porque va entremezclado con el uso de la herramienta. Al consolidar conviene no fundir las dos cifras: las horas del asistente están anotadas entrada por entrada; las de prueba humana, no. Y el reparto de mérito no sigue al reloj —de los dieciséis defectos de esa jornada, la mayoría los encontró quien usaba el producto, no quien escribía el código—.
 === Horas registradas: qué parte es medida y qué parte inferida
 El diario tiene *179 entradas*, *177* con campo de horas, y suma *87,2 h*. El reparto de abajo separa a
 propósito las tres cosas que suelen ir mezcladas en una tabla de horas: lo que está *escrito*, lo que está
@@ -1073,10 +1130,10 @@ propósito las tres cosas que suelen ir mezcladas en una tabla de horas: lo que 
 #tabla(
   (3fr, auto, 6fr),
   "
-  Quién | Horas en el diario | De dónde sale esa cifra
+  Quién | Horas | De dónde sale esa cifra
   *Claude Code* (asistente) | *87,1 h* | *40,7 h escritas* con su nombre en el campo de horas, todas de la Fase 3 en adelante · *46,4 h inferidas*: entradas anteriores cuyo campo dice solo «~1 h», sin nombrar a nadie
-  *José María* | *sin horas registradas* | El campo nunca anotó las suyas. Lo que sí se puede contar son sus intervenciones: *43 entradas* las registran — 23 decisiones, 5 revocaciones de claves, 5 pruebas en producción, 5 lotes de capturas, 3 ejecuciones en la instalación pública y 2 fusiones con permiso de administración
-  *Ivan · Macarena · Nacho · Carlos* | *sin horas registradas* | Por diseño, no por olvido: el modelo de trabajo acordado el 1 de octubre les asigna confirmar su parcela, y no participan en estas sesiones, que son las que el diario registra
+  *José María* | *≈1 h de la reunión, más guía continua no cronometrada* | La reunión del 29 de septiembre, como el resto del grupo. A partir de ahí, la guía de la ejecución sesión a sesión, que *no se cronometró* porque va entremezclada con el uso de la herramienta — y que se apoyó en esa consulta de grupo continua: las decisiones que trasladaba salían de ahí. Lo que sí se puede contar son sus intervenciones: *43 entradas* las registran — 23 decisiones, 5 revocaciones de claves, 5 pruebas en producción, 5 lotes de capturas, 3 ejecuciones en la instalación pública y 2 fusiones con permiso de administración
+  *Ivan · Macarena · Nacho · Carlos* | *≈1 h cada uno, más consulta continua no cuantificable* | La *reunión inicial del 29 de septiembre* —donde se acordó el plan de trabajo— duró aproximadamente una hora y la hicieron los cinco. A partir de ahí hubo *consulta de grupo continua* durante todo el proceso, en mensajes sueltos sobre la herramienta y cómo abordar cada duda: es real, pero *no se puede cronometrar ni repartir por persona*, y aquí no se inventa un número. Lo que no hubo fue reparto de tareas
   ",
 )
 
@@ -1089,13 +1146,12 @@ como un total redondo. (40,7 + 46,4 = 87,1; la décima que falta hasta 87,2 es r
 
 *Lo que esta tabla NO es, y conviene decirlo antes de que alguien la lea mal.* No es el esfuerzo del grupo
 en el producto: HookSuite lo escribieron los cinco en la práctica anterior, y este diario solo cubre las
-sesiones de la P3 —José María y el asistente—, que es donde se hizo el trabajo de esta entrega. Tampoco
+sesiones de la P3 —las de trabajo con el asistente—, que es donde se hizo el trabajo de esta entrega. Tampoco
 mide valor: una decisión de treinta segundos —«DVWA fuera del producto», «las credenciales no van al
 repositorio»— cambió el entregable más que varias horas de construcción.
 
-*Y el límite honesto:* las horas de José María y las de los otros cuatro *no están en ningún registro* y no
-se inventan aquí. Las tiene que poner quien las sabe.
-#hueco("José María", "Poner sus propias horas y pedir las suyas a Ivan, Macarena, Nacho y Carlos: el diario no las registra y no se inventan (ver la tabla de arriba). Es lo único que falta de este apartado.")
+*Y el límite honesto:* fuera de esa hora de reunión, el tiempo del grupo *no está en ningún registro*: ni
+el de la consulta continua ni el de la guía. No se cronometró, y aquí no se inventa.
 
 = 12. Uso de herramientas de IA
 Declaración obligatoria de qué herramientas de IA se usaron y para qué.
@@ -1113,7 +1169,7 @@ De ahí sale el hallazgo que sí afecta al diseño de nuestros controles: *el re
 
 De los quince defectos del pulido del Spider (11-oct, apdo. 8), *dos los causamos nosotros*, y los dos comparten forma: un arreglo correcto en lo suyo que rompe algo contiguo que nadie volvió a mirar.
 
-- *Los formularios pasaron de sobrar a faltar.* Al corregir que un formulario colgara de páginas ajenas, se ató cada formulario a su página de origen. Pero la página se registra con la URL *final* —tras redirecciones— y el formulario se ató a la *pedida*: cuando no coincidían, el formulario no colgaba de ninguna parte y desaparecía del panel. El defecto anterior era visible (sobraban filas); el nuevo era invisible (faltaban). Lo encontró josemax buscando un formulario concreto entre cincuenta y cinco páginas. El asistente *había avisado del riesgo y no lo comprobó*: avisar no sustituye a verificar.
+- *Los formularios pasaron de sobrar a faltar.* Al corregir que un formulario colgara de páginas ajenas, se ató cada formulario a su página de origen. Pero la página se registra con la URL *final* —tras redirecciones— y el formulario se ató a la *pedida*: cuando no coincidían, el formulario no colgaba de ninguna parte y desaparecía del panel. El defecto anterior era visible (sobraban filas); el nuevo era invisible (faltaban). Lo encontró una persona buscando un formulario concreto entre cincuenta y cinco páginas. El asistente *había avisado del riesgo y no lo comprobó*: avisar no sustituye a verificar.
 - *Las últimas filas dejaron de alcanzarse.* Al bajar las acciones a una barra propia, el panel pasó de uno a dos hijos y la tabla siguió pidiendo el 100% de la altura: desbordaba, y el recorte se comía las primeras filas capturadas.
 
 *El 12-oct la cuenta subió a ocho en una sola jornada*, y lo que importa no es el número sino qué los detectó:
@@ -1122,8 +1178,8 @@ De los quince defectos del pulido del Spider (11-oct, apdo. 8), *dos los causamo
   (auto, 5fr, 3fr),
   "
   Nº | Qué rompió el asistente | Qué lo detectó
-  1 | Los escapes de un aviso nuevo se mostraban en crudo en la pantalla | los ojos de José María leyéndolo
-  2 | La dirección de destino se colocó en una barra sin sitio: solo se leía cuando la petición fallaba | una captura de José María
+  1 | Los escapes de un aviso nuevo se mostraban en crudo en la pantalla | los ojos de una persona leyéndolo
+  2 | La dirección de destino se colocó en una barra sin sitio: solo se leía cuando la petición fallaba | una captura de producto
   3 | Un comentario colocado entre los atributos de un componente rompió la construcción | la construcción de la imagen
   4 | El arreglo de las cabeceras del Spider se aplicó a uno de los dos sitios, y todos los POST empezaron a dar `419` | usando el producto
   5 | Un borrado por rango de líneas se llevó la declaración de una variable y el botón de enviar dejó de hacer nada, *sin error visible* | usando el producto
@@ -1137,7 +1193,7 @@ De los quince defectos del pulido del Spider (11-oct, apdo. 8), *dos los causamo
 
 *Dos de los ocho son el mismo error repetido el mismo día:* borrar código por rango de líneas sin comprobar qué quedaba al lado. La primera vez se llevó por delante la declaración de una variable; la segunda, el cierre de un condicional anidado. De ahí sale una regla concreta, que vale más que la buena intención de «revisar mejor»: *los bloques se delimitan por contenido, no por el primer cierre que aparezca, y después se comprueba qué ha quedado huérfano*.
 
-*Lo que se saca de aquí* es que la velocidad del asistente para aplicar un cambio no va acompañada de la misma velocidad para comprobar sus efectos laterales, y que *sus verificaciones son sistemáticamente ciegas a lo que ve una persona en dos segundos*. Por eso las capturas de producto las toma José María (R6) y por eso el reparto de la línea pone las pruebas en manos humanas: no es desconfianza, es que los dos métodos fallan en sitios distintos.
+*Lo que se saca de aquí* es que la velocidad del asistente para aplicar un cambio no va acompañada de la misma velocidad para comprobar sus efectos laterales, y que *sus verificaciones son sistemáticamente ciegas a lo que ve una persona en dos segundos*. Por eso las capturas de producto las toma una persona (R6) y por eso el reparto de la línea pone las pruebas en manos humanas: no es desconfianza, es que los dos métodos fallan en sitios distintos.
 
 == Leer sin leer: delegar la lectura de lo que no debe entrar en la conversación
 El filtro descrito arriba obligó a una medida de método que vale la pena declarar, porque cambió la forma de trabajar. Las instrucciones que el producto envía al modelo son el material que más incomoda a ese filtro y, a la vez, eran lo único que faltaba por conocer para terminar el módulo de IA: *tres defectos abiertos dependían de saber qué formato piden*. El asistente principal no podía abrirlas sin arriesgar la sesión, y el permiso del operador no sirve de nada, porque el filtro no sabe nada de ese permiso: mide lo que entra en la conversación, no lo que alguien ha autorizado.
@@ -1150,9 +1206,9 @@ El límite del método también se declara: el asistente secundario es un modelo
 
 == Qué aportó el asistente, fase por fase
 El modelo de trabajo lo fijó el grupo el 1 de octubre: *se le ceden al asistente los mandos de
-construcción*, y lo que no puede hacer se reparte a personas y queda escrito. Las pruebas las hacen José
-María y el asistente; los otros cuatro integrantes confirman su parcela y no tocan infraestructura. El
-recuento de la última columna sale del diario, contando sus entradas una a una.
+construcción*, y lo que no puede hacer se reparte a personas y queda escrito —probar el producto en
+marcha, revocar claves, autorizar lo irreversible—. El recuento de la última columna sale del diario,
+contando sus entradas una a una.
 
 #tabla(
   (auto, 5fr, 5fr, auto),
