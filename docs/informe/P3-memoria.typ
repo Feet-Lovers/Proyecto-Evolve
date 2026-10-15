@@ -91,7 +91,8 @@
 #show figure.caption: set text(size: 9pt, fill: gris)
 
 // Apartado: rótulo «SECCIÓN N», título grande y regla azul corta, como en la P1
-#show heading.where(level: 1): it => { pagebreak(weak: true); block(above: 26pt, below: 14pt)[
+// (16-oct: fuera el salto de página por apartado, aprobado probar por josemax; se compensa con más aire)
+#show heading.where(level: 1): it => { block(above: 38pt, below: 14pt)[
   #text(size: 8.5pt, fill: azul-acento, weight: "bold", tracking: 2pt)[SECCIÓN #context counter(heading).display("1")]
   #v(5pt)
   #text(size: 19pt, fill: azul, weight: "bold")[#it.body]
