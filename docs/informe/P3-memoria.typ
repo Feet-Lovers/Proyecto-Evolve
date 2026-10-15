@@ -274,7 +274,7 @@ retocado después.
   ",
 )
 
-Dos requisitos cambiaron de estado más adelante, RF-04 y RF-09, y ese cambio se justifica en el apartado 3.
+Dos requisitos acabaron en un estado que esta clasificación no preveía: RF-04 pasó de cumplido a *modificado* y RF-09 de pendiente a *descartado*. Los dos cambios se justifican en el apartado 3.
 
 == Sobre el feedback de la Práctica 1
 El enunciado pide reunir la calificación y los comentarios del equipo docente y construir esta práctica
@@ -305,7 +305,7 @@ Lista completa y numerada. La numeración se fijó en esta práctica, porque la 
   RF-07 | Utilidades: Encoder/Decoder (Base64/URL/HTML/JWT), Hash (MD5/SHA1/SHA256/SHA512), Regex Tester, Payload Generator | Cumplido
   RF-08 | *Análisis y clasificación de vulnerabilidades con IA (Claude) según OWASP* → panel Vulnerabilidades | Parcial
   RF-09 | Captura de tráfico HTTP en tiempo real (DevTools / CDP) → panel Red con código de colores | *Descartado*, justificado abajo
-  RF-10 | Ejecución de ataques con navegador real (Playwright) | *Parcial*, construido y en la red interna, sin prueba ejecutada (apartados 6 y 12)
+  RF-10 | Ejecución de ataques con navegador real (Playwright) | *Parcial*, construido y en la red interna, sin prueba ejecutada (apartados 6 y 7)
   RF-11 | Soporte multi-usuario simultáneo mediante tokens de sesión UUID | Cumplido
   RF-12 | Registro y login individual con JWT + aislamiento de historial/auditorías por usuario | Cumplido (mejora, no venía de la P1)
   ",
@@ -496,9 +496,8 @@ pantalla de acceso, y el módulo de IA trabaja por detrás, sin pestaña propia.
 
 
 == Las funcionalidades, una a una: qué hace, cómo se usa y qué requisito cubre
-Lo anterior cuenta lo que cambió en cada fase. Esta tabla cuenta lo que hay, pantalla por pantalla, tal
-como queda en la versión congelada: el panel tiene seis pestañas más la pantalla de acceso, y la columna
-de la derecha dice dónde se ve cada una sin repetir aquí figuras que ya están en otros apartados.
+Esta tabla cuenta lo que hay, pantalla por pantalla, tal como queda en la versión congelada. La columna
+de la derecha dice dónde se ve cada una, sin repetir aquí figuras que ya están en otros apartados.
 
 #tabla(
   (auto, 6fr, auto, 3fr),
@@ -617,7 +616,7 @@ Hasta esta fecha todo estaba verificado solo en el entorno local, y el 7 de octu
   (4fr, 7fr),
   "
   Qué se midió | Resultado
-  Entrada del panel (/) | 200,  carga *sin pedir Basic Auth*: la contraseña compartida está retirada
+  Entrada del panel (/) | 200, carga *sin pedir Basic Auth*: la contraseña compartida está retirada
   API (/api/auth/yo) | 401, *exige token*. La fuga nº 1 de la columna izquierda, cerrada
   Reinicios del backend | 0 — prueba que los secretos llegaron: el código se niega a arrancar sin ellos
   Contenedores recreados | backend, frontend y nginx. Los otros cuatro, intactos a propósito
@@ -641,7 +640,6 @@ El acceso, capturado en la instalación pública el mismo día del despliegue (l
 - *Sin TLS* (RNF-09): el acceso viaja en claro, así que el token de sesión es interceptable por quien esté en el camino. Pendiente de configurar en el proxy.
 - *Credencial de servicio para los módulos internos.* Lo que este punto afirmaba se quedó atrás dos veces y se corrigió el 13-oct, y hoy son dos situaciones distintas. El *clasificador de IA ya no necesita credencial*: se le movió al bus interno precisamente para eso (apartado 4) y que RF-08 funcione de punta a punta es la prueba, porque si su camino de vuelta diera 401 el panel estaría vacío. *El agente de navegador sí sigue sin credencial, y ese es el hueco real*: sondea por HTTP las rutas protegidas sin cabecera de autorización y recibe 401. Queda como trabajo pendiente de RF-10, y la salida no es repartir una credencial más, es pasarlo al mismo bus que el clasificador.
 
-- *Modelo STRIDE, validación de entradas, dependencias y datos personales*, abajo.
 === Modelo de amenazas (STRIDE)
 El modelo se aplica a los seis componentes del apartado 4 y a la frontera que movió el acceso por usuario: hasta
 entonces autenticaba el proxy con una contraseña compartida. Hoy autentica el backend, por persona.
@@ -684,8 +682,8 @@ Medido el *13-oct sobre el código congelado*, con las herramientas puestas para
 fichero de bloqueo y pip-audit sobre los requisitos declarados). Se dan los números que dan las
 herramientas, sin redondear hacia abajo.
 
-- *Frontend:* 241 dependencias resueltas (84 de producción, 113 de desarrollo, 45 opcionales) y *12 avisos*
- , nueve altos, uno medio, dos bajos. Restringido al árbol de producción, *ocho*: siete altos y uno bajo.
+- *Frontend:* 241 dependencias resueltas (84 de producción, 113 de desarrollo, 45 opcionales) y *12 avisos*,
+  nueve altos, uno medio y dos bajos. Restringido al árbol de producción, *ocho*: siete altos y uno bajo.
   Directas: el cliente HTTP del panel (alto), el enrutador (bajo, por su paquete interno) y la herramienta
   de construcción (alto, que entra en el árbol de producción a través del complemento de estilos).
 - *Backend:* *78 avisos en 12 paquetes* del árbol resuelto. Los que más pesan, y el primero importa más que
@@ -754,7 +752,7 @@ El plan original del equipo tenía *doce* casos, de modo que seis de los código
   PR-14 | RNF-07 | Sin claves en lo que se publica | por ejecutar | *pasa* · cero ficheros seguidos por git con clave, con control positivo · reejecutada
   PR-15 | RNF-08 | Cortafuegos por sesión | *sin caso escrito* | *no reejecutada*: el agente está operativo y endurecido (apdos. 6-7), pero no se ha vuelto a ejercitar
   PR-16 | RNF-07 | Llamar a la API sin ninguna credencial | *toda la API respondía* | *pasa*: 401, y los puertos 8000 y 3000 rechazan conexión desde fuera · reejecutada
-  PR-17 | RNF-02 | Conexión en tiempo real con el servidor | enlace correcto, sin autenticar | *pasa* · el indicador «conectado» de las figuras lo prueba ya autenticado
+  PR-17 | RNF-02 | Conexión en tiempo real con el servidor | enlace correcto, sin autenticar | *pasa* · el indicador «conectado» de la figura del apdo. 6 lo prueba ya autenticado
   PR-18 | RNF-09 | Responder por TLS | sin HTTPS | *sigue sin TLS* · reejecutada. RNF-09 es el único requisito declarado pendiente
   PR-19 | RF-02 | Estado del proxy del lado servidor | *500*, error de servidor | *pasa*: 401, el extremo responde y exige credencial · reejecutada
   PR-20 | RNF-05 | Límite de peticiones simultáneas | *sin caso escrito* | *no reejecutada*: el límite está implementado y citado en el apdo. 7, pero sin prueba propia
@@ -767,6 +765,7 @@ El plan original del equipo tenía *doce* casos, de modo que seis de los código
 
 == Evidencia de exposición (RNF-07 / PR-16), capturada el 4-oct
 La prueba PR-16, llamar a la API sin credenciales, y la verificación del frontend confirman que, antes de endurecer, el producto quedaba accesible sin autenticación. Las capturas se obtuvieron antes de cualquier arreglo, porque la evidencia de un fallo se captura antes de corregirlo: el propio arreglo la destruye. Lo que documentan, pieza a pieza: GET /health de la API respondía 200 sin credenciales ni cabecera WWW-Authenticate. La documentación interactiva (/docs) quedaba abierta, exponiendo las 40 operaciones, incluidas las que lanzan tráfico contra terceros. El frontend servido por el puerto 3000 cargaba sin pedir credencial, evitando por completo el control de la entrada principal, que sí pedía credencial: el control existía, pero se podía rodear por el puerto directo. Y la credencial documentada en el informe de la P1 era rechazada con 401, ya no abría nada. Las cinco capturas están en docs/capturas/exposicion/ del repositorio.
+#estado("ok", "EVIDENCIA DE EXPOSICIÓN Y DEL ENDURECIMIENTO, COMPLETA")
 
 
 == Los doce defectos del prototipo, corregidos y verificados
@@ -850,13 +849,14 @@ Son seis de los dieciséis, los que mejor enseñan el patrón. *Los dieciséis c
 > *Nota de tratamiento de las figuras de este apartado.* Se tomaron contra una web propia del equipo autorizada para ello. Desde el 12-oct el panel de cabeceras muestra la cookie de sesión del objetivo, es lo correcto porque es lo que se envía, así que cada figura se publica con esos valores tapados y los originales no salen del almacén interno. En el par de aislamiento, la captura del usuario A llevaba el identificador de sesión capturado de la web auditada, justo el dato que RF-12 existe para no compartir: va tapado y con la etiqueta a la vista, para que se vea qué se redactó.
 
 == El aislamiento (RF-12): las fugas capturadas antes, y la verificación después
-*Antes del arreglo*, cuatro pruebas lanzadas el 6-oct contra el entorno local a través del proxy, porque el propio arreglo borra esta evidencia. Las cuatro confirmaron el fallo: la API responde 200 sin credencial, un token inventado obtiene sesión propia, un segundo usuario lee la cookie capturada por el primero, y una vulnerabilidad publicada sin token aparece en la sesión de dos auditores distintos. La captura íntegra, con la causa en fichero y línea de cada una, está en evidencias/fugas-aislamiento-06oct.md.
+*Antes del arreglo*, cuatro pruebas lanzadas el 6-oct contra el entorno local a través del proxy, porque el propio arreglo borra esta evidencia. Las cuatro confirmaron el fallo: la API responde 200 sin credencial, un token inventado obtiene sesión propia, un segundo usuario lee la cookie capturada por el primero, y una vulnerabilidad publicada sin token aparece en la sesión de dos auditores distintos. La captura íntegra, con la causa en fichero y línea de cada una, está en docs/evidencias/fugas-aislamiento-06oct.md.
 
 *Después*, con el sistema de acceso puesto, se repitieron las mismas pruebas. *Once comprobaciones, once en verde*: alta y entrada de dos usuarios distintos, contraseña incorrecta rechazada con 401 y no con un error del servidor, la API respondiendo con token y 403 al intentar tocar el espacio de otro con token propio (autenticación *y* autorización, que son cosas distintas), y el segundo usuario sin ver ni el hallazgo ni la cookie del primero. Se probó además *como ataque*: un usuario autenticado intentó dirigir el Spider al espacio de otro nombrándolo en el cuerpo de la petición, el quinto fallo del apartado 6, y el rastreo fue a parar al espacio del atacante. Ni el código de invitación ni las contraseñas aparecen en ninguna salida: el guion de pruebas los mantiene en variables.
 
 #imagen("../capturas/fase2/RF-12-aislamiento-usuarioA-con-datos.png", "RF-12 — antes de rehacer el acceso este panel era común a todos. Ahora el usuario A, autenticado, ve las trece peticiones que su propio Spider capturó del objetivo autorizado. Compárese con la captura siguiente, tomada al mismo tiempo.")
 
 #imagen("../capturas/fase2/RF-12-aislamiento-usuarioB-sin-datos.png", "RF-12 — el contraste: el usuario B, autenticado a la vez y en otro navegador, ve su panel *vacío*. Antes del cambio habría visto exactamente lo mismo que el usuario A. Este par es la prueba del aislamiento por usuario. El alta de ambos exige el *código de invitación*: el registro no es abierto a propósito, porque la herramienta lanza tráfico contra terceros y con altas anónimas cualquiera podría atacar desde la infraestructura del grupo.")
+#estado("ok", "AISLAMIENTO POR USUARIO: 11/11 EN EL ENTORNO LOCAL · EN PRODUCCIÓN SOLO SE HAN VERIFICADO LAS CUATRO FUGAS CERRADAS EL 8-OCT, NO LA BATERÍA ENTERA")
 
 
 
@@ -903,8 +903,6 @@ El mismo día se ejecutó *el caso del techo de gasto*. Una auditoría del módu
 *La mitad que falta del caso*, y se declara: el techo en 1, donde debe pasar una sola consulta y el resto quedar como «no analizado». Esa sí necesita clave de API válida, porque la consulta que pasa tiene que salir de verdad.
 
 #hueco("el grupo", "Ejecutar la segunda mitad del caso del techo, techo en 1, en cuanto haya clave de API válida: debe pasar una sola consulta y el resto quedar como «no analizado» con el motivo del techo. La primera mitad (techo 0) ya está ejecutada y capturada. Coste previsto: una consulta.")
-#estado("ok", "AISLAMIENTO POR USUARIO: 11/11 EN EL ENTORNO LOCAL · EN PRODUCCIÓN SOLO SE HAN VERIFICADO LAS CUATRO FUGAS CERRADAS EL 8-OCT, NO LA BATERÍA ENTERA")
-#estado("ok", "EVIDENCIA DE EXPOSICIÓN Y DEL ENDURECIMIENTO, COMPLETA")
 #hueco("el grupo", "Plan de pruebas formal y capturas de producto de los dos defectos ya corregidos (el error 500 de la comprobación de vida y la trampa del Spider): falta reproducirlos en el entorno local sobre el producto actual y capturar la pantalla.")
 
 
@@ -1011,7 +1009,7 @@ La regla fijada es deliberada: *una sección se escribe cuando su pestaña se ha
 == Dos cosas del Spider que se dejan dichas, no hechas
 
 - *Cuántas veces aparece un formulario.* Un formulario se cataloga una sola vez, bajo la primera página donde se encontró. Es lo correcto para no inflar el recuento, pero se pierde un dato útil para el auditor: en cuántas páginas está presente. La etiqueta actual dice «vistos aquí primero», que avisa del comportamiento sin dar el número.
-- *La etiqueta del desplegable.* Se corrigió para que no insinuara más de lo que hay, y quedó anotada para revisarla en la fase de diseño.
+- *La etiqueta del desplegable.* Se corrigió para que no insinuara más de lo que hay, y quedó anotada para revisarla en el rediseño de la interfaz previsto como trabajo futuro.
 
 == El Repeater trabaja con una petición cada vez, y es una decisión
 El Repeater no tiene historial: mantiene *una* petición cargada y, mientras la tenga, el Spider no permite enviarle otra, su botón pasa a «repeater en uso» y explica cómo liberarlo. Es lo primero que echará en falta quien conozca la herramienta de referencia, y se sostiene como diseño y no como carencia: *el historial existió durante nueve horas del 12-oct y se retiró* (apartado 7) porque el desorden venía de tener varias peticiones conviviendo sin que nada dijera cuál era la buena. Para una herramienta cuya salida acaba en un informe, que no se pueda confundir qué respuesta pertenece a qué petición vale más que poder recuperar la de hace diez minutos. *Trabajo futuro, con el camino ya identificado:* una lista propia en la sesión del servidor, separada de la que comparten el Proxy y el Spider.
@@ -1166,7 +1164,7 @@ contando sus entradas una a una.
 
 
 = Anexos
-Manual de instalación ampliado, credenciales de prueba (ficticias), glosario y referencias.
+Manual de despliegue ampliado, cómo se entrega el acceso para la corrección, glosario y referencias.
 == Manual de despliegue
 El despliegue es *manual y deliberadamente aburrido*: la instalación pública solo recibe versiones, nunca
 arreglos. Está prohibido editar ficheros en ella, fue la causa de que al principio de la práctica lo desplegado no
@@ -1277,5 +1275,5 @@ texto va comprimido y la búsqueda daría cero siempre, y el compilador de docum
 las dos salidas de esta memoria.
 
 *Material de trabajo del grupo que no vive en este repositorio* (protocolo de trabajo, flujo de ramas,
-procedimiento de despliegue y planes por fases) y que se cita en la memoria por su contenido, no por su
+procedimiento de despliegue y planes de trabajo) y que se cita en la memoria por su contenido, no por su
 ruta, precisamente para no dejar referencias que un lector del repositorio no podría abrir.
