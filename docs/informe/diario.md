@@ -5038,3 +5038,22 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
 - **A qué requisito toca:** el criterio de formato del enunciado (20-40 páginas) y la estructura del
   apartado de Pruebas. **Evidencia:** commits `40a86ee6`, `d64d8359` y los dos siguientes.
   **Horas:** ~1,8 h de asistente.
+
+## Fase 3 (15-oct, noche, cont.) — los apartados 1-5 pasan por la tijera y el techo del recorte queda medido
+
+- **Qué se hizo:** con la única palanca que josemax autorizó (recortar también los apartados 1 a 5, ya
+  revisados por él a mediodía), pasada quirúrgica sin tocar hechos: la lección de la P1 y el feedback del
+  apartado 2 compactados, los párrafos largos de RF-04, RF-09 y RF-12 reducidos, y dos evidencias caducadas
+  más corregidas en la tabla de Funcionalidades (el Repeater remitía a «cinco figuras en los apdos. 5 y 8»
+  y Acceso a «cuatro figuras» que ya son dos). Fuera también la cita a un documento interno del equipo que
+  el apartado 6 llevaba en su entradilla.
+- **El hallazgo que importa:** tres pasadas consecutivas de recorte no movieron el total de páginas. Se
+  midió el porqué: el diseño abre cada apartado en página nueva y **~4 páginas del cuerpo son aire** al pie
+  de los apartados (S5 acaba con un 70 % de página vacía, S10 con un 76 %). El recorte de prosa ha tocado
+  techo con este diseño: el documento está en 53 contables y las palancas restantes son las que josemax
+  no autorizó (quitar el salto de página, reducir figuras o tablas de evidencia).
+- **Qué se descartó:** seguir recortando prosa a ciegas, porque el aire se lo traga y el texto pierde
+  claridad sin ganar páginas.
+- **A qué requisito toca:** el criterio de formato (20-40 páginas). **Evidencia:** la medición de aire está
+  en la bitácora de la sesión y el estado en el commit de la memoria.
+  **Horas:** ~0,6 h de asistente.
