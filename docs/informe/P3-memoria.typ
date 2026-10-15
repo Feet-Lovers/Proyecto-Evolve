@@ -504,13 +504,13 @@ de la derecha dice dónde se ve cada una sin repetir aquí figuras que ya están
   (auto, 6fr, auto, 3fr),
   "
   Pantalla | Qué hace y cómo se usa | Requisitos | Dónde se ve
-  *Spider* | Rastrea el objetivo siguiendo enlaces y formularios y levanta su mapa. Se escribe la dirección, se lanza, y la tabla se va llenando. Se puede detener a medias, filtrar por método y mandar una petición al Repeater. Las cabeceras que muestra son las que se enviaron de verdad, no una plantilla | RF-03 | figuras del apdo. 7 (antes y después del pulido)
+  *Spider* | Rastrea el objetivo siguiendo enlaces y formularios y levanta su mapa. Se escribe la dirección, se lanza, y la tabla se va llenando. Se puede detener a medias, filtrar por método y mandar una petición al Repeater. Las cabeceras que muestra son las que se enviaron de verdad, no una plantilla | RF-03 | fig. apdo. 7 (el panel de detalle tras el pulido)
   *Repeater* | Banco de trabajo de una petición: se modifica y se reenvía exactamente lo que se ve en pantalla. Avisa si la petición lleva sesión heredada y ofrece quitarla. El botón «preparar» convierte la plantilla de un formulario en una petición que funciona. La respuesta se lee en Raw, Pretty, Preview, Headers y la página preparada | RF-04 · RF-05 | figura en este apartado y dos en el 7
   *Intruder* | Prueba muchos valores en un punto marcado de la petición y señala las respuestas que se salen del patrón. Se marca el campo, se elige diccionario, se lanza y se puede cancelar sin dejar el servidor trabajando | RF-06 | figura en este apartado
   *Utilidades* | Cuatro herramientas que no salen a la red: codificador (base64, URL, HTML y lectura de JWT), generador de huellas, probador de expresiones regulares y generador de payloads. Se pega el texto y se ve el resultado al lado | RF-07 | figura en este apartado
   *Vulnerabilidades* | Panel donde se dispara la auditoría con IA y donde aterriza su resultado. Lo que está visto funcionando es el camino degradado: lo que la IA no pudo analizar sale aparte y con su motivo. Nunca se ha visto un hallazgo analizado con su severidad, porque ninguna auditoría ha llegado a devolver uno. La pantalla queda sin pulir y sin terminar | RF-08 · RNF-06 | figura del apdo. 7 (operación degradada)
-  *Manual* | Manual de uso dentro del propio producto, control por control y navegable por pastillas. No lo pide ningún requisito: salió del pulido, al comprobar que explicar una pantalla destapa sus defectos | — (mejora) | figura del apdo. 7
-  *Acceso* (fuera de la barra) | Alta con código de invitación y entrada con token firmado por el servidor. Cada cuenta ve solo sus propios datos | RF-11 · RF-12 | figuras de producción en el apdo. 6 y par de aislamiento en el 7
+  *Manual* | Manual de uso dentro del propio producto, control por control y navegable por pastillas. No lo pide ningún requisito: salió del pulido, al comprobar que explicar una pantalla destapa sus defectos | — (mejora) | figura del apdo. 9
+  *Acceso* (fuera de la barra) | Alta con código de invitación y entrada con token firmado por el servidor. Cada cuenta ve solo sus propios datos | RF-11 · RF-12 | figura de producción en el apdo. 6 y par de aislamiento en el 7
   ",
 )
 
@@ -951,7 +951,7 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
   Req. | Descripción | Estado | Implementación (ruta) | Prueba y evidencia
   RF-01 | Dashboard web sin instalación | Cumplido (seis pestañas: Red fuera, Manual dentro) | frontend/src/App.jsx + Layout.jsx + pages/manual/ | PR-01 · fig. apdo. 9 · vídeo —:—
   RF-02 | Proxy del lado servidor (httpx) | Modificado (justif. apdo. 3) | backend/services/proxy_service.py | PR-19 · justif. apdo. 3
-  RF-03 | Spider / rastreo | Cumplido (19 defectos corregidos, apdo. 7) | backend/services/spider_service.py + frontend/src/pages/proxy/ | PR-03 · figs. apdo. 7 · vídeo —:—
+  RF-03 | Spider / rastreo | Cumplido (19 defectos corregidos, apdo. 7) | backend/services/spider_service.py + frontend/src/pages/proxy/ | PR-03 · fig. apdo. 7 · vídeo —:—
   RF-04 | Auditoría autenticada (sesión compartida) | *Modificado* (cliente propio, justif. apdo. 3) | backend/services/session_service.py + proxy_service.py | PR-04 · justif. apdo. 3 · figs. apdo. 7
   RF-05 | Repeater | Cumplido (16 defectos corregidos, historial retirado por diseño, apdo. 9) | backend/routes/repeater.py + frontend/src/pages/repeater/ | PR-05 · fig. apdo. 5 · vídeo —:—
   RF-06 | Intruder / fuzzing | Cumplido (cancelación corregida) | backend/services/intruder_service.py | PR-06 · fig. apdo. 5 · vídeo —:—
