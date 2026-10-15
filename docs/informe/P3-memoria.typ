@@ -247,15 +247,11 @@ Los dos hallazgos de seguridad reorientaron el trabajo de esta práctica y se tr
 
 == La lección más cara de la Práctica 1
 En las primeras pruebas del módulo de inteligencia artificial se cargaron cinco euros de saldo en la API y
-se agotaron en muy poco tiempo. La causa, reconstruida del historial de git, fue que el módulo ejecutaba
-una auditoría completa al arrancar y el servicio estaba declarado para reiniciarse solo, de modo que cada
-vez que el proceso terminaba volvía a empezar otra auditoría. Se corrigió en mayo de 2026 haciendo que el
-módulo espere instrucciones en lugar de auditar al arrancar.
-
-Figura en el punto de partida porque esta práctica hereda el problema a medias. El disparo automático
-quedó curado, pero el tamaño de una auditoría siguió sin acotarse, y esa es una de las razones por las que
-el módulo llegó hasta aquí sin haber operado. El techo de gasto que lo resuelve se explica en los
-apartados 7 y 9.
+se agotaron en muy poco tiempo: el módulo ejecutaba una auditoría completa al arrancar y el servicio estaba
+declarado para reiniciarse solo, así que cada vez que terminaba volvía a empezar. Se corrigió en mayo
+haciendo que el módulo espere instrucciones. Figura en el punto de partida porque esta práctica hereda el
+problema a medias: el disparo automático quedó curado, pero el tamaño de una auditoría siguió sin acotarse.
+El techo de gasto que lo resuelve se explica en los apartados 7 y 9.
 
 == Numeración de requisitos
 La Práctica 1 no numeraba los requisitos. El enunciado de la Práctica 3 obliga a numerarlos como RF-xx y
@@ -285,15 +281,12 @@ El enunciado pide reunir la calificación y los comentarios del equipo docente y
 sobre ellos. El grupo no recibió ni calificación ni comentarios, así que ese material no existe y no se
 puede citar. Se dice aquí en lugar de dejar el apartado a medias.
 
-Las mejoras salen entonces de dos fuentes propias. La primera es el plan de mejoras que la propia Práctica
-1 dejó escrito, del que se abordaron los cinco primeros puntos. La segunda es la revisión crítica del
-producto hecha ejecutándolo, que encontró los defectos que esta memoria documenta y corrige uno a uno.
-Los dos más graves ya están dichos: la API respondía sin credenciales y la credencial documentada no abría
-el panel.
-
-Una precisión sobre la tabla. La categoría A revisar se define como aquella en la que el feedback o la
-experiencia indican que el requisito estaba mal planteado. Sin feedback, en esta práctica fue siempre la
-experiencia, y por eso RF-02 y RNF-06 se reformularon por lo que se vio al usar el producto.
+Las mejoras salen entonces de dos fuentes propias: el plan de mejoras que la propia Práctica 1 dejó
+escrito, del que se abordaron los cinco primeros puntos, y la revisión crítica del producto hecha
+ejecutándolo, que encontró los defectos que esta memoria documenta y corrige uno a uno. Y una precisión
+sobre la tabla: la categoría A revisar se define por «el feedback o la experiencia». Sin feedback, en esta
+práctica fue siempre la experiencia, y por eso RF-02 y RNF-06 se reformularon por lo que se vio al usar el
+producto.
 
 = Requisitos
 Lista completa y numerada. La numeración se fijó en esta práctica, porque la Práctica 1 no la tenía, y se derivó de su informe. La columna de estado parte de la clasificación inicial del apartado 2 y recoge los cambios que esta práctica fue introduciendo.
@@ -363,11 +356,10 @@ y las consecuencias.
   cookies que no estaban en la petición y se quedaba con las que devolvía el servidor, así que dos envíos
   idénticos daban resultados distintos y lo que se veía en pantalla no era lo que salía por el cable.
 - *Consecuencias.* El requisito se sigue cumpliendo, porque la sesión se hereda igual pero por un canal
-  explícito: las cabeceras que el producto muestra son las realmente enviadas, de modo que la cookie del
-  objetivo viaja en la petición, visible y editable. El cambio destapó además un defecto anterior. Al
-  quitar el cliente compartido, todos los envíos por POST empezaron a devolver 419, porque los formularios
-  que el Spider descubre viajaban con las cabeceras incompletas y el cliente compartido lo estaba tapando.
-  Se corrigió el origen y el fallo desapareció.
+  explícito: las cabeceras que el producto muestra son las realmente enviadas, con la cookie del objetivo
+  visible y editable. El cambio destapó además un defecto anterior que el cliente compartido tapaba, los
+  formularios del Spider viajaban con cabeceras incompletas y todos los POST devolvían 419. Se corrigió el
+  origen y el fallo desapareció.
 
 === RNF-06 — operación degradada (*a revisar en la P1, cumplido y demostrado en la P3*)
 - *Versión original:* enunciado como principio en la P1, sin demostrar.
@@ -389,7 +381,7 @@ y las consecuencias.
 - *Motivo.* Se aborda por su valor de seguridad, porque es lo que cierra la fuga de datos entre usuarios
   documentada en los apartados 6 y 7. Cuenta como mejora, que suma pero no compensa un requisito original
   sin cumplir.
-- *Consecuencias.* La persona se da de alta ella misma y elige su propia contraseña. Nadie más la conoce, ni siquiera quien administra, y ese es justo el punto del requisito. Lo que hace falta además es un código de invitación que reparte el grupo. La razón es el propio producto: HookSuite lanza tráfico contra terceros, así que con altas anónimas cualquiera podría usar el Spider y el Intruder contra quien quisiera desde nuestra infraestructura. El código es obligatorio por configuración: si faltara, el servicio no arranca, en lugar de arrancar con el registro abierto sin que nadie lo note.
+- *Consecuencias.* La persona se da de alta ella misma y elige su propia contraseña, que nadie más conoce. Hace falta además un código de invitación que reparte el grupo, porque HookSuite lanza tráfico contra terceros y con altas anónimas cualquiera podría atacar desde nuestra infraestructura. El código es obligatorio por configuración: si faltara, el servicio no arranca, en lugar de arrancar con el registro abierto sin que nadie lo note.
 
 === RF-09 — captura de tráfico en tiempo real con DevTools/CDP (*descartado*)
 - *Versión original:* captura del tráfico HTTP en tiempo real mediante el protocolo de depuración de
@@ -399,13 +391,11 @@ y las consecuencias.
   Manual, así que el producto que se entrega vuelve a tener seis: Spider, Repeater, Intruder, Utilidades,
   Vulnerabilidades y Manual.
 - *Motivo.* Verificado contra el código antes de decidir: RF-09 no era una pantalla a medio pulir sino un
-  vertical entero sin cerrar, con cuatro cosas rotas a la vez. El capturador se lanza a mano y busca el
-  navegador en rutas de Windows que no existen en los contenedores, que son Linux. Sus hallazgos de consola
-  se envían a un extremo que no existe en el backend. Su lanzador apunta a una dirección y un puerto que ya
-  no están, y a la ruta del fichero PAC que se jubiló al reformular RF-02. Y la pestaña del panel era
-  pasiva, no pedía nada al servidor, de modo que el usuario no podía distinguir «no hay tráfico» de «el
-  capturador no está corriendo». Cerrarlo exigía arreglar las cuatro cosas y, sobre todo, probarlo, con el
-  plazo de entrega encima.
+  vertical entero sin cerrar, con cuatro cosas rotas a la vez (el capturador busca el navegador en rutas de
+  Windows que no existen en los contenedores, sus hallazgos de consola van a un extremo inexistente, su
+  lanzador apunta a un puerto retirado y al fichero PAC jubilado con RF-02, y la pestaña era pasiva, sin
+  forma de distinguir «no hay tráfico» de «el capturador no corre»). Cerrarlo exigía arreglar las cuatro y,
+  sobre todo, probarlo, con el plazo de entrega encima.
 - *Consecuencias.* El capturador permanece en el repositorio como punto de partida para más adelante. Los
   extremos de red del backend también se conservan, y no por inercia: los consume el módulo de IA y el de
   Playwright, así que retirarlos habría roto RF-08. RF-01, el acceso desde el navegador sin instalar nada,
@@ -482,10 +472,9 @@ Las cuatro de más peso, cada una con lo que se decidió, por qué y qué cuesta
   configuración de red y con ella la desactivación de la verificación de certificados, que conviene tener en
   un solo sitio.
 
-Del mismo cambio salió un arreglo que beneficia a las cuatro herramientas. Las cabeceras que el producto
-muestra como enviadas se leen ahora de la petición que la propia respuesta conserva, y no de un diccionario
-construido aparte. En una herramienta de auditoría eso no es un detalle de presentación, porque la evidencia
-que se muestra es la que acaba copiada en un informe.
+Del mismo cambio salió un arreglo que beneficia a las cuatro herramientas: las cabeceras que el producto
+muestra como enviadas se leen ahora de la petición que la propia respuesta conserva, no de un diccionario
+construido aparte, y la evidencia que se muestra es la que acaba copiada en un informe.
 
 === Del fichero de autoconfiguración de proxy a httpx (RF-02)
 - *Qué se decidió.* El servidor ejecuta las peticiones directamente con httpx, en lugar de interceptar el
@@ -521,12 +510,12 @@ de la derecha dice dónde se ve cada una sin repetir aquí figuras que ya están
   "
   Pantalla | Qué hace y cómo se usa | Requisitos | Dónde se ve
   *Spider* | Rastrea el objetivo siguiendo enlaces y formularios y levanta su mapa. Se escribe la dirección, se lanza, y la tabla se va llenando. Se puede detener a medias, filtrar por método y mandar una petición al Repeater. Las cabeceras que muestra son las que se enviaron de verdad, no una plantilla | RF-03 | figuras del apdo. 7 (antes y después del pulido)
-  *Repeater* | Banco de trabajo de una petición: se modifica y se reenvía exactamente lo que se ve en pantalla. Avisa si la petición lleva sesión heredada y ofrece quitarla. El botón «preparar» convierte la plantilla de un formulario en una petición que funciona. La respuesta se lee en Raw, Pretty, Preview, Headers y la página preparada | RF-04 · RF-05 | cinco figuras en los apdos. 5 y 8
+  *Repeater* | Banco de trabajo de una petición: se modifica y se reenvía exactamente lo que se ve en pantalla. Avisa si la petición lleva sesión heredada y ofrece quitarla. El botón «preparar» convierte la plantilla de un formulario en una petición que funciona. La respuesta se lee en Raw, Pretty, Preview, Headers y la página preparada | RF-04 · RF-05 | dos figuras en este apartado y dos en el 7
   *Intruder* | Prueba muchos valores en un punto marcado de la petición y señala las respuestas que se salen del patrón. Se marca el campo, se elige diccionario, se lanza y se puede cancelar sin dejar el servidor trabajando | RF-06 | figura en este apartado
   *Utilidades* | Cuatro herramientas que no salen a la red: codificador (base64, URL, HTML y lectura de JWT), generador de huellas, probador de expresiones regulares y generador de payloads. Se pega el texto y se ve el resultado al lado | RF-07 | figura en este apartado
   *Vulnerabilidades* | Panel donde se dispara la auditoría con IA y donde aterriza su resultado. Lo que está visto funcionando es el camino degradado: lo que la IA no pudo analizar sale aparte y con su motivo. Nunca se ha visto un hallazgo analizado con su severidad, porque ninguna auditoría ha llegado a devolver uno. La pantalla queda sin pulir y sin terminar | RF-08 · RNF-06 | figura del apdo. 7 (operación degradada)
   *Manual* | Manual de uso dentro del propio producto, control por control y navegable por pastillas. No lo pide ningún requisito: salió del pulido, al comprobar que explicar una pantalla destapa sus defectos | — (mejora) | figura del apdo. 7
-  *Acceso* (fuera de la barra) | Alta con código de invitación y entrada con token firmado por el servidor. Cada cuenta ve solo sus propios datos | RF-11 · RF-12 | cuatro figuras de producción en el apdo. 6
+  *Acceso* (fuera de la barra) | Alta con código de invitación y entrada con token firmado por el servidor. Cada cuenta ve solo sus propios datos | RF-11 · RF-12 | figuras de producción en el apdo. 6 y par de aislamiento en el 7
   ",
 )
 
@@ -578,7 +567,7 @@ decirlo con los interruptores delante porque el código sí trae los mecanismos 
   demostrar RNF-06 sin gastar saldo, y se declara así en el apartado 7. No forma parte del producto.
 
 = Seguridad del producto
-Modelo de amenazas, secretos, autenticación, validación de entradas, dependencias y datos personales. (Base en REQUISITOS.md apartado 3.) Contenido ya verificado en esta práctica:
+Modelo de amenazas, secretos, autenticación, validación de entradas, dependencias y datos personales. Todo lo que sigue está verificado en esta práctica:
 
 == Secretos: el incidente de las claves
 En el historial de git había claves de API de Anthropic. Verificado el 4-oct: *las cuatro están muertas* (la API responde 401 / "API key is invalid."). Aun así, el enunciado (apartado 7) obliga a limpiarlas del historial, no basta con borrarlas en un commit nuevo.
