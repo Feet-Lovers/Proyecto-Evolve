@@ -4958,3 +4958,31 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   los doce bloques dudosos van resaltados en amarillo en el PDF para decidirlos de una vez.
 - **A qué requisito toca:** **RF-12**, **RNF-06**, **RF-09**, **RF-08**; apdos. **1** a **5**.
   **Horas:** ~2,5 h de asistente · ~1,2 h de josemax (revisión del PDF y decisiones).
+
+## Fase 3 (15-oct, cierre) — un cerco que había dejado de medir, y cuatro huecos que seguían en el informe
+
+- **Qué se hizo:** cerrar la tarde. Se commiteó la revisión de los apartados 4 y 5 en dos entregas
+  separadas, la memoria técnica y el diario, con el escaneo de secretos **antes** del commit y en su
+  propia orden, porque por la mañana ese escaneo había ido en el mismo bucle y no podía frenar nada. Cero
+  coincidencias, con control positivo a los dos lados para saber que el escáner contaba, y el del PDF
+  hecho sobre el texto extraído y no sobre el PDF en crudo, donde el contenido va comprimido y un cero no
+  significa nada.
+- **Se borró un respaldo suelto del fichero de despliegue** que llevaba en la raíz desde el 9 de octubre y
+  se habría ido en la entrega. Antes se comprobó qué era: copia idéntica de una versión que el control de
+  versiones ya guarda, sin credenciales dentro. El repositorio queda sin ficheros fuera de seguimiento.
+- **Qué falló, y se corrige:** una de las comprobaciones automáticas de la entrega **había dejado de medir
+  sin avisar**. Tres de sus ocho preguntas localizaban las secciones por su **número escrito a mano** en el
+  título. Al adoptar el diseño nuevo, la numeración la pone el compositor y las secciones pasaron de trece
+  a doce, así que esas tres búsquedas no encontraban nada y devolvían **cero**. La comprobación leyó ese
+  cero como «lo que el documento afirma es falso» y acusó a tres casillas que eran **ciertas**. Una de
+  ellas, además, no podía darse por buena nunca.
+- **Cómo se arregló:** verificando primero **en el documento** que los datos eran ciertos, y reanclando las
+  tres preguntas en el **título** de cada sección en vez de en su número, que es presentación y cambia. El
+  arreglo se probó rompiéndolo a propósito sobre una copia mutada, y las tres cantan. La lección vale más
+  que el arreglo: **un cero recién aparecido justo después de un cambio de estructura es sospechoso de la
+  herramienta, no del documento.**
+- **Y al volver a medir salió trabajo real: quedan cuatro huecos visibles en la memoria**, y mientras estén
+  ahí la primera casilla de la lista de comprobación del enunciado no se puede marcar. Son la segunda
+  mitad del caso del techo de gasto, el plan de pruebas formal con capturas de producto de los defectos,
+  lo que salga de revisar el vídeo grabado, y el acumulado de limitaciones de las fases 1 a 4.
+- **A qué requisito toca:** ninguno en concreto, es trabajo de entrega. **Horas:** ~0,7 h de asistente.
