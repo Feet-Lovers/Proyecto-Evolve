@@ -56,7 +56,7 @@
     ..cuerpo.flatten().map(c => table.cell(text(size: 8pt, fill: rgb("#DCE4EF"), eval(c, mode: "markup")))),
   ))
 }
-#let imagen(ruta, pie) = figure(image(ruta, width: 92%), caption: eval(pie, mode: "markup"))
+#let imagen(ruta, pie) = figure(image(ruta, width: 80%), caption: eval(pie, mode: "markup"))
 
 #set document(title: "HookSuite — Memoria técnica (Práctica 3)")
 // ── Diseño heredado del informe de la Práctica 1 (mismo esqueleto visual) ──
