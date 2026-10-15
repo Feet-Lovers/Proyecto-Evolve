@@ -783,22 +783,49 @@ herramientas, sin redondear hacia abajo.
   pesa en este apartado.
 
 = Pruebas y evidencias
-Plan de pruebas, casos ejecutados, resultados y las pruebas que fallaron con su explicación. El detalle caso a caso (PR-01…PR-20) se mantiene en la matriz del apartado 8 y en el diario del repo.
+Plan de pruebas, casos ejecutados, resultados y las pruebas que fallaron con su explicación. La matriz del apartado 8 relaciona cada caso con su requisito y su evidencia.
 
 *Dónde se tomó cada evidencia, porque cambia lo que vale.* Salvo cuando se dice lo contrario, toda la verificación previa a cada despliegue se ejecutó en el *entorno local de pruebas*, una réplica del despliegue levantada con los mismos contenedores en una máquina del equipo, y se repitió después contra la instalación pública tras cada despliegue. Las dos se registran por separado y con su fecha: una prueba en el entorno local dice que el arreglo funciona. Solo la de producción dice que *está puesto*. Esa distinción no es formalismo: más abajo se cuenta un despliegue que habría pasado por correcto sin aplicar la configuración que se le pedía.
 
+== El plan de pruebas: los dieciocho casos que cita la matriz
+
+El plan de trabajo original del equipo tenía *doce* casos, de modo que seis de los códigos que la matriz del apartado 8 cita (PR-03, PR-04, PR-10, PR-12, PR-15 y PR-20) no tenían caso escrito en ninguna parte: se redactan aquí por primera vez. Y los doce que existían llevaban resultados del 29 de septiembre, medidos sobre el prototipo antes de esta práctica, de modo que varios eran hoy literalmente falsos: PR-01 figuraba como fallo por un control de acceso que ya no existe, PR-16 decía que «toda la API responde sin credenciales», que es justo lo que se cerró, y PR-19 daba un error de servidor ya corregido. Copiarlos tal cual habría metido tres afirmaciones falsas en el entregable. Esos resultados tampoco son basura: son la foto del punto de partida, y este apartado pide expresamente las pruebas que fallaron con su explicación. Por eso la tabla lleva *dos resultados*, el del *29-sep* sobre el prototipo y el de *hoy* sobre el código congelado, y una última columna que dice *de dónde sale el resultado de hoy*, que es lo que permite juzgarlo: una reejecución, una figura de esta memoria, o nada, y entonces se dice.
+
+#tabla(
+  (auto, auto, 4fr, 3fr, 4fr),
+  "
+  ID | Req. | Qué prueba | 29-sep (prototipo) | Hoy (código congelado)
+  PR-01 | RF-01 | Abrir la URL pública en un navegador limpio | 401 Basic Auth: la credencial documentada no entra | *200*, sirve el panel · reejecutada en producción
+  PR-03 | RF-03 | Rastrear un objetivo y revisar el panel de detalle | no ejecutada | *pasa* · figura del apdo. 7: rótulos legibles y cabeceras reales
+  PR-04 | RF-04 | Enviar dos veces la misma petición y comparar | *sin caso escrito* | *pasa* · figuras del apdo. 7: mismo estado, tamaño y cuerpo. Distinto tiempo
+  PR-05 | RF-05 | Modificar y reenviar una petición. Ver la respuesta | envío correcto, historial vacío | *pasa* · figuras de los apdos. 5 y 7. El historial se retiró por diseño (apdo. 9)
+  PR-06 | RF-06 | Marcar un campo y lanzar el Intruder | diccionarios servidos. Ejecución sin probar | *no reejecutada*: exige lanzar tráfico de ataque real, y su procedimiento del 29-sep nombraba el laboratorio retirado el 13-oct
+  PR-07 | RF-07 | Hash, codificadores y regex con casos conocidos | hash y codificadores correctos. JWT no soportado | *no reejecutada*: exige credencial de usuario
+  PR-08 | RF-08 | Publicar un hallazgo y recuperarlo por el panel | backend correcto. Faltaba el productor | *pasa* · recorrido completo verificado el 10-oct y figura del apdo. 7 (techo a 0 €)
+  PR-10 | RF-10 | Ejercitar el módulo de navegador | *sin caso escrito* | *no reejecutada*: hasta hoy el módulo ni siquiera estaba en la red interna. El despliegue del 13-oct lo corrige, pero no se ha ejercitado
+  PR-11 | RF-11 | Que cada usuario tenga su espacio de datos | tokens correctos por /api/session/new | *procedimiento caducado*: esa ruta se retiró al poner el acceso por usuario. Lo que hoy cumple RF-11 se prueba con PR-12
+  PR-12 | RF-12 | Que un usuario no vea los datos de otro | *sin caso escrito* | *pasa* · cuatro figuras del apdo. 6, verificado 11/11 en el entorno local
+  PR-13 | RNF-03 | Servicio en pie y API publicada en la caja | /health correcto. Esquema de la API *abierto* | *pasa y mejora*: /health 200 y el esquema *ya no se publica* · reejecutada
+  PR-14 | RNF-07 | Sin claves en lo que se publica | por ejecutar | *pasa* · cero ficheros seguidos por git con clave, con control positivo · reejecutada
+  PR-15 | RNF-08 | Cortafuegos por sesión | *sin caso escrito* | *no reejecutada*: el agente está operativo y endurecido (apdos. 6-7), pero no se ha vuelto a ejercitar
+  PR-16 | RNF-07 | Llamar a la API sin ninguna credencial | *toda la API respondía* | *pasa*: 401, y los puertos 8000 y 3000 rechazan conexión desde fuera · reejecutada
+  PR-17 | RNF-02 | Conexión en tiempo real con el servidor | enlace correcto, sin autenticar | *pasa* · el indicador «conectado» de las figuras lo prueba ya autenticado
+  PR-18 | RNF-09 | Responder por TLS | sin HTTPS | *sigue sin TLS* · reejecutada. RNF-09 es el único requisito declarado pendiente
+  PR-19 | RF-02 | Estado del proxy del lado servidor | *500*, error de servidor | *pasa*: 401, el extremo responde y exige credencial · reejecutada
+  PR-20 | RNF-05 | Límite de peticiones simultáneas | *sin caso escrito* | *no reejecutada*: el límite está implementado y citado en el apdo. 7, pero sin prueba propia
+  ",
+)
+
+*Cómo leer esta tabla, dicho sin adornos.* De los dieciocho casos, *seis se han reejecutado* contra producción, *seis los demuestra una figura* de esta memoria, *cinco no se han reejecutado* y se dice por qué, y uno, PR-11, tiene el procedimiento caducado porque cita una ruta que el cambio de acceso retiró.
+
+*Un aviso de método que vale para quien repita estas medidas.* El frontend es una aplicación de una sola página, y el servidor devuelve su portada a *cualquier ruta desconocida*: una dirección inventada responde 200 igual que una real. Por eso, en las filas reejecutadas, un 200 no se ha dado por bueno sin mirar el tipo de contenido, y es lo que evitó concluir que el esquema de la API seguía publicado cuando lo que respondía era la portada. Las salidas completas están en docs/evidencias/pruebas-reejecutadas-13oct.md.
+
 == Evidencia de exposición (RNF-07 / PR-16), capturada el 4-oct
-La prueba PR-16, llamar a la API sin credenciales, y la verificación del frontend confirman que, antes de endurecer, el producto quedaba accesible sin autenticación. Capturas obtenidas antes de cualquier arreglo, porque la evidencia de un fallo se captura antes de corregirlo: el propio arreglo la destruye.
+La prueba PR-16, llamar a la API sin credenciales, y la verificación del frontend confirman que, antes de endurecer, el producto quedaba accesible sin autenticación. Las capturas se obtuvieron antes de cualquier arreglo, porque la evidencia de un fallo se captura antes de corregirlo: el propio arreglo la destruye. Además de lo que muestran las dos figuras, se comprobó que el frontend servido por el puerto 3000 cargaba sin pedir credencial, evitando por completo el control de la entrada principal, que la entrada principal sí pedía credencial (el control existía, pero se podía rodear por el puerto directo) y que la credencial documentada en el informe de la P1 era rechazada con 401: ya no abría nada.
 
 #imagen("../capturas/exposicion/RNF07-api-health-sin-login.png", "RNF-07 / PR-16 — GET /health de la API responde 200 sin credenciales ni cabecera WWW-Authenticate: la API no exige autenticación.")
 
 #imagen("../capturas/exposicion/RNF07-api-swagger-abierto.png", "RNF-07 / PR-16 — la documentación Swagger (/docs) queda abierta a cualquiera, exponiendo las 40 operaciones de la API, incluidas las que lanzan tráfico contra terceros.")
-
-#imagen("../capturas/exposicion/RNF07-frontend-3000-sin-auth.png", "RNF-07 — el frontend servido directamente por :3000 carga 200 sin Basic Auth, evitando por completo el login de Nginx del :80.")
-
-#imagen("../capturas/exposicion/RNF07-nginx-80-pide-auth.png", "RNF-07 — por contraste, la entrada «correcta» (:80 tras Nginx) sí pide Basic Auth: el control existe, pero se puede rodear por el puerto directo.")
-
-#imagen("../capturas/exposicion/RNF07-credencial-p1-no-abre.png", "RNF-07 — la credencial documentada en el informe de la P1 es rechazada con 401 por nginx/1.31.0: la credencial publicada ya no sirve, lo que refuerza el cambio de modelo de acceso en la Fase 2.")
 
 
 == Los doce defectos del prototipo, corregidos y verificados
@@ -825,11 +852,7 @@ Todos se reprodujeron antes de corregirlos y se verificaron después en producci
 
 == Defectos corregidos: antes y después (RF-03)
 
-Dos pares de capturas tomadas sobre el producto desplegado, antes y después de corregir. El objetivo de las pruebas es una web propia del equipo, autorizada para ello.
-
-#imagen("../capturas/fase1/RF-03-antes-sin-boton-detener.png", "RF-03 — ANTES: el Spider está rastreando («Spider en ejecucion…») y el único botón del panel aparece bloqueado como «Ejecutando…». No existe ninguna forma de detener el rastreo desde la interfaz.")
-
-#imagen("../capturas/fase1/RF-03-despues-con-boton-detener.png", "RF-03 — DESPUÉS: en la misma situación aparece el botón «Detener» junto al de ejecución. Obsérvese además el contador «1 FORM» en cada petición, frente a las decenas de la captura siguiente.")
+Un par de capturas tomadas sobre el producto desplegado, antes y después de corregir. El objetivo de las pruebas es una web propia del equipo, autorizada para ello.
 
 #imagen("../capturas/fase1/RF-03-antes-formularios-repetidos.png", "RF-03 — ANTES: una sola petición (/tienda?page=1&sort=newest) arrastra *52 entradas de formulario idénticas*, que inundan el panel de resultados.")
 
@@ -837,9 +860,9 @@ Dos pares de capturas tomadas sobre el producto desplegado, antes y después de 
 
 > *Nota de tratamiento de las capturas.* Las dos del estado anterior mostraban un identificador de sesión de la web de pruebas en la franja superior. Se publican con esa franja tapada, y los originales no salen del almacén interno. Las del estado posterior no lo contienen porque la sesión no estaba autenticada.
 
-== #highlight(fill: rgb("#FFE97A"), extent: 1.5pt)[El pulido del Spider (11-oct): quince defectos, y catorce los encontró el uso]
+== El pulido del Spider (11-oct): quince defectos, y catorce los encontró el uso
 
-Cerrada la Fase 2, el 11-oct no se añadió funcionalidad: la jornada se dedicó a *pulir* lo que ya existía, pestaña por pestaña, empezando por la primera. De esa pasada salen quince defectos corregidos en el Spider. Lo que más dice de ellos no es el número, sino *cómo aparecieron*: catorce usando la herramienta y uno leyendo el código. Cada fila está atada a su entrada del diario de desarrollo, que es la fuente.
+El 11-oct no se añadió funcionalidad: la jornada se dedicó a *pulir* lo que ya existía, pestaña por pestaña, empezando por la primera. De esa pasada salen quince defectos corregidos en el Spider. Lo que más dice de ellos no es el número, sino *cómo aparecieron*: catorce usando la herramienta y uno leyendo el código. Cada fila está atada a su entrada del diario de desarrollo, que es la fuente.
 
 #tabla(
   (auto, 5fr, 2fr, auto),
@@ -863,19 +886,11 @@ Cerrada la Fase 2, el 11-oct no se añadió funcionalidad: la jornada se dedicó
   ",
 )
 
-*El patrón que se repite, y es el hallazgo de la jornada.* En once de los quince, el backend *ya sabía* la respuesta y no llegaba a la pantalla: de qué página salía cada formulario, cómo había terminado el rastreo, cuál era el objetivo, cuántas páginas habían fallado. No eran fallos de cálculo sino de *traslado*: funciones correctas que la interfaz no dejaba ver. Un producto puede estar entero por dentro y resultar inservible por fuera, y las pruebas que miran el backend no detectan nada de esto.
-
-*El decimoquinto se encontró de otra manera, y merece su propio comentario.* Apareció al escribir el manual de uso: para documentar el filtro hubo que leer cómo funcionaba, y leyéndolo se vio que filtraba las filas *antes* de agruparlas. Como cada formulario cuelga de su página, una página que no pasaba el filtro se llevaba por delante a sus formularios. Filtrar por POST, que es justo lo que se hace para ver formularios, vaciaba la tabla.
-
-#imagen("../capturas/fase3/RF-03-filtro-post-vacia-la-tabla.png", "RF-03 — ANTES: con el panel lleno de un rastreo y el filtro de método en POST, la tabla se queda vacía. Los formularios son POST, pero sus páginas son GET: al caer la página, el formulario se quedaba sin grupo donde colgar y desaparecía.")
-
-#imagen("../capturas/fase3/RF-03-filtro-post-muestra-formularios.png", "RF-03 — DESPUÉS: el mismo filtro muestra tres páginas con su formulario POST ya desplegado debajo. Una página entra ahora si coincide ella o si coincide alguno de sus formularios, y si entra solo como contenedor aparece abierta.")
-
-*Dos de los quince los introdujimos nosotros al arreglar otros.* Están contados en la tabla y se detallan en el apartado 11: un arreglo que hizo *desaparecer* formularios que antes solo sobraban, y un cambio de maquetación que recortó las últimas filas. Se señalan aquí porque el recuento honesto incluye los defectos propios, no solo los heredados.
+*El patrón que se repite, y es el hallazgo de la jornada.* En once de los quince, el backend *ya sabía* la respuesta y no llegaba a la pantalla: de qué página salía cada formulario, cómo había terminado el rastreo, cuál era el objetivo. No eran fallos de cálculo sino de *traslado*: funciones correctas que la interfaz no dejaba ver, y las pruebas que miran el backend no detectan nada de esto. El decimoquinto apareció al documentar el filtro para el manual: filtraba las filas *antes* de agruparlas, de modo que filtrar por POST, justo lo que se hace para ver formularios, vaciaba la tabla entera. Y dos de los quince los introdujimos nosotros al arreglar otros: están contados en la tabla y se detallan en el apartado 11, porque el recuento honesto incluye los defectos propios, no solo los heredados.
 
 #imagen("../capturas/fase3/RF-03-spider-alcance-y-objetivo-tras-f5.png", "RF-03 — *el alcance agotado se avisa, y el objetivo sobrevive al refresco*: con el límite puesto en 50 páginas el rastreo se detiene y declara que *pueden existir páginas sin analizar*, en vez de entregar el mapa como si estuviera completo. Y tras recargar la página el objetivo sigue fijado. Cubre RF-03.")
 
-== #highlight(fill: rgb("#FFE97A"), extent: 1.5pt)[El pulido del Repeater (12-oct): dieciséis defectos, y una función retirada el mismo día]
+== El pulido del Repeater (12-oct): dieciséis defectos, y una función retirada el mismo día
 
 El 12-oct repitió el método del día anterior sobre la segunda pestaña: no se añadió alcance, se pulió lo que había. El resultado se parece al del Spider en el número y se diferencia en algo que conviene contar entero, porque es lo más instructivo de la jornada: *una función se añadió por la mañana y se retiró por la tarde*.
 
@@ -902,45 +917,31 @@ El 12-oct repitió el método del día anterior sobre la segunda pestaña: no se
   ",
 )
 
-*La función que no llegó a la noche, y por qué se cuenta en vez de omitirse.* A las 10:08 el Repeater ganó un *historial* de peticiones: el contador de la cabecera, que hasta entonces no se podía abrir, pasó a ser el botón que despliega la lista, con borrado por fila y supervivencia al refresco. A las 17:28 se retiró entero. El motivo es que *todo el comportamiento errático de la jornada giraba a su alrededor*, respuestas cruzadas, entradas con la petición y la respuesta mal emparejadas, el panel mostrando la respuesta de otra, y tres arreglos sucesivos no lo dejaron estable, con la congelación al día siguiente. Un Repeater que mezcla respuestas es peor para un informe que un Repeater sin historial. Lo que ocupó su lugar es la decisión de diseño del apartado 9: *una petición cada vez*, con el estado «ocupado» visible desde la otra pantalla.
+*La función que no llegó a la noche, y por qué se cuenta en vez de omitirse.* A las 10:08 el Repeater ganó un *historial* de peticiones y a las 17:28 se retiró entero: todo el comportamiento errático de la jornada giraba a su alrededor (respuestas cruzadas, entradas con la petición y la respuesta mal emparejadas) y tres arreglos sucesivos no lo dejaron estable, con la congelación al día siguiente. Un Repeater que mezcla respuestas es peor para un informe que un Repeater sin historial. Lo que ocupó su lugar es la decisión de diseño del apartado 9: *una petición cada vez*, con el estado «ocupado» visible desde la otra pantalla. La causa de fondo apareció cuatro horas después de retirarlo: el 302 invisible hacía que, al enviar un formulario que rebota, la respuesta del GET posterior pareciera la del POST. Se deja escrito porque ese es el orden real de los hechos: *primero se retiró el síntoma y después se encontró la causa*.
 
-*Y la causa de fondo, que apareció cuatro horas después de retirarlo.* El 302 invisible explicaba la confusión entera: al enviar un formulario que rebota, el producto mostraba el resultado del GET posterior sin decir que había habido un salto, de modo que la respuesta parecía ser la del POST. Si el 302 se hubiera visto desde el principio, el historial probablemente no habría necesitado retirarse. Se deja escrito porque ese es el orden real de los hechos: *primero se retiró el síntoma y después se encontró la causa*.
+*El patrón de los dieciséis, comparado con el del Spider.* En el Spider, once de quince eran fallos de *traslado*: el servidor sabía la respuesta y la pantalla no la enseñaba. Aquí el patrón es otro y más incómodo: *siete de los dieciséis son fallos de fidelidad*, el producto mostraba algo distinto de lo que hacía. Cabeceras que no eran las enviadas, un 302 que no se veía, dos envíos iguales con distinto resultado, un fallo de red disfrazado de respuesta. En una herramienta de auditoría ese es el defecto más caro, porque *lo que la herramienta muestra es la evidencia que acaba en el informe*: un auditor que copie esas cabeceras documenta algo que no ocurrió.
 
-*El patrón de los dieciséis, comparado con el del Spider.* En el Spider, once de quince eran fallos de *traslado*: el servidor sabía la respuesta y la pantalla no la enseñaba. Aquí el patrón es otro y más incómodo: *siete de los dieciséis son fallos de fidelidad*, el producto mostraba algo distinto de lo que hacía. Cabeceras que no eran las enviadas, un 302 que no se veía, dos envíos iguales con distinto resultado, un fallo de red disfrazado de respuesta, respuestas cruzadas y avisos que ya no podían salir. En una herramienta de auditoría ese es el defecto más caro, porque *lo que la herramienta muestra es la evidencia que acaba en el informe*: un auditor que copie esas cabeceras documenta algo que no ocurrió.
-
-*El proyecto tenía un verificador configurado y sin usar.* La regresión más tonta de la jornada, el botón de enviar dejó de hacer nada porque un borrado por rango de líneas se llevó la declaración de una variable, la habría cazado el analizador estático del propio repositorio, que *nunca se había ejecutado*. Se probó a mordida (un fichero con una variable inexistente devuelve el error esperado) y desde entonces va *por delante* de cada verificación: hoy no queda ninguna variable no declarada en el frontend, con control positivo para que ese cero signifique algo. Lo que destapa de paso va al apartado 9: el frontend acumula veintitrés errores y dos avisos de otras reglas. *El proyecto no pasa su propio analizador*, y conviene decirlo.
-
-*Lo que ninguna de las verificaciones del asistente cazaba, dicho con nombre.* Cada cambio de la jornada se verificó contando cadenas de texto dentro del paquete construido. Ese método confirma que un texto *está*. No dice que se *lea* bien ni que la lógica funcione. Tres veces el mismo día dio por bueno algo roto: escapes que se mostraban en crudo, una dirección presente pero ilegible por falta de sitio, y la regresión del botón de enviar. La construcción de la imagen no comprueba variables no declaradas, el analizador no detecta errores de ejecución, y contar textos no detecta ninguno de los dos. *Lo único que cazó esos tres fue abrir la pantalla*, y de ahí que las capturas de producto las tome una persona. El detalle de los ocho defectos que introdujo el asistente está en el apartado 11.
-
-#imagen("../capturas/fase3/RF-05-repeater-post-sin-419.png", "RF-05 / RF-03 — el final de los 419. La misma clase de petición que antes era rechazada llega ahora a la lógica de la aplicación: el servidor responde 302 y el formulario contesta que las credenciales no coinciden. Es decir, lo que fallaba no era el Repeater sino unas cabeceras incompletas en los formularios que descubre el Spider. Valores de sesión tapados.")
+*El proyecto tenía un verificador configurado y sin usar.* La regresión más tonta de la jornada (el botón de enviar dejó de hacer nada porque un borrado se llevó la declaración de una variable) la habría cazado el analizador estático del propio repositorio, que *nunca se había ejecutado*. Desde entonces va por delante de cada verificación y hoy no queda ninguna variable no declarada en el frontend. Lo que destapa de paso va al apartado 9: el frontend acumula veintitrés errores y dos avisos de otras reglas y *no pasa su propio analizador*. Los defectos que el asistente introdujo ese día, y por qué sus verificaciones no los cazaban, están en el apartado 11.
 
 #imagen("../capturas/fase3/RF-04-repeater-dos-envios-mismo-resultado-1.png", "RF-04 — prueba de aceptación del Repeater con cliente propio, *primer envío*: 302, 0,4 KB y destino /tienda/205.")
 
 #imagen("../capturas/fase3/RF-04-repeater-dos-envios-mismo-resultado-2.png", "RF-04 — *segundo envío de la misma petición, sin tocar nada*: idénticos el estado, el tamaño, el destino y el cuerpo de la respuesta. Lo único que cambia es el tiempo (56 ms → 73 ms), y ese cambio es justamente lo que demuestra que son dos envíos distintos y no la misma figura repetida. Con el cliente compartido anterior, dos envíos iguales podían no coincidir.")
 
-#imagen("../capturas/fase3/RF-03-spider-rotulos-despues.png", "RF-03 — el panel de detalle después del pulido, con los dos defectos de fidelidad corregidos: los rótulos de sección se distinguen del contenido,antes compartían el mismo gris, y eso llevó a leer las cabeceras de respuesta como si fueran de petición— y las cabeceras que se muestran son *las realmente enviadas*, con la Cookie de sesión incluida. Los cuatro valores de sesión van tapados.")
-
-#imagen("../capturas/fase3/RF-05-repeater-aviso-sesion-heredada-censurada.png", "RF-05 — *la sesión heredada, avisada*: el banco de trabajo detecta que la petición viaja con la cookie del objetivo y lo dice en ámbar, con el botón para quitarla. El valor del testigo y el del cuerpo van tapados. Cubre RF-05.")
-
-#imagen("../capturas/fase3/RF-05-repeater-quitar-la-sesion-censurada.png", "RF-05 — *la misma operación, ya ejecutada*: tras pulsar «quitar la sesión» la lista de cabeceras ya no tiene fila de cookie y el aviso ámbar desaparece. Es una petición distinta de la de la figura anterior, no su gemela. Cubre RF-05.")
+#imagen("../capturas/fase3/RF-03-spider-rotulos-despues.png", "RF-03 — el panel de detalle después del pulido, con los dos defectos de fidelidad corregidos: los rótulos de sección se distinguen del contenido (antes compartían el mismo gris, y eso llevó a leer las cabeceras de respuesta como si fueran de petición) y las cabeceras que se muestran son *las realmente enviadas*, con la Cookie de sesión incluida. Los cuatro valores de sesión van tapados.")
 
 #imagen("../capturas/fase3/RF-05-repeater-302-location-censurada.png", "RF-05 — *la redirección que no se sigue*: ante un 302 el banco de trabajo entrega la respuesta a la petición enviada, no la del destino, y lo explica en el propio panel, adónde manda el servidor, por qué no lo sigue y qué hacer para verlo. Cubre RF-05.")
 
-#imagen("../capturas/fase3/RF-05-spider-repeater-en-uso.png", "RF-05 — *el rastreador avisa de que el banco de trabajo está ocupado*: con una petición cargada, el botón de envío pasa a «repeater en uso» en ámbar, de modo que no se pisa lo que el auditor tiene a medias. Cubre RF-05.")
-
-#imagen("../capturas/fase3/RNF-07-repeater-preview-aviso-censurada.png", "RNF-07 — *la vista previa no ejecuta nada*: la pestaña de previsualización avisa de que el código que venga en la respuesta no se ejecuta y de que una página construida con JavaScript puede verse incompleta o en blanco. Es la contrapartida visible del aislamiento. Cubre RNF-07.")
-
 > *Nota de tratamiento de estas figuras.* Todas se tomaron en producción, sobre el código congelado, contra una web propia del equipo autorizada para ello. Desde el 12-oct el panel de cabeceras muestra la cookie de sesión del objetivo, es lo correcto, porque es lo que se envía, así que cada figura se publica con esos valores tapados y los originales no salen del almacén interno.
 
-== #highlight(fill: rgb("#FFE97A"), extent: 1.5pt)[Condición de carrera detectada antes de reiniciar el servidor]
+== Condición de carrera detectada antes de reiniciar el servidor
 El agente del cortafuegos y el servicio de contenedores no tenían orden de arranque entre sí. Si el segundo ganaba la carrera, *creaba una carpeta donde debía ir el canal de comunicación del agente*, comportamiento normal al montar un fichero que no existe, y el agente quedaba en un bucle de reinicios. El servidor llevaba sin reiniciarse desde mayo, así que nunca se había puesto a prueba. Se corrigió fijando el orden de arranque antes de reiniciar. Tras el reinicio, el contador de reinicios del agente marcaba *cero*: la carrera no llegó a producirse.
 
-== #highlight(fill: rgb("#FFE97A"), extent: 1.5pt)[Otras evidencias ya en mano]
+== Otras evidencias ya en mano
 - *Incidente de las claves y limpieza del historial:* ensayo de reescritura verificado antes/después (3 → 0 claves), detallado en el apartado 6.
 - *Salidas de terminal* (health sin login, openapi.json sin seguridad, cierre de puertos, mensajes de error) guardadas como texto en el repo, no como foto (así ninguna captura publica por error un secreto).
 
 == Evidencia de las fugas de aislamiento (RF-12), capturada el 6-oct
-Cuatro pruebas lanzadas contra el entorno local de pruebas a través del proxy, como las haría un cliente, *antes de tocar una sola línea de código de la Fase 2*: el propio arreglo borra esta evidencia, y el apartado pide las pruebas que fallaron con su explicación. Los valores de cookie empleados son inventados a propósito, de modo que la captura no contiene ningún identificador real.
+Cuatro pruebas lanzadas contra el entorno local de pruebas a través del proxy, como las haría un cliente, *antes de tocar una sola línea del código de acceso*: el propio arreglo borra esta evidencia, y el apartado pide las pruebas que fallaron con su explicación. Los valores de cookie empleados son inventados a propósito, de modo que la captura no contiene ningún identificador real.
 
 Las cuatro confirmaron el fallo: la API responde 200 sin credencial mientras /health responde 401. Un token inventado obtiene sesión propia. Un segundo usuario lee la cookie de sesión capturada por el primero, y también se obtiene sin token. Y una vulnerabilidad publicada sin token aparece en la sesión de dos auditores distintos.
 
@@ -955,29 +956,17 @@ Ni el código de invitación ni las contraseñas aparecen en ninguna salida: el 
 
 #imagen("../capturas/fase2/RF-12-panel-login.png", "RF-12 — la entrada del producto tras retirar el Basic Auth de Nginx: un panel de acceso propio, con pestañas «Entrar» y «Crear cuenta». Antes, la raíz devolvía 401 pidiendo una credencial que ningún integrante del grupo conocía.")
 
-#imagen("../capturas/fase2/RF-12-panel-registro.png", "RF-12 — el alta exige *código de invitación*. El registro no es abierto a propósito: la herramienta lanza tráfico contra terceros, así que con altas anónimas cualquiera podría atacar desde la infraestructura del grupo. La contraseña la elige el usuario y solo la conoce él.")
+#imagen("../capturas/fase2/RF-12-aislamiento-usuarioA-con-datos.png", "RF-12 — antes de rehacer el acceso este panel era común a todos. Ahora el usuario A, autenticado, ve las trece peticiones que su propio Spider capturó del objetivo autorizado. Compárese con la captura siguiente, tomada al mismo tiempo.")
 
-#imagen("../capturas/fase2/RF-12-registro-cuenta-creada.png", "RF-12 — alta completada: la interfaz confirma la creación de la cuenta y devuelve al formulario de entrada. Cubre la mitad «registro» del requisito, que el enunciado pide junto al login.")
-
-#imagen("../capturas/fase2/RF-12-aislamiento-usuarioA-con-datos.png", "RF-12 — ANTES de la Fase 2 este panel era común a todos. Ahora el usuario A, autenticado, ve las trece peticiones que su propio Spider capturó del objetivo autorizado. Compárese con la captura siguiente, tomada al mismo tiempo.")
-
-#imagen("../capturas/fase2/RF-12-aislamiento-usuarioB-sin-datos.png", "RF-12 — DESPUÉS, el contraste: el usuario B, autenticado a la vez y en otro navegador, ve su panel *vacío*. Antes de la Fase 2 habría visto exactamente lo mismo que el usuario A. Este par es la prueba del aislamiento por usuario.")
+#imagen("../capturas/fase2/RF-12-aislamiento-usuarioB-sin-datos.png", "RF-12 — el contraste: el usuario B, autenticado a la vez y en otro navegador, ve su panel *vacío*. Antes del cambio habría visto exactamente lo mismo que el usuario A. Este par es la prueba del aislamiento por usuario. El alta de ambos exige el *código de invitación*: el registro no es abierto a propósito, porque la herramienta lanza tráfico contra terceros y con altas anónimas cualquiera podría atacar desde la infraestructura del grupo.")
 
 > *Nota de tratamiento de las capturas.* La del usuario A mostraba el valor íntegro de la cabecera XSRF-TOKEN, que es el identificador de sesión capturado *de la web auditada*: justo el dato que este requisito existe para no compartir. Se publica con ese valor tapado y la etiqueta a la vista, para que se vea qué se redactó. El original no sale del almacén interno. La del usuario B lleva tapada la barra de marcadores del navegador, ajena al proyecto.
 
 
-== #highlight(fill: rgb("#FFE97A"), extent: 1.5pt)[El despliegue habría terminado «en verde» sin aplicar la configuración del proxy]
-La comprobación previa al despliegue de la Fase 2, hecha *antes* de tocar la instalación pública, encontró un defecto no en el producto, sino *en el propio plan de despliegue*, escrito dos días antes. Se cuenta porque el enunciado pide las pruebas que fallaron, y porque el modo de fallo es de los que no avisan.
+== El despliegue habría terminado «en verde» sin aplicar la configuración del proxy
+La comprobación previa al despliegue del sistema de acceso, hecha *antes* de tocar la instalación pública, encontró un defecto no en el producto, sino *en el propio plan de despliegue*. El plan mandaba reconstruir «solo el frontend, el backend y el proxy», pero el proxy *no se construye*: usa una imagen descargada y su bloque del fichero de composición no cambiaba ni un byte, de modo que Compose no lo habría recreado. Como el proxy lee su configuración una sola vez al arrancar, el despliegue habría acabado *sin errores y sin aplicar nada*: el panel de acceso nuevo habría seguido detrás de la contraseña compartida que venía a jubilar. Era además el mismo fallo que ya había ocurrido dos días antes, con el mismo servicio, y la razón de que se repitiera es instructiva: *nombrar un servicio en un comando da la impresión de cubrirlo*.
 
-El plan mandaba reconstruir «solo el frontend, el backend y el proxy». Pero el proxy *no se construye*: usa una imagen descargada, y su bloque del fichero de composición *no cambiaba ni un byte* entre la rama publicada y la que se iba a desplegar. Compose lo veía idéntico a lo que ya estaba corriendo y, por tanto, *no lo habría recreado*. Y como el proxy lee su configuración una sola vez al arrancar, y el contenedor en producción llevaba vivo desde dos días antes, el despliegue habría acabado *sin errores y sin aplicar nada*: el panel de acceso nuevo habría seguido detrás de la contraseña compartida que la Fase 2 venía a jubilar, y las dos rutas retiradas habrían seguido publicadas.
-
-*Lo que convierte esto en una lección y no en una anécdota:* era el mismo fallo que ya había ocurrido dos días antes, con el mismo servicio y la misma causa. Y la razón de que se repitiera es instructiva: *nombrar un servicio en un comando da la impresión de cubrirlo*. El plan lo nombraba, así que nadie volvió a mirar si el comando lo tocaba de verdad.
-
-*Y el 10 de octubre apareció el caso espejo, que completa la lección.* Al revés que entonces, se recrearon el frontend, la API y el modulo de IA *y no el proxy*, porque su configuracion no habia cambiado. Resultado: *502 en todo*. Los contenedores recreados reciben *direcciones nuevas*, y el proxy resuelve los nombres de sus destinos *una sola vez, al arrancar*: seguia llamando a las direcciones de los contenedores que acababan de desaparecer. Su registro lo decia con todas las letras, nombrando direcciones que ya no existian.
-
-Las dos mitades tienen la misma raiz: *el estado del proxy se fija al arrancar*, tanto la configuracion que lee como las direcciones que resuelve. De ahi sale una regla operativa que no estaba escrita en ningun sitio y ahora si: *cuando se recrea cualquiera de los servicios a los que el proxy apunta, se recrea tambien el proxy.* No es una precaucion: es que no hacerlo lo deja hablando con direcciones muertas.
-
-*Arreglo:* forzar explícitamente la recreación de ese servicio. Cuesta segundos y no construye nada. *Se descartó* recargar la configuración en caliente, que también habría funcionado, pero depende de un detalle del sistema de ficheros en lugar de ser incondicional, y también tocar su bloque del fichero de composición solo para que Compose lo viera cambiado, que es resolver el síntoma ensuciando la fuente.
+*El 10 de octubre apareció el caso espejo, que completa la lección.* Se recrearon el frontend, la API y el módulo de IA *y no el proxy*, porque su configuración no había cambiado. Resultado: *502 en todo*. Los contenedores recreados reciben direcciones nuevas y el proxy resuelve los nombres de sus destinos una sola vez, al arrancar: seguía llamando a direcciones que ya no existían. Las dos mitades tienen la misma raíz, *el estado del proxy se fija al arrancar*, y de ahí sale una regla operativa que no estaba escrita en ningún sitio y ahora sí: cuando se recrea cualquiera de los servicios a los que el proxy apunta, se recrea también el proxy, forzando su recreación explícitamente. Se descartó recargar la configuración en caliente, que también habría funcionado pero depende de un detalle del sistema de ficheros en lugar de ser incondicional.
 
 == La instalación desde cero, ejecutada: dos defectos que solo aparecen al seguir las instrucciones
 RNF-03 pide un *despliegue reproducible*, y hasta el 14 de octubre lo que respaldaba ese requisito era que el servicio *estaba en pie* en la máquina de producción, no que alguien pudiera levantarlo desde cero. Son dos cosas distintas, y la segunda se probó siguiendo el README paso a paso, sobre un árbol de trabajo independiente y con su propio proyecto de contenedores, para que nada del entorno de desarrollo se colara en la prueba.
@@ -999,30 +988,15 @@ Los dos aparecieron al reconstruir el entorno desde cero, y ninguno daba error v
   configurada su dirección. Es la causa raíz de que RF-10 y RF-08 no llegaran a operar. Se corrigió con una
   línea en el fichero de composición y se verificó con docker compose config, que sitúa ahora los seis
   servicios en la misma red.
-== #highlight(fill: rgb("#FFE97A"), extent: 1.5pt)[Un modulo que parecia sano y no podia hablar con nadie (RF-08)]
-La prueba mas barata de esta practica fue una peticion con curl, y descubrio un defecto que llevaba cuatro dias en produccion sin que nadie lo notara: *el modulo de IA no podia comunicarse con el backend desde la Fase 2*.
+== Un módulo que parecía sano y no podía hablar con nadie (RF-08)
+La prueba más barata de esta práctica fue una petición con curl, y descubrió un defecto que llevaba cuatro días en producción sin que nadie lo notara: *el módulo de IA no podía comunicarse con el backend* desde que se puso el control de acceso. El módulo preguntaba al backend cada cinco segundos si había trabajo, esa ruta quedó protegida junto con las demás, correctamente, y el módulo no presenta credencial ninguna, de modo que recibía un rechazo en cada intento.
 
-Ese modulo preguntaba al backend cada cinco segundos si habia trabajo. Al poner el control de acceso, esa ruta quedo protegida junto con las demas, correctamente, y el modulo no presenta credencial ninguna, de modo que recibia un rechazo. Hay ademas un segundo muro detras del primero: incluso con una credencial valida, el control comprueba que el espacio de datos nombrado en la ruta sea el tuyo, y el modulo usaba un identificador fijo que no es de ningun usuario.
+*Lo grave no es el defecto, es por qué no se vio.* El código comprobaba si la respuesta era un éxito, y un rechazo por credencial no provoca ningún error, simplemente no es un éxito: el bucle volvía a dormir cinco segundos y lo intentaba otra vez, escribiendo en el registro que estaba esperando instrucciones. Un operador que mirara ese registro habría visto un módulo en marcha y a la espera. Estaba en marcha, y no podía recibir nada. Es el mismo patrón que RNF-06 vino a cerrar un nivel más arriba, *un fallo que no se distingue de la normalidad*, y la razón por la que ahora el módulo falla ruidosamente: comprueba el bus al arrancar y se detiene si no está. Se midió con tres peticiones sin credencial contra la instalación de pruebas, las tres rechazadas. Evidencia como texto en docs/evidencias/canal-ia-backend-muerto-10oct.md.
 
-*Lo grave no es el defecto, es por que no se vio.* El codigo comprobaba si la respuesta era un exito. Un rechazo por credencial *no provoca ningun error*, simplemente no es un exito, asi que el bucle volvia a dormir cinco segundos y lo intentaba otra vez. Y la comprobacion de arranque, que esperaba al backend hasta treinta veces, *descartaba su propio resultado* y continuaba igual, escribiendo en el registro que estaba esperando instrucciones. Un operador que mirara ese registro habria visto un modulo en marcha y a la espera. Estaba en marcha, y no podia recibir nada.
+== Las dos contrapartidas del bus, probadas antes de confiar en él
+Reconectar el módulo por un bus interno (apartado 4) cambia la forma del riesgo: un control de acceso falla cerrando, un bus falla *abriendo*. Así que lo que se prueba no es solo que el reparto funcione, sino que *no se puede repartir mal*. Dieciocho casos en dos conjuntos, con dobles para el bus, el gestor de sesiones y el orquestador: ni red, ni credencial de modelo, ni contenedores, cero coste.
 
-Es el mismo patron que RNF-06 vino a cerrar dentro del clasificador, un nivel mas arriba: *un fallo que no se distingue de la normalidad*. Que apareciera dos veces en el mismo modulo, por caminos distintos, sugiere que no es un descuido aislado sino una forma de escribir, tratar el camino de error como un caso que «ya se vera», y es la razon por la que ahora el modulo falla ruidosamente: comprueba el bus al arrancar y se detiene si no esta.
-
-*Como se midio, y por que importa el metodo.* Tres peticiones sin credencial contra la instalacion de pruebas: la consulta de trabajo pendiente, la comprobacion de arranque y el envio de una orden. Las tres rechazadas. La evidencia se guardo *como texto* y no como captura, de modo que es comparable con la de despues. Y el alcance del problema, que el camino de vuelta de los resultados estaba igual de roto, se establecio *sin abrir el fichero del orquestador*, que esta en la lista de material que este equipo no vuelca a la conversacion con la herramienta de IA (apartado 11): basto contar sus referencias al backend y mirar su esqueleto de funciones.
-
-Evidencia completa en docs/evidencias/canal-ia-backend-muerto-10oct.md.
-
-== #highlight(fill: rgb("#FFE97A"), extent: 1.5pt)[Las dos contrapartidas del bus, probadas antes de confiar en el]
-Reconectar el modulo por un bus interno (apartado 4) cambia la forma del riesgo: un control de acceso falla cerrando, un bus falla *abriendo*. Asi que lo que se prueba no es solo que el reparto funcione, sino que *no se puede repartir mal*. Dieciocho casos en dos conjuntos, con dobles para el bus, el gestor de sesiones y el orquestador: *ni red, ni credencial de modelo, ni contenedores, cero coste*.
-
-Los dos que justifican el esfuerzo:
-
-- *Un hallazgo sin dueño se descarta*, no se guarda ni se emite. Sin esa regla, un mensaje mal formado reabriria exactamente la fuga que cerro la Fase 2, un hallazgo publicado sin credencial apareciendo en el panel de dos auditores distintos.
-- *Dos auditores no ven lo del otro*, comprobado repartiendo a dos espacios y verificando que cada uno recibe solo lo suyo.
-
-Y tres mas que cubren el fallo silencioso en el otro extremo: si la auditoria se interrumpe, *se publica el motivo* en lugar de no publicar nada. Si nadie escucha el bus, publicar *lo dice* en vez de dar el trabajo por encolado. Y si una orden llega sin dueño, *no se audita*, porque no habria a quien devolverle el resultado.
-
-Reproducible con python3 backend/tests/test_bus_reparto.py y python3 ia/tests/test_bus_publicacion.py.
+Los dos que justifican el esfuerzo: *un hallazgo sin dueño se descarta*, no se guarda ni se emite (sin esa regla, un mensaje mal formado reabriría exactamente la fuga de aislamiento ya cerrada), y *dos auditores no ven lo del otro*, comprobado repartiendo a dos espacios y verificando que cada uno recibe solo lo suyo. Tres más cubren el fallo silencioso en el otro extremo: si la auditoría se interrumpe se publica el motivo, si nadie escucha el bus publicar lo dice en vez de dar el trabajo por encolado, y si una orden llega sin dueño no se audita. Reproducible con python3 backend/tests/test_bus_reparto.py y python3 ia/tests/test_bus_publicacion.py.
 
 == El recorrido completo del disparador, verificado de punta a punta (RF-08)
 Durante cuatro días el disparador estuvo *construido y sin poder demostrarse*: el botón existía, el bus estaba cableado, y aun así una pulsación desde el panel no movía ni una línea del módulo de IA. El apartado llegó a listar tres hipótesis sin poder decidir entre ellas.
@@ -1039,7 +1013,7 @@ El caso estaba diseñado para costar *cero*: fijando el techo en 0 por variable 
 *La mitad que falta del caso*, y se declara: el techo en 1, donde debe pasar una sola consulta y el resto quedar como «no analizado». Esa sí necesita clave de API válida, porque la consulta que pasa tiene que salir de verdad.
 
 #hueco("el grupo", "Ejecutar la segunda mitad del caso del techo, techo en 1, en cuanto haya clave de API válida: debe pasar una sola consulta y el resto quedar como «no analizado» con el motivo del techo. La primera mitad (techo 0) ya está ejecutada y capturada. Coste previsto: una consulta.")
-#estado("ok", "AISLAMIENTO POR USUARIO: 11/11 EN LA COCINA · EN PRODUCCIÓN SOLO SE HAN VERIFICADO LAS CUATRO FUGAS CERRADAS EL 8-OCT, NO LA BATERÍA ENTERA")
+#estado("ok", "AISLAMIENTO POR USUARIO: 11/11 EN EL ENTORNO LOCAL · EN PRODUCCIÓN SOLO SE HAN VERIFICADO LAS CUATRO FUGAS CERRADAS EL 8-OCT, NO LA BATERÍA ENTERA")
 #estado("ok", "EVIDENCIA DE EXPOSICIÓN Y DE LA FASE 1 COMPLETA")
 #hueco("el grupo", "Plan de pruebas formal y capturas de producto de los dos defectos ya corregidos (el error 500 de la comprobación de vida y la trampa del Spider): falta reproducirlos en el entorno local sobre el producto actual y capturar la pantalla.")
 
@@ -1048,8 +1022,6 @@ El caso estaba diseñado para costar *cero*: fijando el techo en 0 por variable 
 La prueba que demuestra RNF-06 no necesita ni clave de API ni conexión: sustituye el cliente del modelo por uno simulado y comprueba qué devuelve el clasificador en cada situación. Ocho casos: los tres estados sobre la vía del proxy, el estado degradado en las cuatro vías, el camino correcto de la identificación de servidor, y que se le entrega un esquema de respuesta al cliente.
 
 *El valor de la prueba está en haberla visto fallar.* Ejecutada contra el código anterior devuelve _0 de 8_, y el motivo es revelador: los cuatro métodos llamaban a .get() sobre el objeto que el cliente reescrito devuelve ahora, de modo que la fase de análisis no es que fallara en silencio, es que se interrumpía entera. Contra el código corregido devuelve _8 de 8_. Una prueba que pasa siempre no prueba nada. Esta distingue las dos versiones.
-
-*Por qué una prueba y no una revisión visual.* El fichero del clasificador está en la lista de material que este equipo no vuelca a la conversación con la herramienta de IA (apartado 11), así que se editó sin leerlo, mediante una receta de pasos verificables. En ese modo de trabajo la prueba no es un complemento de la revisión: es lo que la sustituye, y es más estricta, porque comprueba el comportamiento en vez de la impresión que deja el código al leerlo.
 
 Reproducible con python3 ia/tests/test_tres_estados.py. Evidencia completa, con las dos salidas, en docs/evidencias/rnf06-tres-estados-antes-y-despues-09oct.md.
 
@@ -1064,59 +1036,32 @@ Lo que la figura prueba, y que ninguna prueba unitaria alcanzaba: que el mensaje
 
 #imagen("../capturas/ia/RF-08-auditoria-completa-49-analisis.png", "RF-08 / RNF-06 — *la tercera forma de quedarse sin análisis*, el 10-oct: cuarenta y nueve análisis realizados, cero hallazgos y cuatro elementos sin analizar que comparten motivo, la respuesta se truncó al agotar el tope de ocho mil tokens, pensamiento más respuesta. El mensaje recomienda *subir* ese tope, y ese consejo es erróneo: el cliente del modelo no pide la respuesta por partes en ninguna llamada, así que subirlo hace fallar la consulta. La barra de navegación es anterior al 13-oct: todavía figura la pestaña Red y no la de Manual. Cubre RF-08 y RNF-06.")
 
-== #highlight(fill: rgb("#FFE97A"), extent: 1.5pt)[Lo que el modelo puede devolver, y lo que el código daba por hecho (RF-08)]
-Las cuatro vías de análisis del módulo de IA piden al modelo una respuesta con un formato fijo, y ese formato se le impone mediante un *esquema* que viaja con la consulta: la API garantiza que la respuesta se ajusta a él. El esquema, entonces, no es documentación: *es el control*. Y un campo declarado con tipo abierto no es un campo permisivo, es un campo sin control.
+== Lo que el modelo puede devolver, y lo que el código daba por hecho (RF-08)
+Las cuatro vías de análisis del módulo de IA piden al modelo una respuesta con un formato fijo, impuesto mediante un *esquema* que viaja con la consulta: la API garantiza que la respuesta se ajusta a él. El esquema no es documentación, *es el control*, y un campo declarado con tipo abierto no es un campo permisivo, es un campo sin control. La prueba comprueba que el esquema obliga a lo que las instrucciones piden, que la bandera de resultado sea un booleano y que la confianza venga en escala de 0 a 100. Contra el código anterior devuelve _5 de 11_, y los fallos no eran cosméticos:
 
-La prueba comprueba que el esquema obliga a las dos cosas que las instrucciones piden: que la bandera de resultado sea un booleano y que la confianza venga en escala de 0 a 100. Contra el código anterior devuelve _5 de 11_, y los fallos no eran cosméticos:
-
-
-La API *no admite* minimum ni maximum en salida estructurada, de modo que el rango 0-100 *tuvo que salir del esquema*: para ese campo, el esquema ya no es el control. Lo que sigue en pie es el resto, las tres banderas sí las impone, y, sobre todo, el matiz que ya constaba: la rendija de la escala 0-1 *nunca la cerró el rango*, porque 0,85 siempre estuvo dentro de 0-100. El control que se pierde es el que cazaba un 150 absurdo. El peligroso, el del descarte silencioso, vive en el clasificador y sigue intacto (sección siguiente). Queda como *limitación conocida*: un valor fuera de escala ya no lo para nadie.
-
-1. De los tres campos de bandera, uno por vía, con *tres nombres distintos para el mismo papel*, solo el primero estaba declarado como booleano. Los otros dos admitían cadena de texto, y el clasificador evalúa los tres igual, dentro de un if. En el lenguaje en que está escrito, *cualquier cadena no vacía es verdadera, incluida la palabra que significa «no»*: una respuesta negativa del modelo se habría registrado como vulnerabilidad confirmada.
+1. De los tres campos de bandera, uno por vía, solo el primero estaba declarado como booleano. Los otros dos admitían cadena de texto, y el clasificador evalúa los tres dentro de un if: en el lenguaje en que está escrito, *cualquier cadena no vacía es verdadera, incluida la palabra que significa «no»*. Una respuesta negativa del modelo se habría registrado como vulnerabilidad confirmada.
 2. La confianza se declaraba como número *sin rango*, así que nada rechazaba un valor fuera de la escala.
-3. El esquema de la vía de identificación de servidor declaraba *cero campos*, mientras sus instrucciones piden nueve, uno de ellos una lista de objetos.
+3. El esquema de la vía de identificación de servidor declaraba *cero campos*, mientras sus instrucciones piden nueve.
 
-*La causa era una sola, y estaba fuera del repositorio del producto.* Los esquemas no se escriben a mano: los genera una herramienta de la práctica que deduce los campos a partir de las lecturas que el propio clasificador hace sobre la respuesta. Esa herramienta llevaba una lista, escrita a mano, de los campos «que el código interpreta», y se redactó mirando *una sola* de las cuatro vías. Su propio comentario lo delata, porque habla de la bandera en singular. El esquema vacío tiene la misma raíz por el camino opuesto: la vía de identificación de servidor devuelve la respuesta del modelo *sin inspeccionarla*, de modo que no hay ninguna lectura de la que deducir nada. Un esquema no se puede derivar de un código que no mira los datos.
-
-El arreglo fue por tanto en el generador, no en el fichero generado, que lleva en su cabecera la advertencia de que se regenera, y después se regeneró. La prueba pasa _11 de 11_, y la de RNF-06 sigue en _8 de 8_: el cambio no rompió nada.
+*La causa era una sola y estaba fuera del repositorio del producto.* Los esquemas los genera una herramienta de la práctica que deduce los campos a partir de las lecturas que el propio clasificador hace sobre la respuesta, y su lista de campos, escrita a mano, se redactó mirando *una sola* de las cuatro vías. El esquema vacío tiene la misma raíz por el camino opuesto: esa vía devuelve la respuesta sin inspeccionarla, y un esquema no se puede derivar de un código que no mira los datos. El arreglo fue en el generador, no en el fichero generado, y después se regeneró: la prueba pasa _11 de 11_ y la de RNF-06 sigue en _8 de 8_. Un matiz queda como *limitación conocida*: la API no admite mínimo ni máximo en salida estructurada, de modo que el rango 0-100 tuvo que salir del esquema y un valor fuera de escala ya no lo para nadie. El caso peligroso, el de la escala 0-1, lo cubre la guarda del clasificador que se describe más abajo.
 
 Reproducible con python3 ia/tests/test_esquemas_bandera.py ia/esquemas.py. Evidencia con las dos salidas, antes y después, en docs/evidencias/esquemas-bandera-antes-10oct.md.
 
-== #highlight(fill: rgb("#FFE97A"), extent: 1.5pt)[Tres rechazos seguidos de la API: validar contra tu propia prueba no es validar (RF-08)]
-La primera auditoría *real*, clave válida, objetivo propio, techo de gasto puesto, no devolvió ni un hallazgo. Las llamadas que salieron se rechazaron antes de procesarse, y hubo que lanzarla *tres veces* para llegar al fondo, porque cada rechazo tenía un motivo distinto:
+== Tres rechazos seguidos de la API: validar contra tu propia prueba no es validar (RF-08)
+La primera auditoría *real*, clave válida, objetivo propio, techo de gasto puesto, no devolvió ni un hallazgo: las llamadas que salieron se rechazaron antes de procesarse, y hubo que lanzarla *tres veces* porque cada rechazo tenía un motivo distinto. Los objetos del esquema iban abiertos, y la salida estructurada no lo admite. La confianza declaraba un rango con mínimo y máximo, que tampoco se admite. Y veintidós campos declaraban su tipo como una lista de tipos posibles que incluía «objeto», lo que exige una declaración explícita que esos campos no llevaban. *Coste: cero*, porque un rechazo por petición mal formada no consume saldo. La factura fue de tiempo.
 
-1. Los objetos del esquema iban *abiertos*, y la salida estructurada no lo admite.
-2. La confianza declaraba un rango con mínimo y máximo, y tampoco lo admite para números.
-3. Veintidós campos declaraban su tipo como una *lista de tipos posibles* que incluía «objeto». Para la API eso ya cuenta como objeto, y exige la declaración explícita que esos campos no llevaban.
+*Lo que este episodio enseña, y es lo que justifica contarlo.* La prueba de esquemas daba _11 de 11_ *y las seguía dando con el defecto dentro*: comprobaba lo que nosotros le pedíamos al esquema y nunca lo que la API exige para aceptarlo, y ese requisito no estaba escrito en ninguna parte nuestra. Dicho corto: *un esquema validado contra tu propia prueba no está validado. Está de acuerdo contigo.* Quedan dos piezas para que no haya una tercera vez. La prueba ia/tests/test_esquemas_api.py recorre los esquemas en profundidad y rechaza cualquier clave que no conste como admitida, verificada distinguiendo las dos versiones (_1 de 5_ contra los esquemas defectuosos, _5 de 5_ contra los corregidos) y con una comprobación de que sabe contar, para que un cero no se confunda con un aprobado. Y la herramienta ia/tests/validar_esquemas_contra_api.py somete cada esquema al servicio real y responde si pasa, los cuatro pasan, porque *cuando el contrato lo pone otro, se le pregunta a él*. Los dos defectos de esquemas nacieron en el mismo sitio, el generador, que es la única pieza del proyecto sin control de versiones: *lo que no tiene historial es donde nadie mira*.
 
-*Coste: cero.* Un rechazo por petición mal formada no consume saldo, y el techo acotaba el daño de todas formas. La factura fue de tiempo, no de dinero.
+== Un fallo silencioso no es un fallo menor: la escala de la confianza (RF-08 / RNF-06)
+El filtro por confianza compara el valor que devuelve el modelo contra un umbral. Las instrucciones piden ese valor en escala de 0 a 100, pero ninguna de las cuatro pide que sea un número entero, y ahí había una rendija que el esquema *no puede* cerrar: si el modelo devolviera la escala de 0 a 1, un 0,85 queriendo decir «85 %» está dentro del rango permitido, pasaría el control y quedaría por debajo del umbral. El hallazgo *desaparecería sin dejar rastro*, que es exactamente la situación que RNF-06 existe para evitar. El arreglo va en el clasificador y no en el esquema, porque imponer «entero» habría rechazado un decimal legítimo: la franja entre 0 y 1 se trata como *sospecha de escala* y se encamina al estado degradado de RNF-06, con su motivo, de modo que el problema se ve en el informe en lugar de desaparecer.
 
-*Lo que este episodio enseña, y es lo que justifica contarlo.* La prueba de esquemas daba _11 de 11_ *y las seguía dando con el defecto dentro*. Comprobaba lo que *nosotros* le pedíamos al esquema, tipos de las banderas, rango de la confianza, y nunca lo que la API exige para aceptarlo. Ninguna prueba local podía cazarlo, porque el requisito incumplido *no estaba escrito en ninguna parte nuestra*: vivía en el servicio del otro lado. Hizo falta que un esquema saliera de casa *por primera vez* para descubrirlo. Dicho corto: *un esquema validado contra tu propia prueba no está validado. Está de acuerdo contigo.*
-
-*Y un error de método, que es el que explica las dos vueltas.* Con el primer rechazo se arregló únicamente lo que nombraba el mensaje, en vez de revisar el esquema entero contra esa misma clase de límite. El segundo rechazo estaba ya ahí, esperando, a la vista de cualquiera que hubiera mirado. La regla que queda escrita: *cuando un servicio externo rechaza una construcción, se audita la construcción completa contra ese tipo de restricción, no se parchea la línea del error.*
-
-*Lo que se hizo para que no haya una tercera vez.* La prueba nueva (ia/tests/test_esquemas_api.py) ya no comprueba solo los dos defectos conocidos: recorre los esquemas en profundidad y rechaza *cualquier* clave que no conste como admitida, de modo que un límite que aún no nos haya mordido salte aquí y no en una auditoría. Se verificó distinguiendo las dos versiones, _1 de 5_ contra los esquemas defectuosos, _5 de 5_ contra los corregidos, y lleva una comprobación de que sabe contar: si el recorrido no encontrara ni un objeto, falla, para que un cero no se confunda con un aprobado.
-
-*La corrección de fondo, que es de método y no de código.* Las tres restricciones eran averiguables *preguntando*: basta mandar el esquema al servicio y ver si lo acepta. En su lugar se dedujo tres veces a partir del mensaje de error, y cada deducción costó un ciclo completo de arreglar, reconstruir la imagen y relanzar la auditoría. De ahí sale la herramienta ia/tests/validar_esquemas_contra_api.py, que somete cada esquema al servicio real y responde si pasa, los cuatro pasan. Queda fuera de la batería automática porque consume llamadas, y se ejecuta cuando el esquema cambia. *La regla general: cuando el contrato lo pone otro, se le pregunta a él. La prueba propia solo puede vigilar lo que ya sabemos.*
-
-*Dónde estaba el defecto, por segunda vez.* En el generador de esquemas, que es la única pieza del proyecto que *no está bajo control de versiones*. La primera vez fue la lista de campos escrita a mano que se describe más arriba. Dos defectos distintos, el mismo sitio, y la misma causa de fondo: lo que no tiene historial es donde nadie mira.
-
-== #highlight(fill: rgb("#FFE97A"), extent: 1.5pt)[Un fallo silencioso no es un fallo menor: la escala de la confianza (RF-08 / RNF-06)]
-El filtro por confianza compara el valor que devuelve el modelo contra un umbral. Las instrucciones piden ese valor en escala de 0 a 100, pero *ninguna de las cuatro pide que sea un número entero*, se comprobó leyendo las cuatro, y ahí había una rendija que el esquema *no puede* cerrar: si el modelo devolviera la escala de 0 a 1, un valor de 0,85 queriendo decir «85 %» está *dentro* del rango permitido, de modo que pasaría el control y después quedaría por debajo del umbral. El hallazgo *desaparecería sin dejar rastro*, que es exactamente la situación que RNF-06 existe para evitar. El caso peor es el valor 1: en escala de 0 a 1 significa certeza total, y leído como «1 %» descartaría un hallazgo seguro.
-
-*Dónde se arregló, y por qué no en el esquema.* Imponer «entero» en el esquema habría exigido algo que las instrucciones no piden, y habría rechazado un valor decimal legítimo dentro de 0 a 100. El arreglo va en el clasificador: la franja entre 0 y 1 se trata como *sospecha de escala* y se encamina al estado degradado de RNF-06, con su motivo. Así el problema *se ve* en el informe en lugar de corregirse a la fuerza o desaparecer.
-
-*La prueba distingue las dos versiones*, que es la única forma de que valga: contra el código corregido devuelve _19 de 19_. Contra el anterior, _6 de 19_. Y los seis que pasan en la versión antigua son precisamente los casos legítimos, lo que demuestra que la guarda no introduce falsos positivos. El caso que lo prueba todo es el que comprueba que un hallazgo con confianza 0,85 *no* se devuelve como «sin vulnerabilidad»: falla contra el código anterior, es decir, el descarte silencioso queda *demostrado* y no argumentado.
-
-Reproducible con python3 ia/tests/test_escala_confianza.py. Evidencia con las dos salidas en docs/evidencias/escala-confianza-guardia-10oct.md.
+*La prueba distingue las dos versiones*, que es la única forma de que valga: contra el código corregido devuelve _19 de 19_ y contra el anterior _6 de 19_, y los seis que pasan en la versión antigua son precisamente los casos legítimos, lo que demuestra que la guarda no introduce falsos positivos. Reproducible con python3 ia/tests/test_escala_confianza.py. Evidencia con las dos salidas en docs/evidencias/escala-confianza-guardia-10oct.md.
 
 
-== #highlight(fill: rgb("#FFE97A"), extent: 1.5pt)[La interfaz antes de descartar RF-09, capturada antes de retirarla]
+== La interfaz antes de descartar RF-09, capturada antes de retirarla
 #imagen("../capturas/fase3/RF-09-pestana-red-antes-de-retirar.png", "Barra de navegación de HookSuite con las *seis* pestañas, antes de retirar RF-09. «RED» es la última. Capturada en el entorno local el 11-oct, antes de aplicar el cambio. La dirección interna de la barra del navegador va censurada. Requisitos: RF-09 (descartado) y RF-01 (interfaz).")
 
-Esta figura existe por una regla que el grupo se dio al empezar la Fase 3: *las evidencias de un defecto se capturan antes de arreglarlo, porque el arreglo las destruye*. Retirar la pestaña hacía imposible volver a fotografiarla, de modo que se pidió la captura antes de tocar el código y el despliegue se mantuvo a la espera hasta tenerla.
-
-Hay una segunda decisión deliberada, y conviene explicarla porque va contra la intuición: de las tres evidencias previstas se tomó *una sola* imagen. Las otras dos documentaban el defecto técnico, el extremo de consola que responde 404, y ese se guardó *como texto* en lugar de como fotografía. Una salida de terminal en texto es buscable, comparable entre versiones y no corre el riesgo de publicar de refilón una credencial que estuviera en pantalla. Una captura no cumple ninguna de las tres cosas. La imagen se reserva para lo único que no puede contarse de otro modo: cómo se veía la interfaz.
+La figura existe porque *las evidencias de un defecto se capturan antes de arreglarlo*: retirar la pestaña hacía imposible volver a fotografiarla, así que se pidió la captura antes de tocar el código. De las tres evidencias previstas se tomó una sola imagen: las otras dos, el extremo de consola que responde 404, se guardaron como texto, que es buscable, comparable entre versiones y no arriesga publicar de refilón una credencial que estuviera en pantalla.
 = Matriz de trazabilidad
 La pieza con la que se corrige la práctica: requisito por requisito, dónde está implementado, qué prueba lo verifica y dónde se ve. Las rutas están comprobadas en el código (4-oct). La columna de evidencia enlaza la figura de la memoria y el *minuto exacto del vídeo*. Se rellena al grabar.
 #tabla(
@@ -1149,16 +1094,7 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
 #estado("curso", "RUTAS VERIFICADAS EN CÓDIGO · PRUEBAS Y MINUTOS DE VÍDEO POR COMPLETAR")
 
 
-
-
-
-El plan de trabajo del equipo tiene *doce* casos, PR-01, 05, 06, 07, 08, 11, 13, 14, 16, 17, 18 y 19, de modo que *seis de los códigos que esta columna cita (PR-03, PR-04, PR-10, PR-12, PR-15 y PR-20) no tienen caso escrito en ninguna parte*. No es que el lector no tenga el plan: es que de un tercio de lo citado no hay plan que tener.
-
-*Y los doce que sí existen llevan resultados del 29 de septiembre*, medidos contra el prototipo *antes* de las Fases 1 y 2, así que varios son hoy literalmente falsos: PR-01 figura como fallo por un Basic Auth que la Fase 2 retiró. PR-16 dice que «toda la API responde sin credenciales», que es justo lo que la Fase 2 cerró. Y PR-19 da un error de servidor que la Fase 1 corrigió. Copiarlos tal cual habría metido tres afirmaciones falsas en el entregable.
-
-*Qué se hace con eso, y por qué el anexo no es un volcado.* Esos resultados del 29-sep *no son basura*: son la foto del punto de partida, y el enunciado pide expresamente las pruebas que fallaron con su explicación. El anexo del apartado 12 no copia el plan, lo reconstruye con *dos columnas*, qué daba el 29-sep y qué da hoy, y declara, caso por caso, de dónde sale el resultado de hoy: de una reejecución, de una figura de esta memoria, o de que no se ha podido reejecutar y por qué.
-
-> *Hecho el 13-oct.* El plan está ahora en el *anexo del apartado 12*, reconstruido caso por caso y no copiado: con el resultado del 29-sep, el de hoy y de dónde sale cada uno. Los tres desfases que habrían entrado como afirmaciones falsas, PR-01, PR-16 y PR-19, quedan corregidos con medida nueva. La numeración RF/RNF es la fijada en el apartado 3.
+La columna de prueba remite al *plan de pruebas del apartado 7*, que reconstruye los dieciocho casos citados con dos resultados, el del 29 de septiembre sobre el prototipo y el de hoy sobre el código congelado, y declara caso por caso de dónde sale el resultado de hoy. La numeración RF/RNF es la fijada en el apartado 3.
 
 
 #hueco("el grupo", "Al revisar el vídeo grabado, anotar el minuto exacto donde se demuestra cada requisito y el número de figura de su captura.")
@@ -1408,51 +1344,6 @@ de confirmaciones como reparto, por el motivo que ese mismo apartado explica: la
 
 = Anexos
 Manual de instalación ampliado, credenciales de prueba (ficticias), glosario y referencias.
-== #highlight(fill: rgb("#FFE97A"), extent: 1.5pt)[Plan de pruebas: los dieciocho casos que cita la matriz]
-
-Esta tabla existe porque la columna «Prueba» del apartado 8 citaba dieciocho códigos y el lector no tenía
-dónde ir a verlos. Se reconstruye aquí con *dos resultados*: el del *29-sep*, medido sobre el prototipo
-antes de las Fases 1 y 2, y el de *hoy*, sobre el código congelado. La última columna dice *de dónde sale
-el resultado de hoy*, que es lo que permite juzgarlo: una reejecución, una figura de esta memoria, o nada
-, y entonces se dice.
-
-#tabla(
-  (auto, auto, 4fr, 3fr, 4fr),
-  "
-  ID | Req. | Qué prueba | 29-sep (prototipo) | Hoy (código congelado)
-  PR-01 | RF-01 | Abrir la URL pública en un navegador limpio | 401 Basic Auth: la credencial documentada no entra | *200*, sirve el panel · reejecutada en producción
-  PR-03 | RF-03 | Rastrear un objetivo y revisar el panel de detalle | no ejecutada | *pasa* · figura del apdo. 7: rótulos legibles y cabeceras reales
-  PR-04 | RF-04 | Enviar dos veces la misma petición y comparar | *sin caso escrito* | *pasa* · figuras del apdo. 7: mismo estado, tamaño y cuerpo. Distinto tiempo
-  PR-05 | RF-05 | Modificar y reenviar una petición. Ver la respuesta | envío correcto, historial vacío | *pasa* · figuras de los apdos. 5 y 8. El historial se retiró por diseño (apdo. 9)
-  PR-06 | RF-06 | Marcar un campo y lanzar el Intruder | diccionarios servidos. Ejecución sin probar | *no reejecutada*: exige lanzar tráfico de ataque real, y su procedimiento del 29-sep nombraba el laboratorio retirado el 13-oct
-  PR-07 | RF-07 | Hash, codificadores y regex con casos conocidos | hash y codificadores correctos. JWT no soportado | *no reejecutada*: exige credencial de usuario
-  PR-08 | RF-08 | Publicar un hallazgo y recuperarlo por el panel | backend correcto. Faltaba el productor | *pasa* · recorrido completo verificado el 10-oct y figura del apdo. 7 (techo a 0 €)
-  PR-10 | RF-10 | Ejercitar el módulo de navegador | *sin caso escrito* | *no reejecutada*: hasta hoy el módulo ni siquiera estaba en la red interna. El despliegue del 13-oct lo corrige, pero no se ha ejercitado
-  PR-11 | RF-11 | Que cada usuario tenga su espacio de datos | tokens correctos por /api/session/new | *procedimiento caducado*: esa ruta se retiró en la Fase 2. Lo que hoy cumple RF-11 es el acceso por usuario, y se prueba con PR-12
-  PR-12 | RF-12 | Que un usuario no vea los datos de otro | *sin caso escrito* | *pasa* · cuatro figuras del apdo. 6, verificado 11/11 en el entorno local
-  PR-13 | RNF-03 | Servicio en pie y API publicada en la caja | /health correcto. Esquema de la API *abierto* | *pasa y mejora*: /health 200 y el esquema *ya no se publica* · reejecutada
-  PR-14 | RNF-07 | Sin claves en lo que se publica | por ejecutar | *pasa* · cero ficheros seguidos por git con clave, con control positivo · reejecutada
-  PR-15 | RNF-08 | Cortafuegos por sesión | *sin caso escrito* | *no reejecutada*: el agente está operativo y endurecido (apdos. 6-7), pero no se ha vuelto a ejercitar
-  PR-16 | RNF-07 | Llamar a la API sin ninguna credencial | *toda la API respondía* | *pasa*: 401, y los puertos 8000 y 3000 rechazan conexión desde fuera · reejecutada
-  PR-17 | RNF-02 | Conexión en tiempo real con el servidor | enlace correcto, sin autenticar | *pasa* · el indicador «conectado» de las figuras lo prueba ya autenticado
-  PR-18 | RNF-09 | Responder por TLS | sin HTTPS | *sigue sin TLS* · reejecutada. RNF-09 es el único requisito declarado pendiente
-  PR-19 | RF-02 | Estado del proxy del lado servidor | *500*, error de servidor | *pasa*: 401, el extremo responde y exige credencial · reejecutada
-  PR-20 | RNF-05 | Límite de peticiones simultáneas | *sin caso escrito* | *no reejecutada*: el límite está implementado y citado en el apdo. 7, pero sin prueba propia
-  ",
-)
-
-*Cómo leer esta tabla, dicho sin adornos.* De los dieciocho casos, *seis se han reejecutado hoy* contra
-producción, *seis los demuestra una figura* de esta memoria, *cinco no se han reejecutado* y se dice por
-qué, y *uno, PR-11, tiene el procedimiento caducado* porque cita una ruta que la Fase 2 retiró. Seis de los
-dieciocho *no tenían caso escrito en ninguna parte* antes de hoy (PR-03, 04, 10, 12, 15 y 20): se redactan
-aquí por primera vez.
-
-*Un aviso de método que vale para quien repita estas medidas.* El frontend es una aplicación de una sola
-página, y el servidor devuelve su portada a *cualquier ruta desconocida*: una dirección inventada responde
-200 igual que una real. Por eso, en las filas reejecutadas, un 200 no se ha dado por bueno sin mirar el
-tipo de contenido, y es lo que evitó concluir que el esquema de la API seguía publicado cuando lo que
-respondía era la portada. Las salidas completas están en docs/evidencias/pruebas-reejecutadas-13oct.md.
-
 == Manual de despliegue
 El despliegue es *manual y deliberadamente aburrido*: la instalación pública solo recibe versiones, nunca
 arreglos. Está prohibido editar ficheros en ella, fue la causa de que durante la Fase 0 lo desplegado no
