@@ -771,7 +771,7 @@ herramientas, sin redondear hacia abajo.
 = Pruebas y evidencias
 Plan de pruebas, casos ejecutados, resultados y las pruebas que fallaron con su explicación. La matriz del apartado 8 relaciona cada caso con su requisito y su evidencia.
 
-*Dónde se tomó cada evidencia, porque cambia lo que vale.* Salvo cuando se dice lo contrario, toda la verificación previa a cada despliegue se ejecutó en el *entorno local de pruebas*, una réplica del despliegue levantada con los mismos contenedores en una máquina del equipo, y se repitió después contra la instalación pública tras cada despliegue. Las dos se registran por separado y con su fecha: una prueba en el entorno local dice que el arreglo funciona. Solo la de producción dice que *está puesto*. Esa distinción no es formalismo: más abajo se cuenta un despliegue que habría pasado por correcto sin aplicar la configuración que se le pedía.
+*Dónde se tomó cada evidencia, porque cambia lo que vale.* Salvo cuando se dice lo contrario, toda la verificación previa a cada despliegue se ejecutó en el *entorno local de pruebas*, una réplica del despliegue levantada con los mismos contenedores en una máquina del equipo, y se repitió después contra la instalación pública tras cada despliegue. Las dos se registran por separado y con su fecha: una prueba en el entorno local dice que el arreglo funciona. Solo la de producción dice que *está puesto*. Esa distinción no es formalismo: más abajo se cuenta un despliegue que habría pasado por correcto sin aplicar la configuración que se le pedía. Las salidas de terminal (respuestas sin credencial, cierres de puertos, mensajes de error) se guardan como *texto* en el repositorio y no como foto, de modo que son comparables entre versiones y ninguna captura publica por error un secreto.
 
 == El plan de pruebas: los dieciocho casos que cita la matriz
 
@@ -849,24 +849,24 @@ Un par de capturas tomadas sobre el producto desplegado, antes y después de cor
 El 11-oct no se añadió funcionalidad: la jornada se dedicó a *pulir* lo que ya existía, pestaña por pestaña, empezando por la primera. De esa pasada salen quince defectos corregidos en el Spider. Lo que más dice de ellos no es el número, sino *cómo aparecieron*: catorce usando la herramienta y uno leyendo el código. Cada fila está atada a su entrada del diario de desarrollo, que es la fuente.
 
 #tabla(
-  (auto, 5fr, 2fr, auto),
+  (auto, 6fr, 2fr),
   "
-  \# | Qué pasaba | Cómo apareció | Diario
-  1 | Pulsar «Detener» no paraba hasta terminar todos los formularios de la página en curso | usando | 11:17
-  2 | Tres textos de la pantalla describían algo distinto de lo que el código hacía | usando | 11:17
-  3 | El indicador de sesión decía «autenticado» sin que nadie se hubiera autenticado | usando | 11:49
-  4 | El mismo indicador fallaba en los dos sentidos: ni se encendía con sesión ni se apagaba sin ella | usando | 12:45
-  5 | El campo de URL se bloqueaba al iniciar, y no decía por qué ni cómo liberarlo | usando | 12:51
-  6 | Los tres botones de borrado hacían cosas distintas y nada permitía saber cuál usar | usando | 13:01
-  7 | La pestaña se llamaba «Proxy» y no es un proxy, sino un rastreador | usando | 14:19
-  8 | Los formularios colgaban de páginas ajenas: la pertenencia se adivinaba por prefijo de URL | usando | 14:19
-  9 | La columna de estado mezclaba códigos HTTP con la palabra FORM, que no es un código | usando | 14:27
-  10 | Al terminar, el rastreo no decía cómo había terminado | usando | 17:52
-  11 | El objetivo fijado se perdía al refrescar la página, y permitía lanzar otro encima | usando | 17:52
-  12 | El recuento del mensaje final no cuadraba con las filas del panel | usando | 18:12
-  13 | Las primeras filas capturadas no se alcanzaban con el scroll | usando | 18:15
-  14 | La etiqueta del desplegable de formularios insinuaba más de lo que había | usando | 18:15
-  15 | Los filtros escondían los formularios. Filtrar por POST vaciaba la tabla entera | leyendo el código | 19:22
+  \# | Qué pasaba | Cómo apareció
+  1 | Pulsar «Detener» no paraba hasta terminar todos los formularios de la página en curso | usando
+  2 | Tres textos de la pantalla describían algo distinto de lo que el código hacía | usando
+  3 | El indicador de sesión decía «autenticado» sin que nadie se hubiera autenticado | usando
+  4 | El mismo indicador fallaba en los dos sentidos: ni se encendía con sesión ni se apagaba sin ella | usando
+  5 | El campo de URL se bloqueaba al iniciar, y no decía por qué ni cómo liberarlo | usando
+  6 | Los tres botones de borrado hacían cosas distintas y nada permitía saber cuál usar | usando
+  7 | La pestaña se llamaba «Proxy» y no es un proxy, sino un rastreador | usando
+  8 | Los formularios colgaban de páginas ajenas: la pertenencia se adivinaba por prefijo de URL | usando
+  9 | La columna de estado mezclaba códigos HTTP con la palabra FORM, que no es un código | usando
+  10 | Al terminar, el rastreo no decía cómo había terminado | usando
+  11 | El objetivo fijado se perdía al refrescar la página, y permitía lanzar otro encima | usando
+  12 | El recuento del mensaje final no cuadraba con las filas del panel | usando
+  13 | Las primeras filas capturadas no se alcanzaban con el scroll | usando
+  14 | La etiqueta del desplegable de formularios insinuaba más de lo que había | usando
+  15 | Los filtros escondían los formularios. Filtrar por POST vaciaba la tabla entera | leyendo el código
   ",
 )
 
@@ -878,25 +878,25 @@ El 11-oct no se añadió funcionalidad: la jornada se dedicó a *pulir* lo que y
 El 12-oct repitió el método del día anterior sobre la segunda pestaña: no se añadió alcance, se pulió lo que había. El resultado se parece al del Spider en el número y se diferencia en algo que conviene contar entero, porque es lo más instructivo de la jornada: *una función se añadió por la mañana y se retiró por la tarde*.
 
 #tabla(
-  (auto, 5fr, 2fr, auto),
+  (auto, 6fr, 2fr),
   "
-  Nº | Qué pasaba | Cómo apareció | Diario
-  1 | Un fallo de red se mostraba como una respuesta más, con el código HTTP 0 y medidas de «0 ms» y «0,0 KB» | leyendo el código | 10:50
-  2 | El panel no decía a qué dirección se había enviado: con varias peticiones seguidas no se sabía de cuál era la respuesta | usando | 10:50
-  3 | El cuerpo de la petición de envío mandaba el identificador de espacio de datos, residuo del modelo anterior al login | leyendo el código | 10:50
-  4 | «Limpiar» no era definitivo: al volver a la pestaña reaparecían la petición y sus cabeceras heredadas | usando | 12:37
-  5 | El Spider guardaba y enseñaba como enviadas unas cabeceras *fabricadas aparte*: otro User-Agent, un Host que nadie puso y ninguna Cookie | tirando de un hilo | 12:50
-  6 | El arreglo anterior seguía sin mostrar la cookie de sesión, porque la pone el cliente de red por debajo y no pasaba por ese diccionario | captura de producto | 13:35
-  7 | Los cinco rótulos del panel de detalle no se distinguían del contenido: se leían las cabeceras de respuesta como si fueran de petición | usando | 13:30
-  8 | Las respuestas se cruzaban: se veía una dirección con el cuerpo de otra petición, y no era reproducible a voluntad | usando | 16:49
-  9 | No había forma de probar la misma petición *sin* sesión: el único botón vaciaba la petición entera | usando | 16:49
-  10 | El Repeater seguía las redirecciones siempre, así que *nunca* se veía el 302 ni su Location | comparando con la herramienta de referencia | 18:03
-  11 | Dos envíos idénticos daban resultados distintos: el cliente compartido ponía cookies que no estaban en la petición | usando | 18:37
-  12 | Los formularios descubiertos por el Spider viajaban sin sesión, y todos los POST devolvían 419 | usando | 18:45
-  13 | La petición que el Spider manda al Repeater nace vieja: es una plantilla con el token del rastreo, no una petición capturada | usando | 20:24
-  14 | «Limpiar» no borraba la página preparada, que se quedaba a la vista | usando | 20:43
-  15 | Dos avisos que ya no podían aparecer nunca: quedaba el código que los lee, no lo que los provoca | escribiendo el manual | 21:03 y 21:24
-  16 | El manual del Spider afirmaba de las cabeceras lo que el código no cumplía, y no documentaba un botón nuevo | escribiendo el manual | 21:13
+  Nº | Qué pasaba | Cómo apareció
+  1 | Un fallo de red se mostraba como una respuesta más, con el código HTTP 0 y medidas de «0 ms» y «0,0 KB» | leyendo el código
+  2 | El panel no decía a qué dirección se había enviado: con varias peticiones seguidas no se sabía de cuál era la respuesta | usando
+  3 | El cuerpo de la petición de envío mandaba el identificador de espacio de datos, residuo del modelo anterior al login | leyendo el código
+  4 | «Limpiar» no era definitivo: al volver a la pestaña reaparecían la petición y sus cabeceras heredadas | usando
+  5 | El Spider guardaba y enseñaba como enviadas unas cabeceras *fabricadas aparte*: otro User-Agent, un Host que nadie puso y ninguna Cookie | tirando de un hilo
+  6 | El arreglo anterior seguía sin mostrar la cookie de sesión, porque la pone el cliente de red por debajo y no pasaba por ese diccionario | captura de producto
+  7 | Los cinco rótulos del panel de detalle no se distinguían del contenido: se leían las cabeceras de respuesta como si fueran de petición | usando
+  8 | Las respuestas se cruzaban: se veía una dirección con el cuerpo de otra petición, y no era reproducible a voluntad | usando
+  9 | No había forma de probar la misma petición *sin* sesión: el único botón vaciaba la petición entera | usando
+  10 | El Repeater seguía las redirecciones siempre, así que *nunca* se veía el 302 ni su Location | comparando con la herramienta de referencia
+  11 | Dos envíos idénticos daban resultados distintos: el cliente compartido ponía cookies que no estaban en la petición | usando
+  12 | Los formularios descubiertos por el Spider viajaban sin sesión, y todos los POST devolvían 419 | usando
+  13 | La petición que el Spider manda al Repeater nace vieja: es una plantilla con el token del rastreo, no una petición capturada | usando
+  14 | «Limpiar» no borraba la página preparada, que se quedaba a la vista | usando
+  15 | Dos avisos que ya no podían aparecer nunca: quedaba el código que los lee, no lo que los provoca | escribiendo el manual
+  16 | El manual del Spider afirmaba de las cabeceras lo que el código no cumplía, y no documentaba un botón nuevo | escribiendo el manual
   ",
 )
 
@@ -914,13 +914,6 @@ El 12-oct repitió el método del día anterior sobre la segunda pestaña: no se
 
 
 > *Nota de tratamiento de estas figuras.* Todas se tomaron en producción, sobre el código congelado, contra una web propia del equipo autorizada para ello. Desde el 12-oct el panel de cabeceras muestra la cookie de sesión del objetivo, es lo correcto, porque es lo que se envía, así que cada figura se publica con esos valores tapados y los originales no salen del almacén interno.
-
-== Condición de carrera detectada antes de reiniciar el servidor
-El agente del cortafuegos y el servicio de contenedores no tenían orden de arranque entre sí. Si el segundo ganaba la carrera, *creaba una carpeta donde debía ir el canal de comunicación del agente*, comportamiento normal al montar un fichero que no existe, y el agente quedaba en un bucle de reinicios. El servidor llevaba sin reiniciarse desde mayo, así que nunca se había puesto a prueba. Se corrigió fijando el orden de arranque antes de reiniciar. Tras el reinicio, el contador de reinicios del agente marcaba *cero*: la carrera no llegó a producirse.
-
-== Otras evidencias ya en mano
-- *Incidente de las claves y limpieza del historial:* ensayo de reescritura verificado antes/después (3 → 0 claves), detallado en el apartado 6.
-- *Salidas de terminal* (health sin login, openapi.json sin seguridad, cierre de puertos, mensajes de error) guardadas como texto en el repo, no como foto (así ninguna captura publica por error un secreto).
 
 == El aislamiento (RF-12): las fugas capturadas antes, y la verificación después
 *Antes del arreglo*, cuatro pruebas lanzadas el 6-oct contra el entorno local a través del proxy, como las haría un cliente, porque el propio arreglo borra esta evidencia y el apartado pide las pruebas que fallaron. Las cuatro confirmaron el fallo: la API responde 200 sin credencial mientras /health responde 401. Un token inventado obtiene sesión propia. Un segundo usuario lee la cookie de sesión capturada por el primero. Y una vulnerabilidad publicada sin token aparece en la sesión de dos auditores distintos. La captura íntegra, con la causa en fichero y línea de cada una, está en evidencias/fugas-aislamiento-06oct.md, con los valores de cookie inventados a propósito.
@@ -947,8 +940,8 @@ RNF-03 pide un *despliegue reproducible*, y hasta el 14 de octubre lo que respal
 *El arreglo fue del documento, no del producto:* el aviso deja de mandar a un número concreto, se añade cómo comprobar si un puerto está libre antes de elegirlo, y se advierte de que la comprobación final tiene que mostrar los *seis* servicios. Con eso la instalación llegó hasta la pantalla de acceso y se completó el alta de una cuenta con el código de invitación que genera el propio despliegue. *Lo que esta prueba no es:* la comprobación que pide la lista del enunciado, que una persona ajena al grupo instale el producto siguiendo el README, porque la condujo quien lo había escrito. Esa sigue abierta.
 
 
-== Dos defectos de montaje que impedían operar
-Los dos aparecieron al reconstruir el entorno desde cero, y ninguno daba error visible al arrancar.
+== Defectos de montaje y arranque que impedían operar
+Los tres aparecieron al reconstruir el entorno desde cero o al preparar un reinicio, y ninguno daba error visible.
 
 - *El proxy dependía del laboratorio para arrancar.* El fichero infra/nginx.conf hacía del laboratorio
   vulnerable un requisito de arranque del proxy, que fallaba con «host not found in upstream» si aquel no
@@ -959,6 +952,11 @@ Los dos aparecieron al reconstruir el entorno desde cero, y ninguno daba error v
   configurada su dirección. Es la causa raíz de que RF-10 y RF-08 no llegaran a operar. Se corrigió con una
   línea en el fichero de composición y se verificó con docker compose config, que sitúa ahora los seis
   servicios en la misma red.
+- *Condición de carrera detectada antes de reiniciar el servidor.* El agente del cortafuegos y el servicio
+  de contenedores no tenían orden de arranque entre sí: si el segundo ganaba la carrera, creaba una carpeta
+  donde debía ir el canal de comunicación del agente y este quedaba en un bucle de reinicios. El servidor
+  llevaba sin reiniciarse desde mayo, así que nunca se había puesto a prueba. Se corrigió fijando el orden
+  de arranque antes de reiniciar, y tras el reinicio el contador de reinicios del agente marcaba *cero*.
 == Un módulo que parecía sano y no podía hablar con nadie (RF-08)
 La prueba más barata de esta práctica fue una petición con curl, y descubrió un defecto que llevaba cuatro días en producción sin que nadie lo notara: *el módulo de IA no podía comunicarse con el backend* desde que se puso el control de acceso. El módulo preguntaba al backend cada cinco segundos si había trabajo, esa ruta quedó protegida junto con las demás, correctamente, y el módulo no presenta credencial ninguna, de modo que recibía un rechazo en cada intento.
 
@@ -969,23 +967,16 @@ Reconectar el módulo por un bus interno (apartado 4) cambia la forma del riesgo
 
 Los dos que justifican el esfuerzo: *un hallazgo sin dueño se descarta*, no se guarda ni se emite (sin esa regla, un mensaje mal formado reabriría exactamente la fuga de aislamiento ya cerrada), y *dos auditores no ven lo del otro*, comprobado repartiendo a dos espacios y verificando que cada uno recibe solo lo suyo. Tres más cubren el fallo silencioso en el otro extremo: si la auditoría se interrumpe se publica el motivo, si nadie escucha el bus publicar lo dice en vez de dar el trabajo por encolado, y si una orden llega sin dueño no se audita. Reproducible con python3 backend/tests/test_bus_reparto.py y python3 ia/tests/test_bus_publicacion.py.
 
-== El recorrido completo del disparador, verificado de punta a punta (RF-08)
-Durante cuatro días el disparador estuvo *construido y sin poder demostrarse*: el botón existía, el bus estaba cableado, y aun así una pulsación desde el panel no movía ni una línea del módulo de IA. El apartado llegó a listar tres hipótesis sin poder decidir entre ellas.
+== El disparador y el techo de gasto, verificados de punta a punta (RF-08)
+Durante cuatro días el disparador estuvo *construido y sin poder demostrarse*: el botón existía, el bus estaba cableado, y aun así una pulsación desde el panel no movía ni una línea del módulo de IA. El 10-oct se cerró, y la forma de cerrarlo es parte del resultado: *se anotó la hora exacta de la pulsación* y se midió contra ella. A partir de las 13:58:10 el servidor registra *una* petición al disparador, con respuesta correcta, y el registro del módulo de IA pasa de 192 a 376 líneas. Panel → autenticación → bus → módulo suscrito: el recorrido entero, por primera vez. *Lo que no se da por explicado:* cincuenta y ocho minutos antes la misma pulsación no había movido nada sin que se tocara el producto entre una y otra, y la explicación cómoda, una sesión caducada, no encaja. Queda abierto y declarado, porque un apartado de pruebas que explica lo que no sabe explicar vale menos que uno que lo admite.
 
-El 10-oct se cerró, y la forma de cerrarlo es parte del resultado: en lugar de seguir estimando sobre ventanas de tiempo aproximadas, *se anotó la hora exacta de la pulsación* y se midió contra ella. A partir de las 13:58:10 el servidor registra *una* petición al disparador, con respuesta correcta, y el registro del módulo de IA pasa de 192 a 376 líneas. Panel → autenticación → bus → módulo suscrito: el recorrido entero, por primera vez.
-
-*Lo que no se da por explicado.* Cincuenta y ocho minutos antes, la misma pulsación no había movido nada, y entre una y otra *no se tocó el producto*, ningún fichero ni contenedor cambió. La explicación cómoda sería una sesión caducada, pero no encaja: el sondeo de instrucciones sigue devolviendo *no autorizado* ahora, con sesión válida y el disparador funcionando. Queda abierto y declarado, porque un apartado de pruebas que explica lo que no sabe explicar vale menos que uno que lo admite.
-
-== El techo de gasto, ejecutado: una auditoría entera por 0 € (RF-08)
-Este caso estuvo declarado durante semanas como *preparado y no ejecutado*, y se deja constancia de que ya no lo está. Una auditoría del módulo de IA no tiene límite de consultas al modelo: el recorrido anida páginas × tipos de prueba × cargas, y cada carga es una consulta. Con el disparador funcionando, cada pulsación arranca ese recorrido completo.
-
-El caso estaba diseñado para costar *cero*: fijando el techo en 0 por variable de entorno, ninguna consulta debe salir y la auditoría debe quedar marcada como truncada. *Ejecutado el 10-oct desde el panel, con sesión real.* La auditoría recorrió cuarenta y ocho elementos, no salió *ni una sola* consulta al modelo, coste 0 €, y los cuarenta y ocho quedaron marcados como no analizados, cada uno con el motivo del techo. El techo no se limita a cortar: *el corte se ve*, que era la condición que se le puso al diseñarlo.
+El mismo día se ejecutó *el caso del techo de gasto*. Una auditoría del módulo de IA anida páginas × tipos de prueba × cargas, y cada carga es una consulta al modelo: sin techo, cada pulsación arranca ese recorrido completo con gasto sin acotar. El caso estaba diseñado para costar *cero*: con el techo en 0 por variable de entorno, ninguna consulta debe salir y la auditoría debe quedar marcada como truncada. Ejecutado el 10-oct desde el panel, con sesión real: la auditoría recorrió cuarenta y ocho elementos, no salió *ni una sola* consulta, coste 0 €, y los cuarenta y ocho quedaron marcados como no analizados, cada uno con el motivo del techo. El techo no se limita a cortar: *el corte se ve*, que era la condición que se le puso al diseñarlo.
 
 *La mitad que falta del caso*, y se declara: el techo en 1, donde debe pasar una sola consulta y el resto quedar como «no analizado». Esa sí necesita clave de API válida, porque la consulta que pasa tiene que salir de verdad.
 
 #hueco("el grupo", "Ejecutar la segunda mitad del caso del techo, techo en 1, en cuanto haya clave de API válida: debe pasar una sola consulta y el resto quedar como «no analizado» con el motivo del techo. La primera mitad (techo 0) ya está ejecutada y capturada. Coste previsto: una consulta.")
 #estado("ok", "AISLAMIENTO POR USUARIO: 11/11 EN EL ENTORNO LOCAL · EN PRODUCCIÓN SOLO SE HAN VERIFICADO LAS CUATRO FUGAS CERRADAS EL 8-OCT, NO LA BATERÍA ENTERA")
-#estado("ok", "EVIDENCIA DE EXPOSICIÓN Y DE LA FASE 1 COMPLETA")
+#estado("ok", "EVIDENCIA DE EXPOSICIÓN Y DEL ENDURECIMIENTO, COMPLETA")
 #hueco("el grupo", "Plan de pruebas formal y capturas de producto de los dos defectos ya corregidos (el error 500 de la comprobación de vida y la trampa del Spider): falta reproducirlos en el entorno local sobre el producto actual y capturar la pantalla.")
 
 
@@ -1041,12 +1032,12 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
   Req. | Descripción | Estado | Implementación (ruta) | Prueba | Evidencia
   RF-01 | Dashboard web sin instalación | Cumplido (seis pestañas: se retira Red y se añade Manual el 11-oct) | frontend/src/App.jsx + Layout.jsx + pages/manual/ManualPage.jsx | PR-01 | fig. apdo. 9 · vídeo —:—
   RF-02 | Proxy del lado servidor (httpx) | Modificado (dos errores de servidor corregidos al inicio de la práctica) | backend/services/proxy_service.py | PR-19 | justif. apdo. 3 · apdo. 5
-  RF-03 | Spider / rastreo | Cumplido (cuatro defectos corregidos al inicio de la práctica. Quince más en el pulido del 11-oct. El 12-oct las cabeceras que muestra pasan a ser las realmente enviadas) | backend/services/spider_service.py, frontend/.../ProxyPage.jsx, .../RequestsTable.jsx | PR-03 | figs. apdo. 7 · vídeo —:—
+  RF-03 | Spider / rastreo | Cumplido (cuatro defectos corregidos al inicio y quince en el pulido del 11-oct. Las cabeceras que muestra son las realmente enviadas) | backend/services/spider_service.py, frontend/.../ProxyPage.jsx, .../RequestsTable.jsx | PR-03 | figs. apdo. 7 · vídeo —:—
   RF-04 | Auditoría autenticada (sesión compartida) | *Modificado* (12-oct: el Repeater envía con cliente propio y la sesión se hereda por cabecera explícita) | backend/services/session_service.py, backend/services/proxy_service.py, backend/routes/repeater.py | PR-04 | justif. apdo. 3 · figs. apdo. 7
-  RF-05 | Repeater | Cumplido (parser y avisos de error corregidos al inicio de la práctica. El importador de peticiones se traslada aquí desde el Spider el 11-oct y se *retira* el mismo día. Dieciséis defectos corregidos en el pulido del 12-oct, con un historial añadido y retirado esa misma jornada) | backend/routes/repeater.py, backend/services/proxy_service.py, frontend/src/pages/repeater/ | PR-05 | figs. apdo. 5 · vídeo —:—
+  RF-05 | Repeater | Cumplido (dieciséis defectos corregidos en el pulido del 12-oct. El historial se añadió y se retiró esa misma jornada, decisión en el apdo. 9) | backend/routes/repeater.py, backend/services/proxy_service.py, frontend/src/pages/repeater/ | PR-05 | figs. apdo. 5 · vídeo —:—
   RF-06 | Intruder / fuzzing | Cumplido (cancelación corregida al inicio de la práctica) | backend/services/intruder_service.py | PR-06 | fig. apdo. 5 · vídeo —:—
   RF-07 | Utilidades (incl. JWT) | Cumplido | frontend/src/pages/utilities/ | PR-07 | fig. apdo. 5 · vídeo —:—
-  RF-08 | IA → panel Vulnerabilidades | Parcial: el recorrido está verificado de punta a punta (10-oct) y el techo de gasto ejecutado, pero *ninguna auditoría ha devuelto todavía un hallazgo analizado*, todas las que han llegado al final salieron degradadas, por el techo de gasto, por la clave de API o por el tope de tokens | ia/, backend/routes/playwright.py, backend/services/redis_consumer.py, frontend/.../VulnerabilitiesPage.jsx | PR-08 | figs. apdo. 7 · vídeo —:—
+  RF-08 | IA → panel Vulnerabilidades | Parcial: recorrido verificado de punta a punta (10-oct) y techo de gasto ejecutado, pero *ninguna auditoría ha devuelto todavía un hallazgo analizado*: todas salieron degradadas (techo, clave de API o tope de tokens) | ia/, backend/routes/playwright.py, backend/services/redis_consumer.py, frontend/.../VulnerabilitiesPage.jsx | PR-08 | figs. apdo. 7 · vídeo —:—
   RF-09 | DevTools → panel Red | *Descartado* (11-oct. Justificado en apartado 3) | devtools/ conservado · backend/routes/network.py se mantiene (lo consumen IA y Playwright) | — | fig. apdo. 7 · vídeo —:— 
   RF-10 | Playwright | *Parcial* (construido y conectado a la red interna del despliegue. PR-10 sin ejecutar y el sondeo de instrucciones devuelve 401 con sesión válida, apartados 6 y 7) | playwright/ + backend/routes/playwright.py | PR-10 | apdos. 6-7 · vídeo —:—
   RF-11 | Multi-usuario | Cumplido (reimplementado al rehacer el acceso por usuario) | backend/services/guardia.py + services/auth_service.py | PR-11 | apdo. 6 · figs. apdo. 7
@@ -1058,7 +1049,7 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
   RNF-05 | Límite de concurrencia | Cumplido | backend/services/intruder_service.py (asyncio.Semaphore) | PR-20 | apdo. 7
   RNF-06 | Operación degradada cuando la IA falla o no supera el umbral | Cumplido y *visto en el panel* (10-oct, y de nuevo el 15-oct en producción con un motivo distinto: clave de API ausente) | ia/client.py, ia/analyzers/vulnerability_classifier.py, backend/services/redis_consumer.py, frontend/.../VulnerabilitiesPage.jsx | ia/tests/test_tres_estados.py (8/8), ia/tests/test_escala_confianza.py (19/19) | fig. apdo. 7
   RNF-07 | Seguridad del producto | Parcial: exposición cerrada, servidor endurecido, autenticación y aislamiento verificados, pero las dependencias acumulan avisos conocidos (12 en el frontend y 78 en el árbol del backend, apdo. 6) y no se actualizó ninguna | ver apartado 6 | PR-14, PR-16 | apdo. 6-7
-  RNF-08 | Firewall dinámico por sesión | Cumplido en la P1 y endurecido después (permisos del canal y validación de entradas), pero *su ciclo por sesión, abrir al entrar y cerrar al salir o a las cuatro horas, no se ha vuelto a ejercitar en esta práctica*: PR-15 no tiene caso escrito | firewall_agent.py | PR-15 | apdo. 6-7
+  RNF-08 | Firewall dinámico por sesión | Cumplido en la P1 y endurecido después, pero *su ciclo por sesión no se ha vuelto a ejercitar en esta práctica*: PR-15 no tiene caso escrito | firewall_agent.py | PR-15 | apdo. 6-7
   RNF-09 | TLS/HTTPS | Pendiente | (por configurar en Nginx) | PR-18 | apdo. 7
   ",
 )
