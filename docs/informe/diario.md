@@ -4986,3 +4986,29 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   mitad del caso del techo de gasto, el plan de pruebas formal con capturas de producto de los defectos,
   lo que salga de revisar el vídeo grabado, y el acumulado de limitaciones de las fases 1 a 4.
 - **A qué requisito toca:** ninguno en concreto, es trabajo de entrega. **Horas:** ~0,7 h de asistente.
+
+## Fase 3 (15-oct, noche) — el enunciado releído entero, y la matriz puesta a cumplirlo
+
+- **Qué se hizo:** se releyó el enunciado completo del PDF y se listaron todos los criterios que impone a
+  la memoria técnica, repartidos por ocho secciones del documento y no solo por la del entregable 1.
+  Decisión de josemax con esa lista delante: ni reescribir de cero ni seguir el repaso con visto bueno por
+  apartado, sino **llevar el `.typ` actual a cumplimiento total de los criterios**. Primera tanda, la
+  matriz, que seguía sin revisar: **RNF-07 baja a Parcial** (el «Cumplido» contradecía al propio apartado
+  6, que cuenta 12 avisos en el frontend y 78 en el backend sin actualizar ninguno), la celda de RNF-08
+  pasa a empezar por su estado como las otras veinte, fuera el cartel «pendiente de validar por el grupo»
+  (no va a haber validación del grupo y mantenerlo prometía algo falso), y el recuento del resumen pasa de
+  catorce cumplidos y tres parciales a **trece y cuatro**. Evidencias corregidas: la figura de RF-07
+  existe (apdo. 5) y las del Repeater están en los apartados 5 y 7, no en el 5 y el 8.
+- **También: el vocabulario interno, fuera del entregable.** «La cocina» quedaba definida como «el entorno
+  de pruebas descrito en el apartado 4», pero la revisión de esta tarde había borrado ese bloque del
+  apartado 4, así que la definición apuntaba al vacío: pasa a «entorno local de pruebas» en las nueve
+  menciones, con su definición en el apartado 7. Los «en F1 / en F2 / Fase 3» de la matriz pasan a fechas
+  o descripciones. Las citas de reglas internas (R6, R7) salen de la prosa y de los pies de figura. Y los
+  cuatro huecos dejan de llevar nombres propios como responsable.
+- **Qué se descartó:** cerrar los cuatro huecos reescribiéndolos. Son trabajo y evidencia pendientes
+  (vídeo, clave de API), no formato, y se quedan visibles como huecos.
+- **Qué falló:** nada en esta tanda. El escaneo de secretos fue antes del commit, en su propia orden, con
+  control positivo (85 «HookSuite» en el texto extraído del PDF, cero claves).
+- **A qué requisito toca:** RNF-07, RNF-08 y la matriz entera (apdo. 8), más el recuento del resumen
+  (apdo. 1). **Evidencia:** commit `7b1cf50d`.
+  **Horas:** ~0,5 h de asistente.
