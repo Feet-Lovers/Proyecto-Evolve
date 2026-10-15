@@ -4928,3 +4928,33 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   y **RNF-07**; apdos. **4**, **6**, **8**, **9** y **10**. **Evidencia:**
   `docs/evidencias/instalacion-readme-puerto-ocupado-15oct.md` y las siete figuras nuevas.
   **Horas:** ~3,5 h de asistente · ~0,8 h de josemax (pruebas en la caja, repaso de la pestaña y decisiones).
+
+## Fase 3 (15-oct, tarde) — la revisión del informe apartado por apartado
+
+- **Qué se hizo:** repaso con josemax de los apartados **1 a 5**, uno por uno y con tres pasos fijos en
+  cada uno: qué pide exactamente el enunciado, qué incoherencias hay, y no tocar nada hasta su visto
+  bueno. Antes, el **diseño entero** se rehizo idéntico al informe de la práctica 1: cubierta a sangre
+  como apartado 1, encabezado corrido, rótulo de sección, cada sección empezando en página nueva, y el
+  índice sin apuntar a la portada. Los **122 cruces** internos se renumeraron al pasar de trece
+  apartados a doce.
+- **Reglas de redacción que fijó josemax, y que ahora se aplican a todo el documento:** sin puntos y
+  coma ni caracteres que estorben la lectura normal, un solo tipo de letra, negrita no invasiva, y
+  **ningún dato sobre cómo nos organizamos el trabajo por dentro**. Eso último se llevó por delante las
+  dieciséis «correcciones declaradas», la descripción de los dos entornos de trabajo y las referencias
+  a las reglas internas del grupo. También se quitó el **monoespaciado** en todo el documento.
+- **Contenido de más, fuera:** tres subsecciones del apartado 5 que repetían la tabla de pantallas, dos
+  hallazgos duplicados del apartado 4, y la tabla de doce defectos que estaba en el apartado 5 se movió
+  al 7, que es el de pruebas. La fila de Vulnerabilidades de la tabla de pantallas medía **901
+  caracteres** frente a los 114-325 de las otras seis, y bajó a 341 sin perder las tres afirmaciones que
+  importan: lo que está visto es el camino degradado, nunca se ha visto un hallazgo analizado, y la
+  pantalla queda sin terminar.
+- **Un efecto secundario que se comprobó antes de darlo por bueno:** al quitar el monoespaciado, los
+  nombres de fichero con guión bajo podían salir en cursiva, porque el guión bajo es la marca de énfasis
+  del compositor. Se midieron las 27 líneas afectadas y en el PDF salen literales, porque el guión bajo
+  va dentro de una palabra y no abre énfasis.
+- **Lo que queda anotado para su apartado:** el cartel «pendiente de validar por el grupo» y el estado de
+  RNF-07 están **mal en la matriz**, no en el apartado 3, y se corrigen cuando lleguemos al 8.
+- **Tamaño:** **75 páginas totales, 68 contables.** El objetivo son 39, así que el recorte sigue abierto;
+  los doce bloques dudosos van resaltados en amarillo en el PDF para decidirlos de una vez.
+- **A qué requisito toca:** **RF-12**, **RNF-06**, **RF-09**, **RF-08**; apdos. **1** a **5**.
+  **Horas:** ~2,5 h de asistente · ~1,2 h de josemax (revisión del PDF y decisiones).
