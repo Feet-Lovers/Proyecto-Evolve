@@ -35,7 +35,7 @@ Si prefieres levantar tu propia copia —que es lo que describe el resto de este
 | **`openssl`** | Para generar las dos credenciales del paso 3. Viene de serie en Linux y macOS. |
 | **Python 3** | Solo si quieres ejecutar las pruebas automatizadas. No hace falta para instalar. |
 | **Clave de API de Anthropic** | Solo si se quiere usar el módulo de IA. El resto del producto funciona sin ella. |
-| **Un puerto libre** | Por defecto el **80**, que es el único que se publica. Si lo tienes ocupado, se cambia con una variable (ver abajo). |
+| **Un puerto libre** | Por defecto el **80**, que es el único que se publica. Si lo tienes ocupado, sirve cualquier otro por encima de 1024: lo cambias con una variable, y en «¿Y si el puerto está ocupado?» tienes cómo comprobar cuál tienes libre. |
 
 ---
 
@@ -70,11 +70,12 @@ docker compose ps
 
 Abre **http://localhost** en el navegador. Si todo ha ido bien, aparece la pantalla de acceso.
 
-> *¿`address already in use` en el paso 5?* Tienes el puerto 80 ocupado por otro servicio. Cambia
-> `HOOKSUITE_PUERTO` a otro valor en tu `.env` (por ejemplo `HOOKSUITE_PUERTO=8080`) — la variable ya viene
-> en el fichero, se cambia, no se añade—, vuelve a lanzar `docker compose up -d --build` y abre
-> **http://localhost:8080**. Dentro del contenedor nginx sigue escuchando en el 80; esto solo cambia por
-> qué puerto de tu máquina se llega.
+> *¿`address already in use` en el paso 5?* El **80** lo tiene otro servicio de tu máquina. Sirve
+> **cualquier puerto libre por encima de 1024**: cambia `HOOKSUITE_PUERTO` en tu `.env` —la variable ya
+> viene en el fichero, se cambia, no se añade—, vuelve a lanzar `docker compose up -d --build` y abre
+> `http://localhost:<TU_PUERTO>`. Dentro del contenedor nginx sigue escuchando en el 80; esto solo cambia
+> por qué puerto de tu máquina se llega. **Cómo saber cuál tienes libre: «¿Y si el puerto está ocupado?»,
+> justo debajo.**
 
 > **Nota sobre `tools/generar-credenciales.py`.** El repositorio incluye un script que genera esas dos
 > credenciales **sin mostrarlas por pantalla**. Lo usamos nosotros porque nuestro entorno de trabajo
@@ -84,6 +85,27 @@ Abre **http://localhost** en el navegador. Si todo ha ido bien, aparece la panta
 > **Si el backend no arranca, es a propósito.** Sin `JWT_SECRET` o sin `REGISTRO_CODIGO` se niega a
 > levantar en vez de arrancar sin autenticación pareciendo correcto. Revisa que el paso 3 los dejó
 > escritos en el `.env`.
+
+### ¿Y si el puerto está ocupado?
+
+El valor por defecto es el **80**, y es el único puerto que el producto publica. Si lo tienes ocupado sirve
+cualquier otro **por encima de 1024**; no hay ninguno «correcto».
+
+> ⚠️ **No elijas por costumbre: `8080` es el puerto alternativo más usado que existe** —paneles de
+> administración, proxys y servidores de desarrollo lo ocupan—, así que es fácil que también lo tengas
+> cogido y te lleves el mismo error dos veces.
+
+Para saber si un puerto está libre, pregúntale al sistema por **ese** puerto (aquí `8088`). En Linux:
+
+```bash
+ss -ltnH 'sport = :8088'
+```
+
+**Si no imprime nada, está libre.** Si imprime una línea, está ocupado: prueba con otro.
+
+**Qué verás si el puerto está ocupado:** el error lo da **solo `nginx`**, que es el único servicio que
+publica puerto; los otros cinco arrancan igual. No te fíes de que «parece que va»: el paso 6
+(`docker compose ps`) tiene que mostrar los **seis** servicios. Si ves cinco, el panel no se está sirviendo.
 
 ### Qué se levanta
 
@@ -114,8 +136,8 @@ En su lugar, **cada despliegue crea las suyas**:
 3. Rellena usuario y contraseña **tuyos** y pega ese código.
 4. Entra con esa cuenta.
 
-El registro *no es abierto*: sin el código no se crea ninguna cuenta. Para probar el aislamiento entre
-usuarios (RF-12), repite el registro con un segundo usuario y comprueba que no ve los datos del primero.
+El registro *no es abierto*: sin el código no se crea ninguna cuenta. Cada cuenta trabaja con sus propios
+datos y no ve los de las demás; si quieres comprobarlo, basta registrar un segundo usuario.
 
 > Para la *instalación pública* (ver arriba) el código de invitación no está en este repositorio ni en la
 > memoria —el PDF de la memoria también se versiona aquí—: se facilita en el comentario de la entrega.
