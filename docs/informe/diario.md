@@ -4887,3 +4887,44 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
 - **A qué requisito toca:** **RNF-03** (despliegue reproducible) y **RF-12** (cada cuenta con sus datos);
   apdos. **8** y **10**. **Evidencia:** `docs/evidencias/instalacion-readme-puerto-ocupado-15oct.md`.
   **Horas:** ~1,2 h de Claude · ~0,2 h de josemax (navegador, registro y las dos decisiones del texto).
+
+## Fase 3 (15-oct, mañana y mediodía) — la memoria deja de prometer lo que el producto no hace
+
+- **Qué se hizo, y en qué orden.** Con `ENTREGA.md` delante: los dos defectos que hacían que la memoria
+  *afirmara algo falso*, el paquete de la pestaña Vulnerabilidades, las siete capturas que faltaban, el
+  índice, el estado real del pulido, el apartado 8 y los cinco defectos restantes. Al final, PDF y
+  artefacto regenerados de la misma fuente, artefacto republicado y todo empujado.
+- 🔑 **El hallazgo del día, y nace de repasar la pestaña Vulnerabilidades afirmación por afirmación con
+  josemax.** La memoria describía esa pantalla como terminada —«panel donde aterrizan los hallazgos con su
+  severidad y su confianza»— y la matriz daba **RF-08 por cumplido**. Preguntando una a una resultó que
+  **nadie ha visto nunca un hallazgo analizado**: de las tres auditorías que han completado el recorrido,
+  una se cortó por el techo de gasto, otra por una clave de API ausente y la tercera por el tope de tokens.
+  Lo que está probado es el *recorrido* y la *degradación*, no el resultado útil. RF-08 baja a **Parcial**
+  con corrección declarada (R9), y la fila de la pantalla dice ahora qué se ha visto y qué no.
+- **Por qué importa más que un retoque de redacción.** Un evaluador que abra la herramienta y lance una
+  auditoría va a ver exactamente lo que vimos: cero hallazgos. Si la memoria prometía análisis clasificados,
+  la distancia entre documento y producto la habría encontrado él, no nosotros.
+- 🔴 **Cuatro de las siete descripciones del pendiente «los siete defectos» eran inexactas**, y lo barato
+  fue comprobarlas antes de tocar nada: `MAX_TOKENS` no aparecía ni una vez en el documento (el mal consejo
+  estaba en prosa), «cinco pestañas» no existía, los «quince cumplidos» eran doce, y el defecto (e) **ya
+  estaba arreglado desde el 13-oct** —el propio documento lo declaraba—. Su descripción en la hoja de ruta
+  está cortada a media frase, que es por lo que no cuadraba. **Un backlog describe lo que alguien entendió
+  al escribirlo, no lo que el documento dice hoy.**
+- **Qué se descartó.** Mover material al anexo para ganar páginas (rechazado por josemax el 14-oct); tocar
+  la tipografía, que el enunciado fija en 11-12 pt; y declarar el reparto 40/8 de los motivos de
+  degradación en la figura de producción, porque josemax vio los dos mensajes pero no dijo cómo se
+  repartían: la memoria dice que *convivieron*, que es lo exacto.
+- **Qué falló, y se corrige:** el escaneo de secretos de la mañana iba **en el mismo bucle** que los
+  commits, así que cuando dio «6 coincidencias de `sk-ant-`» no frenó nada — se commiteó y se investigó
+  después. Resultó inofensivo (marcadores de documentación, ninguno con clave: la coincidencia más larga
+  medía 18 caracteres frente a los 100+ de una clave real) y nada se había publicado, pero **un recuento
+  que no puede parar el paso siguiente no es un control**. Por la tarde el escaneo fue en su propia orden.
+- **Las siete capturas se abrieron una a una antes de publicarlas**, y la decisión de hacerlo se pagó sola:
+  la de RF-08 **no era** «la prueba de que RF-08 funciona» como decía el seguimiento, sino la prueba del
+  *tercer* motivo de degradación y, de paso, la foto del mal consejo del propio producto («subir
+  `HOOKSUITE_IA_MAX_TOKENS`»); su barra de navegación es anterior al 13-oct y el pie lo declara. Y A1 y A2
+  no son «la misma petición» como decía la lista: son `/register` y `/login`.
+- **A qué requisito toca:** **RF-08**, **RNF-06**, **RNF-03**, **RNF-04**, **RNF-08**, **RF-03**, **RF-05**
+  y **RNF-07**; apdos. **4**, **6**, **8**, **9** y **10**. **Evidencia:**
+  `docs/evidencias/instalacion-readme-puerto-ocupado-15oct.md` y las siete figuras nuevas.
+  **Horas:** ~3,5 h de asistente · ~0,8 h de josemax (pruebas en la caja, repaso de la pestaña y decisiones).
