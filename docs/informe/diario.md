@@ -5057,3 +5057,25 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
 - **A qué requisito toca:** el criterio de formato (20-40 páginas). **Evidencia:** la medición de aire está
   en la bitácora de la sesión y el estado en el commit de la memoria.
   **Horas:** ~0,6 h de asistente.
+
+## Fase 3 (15-oct, noche, cierre) — las 39 páginas contables, alcanzadas
+
+- **Qué se hizo:** josemax autorizó las palancas que faltaban y el documento bajó de 53 a *39 contables*,
+  dentro del rango 20-40 del enunciado y con la página de margen para lo que el vídeo añada. Las palancas,
+  por orden de rendimiento: fuera el salto de página por apartado (53→47, sin perder una palabra, probado
+  primero y aprobado al verlo), menos evidencia redundante (47→44: seis figuras cuyo contenido ya contaba
+  la prosa, con cada cita de la matriz y el plan reanclada, y las tablas del pulido a seis casos ejemplares
+  con remisión al diario), figuras flotantes y pasada final de prosa (44→42), y la matriz reescrita con
+  *estados cortos* al estilo del ejemplo del enunciado y cinco columnas (42→40), que era donde se
+  escondían dos páginas: las celdas-párrafo de la columna Estado estiraban cada fila. La última página
+  salió de la prosa de los apartados 2 y 7.
+- **Dos referencias caducadas más, cazadas de paso:** el borrador del Repeater se declaraba «en el
+  apartado 10» cuando vive en el 9, y la nota de los dos correos que parten el grafo de contribuciones,
+  que solo existía en una celda de la matriz, pasa al apartado 10 para no perderse al acortar la celda.
+- **Qué se descartó:** recortar ninguna de las 13 figuras restantes (todas citadas), tocar la tipografía,
+  y seguir apretando prosa por debajo de este punto, porque el texto empezaría a perder claridad.
+- **Qué falló:** nada. Escaneo de secretos sobre el texto extraído con control positivo (54 «HookSuite»,
+  0 claves) antes del push.
+- **A qué requisito toca:** el criterio de formato del enunciado (20-40 páginas), la matriz (apdo. 8) y el
+  estilo de todo el documento. **Evidencia:** commits de la noche en develop, el último con las 39.
+  **Horas:** ~1,1 h de asistente.
