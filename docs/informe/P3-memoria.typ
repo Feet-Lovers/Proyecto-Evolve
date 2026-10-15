@@ -400,8 +400,8 @@ y las consecuencias.
 - *Consecuencias.* El capturador permanece en el repositorio como punto de partida para más adelante. Los
   extremos de red del backend también se conservan, y no por inercia: los consume el módulo de IA y el de
   Playwright, así que retirarlos habría roto RF-08. RF-01, el acceso desde el navegador sin instalar nada,
-  se mantiene cumplido, y la figura del apartado 7 documenta la pestaña Red tal como estaba antes de
-  retirarla, capturada a propósito antes del arreglo porque el propio arreglo destruía la evidencia.
+  se mantiene cumplido. La pestaña Red tal como estaba quedó capturada a propósito antes del arreglo,
+  porque el propio arreglo destruía la evidencia, y esa captura se conserva en docs/capturas/ del repositorio.
 
 
 = Arquitectura y decisiones técnicas
@@ -499,7 +499,6 @@ pantalla de acceso, y el módulo de IA trabaja por detrás, sin pestaña propia.
 
 #imagen("../capturas/fase3/RF-05-repeater-preparar-formulario.png", "RF-05 — el Repeater tras pulsar «preparar» sobre un formulario traído del Spider, con cuatro cosas a la vez: el aviso de que la petición viaja con una sesión heredada y el botón que la retira. El acuse de «preparar», «1 campo(s) oculto(s) y la cookie» actualizados. El aviso de redirección no seguida con el 302 y la dirección a la que manda el servidor. Y la pestaña Formulario, que muestra la página pedida con sus estilos sin reenviar nada. Los valores de sesión van tapados.")
 
-#imagen("../capturas/fase3/RF-05-repeater-sin-respuesta.png", "RF-05 — un fallo de red deja de disfrazarse de respuesta. Donde iría el código HTTP aparece «sin respuesta» en rojo, y el tiempo y el tamaño desaparecen de la barra: 0 ms y 0,0 KB no son medidas, son la ausencia de ellas. Debajo, la dirección a la que se envió y el motivo exacto, el host no se pudo resolver.")
 
 == Las funcionalidades, una a una: qué hace, cómo se usa y qué requisito cubre
 Lo anterior cuenta lo que cambió en cada fase. Esta tabla cuenta lo que hay, pantalla por pantalla, tal
@@ -511,7 +510,7 @@ de la derecha dice dónde se ve cada una sin repetir aquí figuras que ya están
   "
   Pantalla | Qué hace y cómo se usa | Requisitos | Dónde se ve
   *Spider* | Rastrea el objetivo siguiendo enlaces y formularios y levanta su mapa. Se escribe la dirección, se lanza, y la tabla se va llenando. Se puede detener a medias, filtrar por método y mandar una petición al Repeater. Las cabeceras que muestra son las que se enviaron de verdad, no una plantilla | RF-03 | figuras del apdo. 7 (antes y después del pulido)
-  *Repeater* | Banco de trabajo de una petición: se modifica y se reenvía exactamente lo que se ve en pantalla. Avisa si la petición lleva sesión heredada y ofrece quitarla. El botón «preparar» convierte la plantilla de un formulario en una petición que funciona. La respuesta se lee en Raw, Pretty, Preview, Headers y la página preparada | RF-04 · RF-05 | dos figuras en este apartado y dos en el 7
+  *Repeater* | Banco de trabajo de una petición: se modifica y se reenvía exactamente lo que se ve en pantalla. Avisa si la petición lleva sesión heredada y ofrece quitarla. El botón «preparar» convierte la plantilla de un formulario en una petición que funciona. La respuesta se lee en Raw, Pretty, Preview, Headers y la página preparada | RF-04 · RF-05 | figura en este apartado y dos en el 7
   *Intruder* | Prueba muchos valores en un punto marcado de la petición y señala las respuestas que se salen del patrón. Se marca el campo, se elige diccionario, se lanza y se puede cancelar sin dejar el servidor trabajando | RF-06 | figura en este apartado
   *Utilidades* | Cuatro herramientas que no salen a la red: codificador (base64, URL, HTML y lectura de JWT), generador de huellas, probador de expresiones regulares y generador de payloads. Se pega el texto y se ve el resultado al lado | RF-07 | figura en este apartado
   *Vulnerabilidades* | Panel donde se dispara la auditoría con IA y donde aterriza su resultado. Lo que está visto funcionando es el camino degradado: lo que la IA no pudo analizar sale aparte y con su motivo. Nunca se ha visto un hallazgo analizado con su severidad, porque ninguna auditoría ha llegado a devolver uno. La pantalla queda sin pulir y sin terminar | RF-08 · RNF-06 | figura del apdo. 7 (operación degradada)
@@ -524,7 +523,7 @@ de la derecha dice dónde se ve cada una sin repetir aquí figuras que ya están
 encontrar: el proxy del lado servidor (RF-02) es el que ejecuta las peticiones por debajo de Spider,
 Repeater e Intruder. El navegador real (RF-10) lo dirige el módulo de IA, no una persona. Y el
 *cortafuegos por sesión* (RNF-08) es un agente del sistema. La séptima pestaña que hubo, Red (RF-09), se
-retiró al descartar ese requisito, su figura se capturó antes de retirarla.
+retiró al descartar ese requisito, con su captura tomada antes de retirarla y conservada en el repositorio.
 
 *Tres notas de honestidad sobre esta tabla.*
 - *La pestaña que se llama Spider vive en la ruta /proxy*. Es un resto del nombre que tenía antes del
@@ -641,9 +640,7 @@ Hasta esta fecha todo estaba verificado solo en el entorno local, y el 7 de octu
 
 El dato de los *cero reinicios* no es decorativo: el acceso por usuario se diseñó para *no arrancar* si faltan el secreto de firma o el código de invitación, en lugar de arrancar sin autenticación pareciendo correcto. Que el contenedor esté sirviendo sin un solo reinicio es la prueba de que esa comprobación se superó.
 
-El flujo completo del acceso, capturado en la instalación pública el mismo día del despliegue:
-
-#imagen("../capturas/fase2/RF-12-prod-panel-login-sin-basic-auth.png", "RF-12 — la entrada de www.hooksuite.de carga *sin* el cuadro de Basic Auth que antes pedía una contraseña compartida por todo el grupo. La puerta la guarda ahora el acceso por usuario.")
+El acceso, capturado en la instalación pública el mismo día del despliegue (la entrada carga ya sin el cuadro de Basic Auth que antes pedía una contraseña compartida por todo el grupo):
 
 #imagen("../capturas/fase2/RF-12-prod-sesion-iniciada.png", "RF-12 y RNF-07 — sesión iniciada en producción, con el alta hecha mediante el código de invitación sobre una instalación que arrancó deliberadamente con cero usuarios: el usuario figura en la cabecera y el interceptor aparece como *conectado*, lo que prueba que el WebSocket viaja también autenticado y no solo la API.")
 
@@ -767,7 +764,7 @@ El plan de trabajo original del equipo tenía *doce* casos, de modo que seis de 
   PR-01 | RF-01 | Abrir la URL pública en un navegador limpio | 401 Basic Auth: la credencial documentada no entra | *200*, sirve el panel · reejecutada en producción
   PR-03 | RF-03 | Rastrear un objetivo y revisar el panel de detalle | no ejecutada | *pasa* · figura del apdo. 7: rótulos legibles y cabeceras reales
   PR-04 | RF-04 | Enviar dos veces la misma petición y comparar | *sin caso escrito* | *pasa* · figuras del apdo. 7: mismo estado, tamaño y cuerpo. Distinto tiempo
-  PR-05 | RF-05 | Modificar y reenviar una petición. Ver la respuesta | envío correcto, historial vacío | *pasa* · figuras del apdo. 5. El historial se retiró por diseño (apdo. 9)
+  PR-05 | RF-05 | Modificar y reenviar una petición. Ver la respuesta | envío correcto, historial vacío | *pasa* · figura del apdo. 5. El historial se retiró por diseño (apdo. 9)
   PR-06 | RF-06 | Marcar un campo y lanzar el Intruder | diccionarios servidos. Ejecución sin probar | *no reejecutada*: exige lanzar tráfico de ataque real, y su procedimiento del 29-sep nombraba el laboratorio retirado el 13-oct
   PR-07 | RF-07 | Hash, codificadores y regex con casos conocidos | hash y codificadores correctos. JWT no soportado | *no reejecutada*: exige credencial de usuario
   PR-08 | RF-08 | Publicar un hallazgo y recuperarlo por el panel | backend correcto. Faltaba el productor | *pasa* · recorrido completo verificado el 10-oct y figura del apdo. 7 (techo a 0 €)
@@ -790,9 +787,7 @@ El plan de trabajo original del equipo tenía *doce* casos, de modo que seis de 
 *Un aviso de método que vale para quien repita estas medidas.* El frontend es una aplicación de una sola página, y el servidor devuelve su portada a *cualquier ruta desconocida*: una dirección inventada responde 200 igual que una real. Por eso, en las filas reejecutadas, un 200 no se ha dado por bueno sin mirar el tipo de contenido, y es lo que evitó concluir que el esquema de la API seguía publicado cuando lo que respondía era la portada. Las salidas completas están en docs/evidencias/pruebas-reejecutadas-13oct.md.
 
 == Evidencia de exposición (RNF-07 / PR-16), capturada el 4-oct
-La prueba PR-16, llamar a la API sin credenciales, y la verificación del frontend confirman que, antes de endurecer, el producto quedaba accesible sin autenticación. Las capturas se obtuvieron antes de cualquier arreglo, porque la evidencia de un fallo se captura antes de corregirlo: el propio arreglo la destruye. Además de lo que muestran las dos figuras, se comprobó que el frontend servido por el puerto 3000 cargaba sin pedir credencial, evitando por completo el control de la entrada principal, que la entrada principal sí pedía credencial (el control existía, pero se podía rodear por el puerto directo) y que la credencial documentada en el informe de la P1 era rechazada con 401: ya no abría nada.
-
-#imagen("../capturas/exposicion/RNF07-api-health-sin-login.png", "RNF-07 / PR-16 — GET /health de la API responde 200 sin credenciales ni cabecera WWW-Authenticate: la API no exige autenticación. La documentación interactiva (/docs) quedaba igual de abierta, exponiendo las 40 operaciones, incluidas las que lanzan tráfico contra terceros.")
+La prueba PR-16, llamar a la API sin credenciales, y la verificación del frontend confirman que, antes de endurecer, el producto quedaba accesible sin autenticación. Las capturas se obtuvieron antes de cualquier arreglo, porque la evidencia de un fallo se captura antes de corregirlo: el propio arreglo la destruye. Lo que documentan, pieza a pieza: GET /health de la API respondía 200 sin credenciales ni cabecera WWW-Authenticate. La documentación interactiva (/docs) quedaba abierta, exponiendo las 40 operaciones, incluidas las que lanzan tráfico contra terceros. El frontend servido por el puerto 3000 cargaba sin pedir credencial, evitando por completo el control de la entrada principal, que sí pedía credencial: el control existía, pero se podía rodear por el puerto directo. Y la credencial documentada en el informe de la P1 era rechazada con 401, ya no abría nada. Las cinco capturas están en docs/capturas/exposicion/ del repositorio.
 
 
 == Los doce defectos del prototipo, corregidos y verificados
@@ -817,43 +812,28 @@ Todos se reprodujeron antes de corregirlos y se verificaron después en producci
   "
 )
 
-== Defectos corregidos: antes y después (RF-03)
-
-Un par de capturas tomadas sobre el producto desplegado, antes y después de corregir. El objetivo de las pruebas es una web propia del equipo, autorizada para ello.
-
-#imagen("../capturas/fase1/RF-03-antes-formularios-repetidos.png", "RF-03 — ANTES: una sola petición (/tienda?page=1&sort=newest) arrastra *52 entradas de formulario idénticas*, que inundan el panel de resultados.")
-
-#imagen("../capturas/fase1/RF-03-despues-formularios-unicos.png", "RF-03 — DESPUÉS: la misma petición de la misma página queda en *una sola entrada*. Solo cambia el contador: 52 → 1.")
+Dos de los doce quedaron además fotografiados *antes y después* de corregir, sobre el producto desplegado y contra una web propia del equipo: el panel que arrastraba 52 entradas de formulario idénticas por una sola petición queda en una, y el botón de detener que no existía aparece junto al de ejecución. Las cuatro capturas están en docs/capturas/fase1/ del repositorio.
 
 > *Nota de tratamiento de las capturas.* Las dos del estado anterior mostraban un identificador de sesión de la web de pruebas en la franja superior. Se publican con esa franja tapada, y los originales no salen del almacén interno. Las del estado posterior no lo contienen porque la sesión no estaba autenticada.
 
 == El pulido del Spider (11-oct): quince defectos, y catorce los encontró el uso
 
-El 11-oct no se añadió funcionalidad: la jornada se dedicó a *pulir* lo que ya existía, pestaña por pestaña, empezando por la primera. De esa pasada salen quince defectos corregidos en el Spider. Lo que más dice de ellos no es el número, sino *cómo aparecieron*: catorce usando la herramienta y uno leyendo el código. Cada fila está atada a su entrada del diario de desarrollo, que es la fuente.
+El 11-oct no se añadió funcionalidad: la jornada se dedicó a *pulir* lo que ya existía, pestaña por pestaña, empezando por la primera. De esa pasada salen quince defectos corregidos en el Spider. Lo que más dice de ellos no es el número, sino *cómo aparecieron*: catorce usando la herramienta y uno leyendo el código. La tabla recoge seis, los más ilustrativos. *Los quince completos, cada uno con su entrada del diario de desarrollo, están en docs/informe/diario.md del repositorio.*
 
 #tabla(
   (auto, 6fr, 2fr),
   "
   \# | Qué pasaba | Cómo apareció
   1 | Pulsar «Detener» no paraba hasta terminar todos los formularios de la página en curso | usando
-  2 | Tres textos de la pantalla describían algo distinto de lo que el código hacía | usando
   3 | El indicador de sesión decía «autenticado» sin que nadie se hubiera autenticado | usando
-  4 | El mismo indicador fallaba en los dos sentidos: ni se encendía con sesión ni se apagaba sin ella | usando
-  5 | El campo de URL se bloqueaba al iniciar, y no decía por qué ni cómo liberarlo | usando
-  6 | Los tres botones de borrado hacían cosas distintas y nada permitía saber cuál usar | usando
   7 | La pestaña se llamaba «Proxy» y no es un proxy, sino un rastreador | usando
-  8 | Los formularios colgaban de páginas ajenas: la pertenencia se adivinaba por prefijo de URL | usando
-  9 | La columna de estado mezclaba códigos HTTP con la palabra FORM, que no es un código | usando
-  10 | Al terminar, el rastreo no decía cómo había terminado | usando
   11 | El objetivo fijado se perdía al refrescar la página, y permitía lanzar otro encima | usando
-  12 | El recuento del mensaje final no cuadraba con las filas del panel | usando
   13 | Las primeras filas capturadas no se alcanzaban con el scroll | usando
-  14 | La etiqueta del desplegable de formularios insinuaba más de lo que había | usando
   15 | Los filtros escondían los formularios. Filtrar por POST vaciaba la tabla entera | leyendo el código
   ",
 )
 
-*El patrón que se repite, y es el hallazgo de la jornada.* En once de los quince, el backend *ya sabía* la respuesta y no llegaba a la pantalla: de qué página salía cada formulario, cómo había terminado el rastreo, cuál era el objetivo. No eran fallos de cálculo sino de *traslado*: funciones correctas que la interfaz no dejaba ver, y las pruebas que miran el backend no detectan nada de esto. El decimoquinto apareció al documentar el filtro para el manual: filtraba las filas *antes* de agruparlas, de modo que filtrar por POST, justo lo que se hace para ver formularios, vaciaba la tabla entera. Y dos de los quince los introdujimos nosotros al arreglar otros: están contados en la tabla y se detallan en el apartado 11, porque el recuento honesto incluye los defectos propios, no solo los heredados.
+*El patrón que se repite, y es el hallazgo de la jornada.* En once de los quince, el backend *ya sabía* la respuesta y no llegaba a la pantalla: de qué página salía cada formulario, cómo había terminado el rastreo, cuál era el objetivo. No eran fallos de cálculo sino de *traslado*: funciones correctas que la interfaz no dejaba ver, y las pruebas que miran el backend no detectan nada de esto. El decimoquinto apareció al documentar el filtro para el manual: filtraba las filas *antes* de agruparlas, de modo que filtrar por POST, justo lo que se hace para ver formularios, vaciaba la tabla entera. Y dos de los quince los introdujimos nosotros al arreglar otros: están contados en el recuento y se detallan en el apartado 11, porque el recuento honesto incluye los defectos propios, no solo los heredados.
 
 
 == El pulido del Repeater (12-oct): dieciséis defectos, y una función retirada el mismo día
@@ -865,23 +845,15 @@ El 12-oct repitió el método del día anterior sobre la segunda pestaña: no se
   "
   Nº | Qué pasaba | Cómo apareció
   1 | Un fallo de red se mostraba como una respuesta más, con el código HTTP 0 y medidas de «0 ms» y «0,0 KB» | leyendo el código
-  2 | El panel no decía a qué dirección se había enviado: con varias peticiones seguidas no se sabía de cuál era la respuesta | usando
-  3 | El cuerpo de la petición de envío mandaba el identificador de espacio de datos, residuo del modelo anterior al login | leyendo el código
-  4 | «Limpiar» no era definitivo: al volver a la pestaña reaparecían la petición y sus cabeceras heredadas | usando
   5 | El Spider guardaba y enseñaba como enviadas unas cabeceras *fabricadas aparte*: otro User-Agent, un Host que nadie puso y ninguna Cookie | tirando de un hilo
-  6 | El arreglo anterior seguía sin mostrar la cookie de sesión, porque la pone el cliente de red por debajo y no pasaba por ese diccionario | captura de producto
-  7 | Los cinco rótulos del panel de detalle no se distinguían del contenido: se leían las cabeceras de respuesta como si fueran de petición | usando
   8 | Las respuestas se cruzaban: se veía una dirección con el cuerpo de otra petición, y no era reproducible a voluntad | usando
-  9 | No había forma de probar la misma petición *sin* sesión: el único botón vaciaba la petición entera | usando
   10 | El Repeater seguía las redirecciones siempre, así que *nunca* se veía el 302 ni su Location | comparando con la herramienta de referencia
   11 | Dos envíos idénticos daban resultados distintos: el cliente compartido ponía cookies que no estaban en la petición | usando
   12 | Los formularios descubiertos por el Spider viajaban sin sesión, y todos los POST devolvían 419 | usando
-  13 | La petición que el Spider manda al Repeater nace vieja: es una plantilla con el token del rastreo, no una petición capturada | usando
-  14 | «Limpiar» no borraba la página preparada, que se quedaba a la vista | usando
-  15 | Dos avisos que ya no podían aparecer nunca: quedaba el código que los lee, no lo que los provoca | escribiendo el manual
-  16 | El manual del Spider afirmaba de las cabeceras lo que el código no cumplía, y no documentaba un botón nuevo | escribiendo el manual
   ",
 )
+
+Son seis de los dieciséis, los que mejor enseñan el patrón. *Los dieciséis completos, cada uno con su entrada del diario, están en docs/informe/diario.md del repositorio.*
 
 *La función que no llegó a la noche, y por qué se cuenta en vez de omitirse.* A las 10:08 el Repeater ganó un *historial* de peticiones y a las 17:28 se retiró entero: todo el comportamiento errático de la jornada giraba a su alrededor (respuestas cruzadas, entradas con la petición y la respuesta mal emparejadas) y tres arreglos sucesivos no lo dejaron estable, con la congelación al día siguiente. Un Repeater que mezcla respuestas es peor para un informe que un Repeater sin historial. Lo que ocupó su lugar es la decisión de diseño del apartado 9: *una petición cada vez*, con el estado «ocupado» visible desde la otra pantalla. La causa de fondo apareció cuatro horas después de retirarlo: el 302 invisible hacía que, al enviar un formulario que rebota, la respuesta del GET posterior pareciera la del POST. Se deja escrito porque ese es el orden real de los hechos: *primero se retiró el síntoma y después se encontró la causa*.
 
@@ -1003,10 +975,6 @@ El filtro por confianza compara el valor que devuelve el modelo contra un umbral
 *La prueba distingue las dos versiones*, que es la única forma de que valga: contra el código corregido devuelve _19 de 19_ y contra el anterior _6 de 19_, y los seis que pasan en la versión antigua son precisamente los casos legítimos, lo que demuestra que la guarda no introduce falsos positivos. Reproducible con python3 ia/tests/test_escala_confianza.py. Evidencia con las dos salidas en docs/evidencias/escala-confianza-guardia-10oct.md.
 
 
-== La interfaz antes de descartar RF-09, capturada antes de retirarla
-#imagen("../capturas/fase3/RF-09-pestana-red-antes-de-retirar.png", "Barra de navegación de HookSuite con las *seis* pestañas, antes de retirar RF-09. «RED» es la última. Capturada en el entorno local el 11-oct, antes de aplicar el cambio. La dirección interna de la barra del navegador va censurada. Requisitos: RF-09 (descartado) y RF-01 (interfaz).")
-
-La figura existe porque *las evidencias de un defecto se capturan antes de arreglarlo*: retirar la pestaña hacía imposible volver a fotografiarla, así que se pidió la captura antes de tocar el código. De las tres evidencias previstas se tomó una sola imagen: las otras dos, el extremo de consola que responde 404, se guardaron como texto, que es buscable, comparable entre versiones y no arriesga publicar de refilón una credencial que estuviera en pantalla.
 = Matriz de trazabilidad
 La pieza con la que se corrige la práctica: requisito por requisito, dónde está implementado, qué prueba lo verifica y dónde se ve. Las rutas están comprobadas en el código (4-oct). La columna de evidencia enlaza la figura de la memoria y el *minuto exacto del vídeo*. Se rellena al grabar.
 #tabla(
@@ -1017,11 +985,11 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
   RF-02 | Proxy del lado servidor (httpx) | Modificado (dos errores de servidor corregidos al inicio de la práctica) | backend/services/proxy_service.py | PR-19 | justif. apdo. 3 · apdo. 5
   RF-03 | Spider / rastreo | Cumplido (cuatro defectos corregidos al inicio y quince en el pulido del 11-oct. Las cabeceras que muestra son las realmente enviadas) | backend/services/spider_service.py, frontend/.../ProxyPage.jsx, .../RequestsTable.jsx | PR-03 | figs. apdo. 7 · vídeo —:—
   RF-04 | Auditoría autenticada (sesión compartida) | *Modificado* (12-oct: el Repeater envía con cliente propio y la sesión se hereda por cabecera explícita) | backend/services/session_service.py, backend/services/proxy_service.py, backend/routes/repeater.py | PR-04 | justif. apdo. 3 · figs. apdo. 7
-  RF-05 | Repeater | Cumplido (dieciséis defectos corregidos en el pulido del 12-oct. El historial se añadió y se retiró esa misma jornada, decisión en el apdo. 9) | backend/routes/repeater.py, backend/services/proxy_service.py, frontend/src/pages/repeater/ | PR-05 | figs. apdo. 5 · vídeo —:—
+  RF-05 | Repeater | Cumplido (dieciséis defectos corregidos en el pulido del 12-oct. El historial se añadió y se retiró esa misma jornada, decisión en el apdo. 9) | backend/routes/repeater.py, backend/services/proxy_service.py, frontend/src/pages/repeater/ | PR-05 | fig. apdo. 5 · vídeo —:—
   RF-06 | Intruder / fuzzing | Cumplido (cancelación corregida al inicio de la práctica) | backend/services/intruder_service.py | PR-06 | fig. apdo. 5 · vídeo —:—
   RF-07 | Utilidades (incl. JWT) | Cumplido | frontend/src/pages/utilities/ | PR-07 | fig. apdo. 5 · vídeo —:—
   RF-08 | IA → panel Vulnerabilidades | Parcial: recorrido verificado de punta a punta (10-oct) y techo de gasto ejecutado, pero *ninguna auditoría ha devuelto todavía un hallazgo analizado*: todas salieron degradadas (techo, clave de API o tope de tokens) | ia/, backend/routes/playwright.py, backend/services/redis_consumer.py, frontend/.../VulnerabilitiesPage.jsx | PR-08 | figs. apdo. 7 · vídeo —:—
-  RF-09 | DevTools → panel Red | *Descartado* (11-oct. Justificado en apartado 3) | devtools/ conservado · backend/routes/network.py se mantiene (lo consumen IA y Playwright) | — | fig. apdo. 7 · vídeo —:— 
+  RF-09 | DevTools → panel Red | *Descartado* (11-oct. Justificado en apartado 3) | devtools/ conservado · backend/routes/network.py se mantiene (lo consumen IA y Playwright) | — | justif. apdo. 3 · vídeo —:—
   RF-10 | Playwright | *Parcial* (construido y conectado a la red interna del despliegue. PR-10 sin ejecutar y el sondeo de instrucciones devuelve 401 con sesión válida, apartados 6 y 7) | playwright/ + backend/routes/playwright.py | PR-10 | apdos. 6-7 · vídeo —:—
   RF-11 | Multi-usuario | Cumplido (reimplementado al rehacer el acceso por usuario) | backend/services/guardia.py + services/auth_service.py | PR-11 | apdo. 6 · figs. apdo. 7
   RF-12 | Registro y login por usuario + aislamiento | Cumplido (las cuatro fugas de la P1 cerradas y verificadas en producción. La batería de once casos de aislamiento, superada en el entorno local) | backend/services/auth_service.py, guardia.py, usuarios_store.py, frontend/.../LoginPage.jsx | PR-12 | apdo. 6 · figs. apdo. 7
