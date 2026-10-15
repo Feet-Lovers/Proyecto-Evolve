@@ -609,12 +609,13 @@ El 5-oct se le retiró del proxy la ruta que lo publicaba, de modo que quedó ac
 - *Cortafuegos* activo, con política de denegación por defecto y únicamente el acceso remoto y el proxy permitidos.
 - *Bloqueo automático de fuerza bruta* contra el acceso remoto: en su primer minuto ya registraba 148 intentos fallidos y había bloqueado dos direcciones.
 - *Acceso remoto solo por clave*: se desactivó la autenticación por contraseña. La prueba más limpia es el propio mensaje del servidor, que pasó de ofrecer «clave o contraseña» a admitir *solo clave*.
-- *Limpieza de reglas abandonadas*: siete reglas heredadas de la P1, una con la dirección pública de un integrante, se retiraron tras comprobar que ningún servicio escuchaba en esos puertos.
-- *Agente de firewall duplicado*: un segundo proceso del agente, lanzado a mano en mayo y fuera del gestor de servicios, con permisos de administración del cortafuegos, se terminó. Queda uno solo, gestionado por el sistema.
-- *Sistema operativo*: se estrenó el núcleo ya instalado pero sin aplicar desde mayo, corrigiendo antes una condición de carrera en el arranque (apartado 7).
+- *Limpieza de reglas abandonadas*: siete reglas heredadas de la P1, una de ellas con la dirección pública de un integrante y otra con un valor de ejemplo, se retiraron tras comprobar que ningún servicio escuchaba en esos puertos.
+- *Agente de firewall duplicado*: se encontró un segundo proceso del agente, lanzado a mano en mayo y fuera del gestor de servicios, con permisos de administración del cortafuegos. Se terminó. Queda uno solo, gestionado por el sistema.
+- *Sistema operativo*: se estrenó el núcleo ya instalado pero sin aplicar desde mayo. Antes de reiniciar se corrigió una condición de carrera en el arranque que habría dejado el agente del cortafuegos en bucle (ver apartado 7).
 
 === Dos matices honestos, para no atribuirnos de más
-*El acceso de administrador por contraseña ya estaba bloqueado* por la configuración por defecto del sistema: los 127.000 intentos registrados nunca tuvieron posibilidad, y lo que se cerró fue la autenticación por contraseña a nivel general, para no depender de un valor por defecto que una actualización podría cambiar. Y *el cortafuegos del sistema no filtra los puertos que publica Docker*, cuyas reglas se evalúan antes: quien cerró de verdad la API y el frontend fue el despliegue, al dejar de publicarlos.
+- *El acceso de administrador por contraseña ya estaba bloqueado* por la configuración por defecto del sistema: los 127.000 intentos registrados nunca tuvieron ninguna posibilidad. Lo que se cerró fue la autenticación por contraseña *a nivel general*. Se hizo igual porque deja de depender de un valor por defecto que una actualización podría cambiar, y porque cierra la puerta a cualquier usuario futuro.
+- *El cortafuegos del sistema no filtra los puertos que publica Docker*, cuyas reglas se evalúan antes. Quien cerró de verdad la API y el frontend fue el despliegue, al dejar de publicarlos. El cortafuegos protege el resto del servidor, no esos puertos.
 
 #estado("ok", "EXPOSICIÓN CERRADA Y SERVIDOR ENDURECIDO")
 
@@ -633,7 +634,11 @@ Hasta que se rehízo el acceso, la API y el WebSocket *no tenían autenticación
 )
 
 === Un quinto fallo, que introdujo la propia corrección
-Se documenta porque el enunciado pide las pruebas que fallaron, y porque la lección vale más que el acierto. El guardián comprobaba que el espacio de datos nombrado *en la ruta* fuera el tuyo, pero *cinco rutas reciben ese nombre en el cuerpo de la petición*, y ahí no miraba nadie: un usuario autenticado podía escribir en el espacio de otro con solo ponerlo en el cuerpo. La peor de las cinco fue el Repeater, que mantiene un cliente HTTP persistente por usuario con las cookies del objetivo auditado: nombrar a otro en el cuerpo reutilizaba *su sesión ya autenticada contra la web auditada*. Se descartó la corrección evidente, validar ese campo contra el token, porque deja el dato en manos del cliente: las rutas toman el espacio del token y *descartan* lo que venga en el cuerpo, y lo que no se lee no se puede falsear. Comprobado como ataque real (apartado 7).
+Se documenta porque el enunciado pide las pruebas que fallaron, y porque la lección vale más que el acierto. El guardián comprobaba que el espacio de datos nombrado *en la ruta* fuera el tuyo, pero *cinco rutas reciben ese nombre en el cuerpo de la petición*, y ahí no miraba nadie: un usuario autenticado podía escribir en el espacio de otro con solo ponerlo en el cuerpo. Es el mismo error que este documento le reprocha al código anterior, dejar que el cliente elija dónde escribe, un nivel más abajo.
+
+La peor de las cinco fue el Repeater, y se escapó del primer inventario por buscarla con el nombre de modelo equivocado. Ahí el daño no era ensuciar el historial ajeno: el Repeater mantiene *un cliente HTTP persistente por usuario* que acumula las cookies del objetivo auditado, el mecanismo que da servicio a RF-04, de modo que nombrar a otro en el cuerpo reutilizaba *su sesión ya autenticada contra la web auditada*.
+
+Se descartó la corrección evidente, que era validar ese campo contra el token: funciona, pero deja el dato en manos del cliente y obliga a acordarse en cada modelo nuevo. Las rutas toman el espacio del token y *descartan* lo que venga en el cuerpo: lo que no se lee no se puede falsear. Comprobado como ataque real (apartado 7).
 
 === Desplegado y verificado en producción (8-oct)
 Hasta esta fecha todo estaba verificado solo en el entorno local, y el 7 de octubre se comprobó *en vivo y en la propia instalación pública* que las fugas no eran teóricas: la API respondía sin credencial a cualquiera. El despliegue se hizo el *8 de octubre a las 06:52 UTC*, en cuatro pasos con punto de retorno previo: se etiquetaron las imágenes en servicio y se copió la configuración, se mergeó el cambio a la rama principal, se trajo el código a la caja con git reset --hard y se generaron los secretos, y se reconstruyeron los contenedores. La verificación inmediata, con el sistema ya en marcha:
@@ -662,7 +667,7 @@ El flujo completo del acceso, capturado en la instalación pública el mismo dí
 
 === Dos efectos del pulido del Repeater sobre la seguridad del producto (12-oct)
 - *Cerrado: el último residuo del modelo anterior al login.* La petición de envío del Repeater llevaba en su cuerpo el identificador del espacio de datos, y el esquema del servidor seguía declarándolo. No se leía, el espacio sale siempre del token firmado, nunca del cuerpo, pero *sugería que el cliente puede elegir dónde escribe*, que es exactamente el hueco de autorización que cerró el acceso por usuario: con el nombre de otro en el cuerpo se reutilizaban *sus* cookies del login auditado. Se retiró del frontend el 12-oct a mediodía y del esquema del servidor esa misma noche. Un campo muerto que insinúa una capacidad que no existe es deuda de seguridad, no ruido.
-- *Nuevo, y es una contrapartida asumida: el panel muestra ahora la cookie de sesión del objetivo.* Al corregir que las cabeceras mostradas sean las realmente enviadas, la Cookie del sitio auditado pasa a estar a la vista, como en la herramienta de referencia. Es lo correcto, la evidencia tiene que ser la petición que salió, y tiene un coste que conviene declarar: *cualquier captura de ese panel publica credenciales de un tercero*, así que esas capturas van censuradas antes de entrar en esta memoria. Lo que esto arrastra en el navegador del auditor se trata como limitación abierta en el apartado 9.
+- *Nuevo, y es una contrapartida asumida: el panel muestra ahora la cookie de sesión del objetivo.* Al corregir que las cabeceras mostradas sean las realmente enviadas (apartado 4), la Cookie del sitio auditado pasa a estar a la vista, como en la herramienta de referencia. Es lo correcto, la evidencia tiene que ser la petición que salió, y tiene un coste de método que conviene declarar: *cualquier captura de ese panel publica credenciales de un tercero*. Esas capturas van censuradas antes de entrar en esta memoria o en el artefacto. Ya ocurrió dos veces el mismo día. Lo que esto arrastra en el navegador del auditor, el borrador guarda esas cabeceras, se trata como limitación abierta en el apartado 9.
 
 === Lo que sigue sin cubrir
 - *Sin TLS* (RNF-09): el acceso viaja en claro, así que el token de sesión es interceptable por quien esté en el camino. Pendiente de configurar en el proxy.
@@ -725,9 +730,11 @@ herramientas, sin redondear hacia abajo.
   pieza central del acceso por usuario, la de criptografía siete, la de formularios multiparte siete y el armazón
   ASGI bajo FastAPI otros siete.
 - *El proxy de la P1 sigue pesando, y se comprobó antes de decirlo.* mitmproxy aporta tres avisos propios
-  y arrastra cinco paquetes más. La tentación era declararlo código muerto y proponer quitarlo: *no lo es*,
-  main.py y la ruta de alta importan el gestor que lo lanza como subproceso, aunque RF-02 se implemente hoy
-  con el cliente HTTP nuevo. *Las dos arquitecturas conviven*, y esa convivencia mantiene viva esta superficie.
+  y arrastra cinco paquetes más (servidor web, compresión, serialización, protocolo binario y TLS). La
+  tentación era declararlo código muerto y proponer quitarlo: *no lo es.* main.py y la ruta de alta
+  importan el gestor que lo lanza como subproceso con su complemento, aunque RF-02 se implemente hoy con el
+  cliente HTTP nuevo y las rutas del fichero de autoconfiguración se retirasen al rehacer el acceso. *Las dos
+  arquitecturas conviven*, y esa convivencia es lo que mantiene viva esta superficie.
 - *Política de fijado, desigual:* el backend fija sus doce versiones. El módulo de navegador tres de cuatro
   y el de herramientas de depuración las tres. *El módulo de IA solo una de cuatro*, así que su construcción
   no es reproducible al día de hoy. El frontend declara rangos, pero el fichero de bloqueo fija el árbol.
@@ -738,10 +745,10 @@ herramientas, sin redondear hacia abajo.
   *no se ha medido cuáles son alcanzables* desde el camino de ejecución del producto. Decir «78 avisos» no
   es decir «78 agujeros explotables». Es decir cuántos hay que mirar.
 - *Por qué los paquetes se nombran aquí por su papel y no por nombre y versión.* El repositorio es público
-  y el producto está desplegado *sin TLS*: publicar la lista exacta de paquete, versión y avisos es publicar
-  un mapa de por dónde entrar. Las versiones están en los ficheros de requisitos y la medida se reproduce
-  con las dos órdenes citadas arriba. Única excepción: el proxy de la P1, que esta memoria ya nombra al
-  explicar el pivote de RF-02.
+  y el producto está desplegado *sin TLS*: publicar la lista exacta de paquete, versión y número de avisos
+  es publicar un mapa de por dónde entrar. Las versiones están en los ficheros de requisitos para quien
+  tenga acceso al repositorio, y cualquiera puede reproducir la medida con las dos órdenes citadas arriba.
+  Es la misma regla que se aplicó a las claves: se cuenta el incidente, no se publica el valor. *Única excepción:* el proxy de la P1, que esta memoria ya nombra en los apartados 3 y 5 al explicar el pivote de RF-02. Ocultarlo aquí no taparía nada.
 
 === Tratamiento de datos personales
 - *Qué guarda el producto, y de quién.* De cada auditor: su cuenta, nombre y contraseña *en hash*, nunca en

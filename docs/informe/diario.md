@@ -5012,29 +5012,3 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
 - **A qué requisito toca:** RNF-07, RNF-08 y la matriz entera (apdo. 8), más el recuento del resumen
   (apdo. 1). **Evidencia:** commit `7b1cf50d`.
   **Horas:** ~0,5 h de asistente.
-
-## Fase 3 (15-oct, noche) — el recorte grande: de 67 a 53 páginas contables sin perder una evidencia citada
-
-- **Qué se hizo:** el recorte delegado por josemax, en cuatro tandas commiteadas por separado. El **plan de
-  pruebas salió del anexo y entró como primer subapartado de Pruebas**, que es donde el enunciado lo espera,
-  con la explicación que vivía en la matriz integrada en su introducción y la fila PR-12 reanclada al par de
-  figuras A/B. Los **once bloques ámbar** quedaron procesados: los de método compactados a su hallazgo, las
-  marcas de resaltado fuera del entregable. **Trece figuras retiradas** de las cuarenta, cada una con su
-  contenido contado en prosa o cubierto por otra figura (las cinco de exposición quedan en una, el flujo de
-  login de producción en dos, el par del filtro POST y el botón de detener a la tabla que ya los contaba), y
-  una **restaurada** al detectar que la fila PR-03 del plan la citaba como evidencia. Fuera también la
-  columna de marcas horarias internas de las dos tablas del pulido. Los apartados de Limitaciones, Reparto
-  e IA, compactados conservando cada limitación con su riesgo y su porqué.
-- **Dos incoherencias cazadas de paso:** el subapartado «Lo que el registro de horas no puede decir»
-  estaba **caducado entero** (176 entradas y 85,9 h frente a las 179 y 87,2 h de la tabla vigente, y
-  delegaba una decisión que el apartado 10 ya había tomado), se retiró. Y «la cocina» quedaba definida
-  como «el entorno de pruebas descrito en el apartado 4» cuando la revisión del día había borrado ese
-  bloque: el término pasa a «entorno local de pruebas» con su definición en Pruebas, y el vocabulario
-  interno restante (Fase N, reglas R, marcas de diario) salió del entregable, incluido un «FASE 1» en
-  mayúsculas que el primer barrido no vio.
-- **Qué se descartó:** tocar los apartados 1 a 5 (revisados y aprobados por josemax a mediodía), mover
-  material al anexo (rechazado el 14), tocar tipografía, y quitar figuras citadas por la matriz o el plan.
-- **Qué falló:** nada. Escaneo de secretos antes de cada push, sobre el texto extraído del PDF, cero claves.
-- **A qué requisito toca:** el criterio de formato del enunciado (20-40 páginas) y la estructura del
-  apartado de Pruebas. **Evidencia:** commits `40a86ee6`, `d64d8359` y los dos siguientes.
-  **Horas:** ~1,8 h de asistente.
