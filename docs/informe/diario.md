@@ -4840,3 +4840,50 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
 - **A que requisito toca:** apdos. **1**, **3**, **6**, **11** y **12**; **RNF-03** (despliegue
   reproducible) y **RNF-04** (reparto del trabajo). **Evidencia:** `P3_GrupoFeetLovers_Memoria.pdf`,
   `README.md`, commits `a39b8870`, `97c2ca10`, `31216ec5`, `702e928d`. **Horas:** ~6 h de Claude.
+
+## Fase 3 (15-oct, mañana) — se retoma la prueba del README: el aviso del puerto mandaba a un puerto ocupado
+
+- **Qué se hizo.** Retomada la prueba de instalación por donde se dejó ayer (punto de retorno de `ENTREGA.md`):
+  árbol independiente clonado de `develop` en un directorio temporal, con su propio proyecto de Compose
+  —ni red, ni volumen, ni contenedores compartidos con la cocina— y **sin** el `docker-compose.override.yml`
+  local, que no está versionado y remapea a 8880. Pasos 1-3 reproducidos tal cual (14 variables en el `.env`,
+  credenciales de 64 y 24 caracteres) y paso 5 lanzado: falló con `address already in use` sobre el **80** del
+  anfitrión, que es justo el choque que el punto de retorno mandaba provocar y **no** adelantar.
+- 🔴 **El defecto que ha salido, y que no se encuentra leyendo el texto.** El aviso del paso 5 daba **un único
+  valor concreto** —`HOOKSUITE_PUERTO=8080`— y fijaba la URL en `http://localhost:8080`. En esta máquina el
+  8080 lo tiene Caddy escuchando en `127.0.0.1:8080`, así que seguir el README al pie de la letra produce
+  **el mismo error por segunda vez**, y ahí el documento ya no acompaña: no avisa de que su propio ejemplo
+  pueda estar cogido, ni dice cómo averiguar un puerto libre.
+- 🔴 **Segundo hallazgo del mismo tropiezo:** el fallo lo da **solo `nginx`**, el único servicio que publica
+  puerto; los otros cinco arrancan igual. Quien no lea la salida del paso 5 y vaya directo al paso 6 ve cinco
+  servicios en marcha y puede creer que ha instalado.
+- **Qué se cambió en el README.** Tres cosas: la fila de requisitos previos remite a la sección nueva; el
+  aviso del paso 5 se despega del número concreto («cualquier puerto libre por encima de 1024», y la URL como
+  `http://localhost:<TU_PUERTO>`); y entra la sección **«¿Y si el puerto está ocupado?»** con la orden de
+  Linux para preguntar al sistema por **un** puerto, la advertencia de que `8080` es el puerto alternativo más
+  usado que existe, y la frase de que el paso 6 tiene que mostrar los **seis** servicios.
+- **Qué se descartó, y por qué.** (1) Las órdenes equivalentes de **macOS y PowerShell**: son las estándar,
+  pero **no se han ejecutado** y este README acaba de salir de una limpieza de afirmaciones falsas (lo decidió
+  josemax al ver el borrador). (2) Un párrafo que explicaba por qué `grep -w ':8088'` miente sobre
+  `127.0.0.1:8088` —el carácter anterior a los dos puntos es un dígito y `-w` exige frontera de palabra—:
+  es cierto y le pasó hoy al asistente, que declaró «libre» un puerto ocupado, pero es demasiado «de cocina»
+  para un README. (3) Que el **producto** detecte el puerto ocupado y avise mejor: cambio de producto a un día
+  de entregar, al apdo. 10.
+- ✂️ **Una frase que era trabajo nuestro colado en el README.** «Para probar el aislamiento entre usuarios
+  (RF-12), repite el registro con un segundo usuario y comprueba que no ve los datos del primero» le mandaba
+  **deberes al lector** para verificar un requisito nuestro, citando además un código de requisito interno que
+  no significa nada fuera del grupo. Reescrita como propiedad del producto: «cada cuenta trabaja con sus
+  propios datos y no ve los de las demás; si quieres comprobarlo, basta registrar un segundo usuario». Lo
+  detectó josemax preguntando si esa comprobación era del usuario o nuestra.
+- ✅ **Resultado: el README instala.** Con el puerto comprobado y cambiado, `docker compose up -d --build`
+  recreó **solo `nginx`** y el paso 6 dio **los seis en `running`**, con `nginx` en `0.0.0.0:8088->80`.
+  `http://localhost:8088` responde **200** con `<title>HookSuite</title>` —lo que prueba que el panel se
+  sirve, no que se pinte— y **la otra mitad la verificó josemax con su navegador**: vio la pantalla de acceso,
+  se registró con el código de invitación del `.env` y entró sin problemas.
+- ⚠️ **Lo que esta prueba NO hace.** No tacha la casilla «una persona ajena al grupo lo ha instalado siguiendo
+  el README»: la ha conducido quien escribió el README. Y el clon se hizo de `develop` **a propósito**, porque
+  ni el arreglo del `container_name` de `redis` ni el README nuevo están en `main`; quien clone la rama por
+  defecto hoy se trae la versión anterior, así que la prueba fiel al 100 % exige haber fusionado antes.
+- **A qué requisito toca:** **RNF-03** (despliegue reproducible) y **RF-12** (cada cuenta con sus datos);
+  apdos. **8** y **10**. **Evidencia:** `docs/evidencias/instalacion-readme-puerto-ocupado-15oct.md`.
+  **Horas:** ~1,2 h de Claude · ~0,2 h de josemax (navegador, registro y las dos decisiones del texto).
