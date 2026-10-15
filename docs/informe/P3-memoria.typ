@@ -207,15 +207,17 @@ credenciales, la credencial documentada no abría el panel y cuatro claves de la
 dentro del historial de git. Esta práctica parte de ahí y lleva el prototipo a un estado instalable,
 desplegado y verificable. El recorrido completo está en el apartado 2.
 
-*En qué estado se entrega.* De los veintiún requisitos numerados, catorce quedan cumplidos, tres
+*En qué estado se entrega.* De los veintiún requisitos numerados, trece quedan cumplidos, cuatro
 parciales, dos modificados, uno descartado y uno pendiente.
 
-Los tres parciales conviene decirlos uno a uno. El módulo de navegador está construido y conectado a la
+Los cuatro parciales conviene decirlos uno a uno. El módulo de navegador está construido y conectado a la
 red interna, pero su prueba no se ha llegado a ejecutar. El historial del repositorio no refleja un
 reparto de tareas, sencillamente porque no lo hubo: la autoría de cada confirmación se sortea, y el
-apartado 10 lo explica. Y el análisis con inteligencia artificial tiene el recorrido verificado de punta a
+apartado 10 lo explica. El análisis con inteligencia artificial tiene el recorrido verificado de punta a
 punta y el techo de gasto ejecutado, pero todavía no ha llegado a mostrar un hallazgo analizado, porque
-todas las auditorías que han terminado el recorrido han salido degradadas.
+todas las auditorías que han terminado el recorrido han salido degradadas. Y la seguridad del propio
+producto queda parcial por las dependencias: acumulan avisos conocidos y en esta práctica no se actualizó
+ninguna, el apartado 6 da los números.
 
 El requisito pendiente es el cifrado del tráfico, así que el producto se sirve hoy por HTTP. Lo demás
 funciona de principio a fin: alta y acceso por usuario con datos aislados entre cuentas, rastreo del
@@ -622,7 +624,7 @@ En la Fase 1 se le retiró del proxy la ruta que lo publicaba, de modo que qued�
 #estado("ok", "EXPOSICIÓN CERRADA Y SERVIDOR ENDURECIDO")
 
 == Autenticación y aislamiento: de cuatro fugas a cero (Fase 2)
-Hasta la Fase 2, la API y el WebSocket *no tenían autenticación* por detrás del proxy: el único control era el Basic Auth de la entrada, que además no distinguía personas. Eso no era una carencia, sino *cuatro fallos distintos*, los cuatro medidos en la cocina el 6-oct antes de tocar una línea de código. La tabla enfrenta cada uno con lo que lo cierra. La evidencia de los dos lados está en el apartado 7.
+Hasta la Fase 2, la API y el WebSocket *no tenían autenticación* por detrás del proxy: el único control era el Basic Auth de la entrada, que además no distinguía personas. Eso no era una carencia, sino *cuatro fallos distintos*, los cuatro medidos en el entorno local de pruebas el 6-oct antes de tocar una línea de código. La tabla enfrenta cada uno con lo que lo cierra. La evidencia de los dos lados está en el apartado 7.
 
 #tabla(
   (5fr, 6fr),
@@ -643,7 +645,7 @@ La peor de las cinco fue el Repeater, y se escapó del primer inventario por bus
 Se descartó la corrección evidente, que era validar ese campo contra el token: funciona, pero deja el dato en manos del cliente y obliga a acordarse en cada modelo nuevo. Las rutas toman el espacio del token y *descartan* lo que venga en el cuerpo: lo que no se lee no se puede falsear. Comprobado como ataque real (apartado 7).
 
 === Desplegado y verificado en producción (8-oct)
-Hasta esta fecha, este apartado decía expresamente que no podía afirmar nada de la instalación pública: todo estaba *verificado en la cocina*, y la caja seguía sirviendo la Fase 1 con las cuatro fugas abiertas. Se dejó escrito así a propósito, porque la tentación de contar una mejora en presente antes de que llegue a producción es justo como una memoria acaba describiendo un producto que no existe. El 7 de octubre se comprobó además *en vivo y en la propia instalación pública* que las fugas no eran teóricas: la API respondía sin credencial a cualquiera.
+Hasta esta fecha, este apartado decía expresamente que no podía afirmar nada de la instalación pública: todo estaba *verificado en el entorno local de pruebas*, y la caja seguía sirviendo la Fase 1 con las cuatro fugas abiertas. Se dejó escrito así a propósito, porque la tentación de contar una mejora en presente antes de que llegue a producción es justo como una memoria acaba describiendo un producto que no existe. El 7 de octubre se comprobó además *en vivo y en la propia instalación pública* que las fugas no eran teóricas: la API respondía sin credencial a cualquiera.
 
 El despliegue se hizo el *8 de octubre a las 06:52 UTC*, en cuatro pasos con punto de retorno previo: se etiquetaron las imágenes en servicio y se copió la configuración, se mergeó el cambio a la rama principal, se trajo el código a la caja con git reset --hard y se generaron los secretos, y se reconstruyeron los contenedores. La verificación inmediata, con el sistema ya en marcha:
 
@@ -675,7 +677,7 @@ El flujo completo del acceso, capturado en la instalación pública el mismo dí
 
 === Dos efectos del pulido del Repeater sobre la seguridad del producto (12-oct)
 - *Cerrado: el último residuo del modelo anterior al login.* La petición de envío del Repeater llevaba en su cuerpo el identificador del espacio de datos, y el esquema del servidor seguía declarándolo. No se leía, el espacio sale siempre del token firmado, nunca del cuerpo, pero *sugería que el cliente puede elegir dónde escribe*, que es exactamente el hueco de autorización que cerró la Fase 2: con el nombre de otro en el cuerpo se reutilizaban *sus* cookies del login auditado. Se retiró del frontend el 12-oct a mediodía y del esquema del servidor esa misma noche. Un campo muerto que insinúa una capacidad que no existe es deuda de seguridad, no ruido.
-- *Nuevo, y es una contrapartida asumida: el panel muestra ahora la cookie de sesión del objetivo.* Al corregir que las cabeceras mostradas sean las realmente enviadas (apartado 4), la Cookie del sitio auditado pasa a estar a la vista, como en la herramienta de referencia. Es lo correcto, la evidencia tiene que ser la petición que salió, y tiene un coste de método que conviene declarar: *cualquier captura de ese panel publica credenciales de un tercero*. Esas capturas van censuradas antes de entrar en esta memoria o en el artefacto (R7). Ya ocurrió dos veces el mismo día. Lo que esto arrastra en el navegador del auditor, el borrador guarda esas cabeceras, se trata como limitación abierta en el apartado 9.
+- *Nuevo, y es una contrapartida asumida: el panel muestra ahora la cookie de sesión del objetivo.* Al corregir que las cabeceras mostradas sean las realmente enviadas (apartado 4), la Cookie del sitio auditado pasa a estar a la vista, como en la herramienta de referencia. Es lo correcto, la evidencia tiene que ser la petición que salió, y tiene un coste de método que conviene declarar: *cualquier captura de ese panel publica credenciales de un tercero*. Esas capturas van censuradas antes de entrar en esta memoria o en el artefacto. Ya ocurrió dos veces el mismo día. Lo que esto arrastra en el navegador del auditor, el borrador guarda esas cabeceras, se trata como limitación abierta en el apartado 9.
 
 === Lo que sigue sin cubrir
 - *Sin TLS* (RNF-09): el acceso viaja en claro, así que el token de sesión es interceptable por quien esté en el camino. Pendiente de configurar en el proxy.
@@ -760,7 +762,7 @@ herramientas, sin redondear hacia abajo.
   y el producto está desplegado *sin TLS*: publicar la lista exacta de paquete, versión y número de avisos
   es publicar un mapa de por dónde entrar. Las versiones están en los ficheros de requisitos para quien
   tenga acceso al repositorio, y cualquiera puede reproducir la medida con las dos órdenes citadas arriba.
-  Es la misma regla que se aplicó a las claves: se cuenta el incidente, no se publica el valor (R7). *Única excepción:* el proxy de la P1, que esta memoria ya nombra en los apartados 3 y 5 al explicar el pivote de RF-02. Ocultarlo aquí no taparía nada.
+  Es la misma regla que se aplicó a las claves: se cuenta el incidente, no se publica el valor. *Única excepción:* el proxy de la P1, que esta memoria ya nombra en los apartados 3 y 5 al explicar el pivote de RF-02. Ocultarlo aquí no taparía nada.
 
 === Tratamiento de datos personales
 - *Qué guarda el producto, y de quién.* De cada auditor: su cuenta, nombre y contraseña *en hash*, nunca en
@@ -773,7 +775,7 @@ herramientas, sin redondear hacia abajo.
   en la web auditada. Vive en el espacio de su dueño, y el editor avisa cuando una petición la lleva. Pero
   el *borrador* del Repeater la escribe en el almacenamiento del navegador: está declarado en el apartado
   10 y no se tocó el día de la congelación.
-- *Rastros a retirar antes de la entrega:* los usuarios de prueba creados en la cocina, y una regla heredada
+- *Rastros a retirar antes de la entrega:* los usuarios de prueba creados en el entorno local de pruebas, y una regla heredada
   de la P1 que contenía la dirección pública de un integrante, esa ya se retiró en la Fase 1.
 - *Conservación y borrado:* no hay caducidad ni borrado automático de cuentas ni de historial. El recolector
   solo caduca el estado efímero de sesión. Se declara como lo que es: una decisión no tomada, no una medida.
@@ -783,10 +785,10 @@ herramientas, sin redondear hacia abajo.
 = Pruebas y evidencias
 Plan de pruebas, casos ejecutados, resultados y las pruebas que fallaron con su explicación. El detalle caso a caso (PR-01…PR-20) se mantiene en la matriz del apartado 8 y en el diario del repo.
 
-*Dónde se tomó cada evidencia, porque cambia lo que vale.* Salvo cuando se dice lo contrario, *toda* la verificación de las Fases 1 y 2 se ejecutó en la cocina, el entorno de pruebas descrito en el apartado 4, y se repitió después contra la instalación pública tras cada despliegue. Las dos se registran por separado y con su fecha: una prueba en la cocina dice que el arreglo funciona. Solo la de producción dice que *está puesto*. Esa distinción no es formalismo: más abajo se cuenta un despliegue que habría pasado por correcto sin aplicar la configuración que se le pedía.
+*Dónde se tomó cada evidencia, porque cambia lo que vale.* Salvo cuando se dice lo contrario, toda la verificación previa a cada despliegue se ejecutó en el *entorno local de pruebas*, una réplica del despliegue levantada con los mismos contenedores en una máquina del equipo, y se repitió después contra la instalación pública tras cada despliegue. Las dos se registran por separado y con su fecha: una prueba en el entorno local dice que el arreglo funciona. Solo la de producción dice que *está puesto*. Esa distinción no es formalismo: más abajo se cuenta un despliegue que habría pasado por correcto sin aplicar la configuración que se le pedía.
 
 == Evidencia de exposición (RNF-07 / PR-16), capturada el 4-oct
-La prueba PR-16, llamar a la API sin credenciales, y la verificación del frontend confirman que, antes de endurecer, el producto quedaba accesible sin autenticación. Capturas obtenidas antes de cualquier arreglo (R6: la evidencia de un fallo se captura antes de corregirlo, porque el propio arreglo la destruye):
+La prueba PR-16, llamar a la API sin credenciales, y la verificación del frontend confirman que, antes de endurecer, el producto quedaba accesible sin autenticación. Capturas obtenidas antes de cualquier arreglo, porque la evidencia de un fallo se captura antes de corregirlo: el propio arreglo la destruye.
 
 #imagen("../capturas/exposicion/RNF07-api-health-sin-login.png", "RNF-07 / PR-16 — GET /health de la API responde 200 sin credenciales ni cabecera WWW-Authenticate: la API no exige autenticación.")
 
@@ -833,7 +835,7 @@ Dos pares de capturas tomadas sobre el producto desplegado, antes y después de 
 
 #imagen("../capturas/fase1/RF-03-despues-formularios-unicos.png", "RF-03 — DESPUÉS: la misma petición de la misma página queda en *una sola entrada*. Solo cambia el contador: 52 → 1.")
 
-> *Nota de tratamiento de las capturas (R7).* Las dos del estado anterior mostraban un identificador de sesión de la web de pruebas en la franja superior. Se publican con esa franja tapada, y los originales no salen del almacén interno. Las del estado posterior no lo contienen porque la sesión no estaba autenticada.
+> *Nota de tratamiento de las capturas.* Las dos del estado anterior mostraban un identificador de sesión de la web de pruebas en la franja superior. Se publican con esa franja tapada, y los originales no salen del almacén interno. Las del estado posterior no lo contienen porque la sesión no estaba autenticada.
 
 == #highlight(fill: rgb("#FFE97A"), extent: 1.5pt)[El pulido del Spider (11-oct): quince defectos, y catorce los encontró el uso]
 
@@ -908,17 +910,17 @@ El 12-oct repitió el método del día anterior sobre la segunda pestaña: no se
 
 *El proyecto tenía un verificador configurado y sin usar.* La regresión más tonta de la jornada, el botón de enviar dejó de hacer nada porque un borrado por rango de líneas se llevó la declaración de una variable, la habría cazado el analizador estático del propio repositorio, que *nunca se había ejecutado*. Se probó a mordida (un fichero con una variable inexistente devuelve el error esperado) y desde entonces va *por delante* de cada verificación: hoy no queda ninguna variable no declarada en el frontend, con control positivo para que ese cero signifique algo. Lo que destapa de paso va al apartado 9: el frontend acumula veintitrés errores y dos avisos de otras reglas. *El proyecto no pasa su propio analizador*, y conviene decirlo.
 
-*Lo que ninguna de las verificaciones del asistente cazaba, dicho con nombre.* Cada cambio de la jornada se verificó contando cadenas de texto dentro del paquete construido. Ese método confirma que un texto *está*. No dice que se *lea* bien ni que la lógica funcione. Tres veces el mismo día dio por bueno algo roto: escapes que se mostraban en crudo, una dirección presente pero ilegible por falta de sitio, y la regresión del botón de enviar. La construcción de la imagen no comprueba variables no declaradas, el analizador no detecta errores de ejecución, y contar textos no detecta ninguno de los dos. *Lo único que cazó esos tres fue abrir la pantalla*, y de ahí que las capturas de producto las tome una persona (R6). El detalle de los ocho defectos que introdujo el asistente está en el apartado 11.
+*Lo que ninguna de las verificaciones del asistente cazaba, dicho con nombre.* Cada cambio de la jornada se verificó contando cadenas de texto dentro del paquete construido. Ese método confirma que un texto *está*. No dice que se *lea* bien ni que la lógica funcione. Tres veces el mismo día dio por bueno algo roto: escapes que se mostraban en crudo, una dirección presente pero ilegible por falta de sitio, y la regresión del botón de enviar. La construcción de la imagen no comprueba variables no declaradas, el analizador no detecta errores de ejecución, y contar textos no detecta ninguno de los dos. *Lo único que cazó esos tres fue abrir la pantalla*, y de ahí que las capturas de producto las tome una persona. El detalle de los ocho defectos que introdujo el asistente está en el apartado 11.
 
-#imagen("../capturas/fase3/RF-05-repeater-post-sin-419.png", "RF-05 / RF-03 — el final de los 419. La misma clase de petición que antes era rechazada llega ahora a la lógica de la aplicación: el servidor responde 302 y el formulario contesta que las credenciales no coinciden. Es decir, lo que fallaba no era el Repeater sino unas cabeceras incompletas en los formularios que descubre el Spider. Valores de sesión tapados (R7).")
+#imagen("../capturas/fase3/RF-05-repeater-post-sin-419.png", "RF-05 / RF-03 — el final de los 419. La misma clase de petición que antes era rechazada llega ahora a la lógica de la aplicación: el servidor responde 302 y el formulario contesta que las credenciales no coinciden. Es decir, lo que fallaba no era el Repeater sino unas cabeceras incompletas en los formularios que descubre el Spider. Valores de sesión tapados.")
 
 #imagen("../capturas/fase3/RF-04-repeater-dos-envios-mismo-resultado-1.png", "RF-04 — prueba de aceptación del Repeater con cliente propio, *primer envío*: 302, 0,4 KB y destino /tienda/205.")
 
 #imagen("../capturas/fase3/RF-04-repeater-dos-envios-mismo-resultado-2.png", "RF-04 — *segundo envío de la misma petición, sin tocar nada*: idénticos el estado, el tamaño, el destino y el cuerpo de la respuesta. Lo único que cambia es el tiempo (56 ms → 73 ms), y ese cambio es justamente lo que demuestra que son dos envíos distintos y no la misma figura repetida. Con el cliente compartido anterior, dos envíos iguales podían no coincidir.")
 
-#imagen("../capturas/fase3/RF-03-spider-rotulos-despues.png", "RF-03 — el panel de detalle después del pulido, con los dos defectos de fidelidad corregidos: los rótulos de sección se distinguen del contenido,antes compartían el mismo gris, y eso llevó a leer las cabeceras de respuesta como si fueran de petición— y las cabeceras que se muestran son *las realmente enviadas*, con la Cookie de sesión incluida. Los cuatro valores de sesión van tapados (R7).")
+#imagen("../capturas/fase3/RF-03-spider-rotulos-despues.png", "RF-03 — el panel de detalle después del pulido, con los dos defectos de fidelidad corregidos: los rótulos de sección se distinguen del contenido,antes compartían el mismo gris, y eso llevó a leer las cabeceras de respuesta como si fueran de petición— y las cabeceras que se muestran son *las realmente enviadas*, con la Cookie de sesión incluida. Los cuatro valores de sesión van tapados.")
 
-#imagen("../capturas/fase3/RF-05-repeater-aviso-sesion-heredada-censurada.png", "RF-05 — *la sesión heredada, avisada*: el banco de trabajo detecta que la petición viaja con la cookie del objetivo y lo dice en ámbar, con el botón para quitarla. El valor del testigo y el del cuerpo van tapados (R7). Cubre RF-05.")
+#imagen("../capturas/fase3/RF-05-repeater-aviso-sesion-heredada-censurada.png", "RF-05 — *la sesión heredada, avisada*: el banco de trabajo detecta que la petición viaja con la cookie del objetivo y lo dice en ámbar, con el botón para quitarla. El valor del testigo y el del cuerpo van tapados. Cubre RF-05.")
 
 #imagen("../capturas/fase3/RF-05-repeater-quitar-la-sesion-censurada.png", "RF-05 — *la misma operación, ya ejecutada*: tras pulsar «quitar la sesión» la lista de cabeceras ya no tiene fila de cookie y el aviso ámbar desaparece. Es una petición distinta de la de la figura anterior, no su gemela. Cubre RF-05.")
 
@@ -928,28 +930,28 @@ El 12-oct repitió el método del día anterior sobre la segunda pestaña: no se
 
 #imagen("../capturas/fase3/RNF-07-repeater-preview-aviso-censurada.png", "RNF-07 — *la vista previa no ejecuta nada*: la pestaña de previsualización avisa de que el código que venga en la respuesta no se ejecuta y de que una página construida con JavaScript puede verse incompleta o en blanco. Es la contrapartida visible del aislamiento. Cubre RNF-07.")
 
-> *Nota de tratamiento de estas figuras (R7).* Todas se tomaron en producción, sobre el código congelado, contra una web propia del equipo autorizada para ello. Desde el 12-oct el panel de cabeceras muestra la cookie de sesión del objetivo, es lo correcto, porque es lo que se envía, así que cada figura se publica con esos valores tapados y los originales no salen del almacén interno.
+> *Nota de tratamiento de estas figuras.* Todas se tomaron en producción, sobre el código congelado, contra una web propia del equipo autorizada para ello. Desde el 12-oct el panel de cabeceras muestra la cookie de sesión del objetivo, es lo correcto, porque es lo que se envía, así que cada figura se publica con esos valores tapados y los originales no salen del almacén interno.
 
 == #highlight(fill: rgb("#FFE97A"), extent: 1.5pt)[Condición de carrera detectada antes de reiniciar el servidor]
 El agente del cortafuegos y el servicio de contenedores no tenían orden de arranque entre sí. Si el segundo ganaba la carrera, *creaba una carpeta donde debía ir el canal de comunicación del agente*, comportamiento normal al montar un fichero que no existe, y el agente quedaba en un bucle de reinicios. El servidor llevaba sin reiniciarse desde mayo, así que nunca se había puesto a prueba. Se corrigió fijando el orden de arranque antes de reiniciar. Tras el reinicio, el contador de reinicios del agente marcaba *cero*: la carrera no llegó a producirse.
 
 == #highlight(fill: rgb("#FFE97A"), extent: 1.5pt)[Otras evidencias ya en mano]
 - *Incidente de las claves y limpieza del historial:* ensayo de reescritura verificado antes/después (3 → 0 claves), detallado en el apartado 6.
-- *Salidas de terminal* (health sin login, openapi.json sin seguridad, cierre de puertos, mensajes de error) guardadas como texto en el repo, no como foto (R7: así ninguna captura publica por error un secreto).
+- *Salidas de terminal* (health sin login, openapi.json sin seguridad, cierre de puertos, mensajes de error) guardadas como texto en el repo, no como foto (así ninguna captura publica por error un secreto).
 
 == Evidencia de las fugas de aislamiento (RF-12), capturada el 6-oct
-Cuatro pruebas lanzadas contra la cocina a través del proxy, como las haría un cliente, *antes de tocar una sola línea de código de la Fase 2*: el propio arreglo borra esta evidencia, y el apartado pide las pruebas que fallaron con su explicación. Los valores de cookie empleados son inventados a propósito, de modo que la captura no contiene ningún identificador real (R7).
+Cuatro pruebas lanzadas contra el entorno local de pruebas a través del proxy, como las haría un cliente, *antes de tocar una sola línea de código de la Fase 2*: el propio arreglo borra esta evidencia, y el apartado pide las pruebas que fallaron con su explicación. Los valores de cookie empleados son inventados a propósito, de modo que la captura no contiene ningún identificador real.
 
 Las cuatro confirmaron el fallo: la API responde 200 sin credencial mientras /health responde 401. Un token inventado obtiene sesión propia. Un segundo usuario lee la cookie de sesión capturada por el primero, y también se obtiene sin token. Y una vulnerabilidad publicada sin token aparece en la sesión de dos auditores distintos.
 
 La captura íntegra, con la causa en fichero y línea de cada una, está en evidencias/fugas-aislamiento-06oct.md. Una corrección respecto a lo que teníamos anotado: la difusión no ocurre solo en las dos llamadas que emiten a todas las sesiones, sino también en los dos endpoints que admiten peticiones sin token, que además *persisten* el dato en la sesión de todos los usuarios. Son cuatro puntos de difusión, no dos.
 
 == El aislamiento, verificado después de cerrarlo (RF-12)
-Con el sistema de acceso puesto, se repitieron las mismas pruebas contra la cocina. *Once comprobaciones, once en verde*: alta de dos usuarios distintos. Entrada de ambos. Contraseña incorrecta rechazada con 401 y no con un error del servidor. La identidad del portador del token resuelta correctamente. La API respondiendo con token. 403 al intentar tocar el espacio de otro con token propio, es decir, autenticación *y* autorización, que son cosas distintas. El segundo usuario sin ver el hallazgo del primero. Y el segundo usuario sin ver la cookie de sesión del primero, que era la tercera fuga.
+Con el sistema de acceso puesto, se repitieron las mismas pruebas contra el entorno local. *Once comprobaciones, once en verde*: alta de dos usuarios distintos. Entrada de ambos. Contraseña incorrecta rechazada con 401 y no con un error del servidor. La identidad del portador del token resuelta correctamente. La API respondiendo con token. 403 al intentar tocar el espacio de otro con token propio, es decir, autenticación *y* autorización, que son cosas distintas. El segundo usuario sin ver el hallazgo del primero. Y el segundo usuario sin ver la cookie de sesión del primero, que era la tercera fuga.
 
 Se probó además *como ataque*, no solo como comprobación: un usuario autenticado intentó dirigir el Spider al espacio de otro nombrándolo en el cuerpo de la petición, que era el quinto fallo del apartado 6. El espacio de la víctima quedó vacío y el rastreo fue a parar al del atacante.
 
-Ni el código de invitación ni las contraseñas aparecen en ninguna salida: el guion de pruebas los mantiene en variables (R7).
+Ni el código de invitación ni las contraseñas aparecen en ninguna salida: el guion de pruebas los mantiene en variables.
 
 #imagen("../capturas/fase2/RF-12-panel-login.png", "RF-12 — la entrada del producto tras retirar el Basic Auth de Nginx: un panel de acceso propio, con pestañas «Entrar» y «Crear cuenta». Antes, la raíz devolvía 401 pidiendo una credencial que ningún integrante del grupo conocía.")
 
@@ -961,7 +963,7 @@ Ni el código de invitación ni las contraseñas aparecen en ninguna salida: el 
 
 #imagen("../capturas/fase2/RF-12-aislamiento-usuarioB-sin-datos.png", "RF-12 — DESPUÉS, el contraste: el usuario B, autenticado a la vez y en otro navegador, ve su panel *vacío*. Antes de la Fase 2 habría visto exactamente lo mismo que el usuario A. Este par es la prueba del aislamiento por usuario.")
 
-> *Nota de tratamiento de las capturas (R7).* La del usuario A mostraba el valor íntegro de la cabecera XSRF-TOKEN, que es el identificador de sesión capturado *de la web auditada*: justo el dato que este requisito existe para no compartir. Se publica con ese valor tapado y la etiqueta a la vista, para que se vea qué se redactó. El original no sale del almacén interno. La del usuario B lleva tapada la barra de marcadores del navegador, ajena al proyecto.
+> *Nota de tratamiento de las capturas.* La del usuario A mostraba el valor íntegro de la cabecera XSRF-TOKEN, que es el identificador de sesión capturado *de la web auditada*: justo el dato que este requisito existe para no compartir. Se publica con ese valor tapado y la etiqueta a la vista, para que se vea qué se redactó. El original no sale del almacén interno. La del usuario B lleva tapada la barra de marcadores del navegador, ajena al proyecto.
 
 
 == #highlight(fill: rgb("#FFE97A"), extent: 1.5pt)[El despliegue habría terminado «en verde» sin aplicar la configuración del proxy]
@@ -1036,10 +1038,10 @@ El caso estaba diseñado para costar *cero*: fijando el techo en 0 por variable 
 
 *La mitad que falta del caso*, y se declara: el techo en 1, donde debe pasar una sola consulta y el resto quedar como «no analizado». Esa sí necesita clave de API válida, porque la consulta que pasa tiene que salir de verdad.
 
-#hueco("José María + Claude", "Ejecutar la segunda mitad del caso del techo, techo en 1, en cuanto haya clave de API válida: debe pasar una sola consulta y el resto quedar como «no analizado» con el motivo del techo. La primera mitad (techo 0) ya está ejecutada y capturada. Coste previsto: una consulta.")
+#hueco("el grupo", "Ejecutar la segunda mitad del caso del techo, techo en 1, en cuanto haya clave de API válida: debe pasar una sola consulta y el resto quedar como «no analizado» con el motivo del techo. La primera mitad (techo 0) ya está ejecutada y capturada. Coste previsto: una consulta.")
 #estado("ok", "AISLAMIENTO POR USUARIO: 11/11 EN LA COCINA · EN PRODUCCIÓN SOLO SE HAN VERIFICADO LAS CUATRO FUGAS CERRADAS EL 8-OCT, NO LA BATERÍA ENTERA")
 #estado("ok", "EVIDENCIA DE EXPOSICIÓN Y DE LA FASE 1 COMPLETA")
-#hueco("José María + Claude", "Plan de pruebas formal y capturas de PRODUCTO de los bugs (500 de check/alive, trampa del Spider) reproducidos en la cocina. Las de pantalla las saca José María (R6), tras la Fase 3, cuando el login nuevo cambie las pantallas. Las pruebas las hacen José María y Claude (R2).")
+#hueco("el grupo", "Plan de pruebas formal y capturas de producto de los dos defectos ya corregidos (el error 500 de la comprobación de vida y la trampa del Spider): falta reproducirlos en el entorno local sobre el producto actual y capturar la pantalla.")
 
 
 == Operación degradada (RNF-06), probada sin gastar saldo
@@ -1110,37 +1112,37 @@ Reproducible con python3 ia/tests/test_escala_confianza.py. Evidencia con las do
 
 
 == #highlight(fill: rgb("#FFE97A"), extent: 1.5pt)[La interfaz antes de descartar RF-09, capturada antes de retirarla]
-#imagen("../capturas/fase3/RF-09-pestana-red-antes-de-retirar.png", "Barra de navegación de HookSuite con las *seis* pestañas, antes de retirar RF-09. «RED» es la última. Capturada en la cocina el 11-oct, antes de aplicar el cambio. La dirección interna de la barra del navegador va censurada. Requisitos: RF-09 (descartado) y RF-01 (interfaz).")
+#imagen("../capturas/fase3/RF-09-pestana-red-antes-de-retirar.png", "Barra de navegación de HookSuite con las *seis* pestañas, antes de retirar RF-09. «RED» es la última. Capturada en el entorno local el 11-oct, antes de aplicar el cambio. La dirección interna de la barra del navegador va censurada. Requisitos: RF-09 (descartado) y RF-01 (interfaz).")
 
 Esta figura existe por una regla que el grupo se dio al empezar la Fase 3: *las evidencias de un defecto se capturan antes de arreglarlo, porque el arreglo las destruye*. Retirar la pestaña hacía imposible volver a fotografiarla, de modo que se pidió la captura antes de tocar el código y el despliegue se mantuvo a la espera hasta tenerla.
 
 Hay una segunda decisión deliberada, y conviene explicarla porque va contra la intuición: de las tres evidencias previstas se tomó *una sola* imagen. Las otras dos documentaban el defecto técnico, el extremo de consola que responde 404, y ese se guardó *como texto* en lugar de como fotografía. Una salida de terminal en texto es buscable, comparable entre versiones y no corre el riesgo de publicar de refilón una credencial que estuviera en pantalla. Una captura no cumple ninguna de las tres cosas. La imagen se reserva para lo único que no puede contarse de otro modo: cómo se veía la interfaz.
 = Matriz de trazabilidad
-La pieza con la que se corrige la práctica: requisito por requisito, dónde está implementado, qué prueba lo verifica y dónde se ve. Las rutas están comprobadas en el código (cocina local, 4-oct). La columna de evidencia enlaza la figura de la memoria y el *minuto exacto del vídeo*. Se rellena al grabar.
+La pieza con la que se corrige la práctica: requisito por requisito, dónde está implementado, qué prueba lo verifica y dónde se ve. Las rutas están comprobadas en el código (4-oct). La columna de evidencia enlaza la figura de la memoria y el *minuto exacto del vídeo*. Se rellena al grabar.
 #tabla(
   (auto, 4fr, auto, 4fr, auto, 3fr),
   "
   Req. | Descripción | Estado | Implementación (ruta) | Prueba | Evidencia
   RF-01 | Dashboard web sin instalación | Cumplido (seis pestañas: se retira Red y se añade Manual el 11-oct) | frontend/src/App.jsx + Layout.jsx + pages/manual/ManualPage.jsx | PR-01 | fig. apdo. 9 · vídeo —:—
-  RF-02 | Proxy del lado servidor (httpx) | Modificado (2 errores de servidor corregidos en F1) | backend/services/proxy_service.py | PR-19 | justif. apdo. 3 · apdo. 5
-  RF-03 | Spider / rastreo | Cumplido (4 defectos corregidos en F1. Quince más en el pulido del 11-oct. El 12-oct las cabeceras que muestra pasan a ser las realmente enviadas) | backend/services/spider_service.py, frontend/.../ProxyPage.jsx, .../RequestsTable.jsx | PR-03 | figs. apdo. 7 · vídeo —:—
+  RF-02 | Proxy del lado servidor (httpx) | Modificado (dos errores de servidor corregidos al inicio de la práctica) | backend/services/proxy_service.py | PR-19 | justif. apdo. 3 · apdo. 5
+  RF-03 | Spider / rastreo | Cumplido (cuatro defectos corregidos al inicio de la práctica. Quince más en el pulido del 11-oct. El 12-oct las cabeceras que muestra pasan a ser las realmente enviadas) | backend/services/spider_service.py, frontend/.../ProxyPage.jsx, .../RequestsTable.jsx | PR-03 | figs. apdo. 7 · vídeo —:—
   RF-04 | Auditoría autenticada (sesión compartida) | *Modificado* (12-oct: el Repeater envía con cliente propio y la sesión se hereda por cabecera explícita) | backend/services/session_service.py, backend/services/proxy_service.py, backend/routes/repeater.py | PR-04 | justif. apdo. 3 · figs. apdo. 7
-  RF-05 | Repeater | Cumplido (parser y avisos de error corregidos en F1. El importador de peticiones se traslada aquí desde el Spider el 11-oct y se *retira* el mismo día. Dieciséis defectos corregidos en el pulido del 12-oct, con un historial añadido y retirado esa misma jornada) | backend/routes/repeater.py, backend/services/proxy_service.py, frontend/src/pages/repeater/ | PR-05 | figs. apdos. 5 y 8 · vídeo —:— 
-  RF-06 | Intruder / fuzzing | Cumplido (cancelación corregida en F1) | backend/services/intruder_service.py | PR-06 | apdo. 5 · vídeo —:—
-  RF-07 | Utilidades (incl. JWT) | Cumplido | frontend/src/pages/utilities/ | PR-07 | fig. — · vídeo —:— 
+  RF-05 | Repeater | Cumplido (parser y avisos de error corregidos al inicio de la práctica. El importador de peticiones se traslada aquí desde el Spider el 11-oct y se *retira* el mismo día. Dieciséis defectos corregidos en el pulido del 12-oct, con un historial añadido y retirado esa misma jornada) | backend/routes/repeater.py, backend/services/proxy_service.py, frontend/src/pages/repeater/ | PR-05 | figs. apdos. 5 y 7 · vídeo —:—
+  RF-06 | Intruder / fuzzing | Cumplido (cancelación corregida al inicio de la práctica) | backend/services/intruder_service.py | PR-06 | fig. apdo. 5 · vídeo —:—
+  RF-07 | Utilidades (incl. JWT) | Cumplido | frontend/src/pages/utilities/ | PR-07 | fig. apdo. 5 · vídeo —:—
   RF-08 | IA → panel Vulnerabilidades | Parcial: el recorrido está verificado de punta a punta (10-oct) y el techo de gasto ejecutado, pero *ninguna auditoría ha devuelto todavía un hallazgo analizado*, todas las que han llegado al final salieron degradadas, por el techo de gasto, por la clave de API o por el tope de tokens | ia/, backend/routes/playwright.py, backend/services/redis_consumer.py, frontend/.../VulnerabilitiesPage.jsx | PR-08 | figs. apdo. 7 · vídeo —:—
   RF-09 | DevTools → panel Red | *Descartado* (11-oct. Justificado en apartado 3) | devtools/ conservado · backend/routes/network.py se mantiene (lo consumen IA y Playwright) | — | fig. apdo. 7 · vídeo —:— 
-  RF-10 | Playwright | *Parcial* (construido y en la red interna desde la Fase 3. PR-10 sin ejecutar y el sondeo de instrucciones devuelve 401 con sesión válida, apartados 6 y 7) | playwright/ + backend/routes/playwright.py | PR-10 | fig. — · vídeo —:—
-  RF-11 | Multi-usuario | Cumplido (reimplementado en F2) | backend/services/guardia.py + services/auth_service.py | PR-11 | apdo. 6 · figs. apdo. 7
-  RF-12 | Registro y login por usuario + aislamiento | Cumplido en F2 (verificado en cocina 11/11. Pendiente de producción) | backend/services/auth_service.py, guardia.py, usuarios_store.py, frontend/.../LoginPage.jsx | PR-12 | apdo. 6 · figs. apdo. 7
+  RF-10 | Playwright | *Parcial* (construido y conectado a la red interna del despliegue. PR-10 sin ejecutar y el sondeo de instrucciones devuelve 401 con sesión válida, apartados 6 y 7) | playwright/ + backend/routes/playwright.py | PR-10 | apdos. 6-7 · vídeo —:—
+  RF-11 | Multi-usuario | Cumplido (reimplementado al rehacer el acceso por usuario) | backend/services/guardia.py + services/auth_service.py | PR-11 | apdo. 6 · figs. apdo. 7
+  RF-12 | Registro y login por usuario + aislamiento | Cumplido (las cuatro fugas de la P1 cerradas y verificadas en producción. La batería de once casos de aislamiento, superada en el entorno local) | backend/services/auth_service.py, guardia.py, usuarios_store.py, frontend/.../LoginPage.jsx | PR-12 | apdo. 6 · figs. apdo. 7
   RNF-01 | Accesible desde navegador sin instalar nada en el cliente | Cumplido, con limitación documentada en móvil (apdo. 9) | frontend/ servido por Nginx | PR-01 | apdo. 9
-  RNF-02 | WebSocket en tiempo real | Cumplido (autenticado en F2: el token viaja en el primer mensaje, no en la URL) | backend/main.py (/ws/) | PR-17 | apdo. 6 · vídeo —:—
+  RNF-02 | WebSocket en tiempo real | Cumplido (canal autenticado: el token viaja en el primer mensaje, no en la URL) | backend/main.py (/ws/) | PR-17 | apdo. 6 · vídeo —:—
   RNF-03 | Despliegue Docker en Hetzner | Cumplido, y desde el 15-oct con la *reproducibilidad probada*: instalación desde cero siguiendo el README, ejecutada hasta la pantalla de acceso | docker-compose.yml + infra/nginx.conf + README.md | PR-13 | apdo. 7 · vídeo —:—
   RNF-04 | Historial de commits que refleje el trabajo del grupo | Parcial: el historial *no refleja un reparto de tareas, porque no lo hubo*,  la autoría de cada confirmación se asigna por sorteo y se declara en el apdo. 10. Además dos correos del mismo autor parten el grafo de contribuciones | repositorio del producto | — | apdo. 10
   RNF-05 | Límite de concurrencia | Cumplido | backend/services/intruder_service.py (asyncio.Semaphore) | PR-20 | apdo. 7
   RNF-06 | Operación degradada cuando la IA falla o no supera el umbral | Cumplido y *visto en el panel* (10-oct, y de nuevo el 15-oct en producción con un motivo distinto: clave de API ausente) | ia/client.py, ia/analyzers/vulnerability_classifier.py, backend/services/redis_consumer.py, frontend/.../VulnerabilitiesPage.jsx | ia/tests/test_tres_estados.py (8/8), ia/tests/test_escala_confianza.py (19/19) | fig. apdo. 7
-  RNF-07 | Seguridad del producto | Cumplido en F1 (exposición cerrada y servidor endurecido) y F2 (autenticación y aislamiento, verificados en cocina) | ver apartado 6 | PR-14, PR-16 | apdo. 6-7
-  RNF-08 | Firewall dinámico por sesión | Operativo y endurecido en F1 (permisos del canal y validación de entradas), pero *su ciclo por sesión, abrir al entrar, cerrar al salir o a las cuatro horas, no se ha vuelto a ejercitar en esta práctica*: PR-15 no tiene caso escrito | firewall_agent.py | PR-15 | apdo. 6-7
+  RNF-07 | Seguridad del producto | Parcial: exposición cerrada, servidor endurecido, autenticación y aislamiento verificados, pero las dependencias acumulan avisos conocidos (12 en el frontend y 78 en el árbol del backend, apdo. 6) y no se actualizó ninguna | ver apartado 6 | PR-14, PR-16 | apdo. 6-7
+  RNF-08 | Firewall dinámico por sesión | Cumplido en la P1 y endurecido después (permisos del canal y validación de entradas), pero *su ciclo por sesión, abrir al entrar y cerrar al salir o a las cuatro horas, no se ha vuelto a ejercitar en esta práctica*: PR-15 no tiene caso escrito | firewall_agent.py | PR-15 | apdo. 6-7
   RNF-09 | TLS/HTTPS | Pendiente | (por configurar en Nginx) | PR-18 | apdo. 7
   ",
 )
@@ -1156,10 +1158,10 @@ El plan de trabajo del equipo tiene *doce* casos, PR-01, 05, 06, 07, 08, 11, 13,
 
 *Qué se hace con eso, y por qué el anexo no es un volcado.* Esos resultados del 29-sep *no son basura*: son la foto del punto de partida, y el enunciado pide expresamente las pruebas que fallaron con su explicación. El anexo del apartado 12 no copia el plan, lo reconstruye con *dos columnas*, qué daba el 29-sep y qué da hoy, y declara, caso por caso, de dónde sale el resultado de hoy: de una reejecución, de una figura de esta memoria, o de que no se ha podido reejecutar y por qué.
 
-> *Hecho el 13-oct.* El plan está ahora en el *anexo del apartado 12*, reconstruido caso por caso y no copiado: con el resultado del 29-sep, el de hoy y de dónde sale cada uno. Los tres desfases que habrían entrado como afirmaciones falsas, PR-01, PR-16 y PR-19, quedan corregidos con medida nueva. La numeración RF/RNF es la fijada en el apartado 3 y #estado("curso", "PENDIENTE DE VALIDAR POR EL GRUPO").
+> *Hecho el 13-oct.* El plan está ahora en el *anexo del apartado 12*, reconstruido caso por caso y no copiado: con el resultado del 29-sep, el de hoy y de dónde sale cada uno. Los tres desfases que habrían entrado como afirmaciones falsas, PR-01, PR-16 y PR-19, quedan corregidos con medida nueva. La numeración RF/RNF es la fijada en el apartado 3.
 
 
-#hueco("José María + Claude", "Al revisar el vídeo grabado, anotar el minuto exacto donde se demuestra cada requisito y el número de figura de su captura (R6: el nombre de la captura va atado al ID del requisito, p. ej. RF-08-panel-ia.png, para que esta columna se rellene sola).")
+#hueco("el grupo", "Al revisar el vídeo grabado, anotar el minuto exacto donde se demuestra cada requisito y el número de figura de su captura.")
 
 = Limitaciones y trabajo futuro
 Qué no funciona, qué funciona con condiciones y qué se haría con más tiempo. Este apartado recibe material hasta el último día.
@@ -1245,7 +1247,7 @@ El generador de esquemas vive en la carpeta de trabajo de la práctica, *fuera d
 
 *Trabajo futuro, de coste bajo:* mover las herramientas de la práctica al repositorio, para que un cambio en ellas se revise como cualquier otro. No se hizo ahora porque mover ficheros a tres días de la congelación introduce riesgo sin aportar nada al producto.
 
-#hueco("José María + Claude", "Acumular el resto de limitaciones conforme aparezcan durante las Fases 1-4. Este apartado recibe material hasta el último día.")
+#hueco("el grupo", "Acumular las limitaciones que aparezcan hasta el cierre de la entrega. Este apartado recibe material hasta el último día.")
 
 = Reparto del trabajo
 Quién hizo qué, con estimación de horas por persona.
@@ -1305,7 +1307,7 @@ el de la consulta continua ni el de la guía. No se cronometró, y aquí no se i
 
 = Uso de herramientas de IA
 Declaración obligatoria de qué herramientas de IA se usaron y para qué.
-- *Claude Code* (modelo Claude de Anthropic): asistencia en diagnóstico, montaje de la cocina, ensayo de limpieza del historial y redacción de esta memoria, bajo revisión humana.
+- *Claude Code* (modelo Claude de Anthropic): asistencia en diagnóstico, montaje del entorno local de pruebas, ensayo de limpieza del historial y redacción de esta memoria, bajo revisión humana.
 == Los límites de la herramienta, observados en primera persona
 Usar un asistente de IA para auditar seguridad tiene un límite que conviene declarar porque lo encontramos trabajando: *el filtro de seguridad del propio modelo bloquea a veces tareas legítimas de este dominio*. El 9 de octubre, leyendo las instrucciones del clasificador de vulnerabilidades de HookSuite, la petición fue rechazada con un error que lo dice con todas las letras, el filtro «a veces marca tareas legítimas de programación, *ciberseguridad* y biología». No es un fallo del proyecto ni del operador: es el coste de trabajar en seguridad ofensiva con una herramienta generalista, y conviene contarlo con la fecha y la referencia delante en lugar de omitirlo.
 
@@ -1343,7 +1345,7 @@ De los quince defectos del pulido del Spider (11-oct, apdo. 7), *dos los causamo
 
 *Dos de los ocho son el mismo error repetido el mismo día:* borrar código por rango de líneas sin comprobar qué quedaba al lado. La primera vez se llevó por delante la declaración de una variable. La segunda, el cierre de un condicional anidado. De ahí sale una regla concreta, que vale más que la buena intención de «revisar mejor»: *los bloques se delimitan por contenido, no por el primer cierre que aparezca, y después se comprueba qué ha quedado huérfano*.
 
-*Lo que se saca de aquí* es que la velocidad del asistente para aplicar un cambio no va acompañada de la misma velocidad para comprobar sus efectos laterales, y que *sus verificaciones son sistemáticamente ciegas a lo que ve una persona en dos segundos*. Por eso las capturas de producto las toma una persona (R6) y por eso el reparto de la línea pone las pruebas en manos humanas: no es desconfianza, es que los dos métodos fallan en sitios distintos.
+*Lo que se saca de aquí* es que la velocidad del asistente para aplicar un cambio no va acompañada de la misma velocidad para comprobar sus efectos laterales, y que *sus verificaciones son sistemáticamente ciegas a lo que ve una persona en dos segundos*. Por eso las capturas de producto las toma una persona y por eso el reparto del equipo pone las pruebas en manos humanas: no es desconfianza, es que los dos métodos fallan en sitios distintos.
 
 == Leer sin leer: delegar la lectura de lo que no debe entrar en la conversación
 El filtro descrito arriba obligó a una medida de método que vale la pena declarar, porque cambió la forma de trabajar. Las instrucciones que el producto envía al modelo son el material que más incomoda a ese filtro y, a la vez, eran lo único que faltaba por conocer para terminar el módulo de IA: *tres defectos abiertos dependían de saber qué formato piden*. El asistente principal no podía abrirlas sin arriesgar la sesión, y el permiso del operador no sirve de nada, porque el filtro no sabe nada de ese permiso: mide lo que entra en la conversación, no lo que alguien ha autorizado.
@@ -1427,7 +1429,7 @@ el resultado de hoy*, que es lo que permite juzgarlo: una reejecución, una figu
   PR-08 | RF-08 | Publicar un hallazgo y recuperarlo por el panel | backend correcto. Faltaba el productor | *pasa* · recorrido completo verificado el 10-oct y figura del apdo. 7 (techo a 0 €)
   PR-10 | RF-10 | Ejercitar el módulo de navegador | *sin caso escrito* | *no reejecutada*: hasta hoy el módulo ni siquiera estaba en la red interna. El despliegue del 13-oct lo corrige, pero no se ha ejercitado
   PR-11 | RF-11 | Que cada usuario tenga su espacio de datos | tokens correctos por /api/session/new | *procedimiento caducado*: esa ruta se retiró en la Fase 2. Lo que hoy cumple RF-11 es el acceso por usuario, y se prueba con PR-12
-  PR-12 | RF-12 | Que un usuario no vea los datos de otro | *sin caso escrito* | *pasa* · cuatro figuras del apdo. 6, verificado 11/11 en la cocina
+  PR-12 | RF-12 | Que un usuario no vea los datos de otro | *sin caso escrito* | *pasa* · cuatro figuras del apdo. 6, verificado 11/11 en el entorno local
   PR-13 | RNF-03 | Servicio en pie y API publicada en la caja | /health correcto. Esquema de la API *abierto* | *pasa y mejora*: /health 200 y el esquema *ya no se publica* · reejecutada
   PR-14 | RNF-07 | Sin claves en lo que se publica | por ejecutar | *pasa* · cero ficheros seguidos por git con clave, con control positivo · reejecutada
   PR-15 | RNF-08 | Cortafuegos por sesión | *sin caso escrito* | *no reejecutada*: el agente está operativo y endurecido (apdos. 6-7), pero no se ha vuelto a ejercitar
