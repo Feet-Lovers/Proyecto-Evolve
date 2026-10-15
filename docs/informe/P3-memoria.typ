@@ -594,7 +594,7 @@ Estado de partida, verificado en vivo el 29-sep y el 4-oct (evidencia fotográfi
 - El servidor *no tenía cortafuegos* (política de aceptación por defecto) ni protección contra fuerza bruta, y acumulaba unos *127.000 intentos de acceso en 7 días*.
 - DVWA *no* estaba expuesto a internet (solo red interna), lo que corrige un supuesto previo nuestro.
 
-== Endurecimiento aplicado en la Fase 1 (5-oct)
+== Endurecimiento aplicado al inicio de la práctica (5-oct)
 === Cierre de la exposición
 La API y el frontend dejaron de publicar puerto propio: *la única entrada es el proxy*. No bastaba con retirarlos del docker-compose.yml, porque el frontend llevaba la dirección del servidor incrustada en tiempo de compilación y hablaba directamente con la API. Hubo que *reconstruirlo para que use el mismo origen* y que sus llamadas (incluido el WebSocket) pasen por el proxy.
 Comprobado desde fuera tras el despliegue: los puertos directos *rechazan la conexión*, el proxy responde, y el paquete del frontend ya no contiene ninguna referencia a la dirección antigua.
@@ -603,11 +603,7 @@ Comprobado desde fuera tras el despliegue: los puertos directos *rechazan la con
 El backend aceptaba *cualquier* origen con credenciales, combinación además inválida por especificación: en la práctica, el servidor *reflejaba el origen de quien preguntara*, de modo que cualquier web podía hacerle peticiones autenticadas. Se sustituyó por una *lista cerrada* configurable por entorno. Comprobado: un origen arbitrario ya no recibe permiso. Uno legítimo sí.
 
 === El laboratorio vulnerable: fuera del producto
-En la Fase 1 se le retiró del proxy la ruta que lo publicaba, de modo que quedó accesible solo desde la red interna. El *13-oct*, al congelar, se retiró del producto *entero*: no está en el despliegue ni en la caja, ni el servicio, ni el contenedor, ni la imagen.
-
-*Por qué, y es una decisión del 1-oct que tardó doce días en aplicarse.* Las pruebas de este proyecto se hacen contra una web propia del equipo, autorizada para ello, y no contra el laboratorio clásico. Mantenerlo en el despliegue significaba entregar un producto que arrastra un sistema *deliberadamente vulnerable* que ya nadie usaba. Se retiró de la composición de contenedores, del entorno del módulo de navegador, y del único punto del código que todavía caía a él cuando llegaba una orden sin objetivo: ahora esa orden *se descarta y se dice*, en lugar de auditar un host que ya no existe.
-
-*Lo que no se tocó, y se declara.* El módulo de navegador conserva una función de acceso a ese laboratorio, y los datos de ejemplo del frontend lo siguen nombrando. Son RF-10, parcial, y código que no se ejecuta en el producto entregado. Reescribirlos el día de la congelación añadía riesgo sin ganar nada. Queda anotado en el apartado 9.
+El 5-oct se le retiró del proxy la ruta que lo publicaba, de modo que quedó accesible solo desde la red interna. El *13-oct*, al congelar, se retiró del producto *entero*: no está en el despliegue ni en la caja, ni el servicio, ni el contenedor, ni la imagen. Las pruebas de este proyecto se hacen contra una web propia del equipo, autorizada para ello, y mantener en el despliegue un sistema *deliberadamente vulnerable* que ya nadie usaba no tenía defensa. El único punto del código que todavía caía a él cuando llegaba una orden sin objetivo ahora *descarta esa orden y lo dice*, en lugar de auditar un host que ya no existe. *Lo que no se tocó, y se declara:* el módulo de navegador conserva una función de acceso a ese laboratorio y los datos de ejemplo del frontend lo siguen nombrando. Es código que no se ejecuta en el producto entregado, y reescribirlo el día de la congelación añadía riesgo sin ganar nada. Queda anotado en el apartado 9.
 
 === Endurecimiento del servidor
 - *Cortafuegos* activo, con política de denegación por defecto y únicamente el acceso remoto y el proxy permitidos.
@@ -623,13 +619,13 @@ En la Fase 1 se le retiró del proxy la ruta que lo publicaba, de modo que qued�
 
 #estado("ok", "EXPOSICIÓN CERRADA Y SERVIDOR ENDURECIDO")
 
-== Autenticación y aislamiento: de cuatro fugas a cero (Fase 2)
-Hasta la Fase 2, la API y el WebSocket *no tenían autenticación* por detrás del proxy: el único control era el Basic Auth de la entrada, que además no distinguía personas. Eso no era una carencia, sino *cuatro fallos distintos*, los cuatro medidos en el entorno local de pruebas el 6-oct antes de tocar una línea de código. La tabla enfrenta cada uno con lo que lo cierra. La evidencia de los dos lados está en el apartado 7.
+== Autenticación y aislamiento: de cuatro fugas a cero (8-oct)
+Hasta que se rehízo el acceso, la API y el WebSocket *no tenían autenticación* por detrás del proxy: el único control era el Basic Auth de la entrada, que además no distinguía personas. Eso no era una carencia, sino *cuatro fallos distintos*, los cuatro medidos en el entorno local de pruebas el 6-oct antes de tocar una línea de código. La tabla enfrenta cada uno con lo que lo cierra. La evidencia de los dos lados está en el apartado 7.
 
 #tabla(
   (5fr, 6fr),
   "
-  Cómo estaba (medido el 6-oct) | Cómo queda (Fase 2)
+  Cómo estaba (medido el 6-oct) | Cómo queda (acceso por usuario)
   *La API entera respondía sin credencial.* La asimetría lo delataba: GET /health devolvía 401 por el Basic Auth de la entrada, pero GET /api/session/new devolvía 200 y entregaba un token. El proxy protegía unas rutas y dejaba /api abierta. | Un guardián aplicado *por router*, no ruta por ruta, para que una ruta nueva nazca protegida. Toda /api y /ws/ exigen token: sin él, 401 con cabecera WWW-Authenticate. El Basic Auth de la entrada se retiró, porque la credencial la pide ahora quien debe.
   *El token de sesión no era una credencial, era un nombre.* El backend *creaba* sesión para cualquier cadena inventada, así que no había frontera que violar: bastaba escribir un token cualquiera en la URL. | El token lo *firma el servidor* y el espacio de datos se deduce del token, nunca de la URL ni del cuerpo. El navegador dejó de inventarse su identificador. La ruta que repartía identificadores sin valor de credencial se retiró.
   *La cookie de sesión de la web auditada se compartía entre todos.* Se guardaba en una tabla global indexada solo por dominio, sin dueño. Un segundo usuario leía la cookie capturada por el primero, y se obtenía además sin token. | Las cookies viven dentro de la sesión de cada usuario y la tabla global desapareció. Verificado: el segundo usuario ya no obtiene la cookie del primero.
@@ -645,9 +641,7 @@ La peor de las cinco fue el Repeater, y se escapó del primer inventario por bus
 Se descartó la corrección evidente, que era validar ese campo contra el token: funciona, pero deja el dato en manos del cliente y obliga a acordarse en cada modelo nuevo. Las rutas toman el espacio del token y *descartan* lo que venga en el cuerpo: lo que no se lee no se puede falsear. Comprobado como ataque real (apartado 7).
 
 === Desplegado y verificado en producción (8-oct)
-Hasta esta fecha, este apartado decía expresamente que no podía afirmar nada de la instalación pública: todo estaba *verificado en el entorno local de pruebas*, y la caja seguía sirviendo la Fase 1 con las cuatro fugas abiertas. Se dejó escrito así a propósito, porque la tentación de contar una mejora en presente antes de que llegue a producción es justo como una memoria acaba describiendo un producto que no existe. El 7 de octubre se comprobó además *en vivo y en la propia instalación pública* que las fugas no eran teóricas: la API respondía sin credencial a cualquiera.
-
-El despliegue se hizo el *8 de octubre a las 06:52 UTC*, en cuatro pasos con punto de retorno previo: se etiquetaron las imágenes en servicio y se copió la configuración, se mergeó el cambio a la rama principal, se trajo el código a la caja con git reset --hard y se generaron los secretos, y se reconstruyeron los contenedores. La verificación inmediata, con el sistema ya en marcha:
+Hasta esta fecha todo estaba verificado solo en el entorno local, y el 7 de octubre se comprobó *en vivo y en la propia instalación pública* que las fugas no eran teóricas: la API respondía sin credencial a cualquiera. El despliegue se hizo el *8 de octubre a las 06:52 UTC*, en cuatro pasos con punto de retorno previo: se etiquetaron las imágenes en servicio y se copió la configuración, se mergeó el cambio a la rama principal, se trajo el código a la caja con git reset --hard y se generaron los secretos, y se reconstruyeron los contenedores. La verificación inmediata, con el sistema ya en marcha:
 
 #tabla(
   (4fr, 7fr),
@@ -666,30 +660,22 @@ El flujo completo del acceso, capturado en la instalación pública el mismo dí
 
 #imagen("../capturas/fase2/RF-12-prod-panel-login-sin-basic-auth.png", "RF-12 — la entrada de www.hooksuite.de carga *sin* el cuadro de Basic Auth que antes pedía una contraseña compartida por todo el grupo. La puerta la guarda ahora el acceso por usuario.")
 
-#imagen("../capturas/fase2/RF-12-prod-registro-pide-codigo-invitacion.png", "RF-12 — el alta exige un *código de invitación*. El registro no es abierto a propósito: la herramienta lanza tráfico contra terceros, y con altas anónimas cualquiera atacaría a quien quisiera desde nuestra infraestructura. El campo de la imagen muestra el texto de ayuda, no el código.")
+#imagen("../capturas/fase2/RF-12-prod-sesion-iniciada.png", "RF-12 y RNF-07 — sesión iniciada en producción, con el alta hecha mediante el código de invitación sobre una instalación que arrancó deliberadamente con cero usuarios: el usuario figura en la cabecera y el interceptor aparece como *conectado*, lo que prueba que el WebSocket viaja también autenticado y no solo la API.")
 
-#imagen("../capturas/fase2/RF-12-prod-cuenta-creada.png", "RF-12 — confirmación del alta del primer usuario de producción, creado con el código de invitación. La instalación arrancó deliberadamente con cero usuarios.")
-
-#imagen("../capturas/fase2/RF-12-prod-sesion-iniciada.png", "RF-12 y RNF-07 — sesión iniciada: el usuario figura en la cabecera y el interceptor aparece como *conectado*, lo que prueba que el WebSocket viaja también autenticado y no solo la API.")
-
-*Lo que no se pudo afirmar aquel día, y lo que quedó comprobado después.* El dominio publica también una dirección IPv6, y la primera comprobación por ese camino devolvió 404 en lugar del panel. La hipótesis cómoda, que el servicio no publicara en IPv6, resultó *falsa*: lo que fallaba era el registro AAAA del dominio, que no apuntaba a la máquina. El 8 de octubre se comprobó, contra la dirección IPv6 de la caja, que el panel responde 200 por esa vía y que *los puertos cerrados el 5-oct siguen cerrados también por IPv6*. Y el registro quedó corregido, cosa que hoy puede verificar cualquiera consultando el AAAA del dominio. *Lo que sigue sin poder hacerse desde la máquina de trabajo del grupo* es unir las dos mitades en una sola petición: esa máquina no tiene salida por IPv6, comprobado de nuevo el 15-oct, cuando la petición por IPv6 no llegó a salir y la misma por IPv4 respondió 200, así que el recorrido dominio → IPv6 → panel está demostrado *por partes* y no de una pieza. Evidencia: docs/evidencias/cortafuegos-ipv6-caja-08oct.md.
+*Lo que no se pudo afirmar aquel día, y lo que quedó comprobado después.* La primera comprobación por IPv6 devolvió 404: no porque el servicio no publicara por esa vía, sino porque el registro AAAA del dominio no apuntaba a la máquina. El 8 de octubre se comprobó contra la dirección IPv6 de la caja que el panel responde 200 y que *los puertos cerrados el 5-oct siguen cerrados también por IPv6*, y el registro quedó corregido. La máquina de trabajo del grupo no tiene salida IPv6 (comprobado de nuevo el 15-oct), así que el recorrido dominio → IPv6 → panel está demostrado *por partes* y no de una pieza. Evidencia: docs/evidencias/cortafuegos-ipv6-caja-08oct.md.
 #estado("ok", "LAS CUATRO FUGAS DE AISLAMIENTO, CERRADAS Y VERIFICADAS EN PRODUCCIÓN (8-oct, 06:52 UTC) · IPv6: REGISTRO CORREGIDO Y PUERTOS COMPROBADOS · FALTA UNIRLO EN UNA PETICIÓN DESDE UNA RED CON IPv6")
 
 === Dos efectos del pulido del Repeater sobre la seguridad del producto (12-oct)
-- *Cerrado: el último residuo del modelo anterior al login.* La petición de envío del Repeater llevaba en su cuerpo el identificador del espacio de datos, y el esquema del servidor seguía declarándolo. No se leía, el espacio sale siempre del token firmado, nunca del cuerpo, pero *sugería que el cliente puede elegir dónde escribe*, que es exactamente el hueco de autorización que cerró la Fase 2: con el nombre de otro en el cuerpo se reutilizaban *sus* cookies del login auditado. Se retiró del frontend el 12-oct a mediodía y del esquema del servidor esa misma noche. Un campo muerto que insinúa una capacidad que no existe es deuda de seguridad, no ruido.
+- *Cerrado: el último residuo del modelo anterior al login.* La petición de envío del Repeater llevaba en su cuerpo el identificador del espacio de datos, y el esquema del servidor seguía declarándolo. No se leía, el espacio sale siempre del token firmado, nunca del cuerpo, pero *sugería que el cliente puede elegir dónde escribe*, que es exactamente el hueco de autorización que cerró el acceso por usuario: con el nombre de otro en el cuerpo se reutilizaban *sus* cookies del login auditado. Se retiró del frontend el 12-oct a mediodía y del esquema del servidor esa misma noche. Un campo muerto que insinúa una capacidad que no existe es deuda de seguridad, no ruido.
 - *Nuevo, y es una contrapartida asumida: el panel muestra ahora la cookie de sesión del objetivo.* Al corregir que las cabeceras mostradas sean las realmente enviadas (apartado 4), la Cookie del sitio auditado pasa a estar a la vista, como en la herramienta de referencia. Es lo correcto, la evidencia tiene que ser la petición que salió, y tiene un coste de método que conviene declarar: *cualquier captura de ese panel publica credenciales de un tercero*. Esas capturas van censuradas antes de entrar en esta memoria o en el artefacto. Ya ocurrió dos veces el mismo día. Lo que esto arrastra en el navegador del auditor, el borrador guarda esas cabeceras, se trata como limitación abierta en el apartado 9.
 
 === Lo que sigue sin cubrir
 - *Sin TLS* (RNF-09): el acceso viaja en claro, así que el token de sesión es interceptable por quien esté en el camino. Pendiente de configurar en el proxy.
-- *Credencial de servicio para los módulos internos* (Fase 3). *Reescrito el 13-oct por R9: lo que decía aquí se había quedado atrás dos veces.* Afirmaba que ninguno de los dos módulos llegaba a las rutas protegidas, el clasificador porque RF-08 «todavía no tiene disparador», el agente de navegador porque ni siquiera alcanzaba el servidor, y que el 401 aparecería *en cuanto* RF-08 tuviera disparador. Las dos premisas caducaron: el disparador existe desde el *10-oct* y el fallo de red del agente se corrigió el *9-oct* y llegó a producción el *13-oct*.
-
-  *Lo que de verdad ocurre hoy, y son dos cosas distintas.* El *clasificador de IA ya no necesita credencial*: se le movió al bus interno precisamente para eso (apartado 4), recibe las órdenes por ahí y sus hallazgos vuelven por el mismo camino. Que RF-08 funcione de punta a punta, con los hallazgos en el panel, figura del apartado 7, es la prueba: si su camino de vuelta diera 401, el panel estaría vacío. Para él esto no es un pendiente, está *resuelto por diseño*.
-
-  *El agente de navegador sí sigue sin credencial, y ese es el hueco real.* Sondea por HTTP la ruta de instrucciones y publica en la de resultados, las dos bajo el prefijo protegido y *sin cabecera de autorización*, así que recibe 401. Hasta hoy el síntoma estaba tapado por el fallo de red, no llegaba ni a intentarlo. Desde el despliegue de hoy ya está en la red interna, de modo que el 401 es lo único que le separa de operar. Queda como trabajo pendiente de RF-10, y la salida no es repartir una credencial más: es pasarlo *al mismo bus que el clasificador*, por las tres razones del apartado 4.
+- *Credencial de servicio para los módulos internos.* Lo que este punto afirmaba se quedó atrás dos veces y se corrigió el 13-oct, y hoy son dos situaciones distintas. El *clasificador de IA ya no necesita credencial*: se le movió al bus interno precisamente para eso (apartado 4) y que RF-08 funcione de punta a punta es la prueba, porque si su camino de vuelta diera 401 el panel estaría vacío. *El agente de navegador sí sigue sin credencial, y ese es el hueco real*: sondea por HTTP las rutas protegidas sin cabecera de autorización y recibe 401. Queda como trabajo pendiente de RF-10, y la salida no es repartir una credencial más, es pasarlo al mismo bus que el clasificador.
 
 - *Modelo STRIDE, validación de entradas, dependencias y datos personales*, abajo.
 === Modelo de amenazas (STRIDE)
-El modelo se aplica a los seis componentes del apartado 4 y a la frontera que movió la Fase 2: hasta
+El modelo se aplica a los seis componentes del apartado 4 y a la frontera que movió el acceso por usuario: hasta
 entonces autenticaba el proxy con una contraseña compartida. Hoy autentica el backend, por persona.
 
 *Una premisa que conviene decir antes de la tabla, porque un lector la echaría en falta:* HookSuite es una
@@ -741,13 +727,13 @@ herramientas, sin redondear hacia abajo.
   de construcción (alto, que entra en el árbol de producción a través del complemento de estilos).
 - *Backend:* *78 avisos en 12 paquetes* del árbol resuelto. Los que más pesan, y el primero importa más que
   los otros: *la librería que firma los tokens de sesión acumula trece avisos* en la versión fijada, es la
-  pieza central de la Fase 2, la de criptografía siete, la de formularios multiparte siete y el armazón
+  pieza central del acceso por usuario, la de criptografía siete, la de formularios multiparte siete y el armazón
   ASGI bajo FastAPI otros siete.
 - *El proxy de la P1 sigue pesando, y se comprobó antes de decirlo.* mitmproxy aporta tres avisos propios
   y arrastra cinco paquetes más (servidor web, compresión, serialización, protocolo binario y TLS). La
   tentación era declararlo código muerto y proponer quitarlo: *no lo es.* main.py y la ruta de alta
   importan el gestor que lo lanza como subproceso con su complemento, aunque RF-02 se implemente hoy con el
-  cliente HTTP nuevo y las rutas del fichero de autoconfiguración se retirasen en la Fase 2. *Las dos
+  cliente HTTP nuevo y las rutas del fichero de autoconfiguración se retirasen al rehacer el acceso. *Las dos
   arquitecturas conviven*, y esa convivencia es lo que mantiene viva esta superficie.
 - *Política de fijado, desigual:* el backend fija sus doce versiones. El módulo de navegador tres de cuatro
   y el de herramientas de depuración las tres. *El módulo de IA solo una de cuatro*, así que su construcción
@@ -767,7 +753,7 @@ herramientas, sin redondear hacia abajo.
 === Tratamiento de datos personales
 - *Qué guarda el producto, y de quién.* De cada auditor: su cuenta, nombre y contraseña *en hash*, nunca en
   claro, en un volumen propio, y colgando de ella su historial de peticiones, las cookies que captura del
-  objetivo y sus hallazgos. Desde la Fase 2 nada de eso se comparte entre cuentas.
+  objetivo y sus hallazgos. Desde el cambio de acceso nada de eso se comparte entre cuentas.
 - *De terceros, nada por iniciativa propia.* El producto no recolecta datos personales por su cuenta: lo
   que entra es lo que el auditor captura del objetivo que decide auditar. Las pruebas de esta práctica se
   hacen contra una *web propia del equipo y autorizada*, de modo que no hay datos de terceros en juego.
@@ -776,7 +762,7 @@ herramientas, sin redondear hacia abajo.
   el *borrador* del Repeater la escribe en el almacenamiento del navegador: está declarado en el apartado
   10 y no se tocó el día de la congelación.
 - *Rastros a retirar antes de la entrega:* los usuarios de prueba creados en el entorno local de pruebas, y una regla heredada
-  de la P1 que contenía la dirección pública de un integrante, esa ya se retiró en la Fase 1.
+  de la P1 que contenía la dirección pública de un integrante, esa ya se retiró con el endurecimiento del 5-oct.
 - *Conservación y borrado:* no hay caducidad ni borrado automático de cuentas ni de historial. El recolector
   solo caduca el estado efímero de sesión. Se declara como lo que es: una decisión no tomada, no una medida.
 - *Y el que lo atraviesa todo:* sin TLS, todo lo anterior viaja en claro (RNF-09). Es la limitación que más
@@ -798,13 +784,13 @@ El plan de trabajo original del equipo tenía *doce* casos, de modo que seis de 
   PR-01 | RF-01 | Abrir la URL pública en un navegador limpio | 401 Basic Auth: la credencial documentada no entra | *200*, sirve el panel · reejecutada en producción
   PR-03 | RF-03 | Rastrear un objetivo y revisar el panel de detalle | no ejecutada | *pasa* · figura del apdo. 7: rótulos legibles y cabeceras reales
   PR-04 | RF-04 | Enviar dos veces la misma petición y comparar | *sin caso escrito* | *pasa* · figuras del apdo. 7: mismo estado, tamaño y cuerpo. Distinto tiempo
-  PR-05 | RF-05 | Modificar y reenviar una petición. Ver la respuesta | envío correcto, historial vacío | *pasa* · figuras de los apdos. 5 y 7. El historial se retiró por diseño (apdo. 9)
+  PR-05 | RF-05 | Modificar y reenviar una petición. Ver la respuesta | envío correcto, historial vacío | *pasa* · figuras del apdo. 5. El historial se retiró por diseño (apdo. 9)
   PR-06 | RF-06 | Marcar un campo y lanzar el Intruder | diccionarios servidos. Ejecución sin probar | *no reejecutada*: exige lanzar tráfico de ataque real, y su procedimiento del 29-sep nombraba el laboratorio retirado el 13-oct
   PR-07 | RF-07 | Hash, codificadores y regex con casos conocidos | hash y codificadores correctos. JWT no soportado | *no reejecutada*: exige credencial de usuario
   PR-08 | RF-08 | Publicar un hallazgo y recuperarlo por el panel | backend correcto. Faltaba el productor | *pasa* · recorrido completo verificado el 10-oct y figura del apdo. 7 (techo a 0 €)
   PR-10 | RF-10 | Ejercitar el módulo de navegador | *sin caso escrito* | *no reejecutada*: hasta hoy el módulo ni siquiera estaba en la red interna. El despliegue del 13-oct lo corrige, pero no se ha ejercitado
   PR-11 | RF-11 | Que cada usuario tenga su espacio de datos | tokens correctos por /api/session/new | *procedimiento caducado*: esa ruta se retiró al poner el acceso por usuario. Lo que hoy cumple RF-11 se prueba con PR-12
-  PR-12 | RF-12 | Que un usuario no vea los datos de otro | *sin caso escrito* | *pasa* · cuatro figuras del apdo. 6, verificado 11/11 en el entorno local
+  PR-12 | RF-12 | Que un usuario no vea los datos de otro | *sin caso escrito* | *pasa* · par de figuras A/B de este apartado, verificado 11/11 en el entorno local
   PR-13 | RNF-03 | Servicio en pie y API publicada en la caja | /health correcto. Esquema de la API *abierto* | *pasa y mejora*: /health 200 y el esquema *ya no se publica* · reejecutada
   PR-14 | RNF-07 | Sin claves en lo que se publica | por ejecutar | *pasa* · cero ficheros seguidos por git con clave, con control positivo · reejecutada
   PR-15 | RNF-08 | Cortafuegos por sesión | *sin caso escrito* | *no reejecutada*: el agente está operativo y endurecido (apdos. 6-7), pero no se ha vuelto a ejercitar
@@ -823,9 +809,7 @@ El plan de trabajo original del equipo tenía *doce* casos, de modo que seis de 
 == Evidencia de exposición (RNF-07 / PR-16), capturada el 4-oct
 La prueba PR-16, llamar a la API sin credenciales, y la verificación del frontend confirman que, antes de endurecer, el producto quedaba accesible sin autenticación. Las capturas se obtuvieron antes de cualquier arreglo, porque la evidencia de un fallo se captura antes de corregirlo: el propio arreglo la destruye. Además de lo que muestran las dos figuras, se comprobó que el frontend servido por el puerto 3000 cargaba sin pedir credencial, evitando por completo el control de la entrada principal, que la entrada principal sí pedía credencial (el control existía, pero se podía rodear por el puerto directo) y que la credencial documentada en el informe de la P1 era rechazada con 401: ya no abría nada.
 
-#imagen("../capturas/exposicion/RNF07-api-health-sin-login.png", "RNF-07 / PR-16 — GET /health de la API responde 200 sin credenciales ni cabecera WWW-Authenticate: la API no exige autenticación.")
-
-#imagen("../capturas/exposicion/RNF07-api-swagger-abierto.png", "RNF-07 / PR-16 — la documentación Swagger (/docs) queda abierta a cualquiera, exponiendo las 40 operaciones de la API, incluidas las que lanzan tráfico contra terceros.")
+#imagen("../capturas/exposicion/RNF07-api-health-sin-login.png", "RNF-07 / PR-16 — GET /health de la API responde 200 sin credenciales ni cabecera WWW-Authenticate: la API no exige autenticación. La documentación interactiva (/docs) quedaba igual de abierta, exponiendo las 40 operaciones, incluidas las que lanzan tráfico contra terceros.")
 
 
 == Los doce defectos del prototipo, corregidos y verificados
@@ -888,7 +872,6 @@ El 11-oct no se añadió funcionalidad: la jornada se dedicó a *pulir* lo que y
 
 *El patrón que se repite, y es el hallazgo de la jornada.* En once de los quince, el backend *ya sabía* la respuesta y no llegaba a la pantalla: de qué página salía cada formulario, cómo había terminado el rastreo, cuál era el objetivo. No eran fallos de cálculo sino de *traslado*: funciones correctas que la interfaz no dejaba ver, y las pruebas que miran el backend no detectan nada de esto. El decimoquinto apareció al documentar el filtro para el manual: filtraba las filas *antes* de agruparlas, de modo que filtrar por POST, justo lo que se hace para ver formularios, vaciaba la tabla entera. Y dos de los quince los introdujimos nosotros al arreglar otros: están contados en la tabla y se detallan en el apartado 11, porque el recuento honesto incluye los defectos propios, no solo los heredados.
 
-#imagen("../capturas/fase3/RF-03-spider-alcance-y-objetivo-tras-f5.png", "RF-03 — *el alcance agotado se avisa, y el objetivo sobrevive al refresco*: con el límite puesto en 50 páginas el rastreo se detiene y declara que *pueden existir páginas sin analizar*, en vez de entregar el mapa como si estuviera completo. Y tras recargar la página el objetivo sigue fijado. Cubre RF-03.")
 
 == El pulido del Repeater (12-oct): dieciséis defectos, y una función retirada el mismo día
 
@@ -929,7 +912,6 @@ El 12-oct repitió el método del día anterior sobre la segunda pestaña: no se
 
 #imagen("../capturas/fase3/RF-03-spider-rotulos-despues.png", "RF-03 — el panel de detalle después del pulido, con los dos defectos de fidelidad corregidos: los rótulos de sección se distinguen del contenido (antes compartían el mismo gris, y eso llevó a leer las cabeceras de respuesta como si fueran de petición) y las cabeceras que se muestran son *las realmente enviadas*, con la Cookie de sesión incluida. Los cuatro valores de sesión van tapados.")
 
-#imagen("../capturas/fase3/RF-05-repeater-302-location-censurada.png", "RF-05 — *la redirección que no se sigue*: ante un 302 el banco de trabajo entrega la respuesta a la petición enviada, no la del destino, y lo explica en el propio panel, adónde manda el servidor, por qué no lo sigue y qué hacer para verlo. Cubre RF-05.")
 
 > *Nota de tratamiento de estas figuras.* Todas se tomaron en producción, sobre el código congelado, contra una web propia del equipo autorizada para ello. Desde el 12-oct el panel de cabeceras muestra la cookie de sesión del objetivo, es lo correcto, porque es lo que se envía, así que cada figura se publica con esos valores tapados y los originales no salen del almacén interno.
 
@@ -940,21 +922,10 @@ El agente del cortafuegos y el servicio de contenedores no tenían orden de arra
 - *Incidente de las claves y limpieza del historial:* ensayo de reescritura verificado antes/después (3 → 0 claves), detallado en el apartado 6.
 - *Salidas de terminal* (health sin login, openapi.json sin seguridad, cierre de puertos, mensajes de error) guardadas como texto en el repo, no como foto (así ninguna captura publica por error un secreto).
 
-== Evidencia de las fugas de aislamiento (RF-12), capturada el 6-oct
-Cuatro pruebas lanzadas contra el entorno local de pruebas a través del proxy, como las haría un cliente, *antes de tocar una sola línea del código de acceso*: el propio arreglo borra esta evidencia, y el apartado pide las pruebas que fallaron con su explicación. Los valores de cookie empleados son inventados a propósito, de modo que la captura no contiene ningún identificador real.
+== El aislamiento (RF-12): las fugas capturadas antes, y la verificación después
+*Antes del arreglo*, cuatro pruebas lanzadas el 6-oct contra el entorno local a través del proxy, como las haría un cliente, porque el propio arreglo borra esta evidencia y el apartado pide las pruebas que fallaron. Las cuatro confirmaron el fallo: la API responde 200 sin credencial mientras /health responde 401. Un token inventado obtiene sesión propia. Un segundo usuario lee la cookie de sesión capturada por el primero. Y una vulnerabilidad publicada sin token aparece en la sesión de dos auditores distintos. La captura íntegra, con la causa en fichero y línea de cada una, está en evidencias/fugas-aislamiento-06oct.md, con los valores de cookie inventados a propósito.
 
-Las cuatro confirmaron el fallo: la API responde 200 sin credencial mientras /health responde 401. Un token inventado obtiene sesión propia. Un segundo usuario lee la cookie de sesión capturada por el primero, y también se obtiene sin token. Y una vulnerabilidad publicada sin token aparece en la sesión de dos auditores distintos.
-
-La captura íntegra, con la causa en fichero y línea de cada una, está en evidencias/fugas-aislamiento-06oct.md. Una corrección respecto a lo que teníamos anotado: la difusión no ocurre solo en las dos llamadas que emiten a todas las sesiones, sino también en los dos endpoints que admiten peticiones sin token, que además *persisten* el dato en la sesión de todos los usuarios. Son cuatro puntos de difusión, no dos.
-
-== El aislamiento, verificado después de cerrarlo (RF-12)
-Con el sistema de acceso puesto, se repitieron las mismas pruebas contra el entorno local. *Once comprobaciones, once en verde*: alta de dos usuarios distintos. Entrada de ambos. Contraseña incorrecta rechazada con 401 y no con un error del servidor. La identidad del portador del token resuelta correctamente. La API respondiendo con token. 403 al intentar tocar el espacio de otro con token propio, es decir, autenticación *y* autorización, que son cosas distintas. El segundo usuario sin ver el hallazgo del primero. Y el segundo usuario sin ver la cookie de sesión del primero, que era la tercera fuga.
-
-Se probó además *como ataque*, no solo como comprobación: un usuario autenticado intentó dirigir el Spider al espacio de otro nombrándolo en el cuerpo de la petición, que era el quinto fallo del apartado 6. El espacio de la víctima quedó vacío y el rastreo fue a parar al del atacante.
-
-Ni el código de invitación ni las contraseñas aparecen en ninguna salida: el guion de pruebas los mantiene en variables.
-
-#imagen("../capturas/fase2/RF-12-panel-login.png", "RF-12 — la entrada del producto tras retirar el Basic Auth de Nginx: un panel de acceso propio, con pestañas «Entrar» y «Crear cuenta». Antes, la raíz devolvía 401 pidiendo una credencial que ningún integrante del grupo conocía.")
+*Después*, con el sistema de acceso puesto, se repitieron las mismas pruebas. *Once comprobaciones, once en verde*: alta de dos usuarios distintos. Entrada de ambos. Contraseña incorrecta rechazada con 401 y no con un error del servidor. La API respondiendo con token y 403 al intentar tocar el espacio de otro con token propio, es decir, autenticación *y* autorización, que son cosas distintas. El segundo usuario sin ver ni el hallazgo ni la cookie del primero. Se probó además *como ataque*: un usuario autenticado intentó dirigir el Spider al espacio de otro nombrándolo en el cuerpo de la petición, el quinto fallo del apartado 6, y el rastreo fue a parar al espacio del atacante. Ni el código de invitación ni las contraseñas aparecen en ninguna salida: el guion de pruebas los mantiene en variables.
 
 #imagen("../capturas/fase2/RF-12-aislamiento-usuarioA-con-datos.png", "RF-12 — antes de rehacer el acceso este panel era común a todos. Ahora el usuario A, autenticado, ve las trece peticiones que su propio Spider capturó del objetivo autorizado. Compárese con la captura siguiente, tomada al mismo tiempo.")
 
@@ -1028,13 +999,13 @@ Reproducible con python3 ia/tests/test_tres_estados.py. Evidencia completa, con 
 == RNF-06 visto en el panel, que es donde tenía que verse
 Una prueba unitaria demuestra que el clasificador *devuelve* el estado degradado. No demuestra que alguien lo *enseñe*. Entre las dos cosas hubo un hueco real: durante un día el estado existió en el módulo de IA y no lo consumía nadie al otro lado, de modo que RNF-06 estaba cumplido y era invisible. El 10-oct se cerró el hueco y se comprobó en la interfaz, con una auditoría lanzada desde el panel y sesión real.
 
-#imagen("../capturas/ia/RNF-06-panel-no-analizado-techo0.png", "RNF-06 / RF-08 — el panel tras una auditoría truncada por el techo de gasto. El encabezado anuncia *48 sin analizar, la IA no pudo valorarlo* y cada entrada lleva su motivo, «techo de 0 llamadas por auditoria alcanzado»: el recorte se ve en lugar de pasar por «sin hallazgos». El recuento «0 detectadas · 48 sin analizar» distingue las dos cosas. Los cuarenta y ocho elementos provienen de un rastreo previo sobre *web.academyx.es*, web propia del equipo levantada para practicar. El objetivo que figura en la barra, http://dvwa:80, era el *valor fijo* que el panel traía entonces: se sustituyó el 10-oct por la herencia del objetivo rastreado, y el laboratorio salió del producto el 13-oct (apartados 5 y 7). La figura se conserva porque lo que documenta es el recorte de gasto, no el objetivo.")
+#imagen("../capturas/ia/RNF-06-panel-no-analizado-techo0.png", "RNF-06 / RF-08 — el panel tras una auditoría truncada por el techo de gasto: *48 sin analizar, la IA no pudo valorarlo*, cada entrada con su motivo («techo de 0 llamadas por auditoria alcanzado») y el recuento «0 detectadas · 48 sin analizar» separando las dos cosas. Los elementos provienen de un rastreo previo sobre una web propia del equipo. El objetivo de la barra era el valor fijo que el panel traía entonces, sustituido el 10-oct por la herencia del objetivo rastreado.")
 
 Lo que la figura prueba, y que ninguna prueba unitaria alcanzaba: que el mensaje de lista vacía *dejó de mentir*. Antes, una auditoría que no había podido analizar nada y otra que había analizado y no encontrado nada producían la misma pantalla. Ahora el aviso va aparte de los hallazgos, en su propia tira, por encima, porque mezclarlo obligaría a inventarle una severidad a algo que precisamente *no se pudo valorar*.
 
 *Y el 15 de octubre volvió a verse, en producción y por un motivo distinto.* Una auditoría lanzada sobre la instalación pública recorrió los cuarenta y ocho elementos de un rastreo previo y *ninguno* llegó a analizarse: el recuento quedó en «0 detectadas · 48 sin analizar · 40 analisis realizados», y en la lista de no analizados convivieron *dos* motivos, «clave de API invalida o ausente» en los intentos que salieron, y «techo de 40 llamadas por auditoria alcanzado». Tiene más valor que el caso de laboratorio precisamente porque *no se provocó*: la vía degradada se activó por una condición real del entorno, el cliente del modelo la devolvió *como estado y no como excepción*, y la pantalla la mostró separada de los hallazgos y con su motivo. El mismo mecanismo, dos causas distintas: eso es lo que RNF-06 pedía. De paso deja a la vista el valor del techo que gobierna la auditoría, cuarenta consultas, que el apartado 9 detalla.
 
-#imagen("../capturas/ia/RF-08-auditoria-completa-49-analisis.png", "RF-08 / RNF-06 — *la tercera forma de quedarse sin análisis*, el 10-oct: cuarenta y nueve análisis realizados, cero hallazgos y cuatro elementos sin analizar que comparten motivo, la respuesta se truncó al agotar el tope de ocho mil tokens, pensamiento más respuesta. El mensaje recomienda *subir* ese tope, y ese consejo es erróneo: el cliente del modelo no pide la respuesta por partes en ninguna llamada, así que subirlo hace fallar la consulta. La barra de navegación es anterior al 13-oct: todavía figura la pestaña Red y no la de Manual. Cubre RF-08 y RNF-06.")
+#imagen("../capturas/ia/RF-08-auditoria-completa-49-analisis.png", "RF-08 / RNF-06 — *la tercera forma de quedarse sin análisis*, el 10-oct: cuarenta y nueve análisis realizados, cero hallazgos y cuatro elementos sin analizar porque la respuesta se truncó al agotar el tope de tokens. El mensaje en pantalla recomienda *subir* ese tope y el consejo es erróneo: el cliente no pide la respuesta por partes, de modo que subirlo hace fallar la consulta. La barra de pestañas es anterior al 13-oct.")
 
 == Lo que el modelo puede devolver, y lo que el código daba por hecho (RF-08)
 Las cuatro vías de análisis del módulo de IA piden al modelo una respuesta con un formato fijo, impuesto mediante un *esquema* que viaja con la consulta: la API garantiza que la respuesta se ajusta a él. El esquema no es documentación, *es el control*, y un campo declarado con tipo abierto no es un campo permisivo, es un campo sin control. La prueba comprueba que el esquema obliga a lo que las instrucciones piden, que la bandera de resultado sea un booleano y que la confianza venga en escala de 0 a 100. Contra el código anterior devuelve _5 de 11_, y los fallos no eran cosméticos:
@@ -1072,7 +1043,7 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
   RF-02 | Proxy del lado servidor (httpx) | Modificado (dos errores de servidor corregidos al inicio de la práctica) | backend/services/proxy_service.py | PR-19 | justif. apdo. 3 · apdo. 5
   RF-03 | Spider / rastreo | Cumplido (cuatro defectos corregidos al inicio de la práctica. Quince más en el pulido del 11-oct. El 12-oct las cabeceras que muestra pasan a ser las realmente enviadas) | backend/services/spider_service.py, frontend/.../ProxyPage.jsx, .../RequestsTable.jsx | PR-03 | figs. apdo. 7 · vídeo —:—
   RF-04 | Auditoría autenticada (sesión compartida) | *Modificado* (12-oct: el Repeater envía con cliente propio y la sesión se hereda por cabecera explícita) | backend/services/session_service.py, backend/services/proxy_service.py, backend/routes/repeater.py | PR-04 | justif. apdo. 3 · figs. apdo. 7
-  RF-05 | Repeater | Cumplido (parser y avisos de error corregidos al inicio de la práctica. El importador de peticiones se traslada aquí desde el Spider el 11-oct y se *retira* el mismo día. Dieciséis defectos corregidos en el pulido del 12-oct, con un historial añadido y retirado esa misma jornada) | backend/routes/repeater.py, backend/services/proxy_service.py, frontend/src/pages/repeater/ | PR-05 | figs. apdos. 5 y 7 · vídeo —:—
+  RF-05 | Repeater | Cumplido (parser y avisos de error corregidos al inicio de la práctica. El importador de peticiones se traslada aquí desde el Spider el 11-oct y se *retira* el mismo día. Dieciséis defectos corregidos en el pulido del 12-oct, con un historial añadido y retirado esa misma jornada) | backend/routes/repeater.py, backend/services/proxy_service.py, frontend/src/pages/repeater/ | PR-05 | figs. apdo. 5 · vídeo —:—
   RF-06 | Intruder / fuzzing | Cumplido (cancelación corregida al inicio de la práctica) | backend/services/intruder_service.py | PR-06 | fig. apdo. 5 · vídeo —:—
   RF-07 | Utilidades (incl. JWT) | Cumplido | frontend/src/pages/utilities/ | PR-07 | fig. apdo. 5 · vídeo —:—
   RF-08 | IA → panel Vulnerabilidades | Parcial: el recorrido está verificado de punta a punta (10-oct) y el techo de gasto ejecutado, pero *ninguna auditoría ha devuelto todavía un hallazgo analizado*, todas las que han llegado al final salieron degradadas, por el techo de gasto, por la clave de API o por el tope de tokens | ia/, backend/routes/playwright.py, backend/services/redis_consumer.py, frontend/.../VulnerabilitiesPage.jsx | PR-08 | figs. apdo. 7 · vídeo —:—
@@ -1106,7 +1077,7 @@ Qué no funciona, qué funciona con condiciones y qué se haría con más tiempo
 El estado de una sesión de auditoría, tráfico capturado, resultados del Intruder, vulnerabilidades, vive *en memoria del backend*: al reiniciarlo, se pierde. Es una *decisión consciente*, no un olvido, y se sostiene en tres razones:
 
 1. *El patrón de acceso del backend no lo soporta sin reescribirlo.* Una treintena de puntos obtienen el diccionario de la sesión y lo mutan en memoria (session["requests"].append(...)). Persistir de verdad obligaría a escritura-a-través en cada mutación, es decir, a tocar todo el backend a pocos días de la entrega.
-2. *El modelo de sesión cambia en la Fase 2.* El login por usuario ata las sesiones a identidades. Lo que se persistiera con el modelo anterior habría que rehacerlo.
+2. *El modelo de sesión cambió al rehacer el acceso.* El login por usuario ata las sesiones a identidades. Lo que se persistiera con el modelo anterior habría que rehacerlo.
 3. *Una sesión de auditoría es un espacio de trabajo efímero.* El operador lanza un rastreo, examina los resultados y exporta lo que importa. No espera que la herramienta recuerde una sesión de hace tres días.
 
 Lo que *sí* se hizo, porque era el riesgo real detrás de «todo en memoria»: *poner topes*. El recolector de sesiones existía en el código pero nunca se invocaba, y cualquier llamada a la API con un identificador nuevo creaba una sesión más, con la API sin autenticación, eso permitía agotar la memoria del servidor desde fuera. Ahora hay un tope de sesiones y de peticiones por sesión (configurables por entorno), el recolector se ejecuta de verdad y, al desalojar, *prefiere las sesiones que no tienen conexión en tiempo real abierta*, para no interrumpir a quien está trabajando. Verificado con prueba de abuso: 120 identificadores inventados dejan el número de sesiones en el tope, y la sesión con conexión viva sobrevive.
@@ -1219,13 +1190,13 @@ propósito las tres cosas que suelen ir mezcladas en una tabla de horas: lo que 
   (3fr, auto, 6fr),
   "
   Quién | Horas | De dónde sale esa cifra
-  *Claude Code* (asistente) | *87,1 h* | *40,7 h escritas* con su nombre en el campo de horas, todas de la Fase 3 en adelante · *46,4 h inferidas*: entradas anteriores cuyo campo dice solo «~1 h», sin nombrar a nadie
+  *Claude Code* (asistente) | *87,1 h* | *40,7 h escritas* con su nombre en el campo de horas, todas del tramo final de la práctica · *46,4 h inferidas*: entradas anteriores cuyo campo dice solo «~1 h», sin nombrar a nadie
   *José María* | *≈1 h de la reunión, más guía continua no cronometrada* | La reunión del 29 de septiembre, como el resto del grupo. A partir de ahí, la guía de la ejecución sesión a sesión, que *no se cronometró* porque va entremezclada con el uso de la herramienta,  y que se apoyó en esa consulta de grupo continua: las decisiones que trasladaba salían de ahí. Lo que sí se puede contar son sus intervenciones: *43 entradas* las registran, 23 decisiones, 5 revocaciones de claves, 5 pruebas en producción, 5 lotes de capturas, 3 ejecuciones en la instalación pública y 2 fusiones con permiso de administración
   *Ivan · Macarena · Nacho · Carlos* | *≈1 h cada uno, más consulta continua no cuantificable* | La *reunión inicial del 29 de septiembre*, donde se acordó el plan de trabajo, duró aproximadamente una hora y la hicieron los cinco. A partir de ahí hubo *consulta de grupo continua* durante todo el proceso, en mensajes sueltos sobre la herramienta y cómo abordar cada duda: es real, pero *no se puede cronometrar ni repartir por persona*, y aquí no se inventa un número. Lo que no hubo fue reparto de tareas
   ",
 )
 
-*La regla de inferencia, dicha para que se pueda discutir.* Desde la Fase 3 el campo escribe «*~0,5 h de
+*La regla de inferencia, dicha para que se pueda discutir.* En ese tramo final el campo escribe «*~0,5 h de
 Claude*». Antes escribía «*~1 h*» a secas. Las entradas las redactó *el mismo autor de principio a fin*, con
 el mismo formato y el mismo propósito, medir el tiempo de la sesión, así que *se infiere que el campo
 significaba lo mismo antes de decirlo*. No es una medida y no se presenta como tal: son *46,4 de las 87,2 h*,
@@ -1329,7 +1300,7 @@ contando sus entradas una a una.
 
 == Lo que el registro de horas no puede decir
 El diario tiene *176 entradas*, *174* con el campo de horas, y suma *85,9 h registradas*. Pero el campo
-*solo empezó a nombrar a quién* en la Fase 3:
+*solo empezó a nombrar a quién* en el tramo final:
 
 - *39,5 h atribuidas* explícitamente al asistente, en 99 entradas.
 - *38,0 h de las Fases 0, 1 y 2*, más 8,5 h de entradas anteriores a la numeración por fases, *sin dueño
@@ -1346,7 +1317,7 @@ de confirmaciones como reparto, por el motivo que ese mismo apartado explica: la
 Manual de instalación ampliado, credenciales de prueba (ficticias), glosario y referencias.
 == Manual de despliegue
 El despliegue es *manual y deliberadamente aburrido*: la instalación pública solo recibe versiones, nunca
-arreglos. Está prohibido editar ficheros en ella, fue la causa de que durante la Fase 0 lo desplegado no
+arreglos. Está prohibido editar ficheros en ella, fue la causa de que al principio de la práctica lo desplegado no
 estuviera en ninguna rama, y por eso la actualización se hace con *traer y reponer a la fuerza* el estado de
 la rama principal, no con una fusión: si alguien hubiera editado algo allí, el siguiente despliegue se lo
 lleva. Es intencionado.
@@ -1387,7 +1358,7 @@ mal dirigidas, preguntaban a la pieza equivocada, y se cazaron *probándolas*, q
 - La reconstrucción de la interfaz es la pesada: si queda poca memoria libre, conviene saberlo antes.
 
 == Usuarios de prueba y acceso para la corrección
-El producto ya no tiene una contraseña compartida: desde la Fase 2 cada persona *se da de alta ella misma*
+El producto ya no tiene una contraseña compartida: desde el cambio de acceso cada persona *se da de alta ella misma*
 con un código de invitación y elige su contraseña, que nadie más conoce. Eso cambia cómo se entrega el
 acceso para corregir, y conviene decirlo con claridad:
 
@@ -1410,7 +1381,7 @@ acceso para corregir, y conviene decirlo con claridad:
 - *Proxy del lado servidor:* el producto hace la petición *en lugar* del navegador, de modo que no hace
   falta instalar ni configurar nada en el equipo de quien audita.
 - *Fichero de autoconfiguración de proxy:* mecanismo de la primera versión para que el navegador enrutara
-  solo. Se jubiló en la Fase 2 junto con sus rutas.
+  solo. Se jubiló al rehacer el acceso, junto con sus rutas.
 - *Token firmado (JWT):* credencial que emite el servidor y que el cliente presenta en cada petición. Aquí
   el algoritmo de firma está fijado en el servidor y *no se lee del propio token*.
 - *Hash de contraseña:* huella irreversible. Lo que se guarda es la huella, nunca la contraseña.
