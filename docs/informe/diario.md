@@ -5079,3 +5079,24 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
 - **A qué requisito toca:** el criterio de formato del enunciado (20-40 páginas), la matriz (apdo. 8) y el
   estilo de todo el documento. **Evidencia:** commits de la noche en develop, el último con las 39.
   **Horas:** ~1,1 h de asistente.
+
+## Fase 3 (15-oct, noche, final) — la lectura de coherencia de principio a fin
+
+- **Qué se hizo:** la lectura completa del `.typ` que la validación del recorte pedía, con una comprobación
+  mecánica previa de cada fichero citado (evidencias, capturas, tests, diario: *todos existen*, el cerco de
+  citas muertas que la línea tenía propuesto, ejecutado a mano por primera vez). Once arreglos de
+  coherencia, los que importan: el anexo prometía «credenciales de prueba (ficticias)» y dos párrafos más
+  abajo declaraba que no hay ninguna, RF-10 remitía al apartado 12 (los anexos) en lugar del 7, la
+  evidencia de las fugas se citaba sin el prefijo docs/, un punto de navegación colgante dentro de «Lo que
+  sigue sin cubrir» daba por descubiertos el STRIDE y la validación que vienen justo debajo, los dos
+  distintivos de estado del aislamiento y la exposición vivían aparcados en la sección del techo, PR-17
+  citaba «las figuras» en plural cuando queda una, la entradilla de Funcionalidades conservaba un «cada
+  fase» y repetía la frase de las seis pestañas, la frase «dos requisitos cambiaron de estado» infracontaba
+  lo que la clasificación inicial no preveía, y dos restos menores («fase de diseño», «planes por fases»).
+- **Qué falló:** el cerco de contexto limpio me paró un grep cuyo patrón contenía una ruta de la lista
+  sensible. Correcto por su parte: la comprobación se rehízo como medición pura de existencia, sin volcar
+  nada, y encontró lo mismo.
+- **A qué requisito toca:** la coherencia interna del entregable, que es criterio de evaluación de la
+  memoria. **Evidencia:** el commit de la lectura en develop. Páginas: se mantienen 46 totales y 39
+  contables, escaneo de secretos a cero con control positivo.
+  **Horas:** ~0,9 h de asistente.
