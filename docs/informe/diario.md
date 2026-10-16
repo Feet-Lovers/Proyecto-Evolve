@@ -5187,3 +5187,30 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   jornada en develop; el apartado 5 queda con cero figuras y las tres aparecen como 3, 7 y 8 en el apartado
   de pruebas. 46 páginas totales y **40 contables**, sin cambio. Escaneo de secretos a cero con control
   positivo. **Horas:** ~0,4 h de asistente.
+
+## Fase 3 (16-oct, mediodía) — las tres reglas de estilo que quedaban: coherencia, jerga y explicación de más
+
+- **Qué se hizo:** aplicadas las reglas 5, 6 y 7 de josemax. **Coherencia (5):** los dos bloques gemelos del
+  pulido tenían forma distinta y ahora comparten esqueleto, cabecera de tabla idéntica («Nº | Qué pasaba |
+  Cómo apareció», antes una decía «\#») y la remisión al diario en el mismo sitio, detrás de la tabla en los
+  dos. Comprobado además a máquina que los esqueletos ya fijados siguen completos: las tres decisiones
+  técnicas con su «Qué se decidió · Por qué · Qué cuesta» y los cinco cambios de requisito con su «Versión
+  original · Versión nueva · Motivo · Consecuencias». Y en el apartado de pruebas, la mitad de los títulos
+  llevaba su requisito entre paréntesis y la otra mitad no: igualados los cinco que tienen un requisito
+  dominante claro. **Jerga de calendario (6):** fuera las nueve apariciones de «jornada» salvo tres, que son
+  dato de recuento y no calendario, más un «supuesto previo nuestro». **Explicación de más (7):** fuera las
+  frases que explicaban por qué se cuenta algo en lugar de contarlo, incluida «se documenta porque el
+  enunciado pide las pruebas que fallaron», las horas exactas del historial retirado y la enumeración que
+  repetía la tabla de los dieciséis defectos.
+- **Por qué:** son sus ocho reglas, repetidas tres veces, y las tres que quedaban eran justamente las que no
+  se pueden medir con un recuento. El criterio aplicado en la 7 fue conservar el hecho y quitar la
+  justificación: el enunciado premia contar lo que falló, no explicar por qué se cuenta.
+- **Qué se descartó:** recortar los bloques largos del apartado de pruebas por el simple hecho de ser largos.
+  Se midieron los subapartados y los más extensos son sustancia, un defecto con su arreglo y su prueba, no
+  relato. Recortar ahí habría quitado evidencia, que es lo contrario de lo que pide el enunciado.
+- **Qué falló:** nada, pero una medición previa engañaba: el recuento de palabras por subapartado inflaba
+  los bloques que contienen tablas, y el candidato que parecía más explícito resultó ser el más sustancial
+  al leerlo. La lista de frases meta, buscada por patrón, fue lo que localizó el problema real.
+- **A qué requisito toca:** el criterio de claridad y coherencia del enunciado. **Evidencia:** commit de la
+  jornada en develop. Estado medido: **0 rayas largas, 0 flechas, 0 puntos y coma y 0 fechas** en el cuerpo,
+  negritas de 520 a **272**, y **40 páginas contables** sin cambio. **Horas:** ~0,8 h de asistente.
