@@ -495,13 +495,13 @@ de la derecha dice dónde se ve cada una, sin repetir aquí figuras que ya está
   (auto, 6fr, auto, 3fr),
   "
   Pantalla | Qué hace y cómo se usa | Requisitos | Dónde se ve
-  *Spider* | Rastrea el objetivo siguiendo enlaces y formularios y levanta su mapa. Se escribe la dirección, se lanza, y la tabla se va llenando. Se puede detener a medias, filtrar por método y mandar una petición al Repeater. Las cabeceras que muestra son las que se enviaron de verdad, no una plantilla | RF-03 | fig. apdo. 7 (el panel de detalle tras el pulido)
-  *Repeater* | Banco de trabajo de una petición: se modifica y se reenvía exactamente lo que se ve en pantalla. Avisa si la petición lleva sesión heredada y ofrece quitarla. El botón «preparar» convierte la plantilla de un formulario en una petición que funciona. La respuesta se lee en Raw, Pretty, Preview, Headers y la página preparada | RF-04 · RF-05 | tres figuras en el apdo. 7
-  *Intruder* | Prueba muchos valores en un punto marcado de la petición y señala las respuestas que se salen del patrón. Se marca el campo, se elige diccionario, se lanza y se puede cancelar sin dejar el servidor trabajando | RF-06 | figura en el apdo. 7
-  *Utilidades* | Cuatro herramientas que no salen a la red: codificador (base64, URL, HTML y lectura de JWT), generador de huellas, probador de expresiones regulares y generador de payloads. Se pega el texto y se ve el resultado al lado | RF-07 | figura en el apdo. 7
-  *Vulnerabilidades* | Panel donde se dispara la auditoría con IA y donde aterriza su resultado. Lo que está visto funcionando es el camino degradado: lo que la IA no pudo analizar sale aparte y con su motivo. Nunca se ha visto un hallazgo analizado con su severidad, porque ninguna auditoría ha llegado a devolver uno. La pantalla queda sin pulir y sin terminar | RF-08 · RNF-06 | figura del apdo. 7 (operación degradada)
-  *Manual* | Manual de uso dentro del propio producto, control por control y navegable por pastillas. No lo pide ningún requisito: salió del pulido, al comprobar que explicar una pantalla destapa sus defectos | no aplica (mejora) | figura del apdo. 9
-  *Acceso* (fuera de la barra) | Alta con código de invitación y entrada con token firmado por el servidor. Cada cuenta ve solo sus propios datos | RF-11 · RF-12 | figura de producción en el apdo. 6 y par de aislamiento en el 7
+  *Spider* | Rastrea el objetivo siguiendo enlaces y formularios y levanta su mapa. Se escribe la dirección, se lanza, y la tabla se va llenando. Se puede detener a medias, filtrar por método y mandar una petición al Repeater. Las cabeceras que muestra son las que se enviaron de verdad, no una plantilla | RF-03 | @fig-spider-rotulos
+  *Repeater* | Banco de trabajo de una petición: se modifica y se reenvía exactamente lo que se ve en pantalla. Avisa si la petición lleva sesión heredada y ofrece quitarla. El botón «preparar» convierte la plantilla de un formulario en una petición que funciona. La respuesta se lee en Raw, Pretty, Preview, Headers y la página preparada | RF-04 · RF-05 | @fig-repeater-preparar, @fig-repeater-envio-1 y @fig-repeater-envio-2
+  *Intruder* | Prueba muchos valores en un punto marcado de la petición y señala las respuestas que se salen del patrón. Se marca el campo, se elige diccionario, se lanza y se puede cancelar sin dejar el servidor trabajando | RF-06 | @fig-intruder
+  *Utilidades* | Cuatro herramientas que no salen a la red: codificador (base64, URL, HTML y lectura de JWT), generador de huellas, probador de expresiones regulares y generador de payloads. Se pega el texto y se ve el resultado al lado | RF-07 | @fig-utilidades-jwt
+  *Vulnerabilidades* | Panel donde se dispara la auditoría con IA y donde aterriza su resultado. Lo que está visto funcionando es el camino degradado: lo que la IA no pudo analizar sale aparte y con su motivo. Nunca se ha visto un hallazgo analizado con su severidad, porque ninguna auditoría ha llegado a devolver uno. La pantalla queda sin pulir y sin terminar | RF-08 · RNF-06 | @fig-techo-cero
+  *Manual* | Manual de uso dentro del propio producto, control por control y navegable por pastillas. No lo pide ningún requisito: salió del pulido, al comprobar que explicar una pantalla destapa sus defectos | no aplica (mejora) | @fig-manual
+  *Acceso* (fuera de la barra) | Alta con código de invitación y entrada con token firmado por el servidor. Cada cuenta ve solo sus propios datos | RF-11 · RF-12 | @fig-sesion-produccion, @fig-aislamiento-a y @fig-aislamiento-b
   ",
 )
 
@@ -842,9 +842,9 @@ Estas dos pantallas no se pulieron en esta práctica y se entregan como estaban,
 Intruder, su cancelación corregida. Se comprueban igual: el Intruder con un ataque lanzado y cancelable, y
 el codificador resolviendo un JWT, que es la conversión que la verificación inicial había dado por ausente.
 
-#imagen("../capturas/fase3/RF-06-intruder-ataque-lanzado-censurada.png", "RF-06 · el Intruder con un ataque de inyección SQL lanzado contra el formulario de acceso del objetivo propio: trece payloads numerados, cada uno con su código, tamaño, tiempo y veredicto, y el parámetro marcado con el asterisco. Los trece responden 419 porque el objetivo exige un testigo CSRF válido en cada envío: lo que la captura demuestra es el mecanismo de fuzzing, no un hallazgo. El testigo va tapado.")
+#imagen("../capturas/fase3/RF-06-intruder-ataque-lanzado-censurada.png", "RF-06 · el Intruder con un ataque de inyección SQL lanzado contra el formulario de acceso del objetivo propio: trece payloads numerados, cada uno con su código, tamaño, tiempo y veredicto, y el parámetro marcado con el asterisco. Los trece responden 419 porque el objetivo exige un testigo CSRF válido en cada envío: lo que la captura demuestra es el mecanismo de fuzzing, no un hallazgo. El testigo va tapado.", et: "fig-intruder")
 
-#imagen("../capturas/fase3/RF-07-utilidades-jwt.png", "RF-07 · el codificador con un JWT en la entrada y sus cuatro conversiones resueltas a la vez: base64, URL, HTML y la lectura del JWT, justo la conversión que la verificación inicial dio por ausente. El testigo mostrado es el ejemplo público de documentación («John Doe»), no una credencial del producto.")
+#imagen("../capturas/fase3/RF-07-utilidades-jwt.png", "RF-07 · el codificador con un JWT en la entrada y sus cuatro conversiones resueltas a la vez: base64, URL, HTML y la lectura del JWT, justo la conversión que la verificación inicial dio por ausente. El testigo mostrado es el ejemplo público de documentación («John Doe»), no una credencial del producto.", et: "fig-utilidades-jwt")
 
 === El aislamiento (RF-12): las fugas capturadas antes, y la verificación después
 *Antes del arreglo*, cuatro pruebas lanzadas contra el entorno local a través del proxy, porque el propio arreglo borra esta evidencia. Las cuatro confirmaron el fallo: la API responde 200 sin credencial, un token inventado obtiene sesión propia, un segundo usuario lee la cookie capturada por el primero, y una vulnerabilidad publicada sin token aparece en la sesión de dos auditores distintos. La captura íntegra, con la causa en fichero y línea de cada una, está en docs/evidencias/fugas-aislamiento-06oct.md.
@@ -955,13 +955,13 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
   (auto, 2.4fr, 3.1fr, 2.5fr, 2.3fr),
   "
   Req. | Descripción | Estado | Implementación | Prueba y evidencia
-  RF-01 | Panel web sin instalación | Cumplido · seis pestañas | App.jsx + Layout.jsx + pages/manual/ | PR-01 · fig. apdo. 9
+  RF-01 | Panel web sin instalación | Cumplido · seis pestañas | App.jsx + Layout.jsx + pages/manual/ | PR-01 · @fig-manual
   RF-02 | Proxy del lado servidor (httpx) | Modificado · apdo. 3 | proxy_service.py | PR-19 · apdo. 3
   RF-03 | Spider / rastreo | Cumplido · 19 defectos corregidos | spider_service.py + pages/proxy/ | PR-03 · @fig-spider-rotulos
   RF-04 | Auditoría autenticada | Modificado · cliente propio, apdo. 3 | session_service.py + proxy_service.py | PR-04 · @fig-repeater-envio-1
   RF-05 | Repeater | Cumplido · 16 defectos, sin historial por diseño | repeater.py + pages/repeater/ | PR-05 · @fig-repeater-preparar
-  RF-06 | Intruder / fuzzing | Cumplido · cancelación corregida | intruder_service.py | PR-06 · fig. apdo. 7
-  RF-07 | Utilidades (incl. JWT) | Cumplido | pages/utilities/ | PR-07 · fig. apdo. 7
+  RF-06 | Intruder / fuzzing | Cumplido · cancelación corregida | intruder_service.py | PR-06 · @fig-intruder
+  RF-07 | Utilidades (incl. JWT) | Cumplido | pages/utilities/ | PR-07 · @fig-utilidades-jwt
   RF-08 | IA que alimenta Vulnerabilidades | Parcial · recorrido y techo probados, ningún hallazgo analizado | ia/ + redis_consumer.py | PR-08 · @fig-techo-cero
   RF-09 | DevTools que alimenta Red | Descartado · apdo. 3 | devtools/ y network.py conservados | apdo. 3
   RF-10 | Playwright | Parcial · sin prueba ejecutada, sondeo con 401 | playwright/ + routes/playwright.py | PR-10 · apdos. 6-7
@@ -1008,7 +1008,7 @@ Se añadió una sexta pestaña, *Manual*, con el modo de uso de cada herramienta
 
 Están escritas dos secciones de cinco: la del Spider, con los veinticinco controles de esa pantalla detallados uno a uno (tipo de elemento, qué hace y bajo qué condición aparece), y la del Repeater, con veintiséis. Las tres secciones sin escribir se marcan a la vista del usuario: si falta, se ve que falta.
 
-#imagen("../capturas/fase3/RF-01-manual-pastillas.png", "RF-01 · la pestaña Manual: cinco pastillas, la activa resaltada y las tres secciones sin escribir marcadas con un punto, de modo que el usuario ve que el manual está incompleto. Debajo, el modo de documentar: cada control con su tipo (indicador, botón, campo de texto, desplegable, aviso), qué hace y bajo qué condición aparece.")
+#imagen("../capturas/fase3/RF-01-manual-pastillas.png", "RF-01 · la pestaña Manual: cinco pastillas, la activa resaltada y las tres secciones sin escribir marcadas con un punto, de modo que el usuario ve que el manual está incompleto. Debajo, el modo de documentar: cada control con su tipo (indicador, botón, campo de texto, desplegable, aviso), qué hace y bajo qué condición aparece.", et: "fig-manual")
 
 La regla fijada es deliberada: una sección se escribe cuando su pestaña se ha pulido y verificado, nunca antes, porque durante el pulido del Spider lo que suponíamos de la pantalla y lo que el código hacía no coincidieron quince veces, y un manual redactado sobre suposiciones induce a error. La propia redacción destapó tres defectos más, entre ellos el de los filtros (apdo. 7) y veinte líneas de código muerto: documentar obliga a mirar el código con los ojos de quien lo usa. Queda pendiente decidir si el manual lleva capturas propias, tomadas para enseñar a usar y no para demostrar un arreglo.
 
