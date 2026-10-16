@@ -277,7 +277,7 @@ Dos requisitos acabaron en un estado que esta clasificación no preveía: RF-04 
 == Sobre el feedback de la Práctica 1
 El enunciado pide reunir la calificación y los comentarios del equipo docente y construir esta práctica
 sobre ellos. El grupo no recibió ni calificación ni comentarios, así que ese material no existe y no se
-puede citar. Se dice aquí en lugar de dejar el apartado a medias.
+puede citar. Queda dicho en lugar de dejar el apartado a medias.
 
 Las mejoras salen entonces de dos fuentes propias: el plan de mejoras que la propia Práctica 1 dejó
 escrito, del que se abordaron los cinco primeros puntos, y la revisión crítica del producto hecha
@@ -436,7 +436,7 @@ Toda petición entra por Nginx, que reparte según la ruta pedida con la configu
 - Las dos rutas del fichero de autoconfiguración de proxy se retiraron al jubilar ese modelo (apartado 3,
   RF-02), y también se retiró la ruta hacia el laboratorio vulnerable (apartado 6).
 
-El reparto de responsabilidades cambió durante esta práctica, y conviene decirlo porque es una decisión de
+El reparto de responsabilidades cambió durante esta práctica, y es una decisión de
 arquitectura y no un detalle. Antes Nginx era quien autenticaba, con una credencial única que no distinguía
 personas, y el backend no pedía nada. Ahora Nginx solo reparte, y quien autentica y autoriza es el backend,
 que es el único que puede saber de quién es cada dato.
@@ -546,10 +546,10 @@ Modelo de amenazas, secretos, autenticación, validación de entradas, dependenc
 
 == Secretos: el incidente de las claves
 En el historial de git había claves de API de Anthropic. Comprobado contra la API: las cuatro están muertas (la API responde 401). Aun así el enunciado obliga a limpiarlas del historial, no basta con borrarlas en un commit nuevo. Se reescribió el historial con git-filter-repo (claves redactadas por patrón, .env rastreados y basura fuera, conservando código y las 7 ramas) y se ejecutó en GitHub con force-push y copia de seguridad previa. Verificado sobre un clon nuevo: 0 claves en todo el historial. Salvedad declarada: GitHub conserva un tiempo los refs internos de los pull requests antiguos y los purga por su cuenta. Como las claves están muertas, no supone riesgo.
-#estado("ok", "LIMPIEZA EJECUTADA Y VERIFICADA")
 
 == Exposición de la caja: cómo estaba
-Estado de partida, verificado en vivo sobre el prototipo (evidencia fotográfica en el apartado 7):
+Estado de partida, verificado en vivo sobre el prototipo. Las cinco capturas que lo documentan están en el
+repositorio y el apartado 7 describe qué muestra cada una:
 - La API :8000 no tenía autenticación: lo declaraba su propia openapi.json (40 operaciones sin seguridad) y /health respondía sin credenciales.
 - El Basic Auth del :80 se evitaba sirviendo el frontend directamente por :3000.
 - El servidor no tenía cortafuegos (política de aceptación por defecto) ni protección contra fuerza bruta, y acumulaba unos 127.000 intentos de acceso en 7 días.
@@ -577,7 +577,6 @@ Primero se le retiró del proxy la ruta que lo publicaba, de modo que quedó acc
 === Dos matices honestos, para no atribuirnos de más
 *El acceso de administrador por contraseña ya estaba bloqueado* por la configuración por defecto del sistema: los 127.000 intentos registrados nunca tuvieron posibilidad, y lo que se cerró fue la autenticación por contraseña a nivel general, para no depender de un valor por defecto que una actualización podría cambiar. Y el cortafuegos del sistema no filtra los puertos que publica Docker, cuyas reglas se evalúan antes: quien cerró de verdad la API y el frontend fue el despliegue, al dejar de publicarlos.
 
-#estado("ok", "EXPOSICIÓN CERRADA Y SERVIDOR ENDURECIDO")
 
 == Autenticación y aislamiento: de cuatro fugas a cero
 Hasta que se rehízo el acceso, la API y el WebSocket no tenían autenticación por detrás del proxy: el único control era el Basic Auth de la entrada, que además no distinguía personas. Eso no era una carencia, sino cuatro fallos distintos, los cuatro medidos en el entorno local de pruebas antes de tocar una línea de código. La tabla enfrenta cada uno con lo que lo cierra. La evidencia de los dos lados está en el apartado 7.
@@ -589,7 +588,7 @@ Hasta que se rehízo el acceso, la API y el WebSocket no tenían autenticación 
   *La API entera respondía sin credencial.* GET /health devolvía 401 por el Basic Auth de la entrada, pero GET /api/session/new devolvía 200 y entregaba un token: el proxy protegía unas rutas y dejaba /api abierta. | Un guardián aplicado *por router*, no ruta por ruta, para que una ruta nueva nazca protegida. Toda /api y /ws/ exigen token. El Basic Auth de la entrada se retiró.
   *El token de sesión no era una credencial, era un nombre.* El backend creaba sesión para cualquier cadena inventada: bastaba escribir un token cualquiera en la URL. | El token lo *firma el servidor* y el espacio de datos se deduce del token, nunca de la URL ni del cuerpo. La ruta que repartía identificadores sin valor de credencial se retiró.
   *La cookie de sesión de la web auditada se compartía entre todos.* Vivía en una tabla global sin dueño: un segundo usuario leía la cookie capturada por el primero, además sin token. | Las cookies viven dentro de la sesión de cada usuario y la tabla global desapareció. Verificado: el segundo usuario ya no la obtiene.
-  *Los hallazgos se difundían a todos los paneles.* Una vulnerabilidad publicada sin token aparecía en la sesión de dos auditores distintos: una fuga de datos del cliente de otro. | Los dos endpoints que admitían peticiones sin token escriben ahora solo en el espacio de quien llama. Verificado: el segundo usuario no ve el hallazgo del primero.
+  *Los hallazgos se difundían a todos los paneles.* Una vulnerabilidad publicada sin token aparecía en la sesión de dos auditores distintos: una fuga de los datos que otro estaba auditando. | Los dos endpoints que admitían peticiones sin token escriben ahora solo en el espacio de quien llama. Verificado: el segundo usuario no ve el hallazgo del primero.
   ",
 )
 
@@ -616,8 +615,6 @@ El acceso, capturado en la instalación pública el mismo día del despliegue (l
 
 #imagen("../capturas/fase2/RF-12-prod-sesion-iniciada.png", "RF-12 y RNF-07 · sesión iniciada en producción, con el alta hecha mediante el código de invitación sobre una instalación que arrancó deliberadamente con cero usuarios: el usuario figura en la cabecera y el interceptor aparece como conectado, lo que prueba que el WebSocket viaja también autenticado y no solo la API.")
 
-*Lo que no se pudo afirmar aquel día, y lo que quedó comprobado después.* La primera comprobación por IPv6 devolvió 404: no porque el servicio no publicara por esa vía, sino porque el registro AAAA del dominio no apuntaba a la máquina. Después se comprobó contra la dirección IPv6 de la máquina que el panel responde 200 y que los puertos cerrados siguen cerrados también por IPv6, y el registro quedó corregido. La máquina de trabajo del grupo no tiene salida IPv6, comprobado dos veces, así que el recorrido del dominio a IPv6 y de ahí al panel está demostrado por partes y no de una pieza. Evidencia: docs/evidencias/cortafuegos-ipv6-caja-08oct.md.
-#estado("ok", "LAS CUATRO FUGAS DE AISLAMIENTO, CERRADAS Y VERIFICADAS EN PRODUCCIÓN · IPv6: REGISTRO CORREGIDO Y PUERTOS COMPROBADOS · FALTA UNIRLO EN UNA PETICIÓN DESDE UNA RED CON IPv6")
 
 === Dos efectos del pulido del Repeater sobre la seguridad del producto
 - *Cerrado: el último residuo del modelo anterior al login.* La petición de envío del Repeater llevaba en su cuerpo el identificador del espacio de datos, y el esquema del servidor seguía declarándolo. No se leía, el espacio sale siempre del token firmado, nunca del cuerpo, pero sugería que el cliente puede elegir dónde escribe, que es exactamente el hueco de autorización que cerró el acceso por usuario: con el nombre de otro en el cuerpo se reutilizaban sus cookies del login auditado. Se retiró del frontend y, esa misma noche, del esquema del servidor. Un campo muerto que insinúa una capacidad que no existe es deuda de seguridad, no ruido.
@@ -631,7 +628,7 @@ El acceso, capturado en la instalación pública el mismo día del despliegue (l
 El modelo se aplica a los seis componentes del apartado 4 y a la frontera que movió el acceso por usuario: hasta
 entonces autenticaba el proxy con una contraseña compartida. Hoy autentica el backend, por persona.
 
-*Una premisa que conviene decir antes de la tabla, porque un lector la echaría en falta:* HookSuite es una
+*La premisa de partida:* HookSuite es una
 herramienta ofensiva, y su función es enviar tráfico arbitrario a un objetivo que elige quien la usa. Por
 eso el control no puede ser «no permitir destinos arbitrarios», eso sería desactivar el producto, sino
 *que solo entren personas autenticadas y que cada una responda de lo suyo*. Lo que en otra aplicación sería
@@ -665,36 +662,25 @@ una vulnerabilidad (hacer peticiones a donde diga el usuario) aquí es el requis
   está en el acceso, no en el destino.
 
 === Dependencias
-Medido sobre el código que se entrega, con las herramientas puestas para ello (npm audit sobre el
-fichero de bloqueo y pip-audit sobre los requisitos declarados). Se dan los números que dan las
-herramientas, sin redondear hacia abajo.
+Medido sobre el código que se entrega con npm audit sobre el fichero de bloqueo y pip-audit sobre los
+requisitos declarados, sin redondear hacia abajo.
 
-- *Frontend:* 241 dependencias resueltas (84 de producción, 113 de desarrollo, 45 opcionales) y 12 avisos,
-  nueve altos, uno medio y dos bajos. Restringido al árbol de producción, ocho: siete altos y uno bajo.
-  Directas: el cliente HTTP del panel (alto), el enrutador (bajo, por su paquete interno) y la herramienta
-  de construcción (alto, que entra en el árbol de producción a través del complemento de estilos).
-- *Backend:* 78 avisos en 12 paquetes del árbol resuelto. Los que más pesan, y el primero importa más que
-  los otros: la librería que firma los tokens de sesión acumula trece avisos en la versión fijada, es la
-  pieza central del acceso por usuario, la de criptografía siete, la de formularios multiparte siete y el armazón
-  ASGI bajo FastAPI otros siete.
-- *El proxy de la P1 sigue pesando, y se comprobó antes de decirlo.* mitmproxy aporta tres avisos propios
-  y arrastra cinco paquetes más. La tentación era declararlo código muerto y proponer quitarlo: no lo es,
-  main.py y la ruta de alta importan el gestor que lo lanza como subproceso, aunque RF-02 se implemente hoy
-  con el cliente HTTP nuevo. Las dos arquitecturas conviven, y esa convivencia mantiene viva esta superficie.
-- *Política de fijado, desigual:* el backend fija sus doce versiones. El módulo de navegador tres de cuatro
-  y el de herramientas de depuración las tres. El módulo de IA solo una de cuatro, así que su construcción
-  no es reproducible al día de hoy. El frontend declara rangos, pero el fichero de bloqueo fija el árbol.
-- *Qué no se ha hecho, y por qué:* no se ha actualizado ninguna dependencia hoy. Es el día de la
-  cierre del desarrollo, la entrega se hace sobre esta etiqueta y subir la librería de tokens o el cliente HTTP cambia
-  el código que se entrega. Queda declarado aquí y en el apartado 9.
-- *Honestidad de método:* pip-audit resuelve el árbol completo, así que esos 78 incluyen transitivas, y
-  *no se ha medido cuáles son alcanzables* desde el camino de ejecución del producto. Decir «78 avisos» no
-  es decir «78 agujeros explotables». Es decir cuántos hay que mirar.
-- *Por qué los paquetes se nombran aquí por su papel y no por nombre y versión.* El repositorio es público
-  y el producto está desplegado sin TLS: publicar la lista exacta de paquete, versión y avisos es publicar
-  un mapa de por dónde entrar. Las versiones están en los ficheros de requisitos y la medida se reproduce
-  con las dos órdenes citadas arriba. Única excepción: el proxy de la P1, que esta memoria ya nombra al
-  explicar el pivote de RF-02.
+- *Frontend:* 241 dependencias resueltas y 12 avisos, de los que ocho están en el árbol de producción,
+  siete altos y uno bajo. Las directas son el cliente HTTP del panel, el enrutador y la herramienta de
+  construcción.
+- *Backend:* 78 avisos en 12 paquetes. El que más importa es la librería que firma los tokens de sesión,
+  con trece en la versión fijada, por ser la pieza central del acceso por usuario. El proxy de la P1 aporta
+  tres propios y arrastra cinco paquetes más, y no es código muerto: la ruta de alta sigue lanzándolo como
+  subproceso aunque RF-02 se implemente hoy con el cliente HTTP nuevo.
+- *Fijado desigual:* el backend fija sus doce versiones y el módulo de IA solo una de cuatro, así que su
+  construcción no es reproducible hoy. El frontend declara rangos y el fichero de bloqueo fija el árbol.
+- *Lo que no se ha hecho:* no se ha actualizado ninguna dependencia. La entrega se hace sobre esta etiqueta
+  y subir la librería de tokens o el cliente HTTP cambiaría el código que se entrega. Queda declarado
+  también en el apartado 9.
+- *Honestidad de método:* esos 78 incluyen transitivas y no se ha medido cuáles son alcanzables desde el
+  camino de ejecución, de modo que son avisos que hay que mirar y no agujeros explotables. Los paquetes se
+  nombran por su papel y no por nombre y versión porque el repositorio es público y el producto está
+  desplegado sin TLS.
 
 === Tratamiento de datos personales
 - *Qué guarda el producto, y de quién.* De cada auditor: su cuenta, nombre y contraseña en hash, en un
@@ -717,9 +703,11 @@ Plan de pruebas, casos ejecutados, resultados y las pruebas que fallaron con su 
 
 *Dónde se tomó cada evidencia, porque cambia lo que vale.* Salvo cuando se dice lo contrario, toda verificación se ejecutó primero en el entorno local de pruebas, una réplica del despliegue con los mismos contenedores en una máquina del equipo, y se repitió contra la instalación pública tras cada despliegue. Una prueba en el entorno local dice que el arreglo funciona. Solo la de producción dice que está puesto, y más abajo se cuenta un despliegue que habría pasado por correcto sin aplicar nada. Las salidas de terminal se guardan como texto en el repositorio y no como foto: son comparables entre versiones y ninguna captura publica por error un secreto.
 
-== El plan de pruebas: los dieciocho casos que cita la matriz
+== El plan
 
-El plan original del equipo tenía doce casos, de modo que seis de los códigos que la matriz cita (PR-03, PR-04, PR-10, PR-12, PR-15 y PR-20) no tenían caso escrito: se redactan aquí por primera vez. Y los doce que existían llevaban los resultados medidos sobre el prototipo, de modo que varios eran hoy literalmente falsos (PR-01 figuraba como fallo por un control de acceso que ya no existe, PR-16 decía que toda la API respondía sin credenciales, PR-19 daba un error de servidor ya corregido). Esos resultados tampoco son basura: son la foto del punto de partida. Por eso la tabla lleva dos resultados, el del prototipo y el de hoy sobre el código que se entrega, y una última columna que dice de dónde sale el resultado de hoy: una reejecución, una figura de esta memoria, o nada, y entonces se dice.
+=== El plan de pruebas: los dieciocho casos que cita la matriz
+
+El plan original del equipo tenía doce casos, de modo que seis de los códigos que la matriz cita (PR-03, PR-04, PR-10, PR-12, PR-15 y PR-20) no tenían caso escrito: se redactan aquí por primera vez. Y los doce que existían llevaban los resultados medidos sobre el prototipo, de modo que varios eran hoy literalmente falsos (PR-01 figuraba como fallo por un control de acceso que ya no existe, PR-16 decía que toda la API respondía sin credenciales, PR-19 daba un error de servidor ya corregido). Esos resultados tampoco son basura: son la foto del punto de partida. Por eso la tabla lleva dos resultados, el del prototipo y el de hoy sobre el código que se entrega, y la celda de hoy dice además de dónde sale ese resultado: una reejecución, una figura de esta memoria, o nada, y entonces se dice. Los códigos son los del plan de la práctica anterior y se conservan tal cual para que las remisiones de la matriz sigan valiendo, de ahí que la numeración llegue a veinte con dieciocho casos.
 
 #tabla(
   (auto, auto, 4fr, 3fr, 4fr),
@@ -750,12 +738,14 @@ El plan original del equipo tenía doce casos, de modo que seis de los códigos 
 
 *Un aviso de método que vale para quien repita estas medidas.* El frontend es una aplicación de una sola página, y el servidor devuelve su portada a cualquier ruta desconocida: una dirección inventada responde 200 igual que una real. Por eso, en las filas reejecutadas, un 200 no se ha dado por bueno sin mirar el tipo de contenido, y es lo que evitó concluir que el esquema de la API seguía publicado cuando lo que respondía era la portada. Las salidas completas están en docs/evidencias/pruebas-reejecutadas-13oct.md.
 
-== Evidencia de exposición (RNF-07 / PR-16)
+== Las pruebas del producto
+Pantalla por pantalla y requisito por requisito, con la evidencia capturada antes de cada arreglo.
+
+=== Evidencia de exposición (RNF-07 / PR-16)
 La prueba PR-16, llamar a la API sin credenciales, y la verificación del frontend confirman que, antes de endurecer, el producto quedaba accesible sin autenticación. Las capturas se obtuvieron antes de cualquier arreglo, porque la evidencia de un fallo se captura antes de corregirlo: el propio arreglo la destruye. Lo que documentan, pieza a pieza: GET /health de la API respondía 200 sin credenciales ni cabecera WWW-Authenticate. La documentación interactiva (/docs) quedaba abierta, exponiendo las 40 operaciones, incluidas las que lanzan tráfico contra terceros. El frontend servido por el puerto 3000 cargaba sin pedir credencial, evitando por completo el control de la entrada principal, que sí pedía credencial: el control existía, pero se podía rodear por el puerto directo. Y la credencial documentada en el informe de la P1 era rechazada con 401, ya no abría nada. Las cinco capturas están en docs/capturas/exposicion/ del repositorio.
-#estado("ok", "EVIDENCIA DE EXPOSICIÓN Y DEL ENDURECIMIENTO, COMPLETA")
 
 
-== Los doce defectos del prototipo, corregidos y verificados
+=== Los doce defectos del prototipo, corregidos y verificados
 Todos se reprodujeron antes de corregirlos y se verificaron después en producción.
 
 #tabla(
@@ -781,7 +771,7 @@ Dos de los doce quedaron además fotografiados antes y después de corregir, sob
 
 > Nota de tratamiento de las capturas. Las dos del estado anterior mostraban un identificador de sesión de la web de pruebas en la franja superior. Se publican con esa franja tapada, y los originales no salen del almacén interno. Las del estado posterior no lo contienen porque la sesión no estaba autenticada.
 
-== El pulido del Spider (RF-03): quince defectos, y catorce los encontró el uso
+=== El pulido del Spider (RF-03): quince defectos, y catorce los encontró el uso
 
 En este tramo no se añadió funcionalidad: se pulió lo que ya existía, pestaña por pestaña. De esa pasada salen quince defectos corregidos en el Spider, y lo que más dice de ellos es cómo aparecieron: catorce usando la herramienta y uno leyendo el código.
 
@@ -803,9 +793,9 @@ Son seis de los quince, los que mejor enseñan el patrón. Los quince completos,
 *El patrón que se repite.* En once de los quince, el backend ya sabía la respuesta y no llegaba a la pantalla: no eran fallos de cálculo sino de traslado, funciones correctas que la interfaz no dejaba ver, y las pruebas que miran el backend no detectan nada de esto. Dos de los quince los introdujimos nosotros al arreglar otros, y se detallan en el apartado 11.
 
 
-== El pulido del Repeater (RF-05): dieciséis defectos, y una función retirada el mismo día
+=== El pulido del Repeater (RF-05): dieciséis defectos, y una función retirada el mismo día
 
-El tramo siguiente repitió el método sobre la segunda pestaña: no se añadió alcance, se pulió lo que había. El resultado se parece al del Spider en el número y se diferencia en algo que conviene contar entero, porque es lo más instructivo del tramo: una función se añadió y se retiró el mismo día.
+El tramo siguiente repitió el método sobre la segunda pestaña: no se añadió alcance, se pulió lo que había. El resultado se parece al del Spider en el número y se diferencia en una cosa: una función se añadió y se retiró el mismo día.
 
 #tabla(
   (auto, 6fr, 2fr),
@@ -847,7 +837,7 @@ conversión que la verificación inicial había dado por ausente.
 
 > Nota de tratamiento de las figuras de este apartado. Se tomaron contra una web propia del equipo autorizada para ello. El panel de cabeceras muestra la cookie de sesión del objetivo, es lo correcto porque es lo que se envía, así que cada figura se publica con esos valores tapados y los originales no salen del almacén interno. En el par de aislamiento, la captura del usuario A llevaba el identificador de sesión capturado de la web auditada, justo el dato que RF-12 existe para no compartir: va tapado y con la etiqueta a la vista, para que se vea qué se redactó.
 
-== El aislamiento (RF-12): las fugas capturadas antes, y la verificación después
+=== El aislamiento (RF-12): las fugas capturadas antes, y la verificación después
 *Antes del arreglo*, cuatro pruebas lanzadas contra el entorno local a través del proxy, porque el propio arreglo borra esta evidencia. Las cuatro confirmaron el fallo: la API responde 200 sin credencial, un token inventado obtiene sesión propia, un segundo usuario lee la cookie capturada por el primero, y una vulnerabilidad publicada sin token aparece en la sesión de dos auditores distintos. La captura íntegra, con la causa en fichero y línea de cada una, está en docs/evidencias/fugas-aislamiento-06oct.md.
 
 *Después*, con el sistema de acceso puesto, se repitieron las mismas pruebas. Once comprobaciones, once en verde: alta y entrada de dos usuarios distintos, contraseña incorrecta rechazada con 401 y no con un error del servidor, la API respondiendo con token y 403 al intentar tocar el espacio de otro con token propio (autenticación y autorización, que son cosas distintas), y el segundo usuario sin ver ni el hallazgo ni la cookie del primero. Se probó además como ataque: un usuario autenticado intentó dirigir el Spider al espacio de otro nombrándolo en el cuerpo de la petición, el quinto fallo del apartado 6, y el rastreo fue a parar al espacio del atacante. Ni el código de invitación ni las contraseñas aparecen en ninguna salida: el guion de pruebas los mantiene en variables.
@@ -855,16 +845,20 @@ conversión que la verificación inicial había dado por ausente.
 #imagen("../capturas/fase2/RF-12-aislamiento-usuarioA-con-datos.png", "RF-12 · antes de rehacer el acceso este panel era común a todos. Ahora el usuario A, autenticado, ve las trece peticiones que su propio Spider capturó del objetivo autorizado. Compárese con la captura siguiente, tomada al mismo tiempo.")
 
 #imagen("../capturas/fase2/RF-12-aislamiento-usuarioB-sin-datos.png", "RF-12 · el contraste: el usuario B, autenticado a la vez y en otro navegador, ve su panel vacío. Antes del cambio habría visto exactamente lo mismo que el usuario A. Este par es la prueba del aislamiento por usuario. El alta de ambos exige el código de invitación: el registro no es abierto a propósito, porque la herramienta lanza tráfico contra terceros y con altas anónimas cualquiera podría atacar desde la infraestructura del grupo.")
-#estado("ok", "AISLAMIENTO POR USUARIO: 11/11 EN EL ENTORNO LOCAL · EN PRODUCCIÓN SOLO SE HAN VERIFICADO LAS CUATRO FUGAS CERRADAS EL 8-OCT, NO LA BATERÍA ENTERA")
+La batería de once casos de aislamiento pasa completa en el entorno local. En la instalación pública
+se han verificado las cuatro fugas cerradas, no la batería entera, y conviene no confundir una cosa con la otra.
 
 
 
-== El despliegue (RNF-03) habría terminado «en verde» sin aplicar la configuración del proxy
+== La plataforma y el despliegue
+Lo que falla cuando el producto se levanta, y no cuando se usa.
+
+=== El despliegue (RNF-03) habría terminado «en verde» sin aplicar la configuración del proxy
 La comprobación previa al despliegue del sistema de acceso encontró un defecto no en el producto, sino en el propio plan de despliegue. El plan mandaba reconstruir «solo el frontend, el backend y el proxy», pero el proxy no se construye: usa una imagen descargada y su bloque del fichero de composición no cambiaba ni un byte, de modo que Compose no lo habría recreado. Como el proxy lee su configuración una sola vez al arrancar, el despliegue habría acabado sin errores y sin aplicar nada. Era el mismo fallo que ya había ocurrido dos días antes, y la razón de que se repitiera es instructiva: nombrar un servicio en un comando da la impresión de cubrirlo.
 
 *Después apareció el caso espejo.* Se recrearon el frontend, la API y el módulo de IA y no el proxy, porque su configuración no había cambiado. Resultado: 502 en todo, porque los contenedores recreados reciben direcciones nuevas y el proxy resuelve los nombres de sus destinos una sola vez, al arrancar. Las dos mitades tienen la misma raíz, el estado del proxy se fija al arrancar, y de ahí sale la regla operativa que ahora está escrita: cuando se recrea cualquiera de los servicios a los que el proxy apunta, se recrea también el proxy, forzándolo explícitamente.
 
-== La instalación desde cero (RNF-03), ejecutada: dos defectos que solo aparecen al seguir las instrucciones
+=== La instalación desde cero (RNF-03), ejecutada: dos defectos que solo aparecen al seguir las instrucciones
 RNF-03 pide un despliegue reproducible, y lo único que lo respaldaba era que el servicio estaba en pie en producción, no que alguien pudiera levantarlo desde cero. La segunda cosa se probó siguiendo el README paso a paso, sobre un árbol independiente y con su propio proyecto de contenedores.
 
 *Salieron dos defectos, y ninguno se habría visto leyendo el documento.* El primero: con el puerto 80 ocupado, el arranque falla con «address already in use» y el aviso del README ofrecía un único valor concreto como alternativa, que en esa misma máquina también estaba ocupado: seguir las instrucciones al pie de la letra producía el mismo error dos veces. El segundo es más fino, y es el que importa: ese fallo solo tumba el proxy, el único servicio que publica puerto, mientras los otros cinco arrancan con normalidad, de modo que quien no lea la salida del arranque ve cinco servicios en marcha y puede creer que ha instalado. Es la misma familia que el caso de arriba: algo que parece verde y no lo está.
@@ -872,7 +866,7 @@ RNF-03 pide un despliegue reproducible, y lo único que lo respaldaba era que el
 *El arreglo fue del documento, no del producto:* el aviso deja de mandar a un número concreto, se añade cómo comprobar si un puerto está libre, y se advierte de que la comprobación final tiene que mostrar los seis servicios. Con eso la instalación llegó hasta la pantalla de acceso y se completó el alta con el código de invitación que genera el propio despliegue. Lo que esta prueba no es: la casilla del enunciado de que una persona ajena al grupo instale siguiendo el README, porque la condujo quien lo había escrito. Esa sigue abierta.
 
 
-== Defectos de montaje y arranque que impedían operar
+=== Defectos de montaje y arranque que impedían operar
 Los tres aparecieron al reconstruir el entorno desde cero o al preparar un reinicio, y ninguno daba error visible.
 
 - *El proxy dependía del laboratorio para arrancar*: infra/nginx.conf lo hacía requisito de arranque y el
@@ -884,28 +878,34 @@ Los tres aparecieron al reconstruir el entorno desde cero o al preparar un reini
   contenedores no tenían orden de arranque entre sí, y si el segundo ganaba, el agente quedaba en bucle de
   reinicios. Se corrigió fijando el orden antes de reiniciar, y tras el reinicio el contador del agente
   marcaba cero.
-== Un módulo que parecía sano y no podía hablar con nadie (RF-08)
+== El módulo de análisis con IA, paso a paso
+El recorrido de RF-08 se probó por tramos, y cada tramo dejó su propio fallo. Van en el orden en que se
+encontraron, del montaje a la respuesta del modelo.
+
+=== Un módulo que parecía sano y no podía hablar con nadie (RF-08)
 La prueba más barata de esta práctica fue una petición con curl, y descubrió un defecto que llevaba cuatro días en producción sin que nadie lo notara: el módulo de IA no podía comunicarse con el backend desde que se puso el control de acceso. El módulo preguntaba al backend cada cinco segundos si había trabajo, esa ruta quedó protegida junto con las demás, correctamente, y el módulo no presenta credencial ninguna, de modo que recibía un rechazo en cada intento.
 
 *Lo grave no es el defecto, es por qué no se vio.* El código comprobaba si la respuesta era un éxito, y un rechazo por credencial no provoca ningún error, simplemente no es un éxito: el bucle volvía a dormir y el registro decía que estaba esperando instrucciones. Un operador habría visto un módulo en marcha y a la espera. Estaba en marcha, y no podía recibir nada. Es el mismo patrón que RNF-06 vino a cerrar un nivel más arriba, un fallo que no se distingue de la normalidad, y la razón por la que ahora el módulo falla ruidosamente: comprueba el bus al arrancar y se detiene si no está. Se midió con tres peticiones sin credencial, las tres rechazadas. Evidencia como texto en docs/evidencias/canal-ia-backend-muerto-10oct.md.
 
-== Las dos contrapartidas del bus (RF-08), probadas antes de confiar en él
+=== Las dos contrapartidas del bus (RF-08), probadas antes de confiar en él
 Reconectar el módulo por un bus interno (apartado 4) cambia la forma del riesgo: un control de acceso falla cerrando, un bus falla abriendo. Así que lo que se prueba no es solo que el reparto funcione, sino que no se puede repartir mal. Dieciocho casos en dos conjuntos, con dobles para el bus, el gestor de sesiones y el orquestador: ni red, ni credencial de modelo, ni contenedores, cero coste.
 
 Los dos que justifican el esfuerzo: un hallazgo sin dueño se descarta, no se guarda ni se emite (sin esa regla, un mensaje mal formado reabriría exactamente la fuga de aislamiento ya cerrada), y dos auditores no ven lo del otro, comprobado repartiendo a dos espacios y verificando que cada uno recibe solo lo suyo. Tres más cubren el fallo silencioso en el otro extremo: si la auditoría se interrumpe se publica el motivo, si nadie escucha el bus publicar lo dice en vez de dar el trabajo por encolado, y si una orden llega sin dueño no se audita. Reproducible con python3 backend/tests/test_bus_reparto.py y python3 ia/tests/test_bus_publicacion.py.
 
-== El disparador y el techo de gasto, verificados de punta a punta (RF-08)
+=== El disparador y el techo de gasto, verificados de punta a punta (RF-08)
 Durante cuatro días el disparador estuvo construido y sin poder demostrarse: el botón existía, el bus estaba cableado, y una pulsación desde el panel no movía ni una línea del módulo de IA. Se cerró anotando la hora exacta de la pulsación y midiendo contra ella: a partir de las 13:58:10 el servidor registra una petición al disparador con respuesta correcta y el registro del módulo pasa de 192 a 376 líneas. Del panel a la autenticación, de ahí al bus y al módulo suscrito, el recorrido entero por primera vez. Lo que no se da por explicado: cincuenta y ocho minutos antes la misma pulsación no movió nada sin que se tocara el producto entre una y otra. Queda abierto y declarado, porque un apartado de pruebas que explica lo que no sabe explicar vale menos que uno que lo admite.
 
 El mismo día se ejecutó el caso del techo de gasto. Una auditoría del módulo de IA anida páginas × tipos de prueba × cargas, y cada carga es una consulta al modelo: sin techo, cada pulsación arranca ese recorrido completo con gasto sin acotar. El caso estaba diseñado para costar cero: con el techo en 0 por variable de entorno, ninguna consulta debe salir y la auditoría debe quedar marcada como truncada. Ejecutado desde el panel, con sesión real: la auditoría recorrió cuarenta y ocho elementos, no salió ni una sola consulta, coste 0 €, y los cuarenta y ocho quedaron marcados como no analizados, cada uno con el motivo del techo. El techo no se limita a cortar: el corte se ve, que era la condición que se le puso al diseñarlo.
 
 *La mitad que falta del caso*, y se declara: el techo en 1, donde debe pasar una sola consulta y el resto quedar como «no analizado». Esa sí necesita clave de API válida, porque la consulta que pasa tiene que salir de verdad.
 
-#hueco("el grupo", "Ejecutar la segunda mitad del caso del techo, techo en 1, en cuanto haya clave de API válida: debe pasar una sola consulta y el resto quedar como «no analizado» con el motivo del techo. La primera mitad (techo 0) ya está ejecutada y capturada. Coste previsto: una consulta.")
-#hueco("el grupo", "Plan de pruebas formal y capturas de producto de los dos defectos ya corregidos (el error 500 de la comprobación de vida y la trampa del Spider): falta reproducirlos en el entorno local sobre el producto actual y capturar la pantalla.")
+Dos cosas más quedan sin ejecutar y se declaran aquí: el caso del techo con límite distinto de cero, que
+necesita una clave de API válida de la que la instalación pública no dispone, y el caso formal con capturas
+de producto de dos defectos ya corregidos, el error de servidor de la comprobación de vida y la trampa de
+araña del rastreador, que están arreglados y verificados pero sin caso escrito.
 
 
-== Operación degradada (RNF-06): probada sin gastar saldo, y vista en el panel
+=== Operación degradada (RNF-06): probada sin gastar saldo, y vista en el panel
 La prueba que demuestra RNF-06 no necesita ni clave de API ni conexión: sustituye el cliente del modelo por uno simulado y comprueba qué devuelve el clasificador en ocho casos. Su valor está en haberla visto fallar: contra el código anterior devuelve _0 de 8_ (los cuatro métodos llamaban a .get() sobre un objeto que ya no existe y la fase de análisis se interrumpía entera) y contra el corregido _8 de 8_. Una prueba que pasa siempre no prueba nada. Reproducible con python3 ia/tests/test_tres_estados.py, evidencia con las dos salidas en docs/evidencias/rnf06-tres-estados-antes-y-despues-09oct.md.
 
 Una prueba unitaria demuestra que el clasificador devuelve el estado degradado, no que alguien lo enseñe, y entre las dos cosas hubo un hueco real: durante un día el estado existió y no lo consumía nadie al otro lado, de modo que RNF-06 estaba cumplido y era invisible. El hueco se cerró y se comprobó en la interfaz, con una auditoría lanzada desde el panel y sesión real.
@@ -918,7 +918,7 @@ Lo que la figura prueba, y que ninguna prueba unitaria alcanzaba: que el mensaje
 
 #imagen("../capturas/ia/RF-08-auditoria-completa-49-analisis.png", "RF-08 / RNF-06 · la tercera forma de quedarse sin análisis: cuarenta y nueve análisis realizados, cero hallazgos y cuatro elementos sin analizar porque la respuesta se truncó al agotar el tope de tokens. El mensaje en pantalla recomienda subir ese tope y el consejo es erróneo: el cliente no pide la respuesta por partes, de modo que subirlo hace fallar la consulta. La barra de pestañas es anterior a la retirada de la pestaña Red.")
 
-== Lo que el modelo puede devolver, y lo que el código daba por hecho (RF-08)
+=== Lo que el modelo puede devolver, y lo que el código daba por hecho (RF-08)
 Las cuatro vías de análisis del módulo de IA piden al modelo una respuesta con un formato fijo, impuesto mediante un esquema que viaja con la consulta: la API garantiza que la respuesta se ajusta a él. El esquema no es documentación, es el control, y un campo declarado con tipo abierto no es un campo permisivo, es un campo sin control. La prueba comprueba que el esquema obliga a lo que las instrucciones piden, que la bandera de resultado sea un booleano y que la confianza venga en escala de 0 a 100. Contra el código anterior devuelve _5 de 11_, y los fallos no eran cosméticos:
 
 1. De los tres campos de bandera, uno por vía, solo el primero estaba declarado como booleano. Los otros dos admitían cadena de texto, y el clasificador evalúa los tres dentro de un if: en el lenguaje en que está escrito, cualquier cadena no vacía es verdadera, incluida la palabra que significa «no». Una respuesta negativa del modelo se habría registrado como vulnerabilidad confirmada.
@@ -929,12 +929,12 @@ Las cuatro vías de análisis del módulo de IA piden al modelo una respuesta co
 
 Reproducible con python3 ia/tests/test_esquemas_bandera.py ia/esquemas.py. Evidencia con las dos salidas, antes y después, en docs/evidencias/esquemas-bandera-antes-10oct.md.
 
-== Tres rechazos seguidos de la API: validar contra tu propia prueba no es validar (RF-08)
+=== Tres rechazos seguidos de la API: validar contra tu propia prueba no es validar (RF-08)
 La primera auditoría real, clave válida, objetivo propio, techo de gasto puesto, no devolvió ni un hallazgo: las llamadas que salieron se rechazaron antes de procesarse, y hubo que lanzarla tres veces porque cada rechazo tenía un motivo distinto. Los objetos del esquema iban abiertos, y la salida estructurada no lo admite. La confianza declaraba un rango con mínimo y máximo, que tampoco se admite. Y veintidós campos declaraban su tipo como una lista de tipos posibles que incluía «objeto», lo que exige una declaración explícita que esos campos no llevaban. Coste: cero, porque un rechazo por petición mal formada no consume saldo. La factura fue de tiempo.
 
 *Lo que este episodio enseña.* La prueba de esquemas daba _11 de 11_ y las seguía dando con el defecto dentro: comprobaba lo que nosotros le pedíamos al esquema y nunca lo que la API exige para aceptarlo. Dicho corto: un esquema validado contra tu propia prueba no está validado. Está de acuerdo contigo. Quedan dos piezas para que no haya una tercera vez: ia/tests/test_esquemas_api.py recorre los esquemas y rechaza cualquier clave que no conste como admitida (verificada distinguiendo las dos versiones, _1 de 5_ contra los defectuosos y _5 de 5_ contra los corregidos), y ia/tests/validar_esquemas_contra_api.py somete cada esquema al servicio real, los cuatro pasan, porque cuando el contrato lo pone otro, se le pregunta a él. Los dos defectos nacieron en el mismo sitio, el generador, la única pieza del proyecto sin control de versiones: lo que no tiene historial es donde nadie mira.
 
-== Un fallo silencioso no es un fallo menor: la escala de la confianza (RF-08 / RNF-06)
+=== Un fallo silencioso no es un fallo menor: la escala de la confianza (RF-08 / RNF-06)
 El filtro por confianza compara el valor que devuelve el modelo contra un umbral. Las instrucciones piden ese valor en escala de 0 a 100, pero ninguna pide que sea entero, y ahí había una rendija que el esquema no puede cerrar: un 0,85 queriendo decir «85 %» está dentro del rango permitido, pasaría el control y quedaría por debajo del umbral. El hallazgo desaparecería sin dejar rastro, que es exactamente lo que RNF-06 existe para evitar. El arreglo va en el clasificador y no en el esquema, porque imponer «entero» habría rechazado un decimal legítimo: la franja entre 0 y 1 se trata como sospecha de escala y se encamina al estado degradado de RNF-06, con su motivo, de modo que el problema se ve en el informe en lugar de desaparecer.
 
 *La prueba distingue las dos versiones*, que es la única forma de que valga: contra el código corregido devuelve _19 de 19_ y contra el anterior _6 de 19_, y los seis que pasan en la versión antigua son precisamente los casos legítimos, lo que demuestra que la guarda no introduce falsos positivos. Reproducible con python3 ia/tests/test_escala_confianza.py. Evidencia con las dos salidas en docs/evidencias/escala-confianza-guardia-10oct.md.
@@ -969,7 +969,6 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
   RNF-09 | TLS/HTTPS | Pendiente | (por configurar en Nginx) | PR-18 · apdo. 7
   ",
 )
-#estado("curso", "RUTAS VERIFICADAS EN CÓDIGO · PRUEBAS SEGÚN EL PLAN DEL APARTADO 7")
 
 
 La columna de prueba remite al plan de pruebas del apartado 7, que reconstruye los dieciocho casos citados con dos resultados, el del prototipo y el de hoy sobre el código que se entrega, y declara caso por caso de dónde sale el resultado de hoy. La numeración RF/RNF es la fijada en el apartado 3.
@@ -1048,7 +1047,6 @@ de pruebas del apartado 7 con sus dieciocho casos y sus dos resultados, y la ins
 ejecutada y documentada en el apartado 7. Ninguna de las tres sustituye al vídeo y no se presentan como
 equivalentes.
 
-#hueco("el grupo", "Acumular las limitaciones que aparezcan hasta el cierre de la entrega. Este apartado recibe material hasta el último día.")
 
 = Reparto del trabajo
 Quién hizo qué, con estimación de horas por persona.
@@ -1101,9 +1099,9 @@ registro. No se cronometró, y aquí no se inventa.
 Declaración obligatoria de qué herramientas de IA se usaron y para qué.
 - *Claude Code* (modelo Claude de Anthropic): asistencia en diagnóstico, montaje del entorno local de pruebas, ensayo de limpieza del historial y redacción de esta memoria, bajo revisión humana.
 == Los límites de la herramienta, observados en primera persona
-Usar un asistente de IA para auditar seguridad tiene un límite que conviene declarar porque lo encontramos trabajando: el filtro de seguridad del propio modelo bloquea a veces tareas legítimas de este dominio. Leyendo las instrucciones del clasificador de vulnerabilidades de HookSuite, la petición fue rechazada con un error que lo dice con todas las letras, el filtro «a veces marca tareas legítimas de programación, ciberseguridad y biología». Es el coste de trabajar en seguridad ofensiva con una herramienta generalista, y se cuenta con la fecha delante en lugar de omitirlo.
+Usar un asistente de IA para auditar seguridad tiene un límite que encontramos trabajando: el filtro de seguridad del propio modelo bloquea a veces tareas legítimas de este dominio. Leyendo las instrucciones del clasificador de vulnerabilidades de HookSuite, la petición fue rechazada con un error que lo dice con todas las letras, el filtro «a veces marca tareas legítimas de programación, ciberseguridad y biología». Es el coste de trabajar en seguridad ofensiva con una herramienta generalista, y se cuenta con la fecha delante en lugar de omitirlo.
 
-Lo caro no fue el bloqueo, sino la recuperación: la opción elegida del rebobinado del cliente descartó ocho minutos de trabajo que otras dos opciones habrían conservado. Y de ahí salió el hallazgo que sí afecta al diseño de nuestros controles: el rebobinado restaura la conversación y los ficheros, pero no los efectos sobre el servidor. El turno que había construido una imagen de contenedor figuraba como «sin cambios de código», la imagen siguió existiendo después de rebobinar, y el único testigo fue un control externo que compara el estado del servidor contra lo que la documentación afirma. Un control que mira ficheros no sustituye a uno que mira el sistema.
+Lo caro no fue el bloqueo, sino la recuperación: la opción elegida del rebobinado de la herramienta descartó ocho minutos de trabajo que otras dos opciones habrían conservado. Y de ahí salió el hallazgo que sí afecta al diseño de nuestros controles: el rebobinado restaura la conversación y los ficheros, pero no los efectos sobre el servidor. El turno que había construido una imagen de contenedor figuraba como «sin cambios de código», la imagen siguió existiendo después de rebobinar, y el único testigo fue un control externo que compara el estado del servidor contra lo que la documentación afirma. Un control que mira ficheros no sustituye a uno que mira el sistema.
 
 *Qué fue generado y qué fue verificado.* La distinción no es teórica: ese mismo día, una afirmación escrita por el asistente en el plan del módulo de IA, que los cuatro conjuntos de instrucciones pedían un campo descripcion, resultó falsa para uno de ellos al releer el código fuente, y se corrigió. El criterio que seguimos es que nada entra en esta memoria por haberlo dicho la herramienta: entra cuando se ha contrastado contra el código, la salida de un comando o el enunciado.
 
@@ -1140,7 +1138,7 @@ De los quince defectos del pulido del Spider (apdo. 7), dos los causamos nosotro
 == Leer sin leer: delegar la lectura de lo que no debe entrar en la conversación
 El filtro descrito arriba obligó a una medida de método que cambió la forma de trabajar. Las instrucciones que el producto envía al modelo son el material que más incomoda a ese filtro y eran lo único que faltaba por conocer para terminar el módulo de IA: tres defectos abiertos dependían de saber qué formato piden. El asistente principal no podía abrirlas sin arriesgar la sesión, y el permiso del operador no sirve de nada, porque el filtro no sabe nada de ese permiso: mide lo que entra en la conversación. La salida fue delegar la lectura: un asistente secundario, con instrucciones propias y un contexto que se destruye con él, abre los ficheros y devuelve solo su interfaz, nombres de campo, tipos, escalas y números de línea, sin una frase del texto. De ahí salieron los tres defectos del apartado 7: lo que no se puede leer, se mide, se edita a ciegas y se verifica con una prueba, y ese método resultó más estricto que la lectura directa.
 
-El límite del método también se declara: el asistente secundario es un modelo, no un control. Lo que devuelve tiene que revisarlo una persona que conozca el material, porque es la única que puede juzgar si cruzó la línea entre describir y reproducir. El asistente principal no puede, precisamente porque no conoce el contenido.
+El límite del método: el asistente secundario es un modelo, no un control. Lo que devuelve tiene que revisarlo una persona que conozca el material, porque es la única que puede juzgar si cruzó la línea entre describir y reproducir. El asistente principal no puede, precisamente porque no conoce el contenido.
 
 == Qué aportó el asistente, tramo a tramo
 El modelo de trabajo lo fijó el grupo: se le ceden al asistente los mandos de
@@ -1179,6 +1177,9 @@ contando sus entradas una a una.
 = Anexos
 Manual de despliegue ampliado, cómo se entrega el acceso para la corrección, glosario y referencias.
 == Manual de despliegue
+Esto es el procedimiento de actualización de la instalación pública. La instalación desde cero en una
+máquina nueva no se repite aquí: está en el README del repositorio, paso a paso y probada de punta a punta.
+
 El despliegue es manual y deliberadamente aburrido: la instalación pública solo recibe versiones, nunca
 arreglos. Está prohibido editar ficheros en ella, fue la causa de que al principio de la práctica lo desplegado no
 estuviera en ninguna rama, y por eso la actualización se hace con traer y reponer a la fuerza el estado de
