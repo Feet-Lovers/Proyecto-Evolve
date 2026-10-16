@@ -5295,3 +5295,26 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
 - **A qué requisito toca:** la matriz entera y el criterio de claridad. **Evidencia:** commit de la jornada
   en develop. **44 páginas totales y 37 contables**, tres de margen; 26 citas de figura por número y cero
   referencias sin resolver; escaneo de secretos a cero con control positivo. **Horas:** ~0,9 h de asistente.
+
+## Fase 3 (16-oct, tarde) — barrido de las remisiones entre apartados
+
+- **Qué se hizo:** barrido completo de las remisiones internas del informe, a petición de josemax.
+  **Noventa y dos remisiones** a nueve apartados distintos, extraídas a máquina con su contexto y
+  verificadas contra lo que de verdad contiene cada destino: que el apartado exista, que tenga figuras
+  cuando la remisión promete una figura, y que las promesas de justificación, limitación o plan de pruebas
+  caigan en el apartado que las contiene. **Ninguna remisión está equivocada.** Las dos que parecían
+  sospechosas por quedarse sin contexto en el volcado se revisaron a mano y eran correctas, frases que
+  empiezan diciendo el apartado.
+- **Lo que sí encontró el barrido:** once citas de figura **sin número**, del tipo «figura en el apartado 7»
+  o «tres figuras en el apartado 7», repartidas entre la tabla de pantallas y la matriz. No eran falsas pero
+  eran inútiles, porque ese apartado tiene diez figuras. Con las etiquetas ya montadas, las once pasan a
+  citar el número, y se etiquetaron tres figuras más para poder hacerlo. **El documento ya no tiene ni una
+  sola cita de figura vaga.**
+- **Por qué:** una remisión que manda a un apartado de diez figuras obliga al lector a buscar, y el enunciado
+  pide que cada figura tenga pie y referencia. Además la matriz y el plan ya citaban por número, así que la
+  tabla de pantallas era además una incoherencia de formato entre bloques del mismo tipo.
+- **Qué falló:** la verificación automática por categorías dio cero sospechosas, y eso no bastaba: solo
+  comprobaba cuatro tipos de promesa. Lo que encontró el problema real fue mirar las celdas una a una.
+- **A qué requisito toca:** el criterio de coherencia del enunciado. **Evidencia:** commit de la jornada en
+  develop. **38 citas de figura por número, cero referencias sin resolver y cero citas vagas**; 44 páginas
+  totales y 37 contables. **Horas:** ~0,5 h de asistente.
