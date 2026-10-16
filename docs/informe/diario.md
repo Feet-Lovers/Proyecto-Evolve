@@ -5340,3 +5340,30 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
 - **A qué requisito toca:** la declaración obligatoria de uso de IA. **Evidencia:** commit de la jornada en
   develop. **43 páginas totales y 36 contables**, cuatro de margen; cero referencias sin resolver.
   **Horas:** ~0,4 h de asistente.
+
+## Fase 3 (16-oct, tarde) — las pruebas, ejecutadas como las ejecutará el evaluador
+
+- **Qué se hizo:** josemax señaló un fallo de método real: las pruebas se habían ejecutado en el entorno
+  local de trabajo, con un árbol que lleva semanas encima, y **el evaluador las va a ejecutar en un clon
+  limpio, desde la raíz, copiando las órdenes que el documento escribe**. Se repitió así: clon nuevo de la
+  rama de desarrollo y las órdenes literales del informe y del README. Resultado de las ocho: **seis pasan**
+  (8/8, 19/19, 5/5, 11/11, 9/9 y el validador fallando limpiamente por falta de clave, con su mensaje) y
+  **dos no**. No hace falta instalar nada: ningún fallo de importación, así que el README dice la verdad al
+  afirmar que son scripts independientes.
+- **Los dos que no pasan, y están declarados en el informe por decisión suya, sin tocar una línea de
+  código:** *(a)* dos de los dieciocho casos del bus comprueban el camino que caía al laboratorio
+  vulnerable, retirado del producto, así que el producto hace lo correcto y la prueba se quedó atrás;
+  *(b)* el bloque de pruebas del README recorre todos los ficheros de su directorio sin argumentos, y el
+  que valida la bandera de los esquemas devuelve un error de uso, mientras el informe sí da su orden
+  completa.
+- **Por qué no se arreglaron:** se le planteó y eligió declararlos. Tocar el test el día de la entrega
+  significa cambiar la vara de medir hasta que dé verde, que es la lección que esta misma memoria cuenta
+  sobre validar contra tu propia prueba. Y el README está probado de punta a punta, así que cambiar su
+  bloque obligaría a reprobarlo entero.
+- **Qué falló:** dos cosas, las dos mías. La primera, el método: ejecutar desde dentro del directorio en vez
+  de desde la raíz me dio un falso fallo en el validador de esquemas, que **sí funciona** como el README
+  indica. La segunda, la redacción: la declaración nueva incluía un «se dice aquí porque», justo la
+  justificación que las reglas de redacción prohíben, y se retiró antes de confirmar.
+- **A qué requisito toca:** el plan de pruebas y la honestidad del apartado de limitaciones.
+  **Evidencia:** commit de la jornada en develop, **44 páginas totales y 37 contables**, escaneo de secretos
+  a cero con control positivo. **Horas:** ~0,7 h de asistente.
