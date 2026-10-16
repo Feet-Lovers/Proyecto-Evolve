@@ -5100,3 +5100,36 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   memoria. **Evidencia:** el commit de la lectura en develop. Páginas: se mantienen 46 totales y 39
   contables, escaneo de secretos a cero con control positivo.
   **Horas:** ~0,9 h de asistente.
+
+## Fase 3 (16-oct, mañana) — el vídeo no se graba, y el informe deja de prometerlo
+
+- **Qué se hizo:** josemax comunicó al arrancar la jornada que **el vídeo de demostración no se va a grabar
+  por falta de tiempo**. Su instrucción fue declararlo abiertamente y que **del vídeo no quede ni una
+  mención en el informe salvo en el apartado de limitaciones** (y en el comentario de la entrega del
+  campus). Nueve cambios sobre el `.typ`, que era la única fuente: en la portada se retira el rótulo rojo
+  «Vídeo de demostración · PENDIENTE DE ENLACE» y el área de Documentación deja de listarlo; en la matriz
+  salen las **diez** celdas `vídeo —:—`, la prosa de entrada deja de prometer el minuto exacto, el
+  distintivo ámbar pasa a remitir al plan de pruebas y **se retira el hueco de los minutos**, que ya no se
+  puede llenar; la frase que citaba al enunciado pidiendo declarar los datos simulados «en la memoria y en
+  el vídeo» se parafrasea para no arrastrar la palabra; la justificación de la etiqueta en el apartado 7
+  pasa de «el vídeo se graba sobre esta etiqueta» a «la entrega se hace sobre esta etiqueta»; y entra un
+  subapartado nuevo en Limitaciones, **«El vídeo de demostración no se entrega»**, con el motivo, lo que se
+  pierde (las tres comprobaciones de la lista de entrega que dependen de la grabación, más la del enlace en
+  la portada) y con qué se sostiene la demostración en su lugar, diciendo que esas piezas **no** son
+  equivalentes.
+- **Por qué:** el documento prometía un enlace que no iba a existir y un minuto por requisito en diez filas
+  de la matriz. Un evaluador habría buscado los dos. El enunciado dice que explicar lo que no funciona vale
+  más que ocultarlo, así que la ausencia se declara en lugar de dejarse sin explicación.
+- **Qué se descartó:** *(a)* reescribir el rótulo de la portada para que dijera «no se entrega» (josemax
+  prefirió que el vídeo no aparezca en la portada en absoluto); *(b)* grabar una versión mínima más corta,
+  que no habría marcado la casilla de los diez minutos pero sí habría dado un tercer entregable;
+  *(c)* dejar el informe como estaba, que era lo más barato y lo único deshonesto de las tres.
+- **Qué falló:** nada en la compilación. Lo que sí había que medir antes de dar el cambio por bueno es si
+  el subapartado nuevo empujaba el cuerpo por encima del límite de 40 páginas. Se recompiló el `.typ`
+  anterior a un PDF aparte y se compararon las páginas de inicio de los cinco últimos apartados: **reparto
+  idéntico**, 46 páginas totales y **39 contables** (cuerpo 4-42, anexos desde la 43). El subapartado cupo
+  en el espacio que dejó la columna de minutos retirada.
+- **A qué requisito toca:** el criterio de honestidad del enunciado y su límite de formato, la matriz de
+  trazabilidad y el apartado de limitaciones. **Evidencia:** commit `721315fc` en develop, escaneo de
+  secretos a cero con control positivo (12 en el `.typ` y 54 en el PDF vía pdftotext).
+  **Horas:** ~0,6 h de asistente.
