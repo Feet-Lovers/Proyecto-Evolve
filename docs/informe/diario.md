@@ -5431,3 +5431,24 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
 - **A qué requisito toca:** el contenido del repositorio entregado. **Evidencia:** commit de la jornada en
   develop. El repositorio queda en **225 ficheros y 6,4 MB**, desde los 382 y 24,5 MB de la mañana.
   **Horas:** ~0,3 h de asistente.
+
+## Fase 3 (16-oct, tarde) — la entrega queda en la rama principal y la etiqueta la señala
+
+- **Qué se hizo:** fusión de la rama de desarrollo en la principal y la etiqueta de entrega movida al commit
+  resultante. Se hizo **paso a paso y por comandos**, sin pasar por la web, porque la fusión por la interfaz
+  deja el commit a nombre del correo automático de la plataforma, y así queda con el correo real del
+  integrante que la ejecuta. La solicitud de incorporación se abrió por la API para que quede el registro
+  que exige el flujo del equipo, y se cerró sola al contener la rama principal todo lo fusionado.
+- **Dos obstáculos que aparecieron y cómo se resolvieron:** la rama principal **local** estaba en un commit
+  de junio, anterior a la reescritura del historial, con ciento un commits de hashes viejos. Se guardó con
+  otro nombre antes de tocarla. Y al intentar situarse en ella, la operación **abortó**: los ficheros que la
+  limpieza había retirado del control de versiones seguían en el disco, y la rama principal todavía los
+  tenía versionados. Se resolvió **fusionando en un árbol de trabajo aparte**, sin mover ni borrar nada.
+- **Qué se verificó antes de publicar, con el merge ya construido y todavía en local:** doscientos
+  veinticinco ficheros, el PDF dentro, las tres capturas que faltaban, cero respaldos, **trece de trece
+  figuras**, **cero rutas citadas sin respaldo** y la memoria compilando desde ese árbol.
+- **Y después de publicar:** la etiqueta apunta al mismo commit que la rama principal, contiene el PDF y el
+  README de doscientas veintiséis líneas, y está a **cero commits** de la rama de desarrollo. Lo etiquetado
+  es lo que se entrega.
+- **A qué requisito toca:** la casilla del enunciado que pide la etiqueta sobre el commit entregado, y las
+  dos que dependían de ella. **Evidencia:** la etiqueta en el remoto. **Horas:** ~0,5 h de asistente.
