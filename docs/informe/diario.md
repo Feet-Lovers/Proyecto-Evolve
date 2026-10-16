@@ -5367,3 +5367,21 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
 - **A qué requisito toca:** el plan de pruebas y la honestidad del apartado de limitaciones.
   **Evidencia:** commit de la jornada en develop, **44 páginas totales y 37 contables**, escaneo de secretos
   a cero con control positivo. **Horas:** ~0,7 h de asistente.
+
+## Fase 3 (16-oct, tarde) — dos datos falsos del informe, corregidos contra git
+
+- **Qué se hizo:** la verificación de cifras encontró **tres números equivocados en una sola frase** del
+  apartado de reparto. Decía «de las 41 confirmaciones de una sola jornada, una persona figura en 19, más
+  del doble que cualquier otra, pero 11 de esas 19 son regeneraciones de la memoria». Contado en git: **60
+  confirmaciones**, esa persona en **22**, de ellas **12** de la memoria, y la segunda persona tiene 11, de
+  modo que es **el doble** y no más del doble. Corregidas las cuatro cosas. Y la entradilla de la matriz
+  decía «las rutas están comprobadas en el código» cuando, desde que la tabla se compactó, cita **nombres
+  de fichero y no rutas**: ahora dice lo que hace.
+- **Por qué:** son cifras que el equipo docente puede contar en GitHub en dos clics, y una afirmación que
+  se desmiente leyendo la propia tabla. La regla de la línea es contrastar la fuente antes de afirmar, y aquí
+  la fuente es git.
+- **Qué falló:** la frase se escribió a media jornada y **la jornada siguió**, de 41 confirmaciones a 60.
+  Nadie la volvió a mirar. Es el mismo patrón que ya había dejado caducadas otras cifras: un dato correcto
+  cuando se escribe y falso unas horas después.
+- **A qué requisito toca:** el apartado de reparto del trabajo y la matriz. **Evidencia:** commit de la
+  jornada en develop, cifras recontadas con git log. **Horas:** ~0,2 h de asistente.
