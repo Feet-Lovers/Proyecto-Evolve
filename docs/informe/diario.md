@@ -5270,3 +5270,28 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
 - **A qué requisito toca:** el criterio del enunciado de que cada figura tenga pie y referencia.
   **Evidencia:** commit de la jornada en develop. **45 páginas totales y 38 contables**, dos de margen
   sobre el límite. **Horas:** ~0,5 h de asistente.
+
+## Fase 3 (16-oct, tarde) — la matriz vuelve a leerse, y las figuras se van con su explicación
+
+- **Qué se hizo:** tres cosas que salieron de la revisión de josemax del apartado de pruebas y de la matriz.
+  *(a)* **La matriz de trazabilidad estaba ilegible** y se rehizo entera: la columna de estado era de ancho
+  automático y se comía la tabla, así que las de descripción e implementación quedaban en cuatro caracteres
+  por línea y las rutas se partían con guiones en mitad del nombre. Anchos nuevos en proporciones fijas,
+  rutas acortadas al fichero que importa, estados compactos y las figuras citadas por su número con las
+  etiquetas nuevas. *(b)* **Las figuras se reparten junto a lo que explican:** la del rastreador baja al
+  bloque del pulido del Spider, y las del Intruder y el codificador salen del bloque del Repeater, donde no
+  tenían nada que hacer, a un bloque propio que declara que esas dos pantallas se entregan como estaban.
+  *(c)* **Las referencias a evidencia dicen ahora el fichero y no el directorio:** la captura de la pestaña
+  retirada, las cinco de la exposición y las cuatro del antes y después de los defectos del rastreador.
+- **Por qué:** él lo dijo con precisión. Las referencias del tipo «las capturas se obtuvieron» o
+  «fotografiadas antes y después» no dejaban claro dónde mirar, y las figuras agrupadas bajo un bloque que
+  no las explicaba eran una incoherencia de organización, aunque otros sitios del documento las citaran.
+- **Qué se descartó:** mover las dos figuras de los dos envíos idénticos, que prueban RF-04 pero viven en el
+  bloque del Repeater. Un barrido de coherencia las marcó como sospechosas y se revisaron una a una: es
+  **correcto** que estén ahí, porque esa prueba se hizo con el Repeater y el defecto que la motivó era suyo.
+- **Qué falló:** nada roto, pero el primer barrido de referencias de evidencia dio mucho ruido: buscaba la
+  palabra «captura» y devolvía treinta y seis resultados, la mayoría prosa normal. Los casos reales eran
+  **tres**, y aparecieron al mirar si el párrafo nombraba un destino.
+- **A qué requisito toca:** la matriz entera y el criterio de claridad. **Evidencia:** commit de la jornada
+  en develop. **44 páginas totales y 37 contables**, tres de margen; 26 citas de figura por número y cero
+  referencias sin resolver; escaneo de secretos a cero con control positivo. **Horas:** ~0,9 h de asistente.
