@@ -1116,12 +1116,9 @@ Lo caro no fue el bloqueo, sino la recuperación: la opción elegida del rebobin
 
 == Los defectos que introdujo el asistente al arreglar otros
 
-De los quince defectos del pulido del Spider (apdo. 7), dos los causamos nosotros, y los dos comparten forma: un arreglo correcto en lo suyo que rompe algo contiguo que nadie volvió a mirar.
-
-- *Los formularios pasaron de sobrar a faltar.* Al corregir que un formulario colgara de páginas ajenas, la página quedó registrada con la URL final tras redirecciones y el formulario atado a la pedida: cuando no coincidían, el formulario desaparecía del panel. El defecto anterior era visible (sobraban filas), el nuevo invisible (faltaban), y lo encontró una persona buscando un formulario concreto. El asistente había avisado del riesgo y no lo comprobó: avisar no sustituye a verificar.
-- *Las últimas filas dejaron de alcanzarse.* Al bajar las acciones a una barra propia, la tabla siguió pidiendo el 100% de la altura: desbordaba, y el recorte se comía las primeras filas capturadas.
-
-*La cuenta subió a ocho en una sola jornada*, y lo que importa no es el número sino qué los detectó:
+Dos de los quince defectos del pulido del Spider (apdo. 7) los causamos nosotros, y la cuenta llegó a ocho
+en una sola jornada. Todos comparten la misma forma: un arreglo correcto en lo suyo que rompe algo
+contiguo que nadie volvió a mirar. Lo que importa no es el número, sino qué los detectó:
 
 #tabla(
   (auto, 5fr, 3fr),
@@ -1143,11 +1140,6 @@ De los quince defectos del pulido del Spider (apdo. 7), dos los causamos nosotro
 *Dos de los ocho son el mismo error repetido el mismo día:* borrar código por rango de líneas sin comprobar qué quedaba al lado. La primera vez se llevó por delante la declaración de una variable. La segunda, el cierre de un condicional anidado. De ahí sale una regla concreta, que vale más que la buena intención de «revisar mejor»: los bloques se delimitan por contenido, no por el primer cierre que aparezca, y después se comprueba qué ha quedado huérfano.
 
 *Lo que se saca de aquí* es que la velocidad del asistente para aplicar un cambio no va acompañada de la misma velocidad para comprobar sus efectos laterales, y que sus verificaciones son sistemáticamente ciegas a lo que ve una persona en dos segundos. Por eso las capturas de producto las toma una persona y por eso el reparto del equipo pone las pruebas en manos humanas: no es desconfianza, es que los dos métodos fallan en sitios distintos.
-
-== Leer sin leer: delegar la lectura de lo que no debe entrar en la conversación
-El filtro descrito arriba obligó a una medida de método que cambió la forma de trabajar. Las instrucciones que el producto envía al modelo son el material que más incomoda a ese filtro y eran lo único que faltaba por conocer para terminar el módulo de IA: tres defectos abiertos dependían de saber qué formato piden. El asistente principal no podía abrirlas sin arriesgar la sesión, y el permiso del operador no sirve de nada, porque el filtro no sabe nada de ese permiso: mide lo que entra en la conversación. La salida fue delegar la lectura: un asistente secundario, con instrucciones propias y un contexto que se destruye con él, abre los ficheros y devuelve solo su interfaz, nombres de campo, tipos, escalas y números de línea, sin una frase del texto. De ahí salieron los tres defectos del apartado 7: lo que no se puede leer, se mide, se edita a ciegas y se verifica con una prueba, y ese método resultó más estricto que la lectura directa.
-
-El límite del método: el asistente secundario es un modelo, no un control. Lo que devuelve tiene que revisarlo una persona que conozca el material, porque es la única que puede juzgar si cruzó la línea entre describir y reproducir. El asistente principal no puede, precisamente porque no conoce el contenido.
 
 == Qué aportó el asistente, tramo a tramo
 El modelo de trabajo lo fijó el grupo: se le ceden al asistente los mandos de
