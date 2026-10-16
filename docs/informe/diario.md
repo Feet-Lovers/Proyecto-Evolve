@@ -5162,3 +5162,28 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   jornada en develop, 46 páginas totales y **40 contables**, cero asteriscos huérfanos y escaneo de secretos
   a cero con control positivo. ⚠️ **40 es el límite exacto del enunciado**, sin margen.
   **Horas:** ~1,4 h de asistente.
+
+## Fase 3 (16-oct, mediodía) — las tres capturas del apartado 5 se van al de pruebas
+
+- **Qué se hizo:** josemax dijo que las figuras 2, 3 y 4 le seguían chirriando después de quitarles el
+  flotado, y preguntó qué hacían ahí. La respuesta salió del historial, no de una suposición: la del
+  Repeater entró en un lote de siete capturas de producto y cayó al principio del apartado por ser la
+  primera del lote; las del Intruder y el codificador las sacó él a mano un día después y se pegaron al
+  final. Ninguna la llamaba ninguna frase. Con el dato de que la matriz las cita como evidencia de RF-05,
+  RF-06 y RF-07, eligió **llevarlas al apartado de pruebas**. Las tres se movieron al bloque de figuras del
+  pulido, las dos que no son del pulido con una frase que dice qué enseñan, y las **cuatro citas** se
+  reanclaron: las tres filas de la matriz, el caso PR-05 del plan y las tres remisiones de la tabla de
+  pantallas, que decían «figura en este apartado».
+- **Por qué:** el apartado de funcionalidades describe las pantallas y no es donde el enunciado espera la
+  evidencia. Con las figuras fuera, su entradilla («la columna dice dónde se ve cada una, sin repetir aquí
+  figuras que ya están en otros apartados») pasa a ser literalmente cierta.
+- **Qué se descartó:** quitarlas del informe, que habría dado una página de margen pero dejaba RF-06 y
+  RF-07 sin ninguna imagen en todo el documento; y agruparlas en funcionalidades, descartado antes.
+- **Qué falló:** nada roto, pero la numeración de las figuras se desplaza al mover tres de sitio. No rompe
+  ninguna cita porque la prosa **no cita figuras por número** en ningún punto del documento: todas las
+  remisiones son por apartado. Eso, que aquí ayuda, es también la causa de que una figura descolocada se
+  quede huérfana.
+- **A qué requisito toca:** RF-05, RF-06, RF-07 y el criterio de claridad. **Evidencia:** commit de la
+  jornada en develop; el apartado 5 queda con cero figuras y las tres aparecen como 3, 7 y 8 en el apartado
+  de pruebas. 46 páginas totales y **40 contables**, sin cambio. Escaneo de secretos a cero con control
+  positivo. **Horas:** ~0,4 h de asistente.
