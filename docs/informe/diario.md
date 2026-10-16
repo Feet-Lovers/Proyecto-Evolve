@@ -5385,3 +5385,29 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   cuando se escribe y falso unas horas después.
 - **A qué requisito toca:** el apartado de reparto del trabajo y la matriz. **Evidencia:** commit de la
   jornada en develop, cifras recontadas con git log. **Horas:** ~0,2 h de asistente.
+
+## Fase 3 (16-oct, tarde) — el repositorio publica solo lo necesario
+
+- **Qué se hizo:** limpieza del árbol publicado, a propuesta de josemax. Inventario primero: el repositorio
+  llevaba **382 ficheros y 24,5 MB**, de los que el código del producto no llegaba a 1 MB. Fuera del índice
+  **144 ficheros**: el informe de la práctica anterior (4,1 MB), dos respaldos de la memoria que conservaban
+  su versión con huecos y distintivos, un respaldo de código, la fuente typst antigua, el artefacto HTML
+  (3 MB), las salidas de ejecución del módulo de navegador y del de captura (62 y 2 ficheros, sin una sola
+  cita en ningún documento) y **73 capturas que nadie citaba**, en su mayoría de la práctica anterior. Queda
+  en **248 ficheros y 8,5 MB**, y el directorio del informe con tres ficheros: la fuente, el PDF y el
+  diario. El `.gitignore` gana los patrones para que nada de eso vuelva.
+- **Por qué:** el README documenta una estructura del repositorio en la que **nada de lo retirado
+  aparecía**, así que el árbol se parece ahora a lo que el propio README promete. Y dos de los respaldos
+  publicaban la versión de la memoria anterior a la revisión, con sus huecos y sus distintivos dentro.
+- **Qué se comprobó antes de borrar, y evitó dos errores:** que ninguna de las **13 figuras** empotradas
+  saliera del índice (las trece siguen versionadas, comprobadas una a una), y que ninguna de las **25 rutas
+  citadas** quedara sin respaldo. Dos ficheros se salvaron por esa comprobación: la captura de la pestaña
+  retirada, que el informe cita por su nombre, y el diagrama de arquitectura de la primera figura.
+- **Qué se descartó:** reescribir el historial. Los ficheros salen del árbol publicado, **no del historial**,
+  porque reescribirlo exige un empuje forzado y eso no se hace el día de la entrega.
+- **Qué falló:** nada, pero la primera medición de pesos por carpeta salió en ceros por un error de formato
+  al leer la salida de git, y la primera lista de capturas sin citar daba cinco y cuatro de más, porque el
+  informe las cita **por directorio y prefijo** y la comprobación buscaba el nombre exacto.
+- **A qué requisito toca:** el criterio del enunciado sobre el contenido del repositorio. **Evidencia:**
+  commit de la jornada en develop, y **un clon limpio del repositorio compila la memoria con sus trece
+  figuras**. **Horas:** ~0,6 h de asistente.
