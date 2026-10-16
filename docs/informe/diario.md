@@ -4692,3 +4692,742 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   queria medir era un arbol) y *un documento que envejece en horas* (los tres pendientes caducados de hoy).
 - **A que requisito toca:** apdo. **12**, y da material al **11**. **Evidencia:** `(no aplica)`, queda en
   git (`ab0ba4c5`). **Horas:** ~0,5 h de Claude.
+
+### Fase 3 (13-oct, 20:0x) · Las dos filas sin estado de la matriz, cerradas por josemax
+
+- **Que se hizo:** las dos casillas que quedaban sin estado firme en la matriz pasan a tenerlo, por decision
+  de josemax: **RF-04 → *Modificado*** y **RF-10 → *Parcial***. Las veintiuna filas tienen estado.
+- **RF-04.** La matriz decia *A revisar*, que es el nombre que la clasificacion de partida usa para «estaba
+  mal planteado y se reformula con justificacion». En un entregable final esa palabra se lee como «no lo
+  sabemos». Decision: **Modificado**, como RF-02 — el requisito describia un mecanismo, el mecanismo cambio
+  con justificacion y el objetivo (auditar autenticado) se cumple.
+- **RF-10.** Decia **«segun alcance»**, que no es un estado. **Parcial** es la categoria que el propio
+  documento define —«existe algo, pero incompleto o con fallos; hay que terminarlo y probarlo»— y describe
+  esto con exactitud: el modulo esta construido y **en la red interna desde la Fase 3**, pero **PR-10 no se
+  ha ejecutado nunca** y el sondeo de instrucciones **devuelve `401` con sesion valida** (apdos. 7 y 8).
+- 🔴 **Y aqui me equivoque dos veces seguidas, las dos por leer de mas antes de medir.**
+  1. Propuse a josemax **renombrar la categoria entera** «A revisar» → «Modificado» en la tabla de
+     clasificacion, afectando a RF-02, RF-04 y RNF-06. **Lo aprobo, y no lo apliqué**: al mirar la tabla de
+     cerca, dice *«en el punto de partida»* — es **historica**, y reescribirla habria **falsificado** el
+     estado del que salimos. Se quedo intacta.
+  2. En la misma propuesta afirme que la lista del apdo. 4 y la matriz se contradecian («una decia Cumplido
+     y la otra A revisar»). **Tampoco era eso:** la columna se titulaba *Estado P1* pero su entradilla dice
+     que *se actualiza a medida que la P3 avanza*, y de hecho `RF-09` ya figuraba ahi como *Descartado*,
+     decision del 11-oct. **El defecto real era el titulo de la columna**, no una contradiccion de estados.
+     Se corrigio el titulo y se pusieron al dia las dos celdas que nunca se actualizaron (RF-02 y RNF-06).
+  🔑 **La leccion, que es la misma que ya me costo tres pendientes caducados hoy:** una tabla y su titulo
+  pueden contar cosas distintas, y antes de proponer un cambio de diez casillas hay que **leer que afirma
+  cada tabla sobre si misma**. Lo caro no fue el error, fue que josemax **aprobo una propuesta mal fundada**;
+  se le dijo en el momento y no se aplico.
+- **Dos defectos propios mas, menores y arreglados:** un bloque de sustitucion se solapo con el anterior y
+  dejo **la declaracion vieja a medias debajo de la nueva** (se borro la cola huerfana), y use `**negrita**`
+  de Markdown donde Typst quiere `*negrita*` (Typst lo avisó: «no text within stars»).
+- **A que requisito toca:** **RF-04**, **RF-10**; apdos. **4** y **9**. **Evidencia:** `(no aplica)`, queda
+  en git (`1c6c908d` y los tres anteriores). **Horas:** ~0,5 h de Claude.
+
+### Fase 3 (13-oct, 20:1x) · `main` al dia, y un cerco que se pone rojo por decirlo
+
+- **Que paso:** josemax **fusiono el PR #8** (12 commits, todos `docs`), asi que `origin/main` pasa de
+  `01c81ab3` a `5873f566`. La memoria tecnica, su PDF, su artefacto y el diario ya estan en la rama
+  principal, que es desde donde se entrega.
+- **Por que lo fusiono el y no yo:** el PR lo abri por API, pero **la fusion me la bloqueo el clasificador
+  del auto-mode**. No se insistio con otro comando equivalente; se le paso el enlace y lo hizo el.
+  (Ademas la rama esta protegida y hace falta su permiso de administracion.)
+- 🗂️ **Y acto seguido el cerco R1b salio en DESAJUSTE, con razon.** Compara por SSH el HEAD de la caja
+  contra el `main` **real** del remoto (`ls-remote`, no refs locales). La caja sigue en `01c81ab3` y el
+  remoto ya va por `5873f566`: **no coinciden**. Comprobado en vivo antes de llamarlo falso positivo.
+- **Es real y es benigno, y la diferencia entre las dos cosas importa.** Los 12 commits son `docs(...)`
+  —medido con `--invert-grep --grep=^docs`: **cero de codigo**—, asi que **el producto desplegado es
+  identico** al de la etiqueta `v1.0-practica3`. Lo unico desalineado es documentacion que ningun
+  contenedor usa.
+- **Como se cierra:** la caja se pone al dia con `fetch` + `reset --hard origin/main`, **sin reconstruir ni
+  reiniciar nada**. Se entrego a josemax como bloque copiable porque el `ssh` a la caja esta bloqueado para
+  el asistente. Hasta que lo lance, el cerco **se queda rojo a proposito**: un cerco rojo que se entiende es
+  mejor que uno verde que no mira.
+- **A que requisito toca:** **RNF-03** (despliegue); apdo. **13** (manual). **Evidencia:** `(no aplica)`.
+  **Horas:** ~0,2 h de Claude.
+
+### Fase 3 (13-oct, 20:3x) · El apartado 11: las horas, reconstruidas con la regla a la vista
+
+- **Que se hizo:** josemax eligio **reconstruir la atribucion** en vez de declararla no atribuible, asi que
+  se recorrieron **las 60 entradas sin dueno** y se escribio el apdo. 11 separando tres cosas que las tablas
+  de horas suelen mezclar: lo **escrito**, lo **inferido con una regla declarada** y lo que **no se registro**.
+- **El resultado.** 179 entradas, 177 con horas, **87,2 h**. Asistente: **87,1 h** = *40,7 escritas* con su
+  nombre (Fase 3 en adelante) + **46,4 inferidas** (entradas anteriores cuyo campo dice solo «~1 h»).
+  josemax: **sin horas registradas**, pero **43 entradas registran una intervencion suya** —23 decisiones,
+  5 revocaciones, 5 pruebas en produccion, 5 lotes de capturas, 3 ejecuciones en la caja y 2 fusiones—.
+  Los otros cuatro: **sin horas**, y por diseno: el modelo del 1-oct les asigna confirmar su parcela.
+- 🔑 **La regla de inferencia se escribe para que se pueda discutir**, no se esconde: desde la Fase 3 el
+  campo dice «de Claude» y antes decia «~1 h» a secas; **las entradas las redacto el mismo autor de principio
+  a fin**, con el mismo formato y el mismo proposito, asi que se infiere que el campo significaba lo mismo
+  antes de decirlo. **Son 46,4 de 87,2 h: mas de la mitad**, y por eso la cifra se da con su desglose
+  delante en vez de como un total redondo.
+- **Y se dice lo que la tabla NO es:** no es el esfuerzo del grupo en el producto (la P1 la escribieron los
+  cinco; este diario solo cubre las sesiones de la P3), y no mide valor — una decision de treinta segundos
+  («DVWA fuera», «las credenciales no van al repositorio») cambio el entregable mas que varias horas de
+  construccion.
+- **Lo que queda, en un hueco mas estrecho:** las horas de josemax y las de los otros cuatro. **No estan en
+  ningun registro y no se inventan aqui.**
+- **Nota de medicion, por si alguien repite el calculo:** un primer recuento dio «45,6 h sin dueno» y el
+  bueno es **46,4**; la diferencia son entradas cuyo campo dice «0,6 h de destilado» o «0,25 h de la …», que
+  el patron leyo como si «destilado» fuese una persona. **Un regex que busca personas encuentra palabras.**
+- **A que requisito toca:** apdo. **11** (y el **12** ya daba el material). **Evidencia:** `(no aplica)`,
+  queda en git (`5be8d6a8`). **Horas:** ~0,6 h de Claude.
+
+### Fase 3 (13-oct, 21:0x) · El apartado 6: las seis pantallas una a una, leidas del codigo
+
+- **Que se hizo:** el apdo. 6 pasa de contar *lo que cambio en cada fase* a documentar tambien **lo que
+  hay**: tabla de las **seis pestanas** mas la pantalla de acceso, con que hace cada una, como se usa, que
+  requisitos cubre y **donde se ve** (apuntando a las figuras que ya estan en otros apartados, sin
+  duplicarlas). Huecos: 10 → 10, porque el hueco gordo se sustituye por **uno mucho mas estrecho**.
+- 🔑 **La tabla sale del codigo, no de la memoria de nadie.** Las pestanas se leyeron del `Layout.jsx` y del
+  router: *Spider, Repeater, Intruder, Utilidades, Vulnerabilidades y Manual*. Dos cosas que no sabiamos y
+  ahora estan escritas: **Utilidades tiene CUATRO herramientas** (codificador, huellas, regex y **generador
+  de payloads**, que la matriz no mencionaba) y **la pestana Spider vive en la ruta `/proxy`**, resto del
+  nombre anterior al pivote de RF-02.
+- ✅ **Y una correccion que vale un requisito: RF-07 ya soporta JWT.** La verificacion del 29-sep anoto que
+  «el codificador no soporta JWT aunque RF-07 lo promete». Hoy la lista de conversiones incluye `jwt decode`
+  (`frontend/src/pages/utilities/EncoderDecoder.jsx`). **Se dice en la memoria**, porque el defecto se
+  declaro en su dia y no se puede retirar en silencio (R9).
+- 🔑 **El hueco de capturas se reduce de seis a dos, y eso sale de cruzar lo que ya hay.** Inventariadas las
+  capturas: del **producto congelado** ya existen Spider, Repeater (cinco), Manual, Vulnerabilidades
+  degradadas y cuatro de acceso en produccion. **Solo faltan Intruder y Utilidades.** ⚠️ Y hay un monton de
+  capturas de producto **de la epoca de la P1** en `docs/capturas/frontend/` que **NO sirven**: muestran la
+  interfaz anterior al login nuevo y a la reforma del Repeater. Es exactamente lo que R6 avisa al separar
+  capturas de evidencia (ahora) de capturas de producto (despues de la Fase 3). **Pedirle a josemax seis
+  capturas cuando solo faltan dos habria sido hacerle perder el tiempo.**
+- **Defecto propio evitado a tiempo:** la tabla llevaba un `|` sobrante al final de **siete filas**, lo que
+  habria creado una quinta columna en una tabla de cuatro. Se conto antes de empalmar (`grep -c ' |$'`) y la
+  prueba de que importaba es que el `typst compile` es el que lo habria cazado despues, ya en el documento.
+- **A que requisito toca:** **RF-01** a **RF-08**, **RF-11**, **RF-12**, **RNF-06**, **RNF-08**; apdo. **6**.
+  **Evidencia:** ⚠️ FALTA: Intruder lanzado y Utilidades con el codificador [pantalla]. **Horas:** ~0,7 h.
+
+## Fase 3 (14-oct, tarde-noche) — el reparto del trabajo como fue, y un README que no servia para instalar
+
+- 🔑 **El apartado 11 deja de sostenerse sobre una premisa falsa.** La justificacion del sorteo de autorias
+  decia que «el trabajo se reparte por tareas y no por ficheros». **No hubo reparto de tareas**, asi que esa
+  frase no solo era inexacta: era **la razon** que sostenia todo el argumento. Sustituida por la verdadera —
+  las decisiones salian de una consulta de grupo continua y la ejecucion paso por una sola via, de modo que
+  **ninguna confirmacion es atribuible a una persona**—. La tabla de horas pasa a tres filas honestas: la
+  reunion inicial de ~1 h por cabeza y la consulta continua **declarada como no cuantificable**, en vez de
+  inventar un numero por persona. **Hueco de horas cerrado sin pedirle nada a nadie.**
+- **Se declara que no hubo feedback docente de la P1** (apdo. 3) y de donde salen entonces las mejoras: el
+  plan que la propia P1 dejo escrito y la revision critica del 29-sep. De paso precisa la tabla de ese
+  apartado: la categoria «A revisar» se define como «el feedback *o la experiencia*», y aqui fue **siempre
+  la experiencia**.
+- **Portada completa** con el grupo Feet Lovers y **siete areas de trabajo** «asumidas en comun y sin
+  reparto por persona» — describen el trabajo en vez de etiquetar personas. El PDF pasa a llamarse
+  `P3_GrupoFeetLovers_Memoria.pdf`, como exige el enunciado. El grupo **no tiene numero asignado**:
+  verificado en el campus.
+- ✅ **Empotradas las dos capturas que faltaban** (apdo. 6). La del Intruder iba con el **testigo CSRF
+  completo a la vista, dos veces**: tapada con Pillow, solo entra la copia censurada. La del JWT **no**
+  necesitaba tapado y se comprobo descodificando la carga util: es el ejemplo publico de la documentacion.
+  **Huecos del documento: de 10 a 6.**
+- 🔴 **El README no servia para instalar, y se descubrio ejecutandolo.** Su unica instruccion era un enlace
+  a `docs/guia_despliegue.md`, **que no existe en el repositorio**. Reescrito de 72 a 203 lineas a partir
+  del `docker-compose.yml` real. Al probarlo paso a paso salieron **dos fallos que impedian instalar**:
+  (1) los pasos 2 y 3 eran **incompatibles** —`cp .env.example .env` deja `JWT_SECRET=` vacia y el script de
+  credenciales aborta al ver esa cadena, sin mirar si tiene valor—, y (2) `redis` tenia un `container_name`
+  **fijo**, que anula el aislamiento por proyecto de Compose e impide levantar una segunda copia.
+- **Y una barrera que no era un fallo pero si un obstaculo:** el puerto estaba clavado en `"80:80"`. Quien
+  lo tenga ocupado se encontraba `address already in use` **sin salida documentada**. Pasa a
+  `${HOOKSUITE_PUERTO:-80}`, con el patron que ese fichero ya usa cuatro veces; **el defecto sigue siendo 80
+  y el despliegue publico no cambia**. El repositorio ya lo delataba: habia un `docker-compose.override.yml`
+  **sin versionar** remapeando a 8880 — el apaño existia, pero solo en local.
+- ⚠️ **La prueba de instalacion queda a medias a proposito**, con el punto de retorno escrito. Y **no tacha
+  la casilla del enunciado**: la hizo quien escribio el README, no una persona ajena al grupo. Comprueba
+  que las instrucciones se sostienen, que es el 30 % de la nota, pero no sustituye a esa casilla.
+- **A que requisito toca:** apdos. **1**, **3**, **6**, **11** y **12**; **RNF-03** (despliegue
+  reproducible) y **RNF-04** (reparto del trabajo). **Evidencia:** `P3_GrupoFeetLovers_Memoria.pdf`,
+  `README.md`, commits `a39b8870`, `97c2ca10`, `31216ec5`, `702e928d`. **Horas:** ~6 h de Claude.
+
+## Fase 3 (15-oct, mañana) — se retoma la prueba del README: el aviso del puerto mandaba a un puerto ocupado
+
+- **Qué se hizo.** Retomada la prueba de instalación por donde se dejó ayer (punto de retorno de `ENTREGA.md`):
+  árbol independiente clonado de `develop` en un directorio temporal, con su propio proyecto de Compose
+  —ni red, ni volumen, ni contenedores compartidos con la cocina— y **sin** el `docker-compose.override.yml`
+  local, que no está versionado y remapea a 8880. Pasos 1-3 reproducidos tal cual (14 variables en el `.env`,
+  credenciales de 64 y 24 caracteres) y paso 5 lanzado: falló con `address already in use` sobre el **80** del
+  anfitrión, que es justo el choque que el punto de retorno mandaba provocar y **no** adelantar.
+- 🔴 **El defecto que ha salido, y que no se encuentra leyendo el texto.** El aviso del paso 5 daba **un único
+  valor concreto** —`HOOKSUITE_PUERTO=8080`— y fijaba la URL en `http://localhost:8080`. En esta máquina el
+  8080 lo tiene Caddy escuchando en `127.0.0.1:8080`, así que seguir el README al pie de la letra produce
+  **el mismo error por segunda vez**, y ahí el documento ya no acompaña: no avisa de que su propio ejemplo
+  pueda estar cogido, ni dice cómo averiguar un puerto libre.
+- 🔴 **Segundo hallazgo del mismo tropiezo:** el fallo lo da **solo `nginx`**, el único servicio que publica
+  puerto; los otros cinco arrancan igual. Quien no lea la salida del paso 5 y vaya directo al paso 6 ve cinco
+  servicios en marcha y puede creer que ha instalado.
+- **Qué se cambió en el README.** Tres cosas: la fila de requisitos previos remite a la sección nueva; el
+  aviso del paso 5 se despega del número concreto («cualquier puerto libre por encima de 1024», y la URL como
+  `http://localhost:<TU_PUERTO>`); y entra la sección **«¿Y si el puerto está ocupado?»** con la orden de
+  Linux para preguntar al sistema por **un** puerto, la advertencia de que `8080` es el puerto alternativo más
+  usado que existe, y la frase de que el paso 6 tiene que mostrar los **seis** servicios.
+- **Qué se descartó, y por qué.** (1) Las órdenes equivalentes de **macOS y PowerShell**: son las estándar,
+  pero **no se han ejecutado** y este README acaba de salir de una limpieza de afirmaciones falsas (lo decidió
+  josemax al ver el borrador). (2) Un párrafo que explicaba por qué `grep -w ':8088'` miente sobre
+  `127.0.0.1:8088` —el carácter anterior a los dos puntos es un dígito y `-w` exige frontera de palabra—:
+  es cierto y le pasó hoy al asistente, que declaró «libre» un puerto ocupado, pero es demasiado «de cocina»
+  para un README. (3) Que el **producto** detecte el puerto ocupado y avise mejor: cambio de producto a un día
+  de entregar, al apdo. 10.
+- ✂️ **Una frase que era trabajo nuestro colado en el README.** «Para probar el aislamiento entre usuarios
+  (RF-12), repite el registro con un segundo usuario y comprueba que no ve los datos del primero» le mandaba
+  **deberes al lector** para verificar un requisito nuestro, citando además un código de requisito interno que
+  no significa nada fuera del grupo. Reescrita como propiedad del producto: «cada cuenta trabaja con sus
+  propios datos y no ve los de las demás; si quieres comprobarlo, basta registrar un segundo usuario». Lo
+  detectó josemax preguntando si esa comprobación era del usuario o nuestra.
+- ✅ **Resultado: el README instala.** Con el puerto comprobado y cambiado, `docker compose up -d --build`
+  recreó **solo `nginx`** y el paso 6 dio **los seis en `running`**, con `nginx` en `0.0.0.0:8088->80`.
+  `http://localhost:8088` responde **200** con `<title>HookSuite</title>` —lo que prueba que el panel se
+  sirve, no que se pinte— y **la otra mitad la verificó josemax con su navegador**: vio la pantalla de acceso,
+  se registró con el código de invitación del `.env` y entró sin problemas.
+- ⚠️ **Lo que esta prueba NO hace.** No tacha la casilla «una persona ajena al grupo lo ha instalado siguiendo
+  el README»: la ha conducido quien escribió el README. Y el clon se hizo de `develop` **a propósito**, porque
+  ni el arreglo del `container_name` de `redis` ni el README nuevo están en `main`; quien clone la rama por
+  defecto hoy se trae la versión anterior, así que la prueba fiel al 100 % exige haber fusionado antes.
+- **A qué requisito toca:** **RNF-03** (despliegue reproducible) y **RF-12** (cada cuenta con sus datos);
+  apdos. **8** y **10**. **Evidencia:** `docs/evidencias/instalacion-readme-puerto-ocupado-15oct.md`.
+  **Horas:** ~1,2 h de Claude · ~0,2 h de josemax (navegador, registro y las dos decisiones del texto).
+
+## Fase 3 (15-oct, mañana y mediodía) — la memoria deja de prometer lo que el producto no hace
+
+- **Qué se hizo, y en qué orden.** Con `ENTREGA.md` delante: los dos defectos que hacían que la memoria
+  *afirmara algo falso*, el paquete de la pestaña Vulnerabilidades, las siete capturas que faltaban, el
+  índice, el estado real del pulido, el apartado 8 y los cinco defectos restantes. Al final, PDF y
+  artefacto regenerados de la misma fuente, artefacto republicado y todo empujado.
+- 🔑 **El hallazgo del día, y nace de repasar la pestaña Vulnerabilidades afirmación por afirmación con
+  josemax.** La memoria describía esa pantalla como terminada —«panel donde aterrizan los hallazgos con su
+  severidad y su confianza»— y la matriz daba **RF-08 por cumplido**. Preguntando una a una resultó que
+  **nadie ha visto nunca un hallazgo analizado**: de las tres auditorías que han completado el recorrido,
+  una se cortó por el techo de gasto, otra por una clave de API ausente y la tercera por el tope de tokens.
+  Lo que está probado es el *recorrido* y la *degradación*, no el resultado útil. RF-08 baja a **Parcial**
+  con corrección declarada (R9), y la fila de la pantalla dice ahora qué se ha visto y qué no.
+- **Por qué importa más que un retoque de redacción.** Un evaluador que abra la herramienta y lance una
+  auditoría va a ver exactamente lo que vimos: cero hallazgos. Si la memoria prometía análisis clasificados,
+  la distancia entre documento y producto la habría encontrado él, no nosotros.
+- 🔴 **Cuatro de las siete descripciones del pendiente «los siete defectos» eran inexactas**, y lo barato
+  fue comprobarlas antes de tocar nada: `MAX_TOKENS` no aparecía ni una vez en el documento (el mal consejo
+  estaba en prosa), «cinco pestañas» no existía, los «quince cumplidos» eran doce, y el defecto (e) **ya
+  estaba arreglado desde el 13-oct** —el propio documento lo declaraba—. Su descripción en la hoja de ruta
+  está cortada a media frase, que es por lo que no cuadraba. **Un backlog describe lo que alguien entendió
+  al escribirlo, no lo que el documento dice hoy.**
+- **Qué se descartó.** Mover material al anexo para ganar páginas (rechazado por josemax el 14-oct); tocar
+  la tipografía, que el enunciado fija en 11-12 pt; y declarar el reparto 40/8 de los motivos de
+  degradación en la figura de producción, porque josemax vio los dos mensajes pero no dijo cómo se
+  repartían: la memoria dice que *convivieron*, que es lo exacto.
+- **Qué falló, y se corrige:** el escaneo de secretos de la mañana iba **en el mismo bucle** que los
+  commits, así que cuando dio «6 coincidencias de `sk-ant-`» no frenó nada — se commiteó y se investigó
+  después. Resultó inofensivo (marcadores de documentación, ninguno con clave: la coincidencia más larga
+  medía 18 caracteres frente a los 100+ de una clave real) y nada se había publicado, pero **un recuento
+  que no puede parar el paso siguiente no es un control**. Por la tarde el escaneo fue en su propia orden.
+- **Las siete capturas se abrieron una a una antes de publicarlas**, y la decisión de hacerlo se pagó sola:
+  la de RF-08 **no era** «la prueba de que RF-08 funciona» como decía el seguimiento, sino la prueba del
+  *tercer* motivo de degradación y, de paso, la foto del mal consejo del propio producto («subir
+  `HOOKSUITE_IA_MAX_TOKENS`»); su barra de navegación es anterior al 13-oct y el pie lo declara. Y A1 y A2
+  no son «la misma petición» como decía la lista: son `/register` y `/login`.
+- **A qué requisito toca:** **RF-08**, **RNF-06**, **RNF-03**, **RNF-04**, **RNF-08**, **RF-03**, **RF-05**
+  y **RNF-07**; apdos. **4**, **6**, **8**, **9** y **10**. **Evidencia:**
+  `docs/evidencias/instalacion-readme-puerto-ocupado-15oct.md` y las siete figuras nuevas.
+  **Horas:** ~3,5 h de asistente · ~0,8 h de josemax (pruebas en la caja, repaso de la pestaña y decisiones).
+
+## Fase 3 (15-oct, tarde) — la revisión del informe apartado por apartado
+
+- **Qué se hizo:** repaso con josemax de los apartados **1 a 5**, uno por uno y con tres pasos fijos en
+  cada uno: qué pide exactamente el enunciado, qué incoherencias hay, y no tocar nada hasta su visto
+  bueno. Antes, el **diseño entero** se rehizo idéntico al informe de la práctica 1: cubierta a sangre
+  como apartado 1, encabezado corrido, rótulo de sección, cada sección empezando en página nueva, y el
+  índice sin apuntar a la portada. Los **122 cruces** internos se renumeraron al pasar de trece
+  apartados a doce.
+- **Reglas de redacción que fijó josemax, y que ahora se aplican a todo el documento:** sin puntos y
+  coma ni caracteres que estorben la lectura normal, un solo tipo de letra, negrita no invasiva, y
+  **ningún dato sobre cómo nos organizamos el trabajo por dentro**. Eso último se llevó por delante las
+  dieciséis «correcciones declaradas», la descripción de los dos entornos de trabajo y las referencias
+  a las reglas internas del grupo. También se quitó el **monoespaciado** en todo el documento.
+- **Contenido de más, fuera:** tres subsecciones del apartado 5 que repetían la tabla de pantallas, dos
+  hallazgos duplicados del apartado 4, y la tabla de doce defectos que estaba en el apartado 5 se movió
+  al 7, que es el de pruebas. La fila de Vulnerabilidades de la tabla de pantallas medía **901
+  caracteres** frente a los 114-325 de las otras seis, y bajó a 341 sin perder las tres afirmaciones que
+  importan: lo que está visto es el camino degradado, nunca se ha visto un hallazgo analizado, y la
+  pantalla queda sin terminar.
+- **Un efecto secundario que se comprobó antes de darlo por bueno:** al quitar el monoespaciado, los
+  nombres de fichero con guión bajo podían salir en cursiva, porque el guión bajo es la marca de énfasis
+  del compositor. Se midieron las 27 líneas afectadas y en el PDF salen literales, porque el guión bajo
+  va dentro de una palabra y no abre énfasis.
+- **Lo que queda anotado para su apartado:** el cartel «pendiente de validar por el grupo» y el estado de
+  RNF-07 están **mal en la matriz**, no en el apartado 3, y se corrigen cuando lleguemos al 8.
+- **Tamaño:** **75 páginas totales, 68 contables.** El objetivo son 39, así que el recorte sigue abierto;
+  los doce bloques dudosos van resaltados en amarillo en el PDF para decidirlos de una vez.
+- **A qué requisito toca:** **RF-12**, **RNF-06**, **RF-09**, **RF-08**; apdos. **1** a **5**.
+  **Horas:** ~2,5 h de asistente · ~1,2 h de josemax (revisión del PDF y decisiones).
+
+## Fase 3 (15-oct, cierre) — un cerco que había dejado de medir, y cuatro huecos que seguían en el informe
+
+- **Qué se hizo:** cerrar la tarde. Se commiteó la revisión de los apartados 4 y 5 en dos entregas
+  separadas, la memoria técnica y el diario, con el escaneo de secretos **antes** del commit y en su
+  propia orden, porque por la mañana ese escaneo había ido en el mismo bucle y no podía frenar nada. Cero
+  coincidencias, con control positivo a los dos lados para saber que el escáner contaba, y el del PDF
+  hecho sobre el texto extraído y no sobre el PDF en crudo, donde el contenido va comprimido y un cero no
+  significa nada.
+- **Se borró un respaldo suelto del fichero de despliegue** que llevaba en la raíz desde el 9 de octubre y
+  se habría ido en la entrega. Antes se comprobó qué era: copia idéntica de una versión que el control de
+  versiones ya guarda, sin credenciales dentro. El repositorio queda sin ficheros fuera de seguimiento.
+- **Qué falló, y se corrige:** una de las comprobaciones automáticas de la entrega **había dejado de medir
+  sin avisar**. Tres de sus ocho preguntas localizaban las secciones por su **número escrito a mano** en el
+  título. Al adoptar el diseño nuevo, la numeración la pone el compositor y las secciones pasaron de trece
+  a doce, así que esas tres búsquedas no encontraban nada y devolvían **cero**. La comprobación leyó ese
+  cero como «lo que el documento afirma es falso» y acusó a tres casillas que eran **ciertas**. Una de
+  ellas, además, no podía darse por buena nunca.
+- **Cómo se arregló:** verificando primero **en el documento** que los datos eran ciertos, y reanclando las
+  tres preguntas en el **título** de cada sección en vez de en su número, que es presentación y cambia. El
+  arreglo se probó rompiéndolo a propósito sobre una copia mutada, y las tres cantan. La lección vale más
+  que el arreglo: **un cero recién aparecido justo después de un cambio de estructura es sospechoso de la
+  herramienta, no del documento.**
+- **Y al volver a medir salió trabajo real: quedan cuatro huecos visibles en la memoria**, y mientras estén
+  ahí la primera casilla de la lista de comprobación del enunciado no se puede marcar. Son la segunda
+  mitad del caso del techo de gasto, el plan de pruebas formal con capturas de producto de los defectos,
+  lo que salga de revisar el vídeo grabado, y el acumulado de limitaciones de las fases 1 a 4.
+- **A qué requisito toca:** ninguno en concreto, es trabajo de entrega. **Horas:** ~0,7 h de asistente.
+
+## Fase 3 (15-oct, noche) — el enunciado releído entero, y la matriz puesta a cumplirlo
+
+- **Qué se hizo:** se releyó el enunciado completo del PDF y se listaron todos los criterios que impone a
+  la memoria técnica, repartidos por ocho secciones del documento y no solo por la del entregable 1.
+  Decisión de josemax con esa lista delante: ni reescribir de cero ni seguir el repaso con visto bueno por
+  apartado, sino **llevar el `.typ` actual a cumplimiento total de los criterios**. Primera tanda, la
+  matriz, que seguía sin revisar: **RNF-07 baja a Parcial** (el «Cumplido» contradecía al propio apartado
+  6, que cuenta 12 avisos en el frontend y 78 en el backend sin actualizar ninguno), la celda de RNF-08
+  pasa a empezar por su estado como las otras veinte, fuera el cartel «pendiente de validar por el grupo»
+  (no va a haber validación del grupo y mantenerlo prometía algo falso), y el recuento del resumen pasa de
+  catorce cumplidos y tres parciales a **trece y cuatro**. Evidencias corregidas: la figura de RF-07
+  existe (apdo. 5) y las del Repeater están en los apartados 5 y 7, no en el 5 y el 8.
+- **También: el vocabulario interno, fuera del entregable.** «La cocina» quedaba definida como «el entorno
+  de pruebas descrito en el apartado 4», pero la revisión de esta tarde había borrado ese bloque del
+  apartado 4, así que la definición apuntaba al vacío: pasa a «entorno local de pruebas» en las nueve
+  menciones, con su definición en el apartado 7. Los «en F1 / en F2 / Fase 3» de la matriz pasan a fechas
+  o descripciones. Las citas de reglas internas (R6, R7) salen de la prosa y de los pies de figura. Y los
+  cuatro huecos dejan de llevar nombres propios como responsable.
+- **Qué se descartó:** cerrar los cuatro huecos reescribiéndolos. Son trabajo y evidencia pendientes
+  (vídeo, clave de API), no formato, y se quedan visibles como huecos.
+- **Qué falló:** nada en esta tanda. El escaneo de secretos fue antes del commit, en su propia orden, con
+  control positivo (85 «HookSuite» en el texto extraído del PDF, cero claves).
+- **A qué requisito toca:** RNF-07, RNF-08 y la matriz entera (apdo. 8), más el recuento del resumen
+  (apdo. 1). **Evidencia:** commit `7b1cf50d`.
+  **Horas:** ~0,5 h de asistente.
+
+## Fase 3 (15-oct, noche) — el recorte grande: de 67 a 53 páginas contables sin perder una evidencia citada
+
+- **Qué se hizo:** el recorte delegado por josemax, en cuatro tandas commiteadas por separado. El **plan de
+  pruebas salió del anexo y entró como primer subapartado de Pruebas**, que es donde el enunciado lo espera,
+  con la explicación que vivía en la matriz integrada en su introducción y la fila PR-12 reanclada al par de
+  figuras A/B. Los **once bloques ámbar** quedaron procesados: los de método compactados a su hallazgo, las
+  marcas de resaltado fuera del entregable. **Trece figuras retiradas** de las cuarenta, cada una con su
+  contenido contado en prosa o cubierto por otra figura (las cinco de exposición quedan en una, el flujo de
+  login de producción en dos, el par del filtro POST y el botón de detener a la tabla que ya los contaba), y
+  una **restaurada** al detectar que la fila PR-03 del plan la citaba como evidencia. Fuera también la
+  columna de marcas horarias internas de las dos tablas del pulido. Los apartados de Limitaciones, Reparto
+  e IA, compactados conservando cada limitación con su riesgo y su porqué.
+- **Dos incoherencias cazadas de paso:** el subapartado «Lo que el registro de horas no puede decir»
+  estaba **caducado entero** (176 entradas y 85,9 h frente a las 179 y 87,2 h de la tabla vigente, y
+  delegaba una decisión que el apartado 10 ya había tomado), se retiró. Y «la cocina» quedaba definida
+  como «el entorno de pruebas descrito en el apartado 4» cuando la revisión del día había borrado ese
+  bloque: el término pasa a «entorno local de pruebas» con su definición en Pruebas, y el vocabulario
+  interno restante (Fase N, reglas R, marcas de diario) salió del entregable, incluido un «FASE 1» en
+  mayúsculas que el primer barrido no vio.
+- **Qué se descartó:** tocar los apartados 1 a 5 (revisados y aprobados por josemax a mediodía), mover
+  material al anexo (rechazado el 14), tocar tipografía, y quitar figuras citadas por la matriz o el plan.
+- **Qué falló:** nada. Escaneo de secretos antes de cada push, sobre el texto extraído del PDF, cero claves.
+- **A qué requisito toca:** el criterio de formato del enunciado (20-40 páginas) y la estructura del
+  apartado de Pruebas. **Evidencia:** commits `40a86ee6`, `d64d8359` y los dos siguientes.
+  **Horas:** ~1,8 h de asistente.
+
+## Fase 3 (15-oct, noche, cont.) — los apartados 1-5 pasan por la tijera y el techo del recorte queda medido
+
+- **Qué se hizo:** con la única palanca que josemax autorizó (recortar también los apartados 1 a 5, ya
+  revisados por él a mediodía), pasada quirúrgica sin tocar hechos: la lección de la P1 y el feedback del
+  apartado 2 compactados, los párrafos largos de RF-04, RF-09 y RF-12 reducidos, y dos evidencias caducadas
+  más corregidas en la tabla de Funcionalidades (el Repeater remitía a «cinco figuras en los apdos. 5 y 8»
+  y Acceso a «cuatro figuras» que ya son dos). Fuera también la cita a un documento interno del equipo que
+  el apartado 6 llevaba en su entradilla.
+- **El hallazgo que importa:** tres pasadas consecutivas de recorte no movieron el total de páginas. Se
+  midió el porqué: el diseño abre cada apartado en página nueva y **~4 páginas del cuerpo son aire** al pie
+  de los apartados (S5 acaba con un 70 % de página vacía, S10 con un 76 %). El recorte de prosa ha tocado
+  techo con este diseño: el documento está en 53 contables y las palancas restantes son las que josemax
+  no autorizó (quitar el salto de página, reducir figuras o tablas de evidencia).
+- **Qué se descartó:** seguir recortando prosa a ciegas, porque el aire se lo traga y el texto pierde
+  claridad sin ganar páginas.
+- **A qué requisito toca:** el criterio de formato (20-40 páginas). **Evidencia:** la medición de aire está
+  en la bitácora de la sesión y el estado en el commit de la memoria.
+  **Horas:** ~0,6 h de asistente.
+
+## Fase 3 (15-oct, noche, cierre) — las 39 páginas contables, alcanzadas
+
+- **Qué se hizo:** josemax autorizó las palancas que faltaban y el documento bajó de 53 a *39 contables*,
+  dentro del rango 20-40 del enunciado y con la página de margen para lo que el vídeo añada. Las palancas,
+  por orden de rendimiento: fuera el salto de página por apartado (53→47, sin perder una palabra, probado
+  primero y aprobado al verlo), menos evidencia redundante (47→44: seis figuras cuyo contenido ya contaba
+  la prosa, con cada cita de la matriz y el plan reanclada, y las tablas del pulido a seis casos ejemplares
+  con remisión al diario), figuras flotantes y pasada final de prosa (44→42), y la matriz reescrita con
+  *estados cortos* al estilo del ejemplo del enunciado y cinco columnas (42→40), que era donde se
+  escondían dos páginas: las celdas-párrafo de la columna Estado estiraban cada fila. La última página
+  salió de la prosa de los apartados 2 y 7.
+- **Dos referencias caducadas más, cazadas de paso:** el borrador del Repeater se declaraba «en el
+  apartado 10» cuando vive en el 9, y la nota de los dos correos que parten el grafo de contribuciones,
+  que solo existía en una celda de la matriz, pasa al apartado 10 para no perderse al acortar la celda.
+- **Qué se descartó:** recortar ninguna de las 13 figuras restantes (todas citadas), tocar la tipografía,
+  y seguir apretando prosa por debajo de este punto, porque el texto empezaría a perder claridad.
+- **Qué falló:** nada. Escaneo de secretos sobre el texto extraído con control positivo (54 «HookSuite»,
+  0 claves) antes del push.
+- **A qué requisito toca:** el criterio de formato del enunciado (20-40 páginas), la matriz (apdo. 8) y el
+  estilo de todo el documento. **Evidencia:** commits de la noche en develop, el último con las 39.
+  **Horas:** ~1,1 h de asistente.
+
+## Fase 3 (15-oct, noche, final) — la lectura de coherencia de principio a fin
+
+- **Qué se hizo:** la lectura completa del `.typ` que la validación del recorte pedía, con una comprobación
+  mecánica previa de cada fichero citado (evidencias, capturas, tests, diario: *todos existen*, el cerco de
+  citas muertas que la línea tenía propuesto, ejecutado a mano por primera vez). Once arreglos de
+  coherencia, los que importan: el anexo prometía «credenciales de prueba (ficticias)» y dos párrafos más
+  abajo declaraba que no hay ninguna, RF-10 remitía al apartado 12 (los anexos) en lugar del 7, la
+  evidencia de las fugas se citaba sin el prefijo docs/, un punto de navegación colgante dentro de «Lo que
+  sigue sin cubrir» daba por descubiertos el STRIDE y la validación que vienen justo debajo, los dos
+  distintivos de estado del aislamiento y la exposición vivían aparcados en la sección del techo, PR-17
+  citaba «las figuras» en plural cuando queda una, la entradilla de Funcionalidades conservaba un «cada
+  fase» y repetía la frase de las seis pestañas, la frase «dos requisitos cambiaron de estado» infracontaba
+  lo que la clasificación inicial no preveía, y dos restos menores («fase de diseño», «planes por fases»).
+- **Qué falló:** el cerco de contexto limpio me paró un grep cuyo patrón contenía una ruta de la lista
+  sensible. Correcto por su parte: la comprobación se rehízo como medición pura de existencia, sin volcar
+  nada, y encontró lo mismo.
+- **A qué requisito toca:** la coherencia interna del entregable, que es criterio de evaluación de la
+  memoria. **Evidencia:** el commit de la lectura en develop. Páginas: se mantienen 46 totales y 39
+  contables, escaneo de secretos a cero con control positivo.
+  **Horas:** ~0,9 h de asistente.
+
+## Fase 3 (16-oct, mañana) — el vídeo no se graba, y el informe deja de prometerlo
+
+- **Qué se hizo:** josemax comunicó al arrancar la jornada que **el vídeo de demostración no se va a grabar
+  por falta de tiempo**. Su instrucción fue declararlo abiertamente y que **del vídeo no quede ni una
+  mención en el informe salvo en el apartado de limitaciones** (y en el comentario de la entrega del
+  campus). Nueve cambios sobre el `.typ`, que era la única fuente: en la portada se retira el rótulo rojo
+  «Vídeo de demostración · PENDIENTE DE ENLACE» y el área de Documentación deja de listarlo; en la matriz
+  salen las **diez** celdas `vídeo —:—`, la prosa de entrada deja de prometer el minuto exacto, el
+  distintivo ámbar pasa a remitir al plan de pruebas y **se retira el hueco de los minutos**, que ya no se
+  puede llenar; la frase que citaba al enunciado pidiendo declarar los datos simulados «en la memoria y en
+  el vídeo» se parafrasea para no arrastrar la palabra; la justificación de la etiqueta en el apartado 7
+  pasa de «el vídeo se graba sobre esta etiqueta» a «la entrega se hace sobre esta etiqueta»; y entra un
+  subapartado nuevo en Limitaciones, **«El vídeo de demostración no se entrega»**, con el motivo, lo que se
+  pierde (las tres comprobaciones de la lista de entrega que dependen de la grabación, más la del enlace en
+  la portada) y con qué se sostiene la demostración en su lugar, diciendo que esas piezas **no** son
+  equivalentes.
+- **Por qué:** el documento prometía un enlace que no iba a existir y un minuto por requisito en diez filas
+  de la matriz. Un evaluador habría buscado los dos. El enunciado dice que explicar lo que no funciona vale
+  más que ocultarlo, así que la ausencia se declara en lugar de dejarse sin explicación.
+- **Qué se descartó:** *(a)* reescribir el rótulo de la portada para que dijera «no se entrega» (josemax
+  prefirió que el vídeo no aparezca en la portada en absoluto); *(b)* grabar una versión mínima más corta,
+  que no habría marcado la casilla de los diez minutos pero sí habría dado un tercer entregable;
+  *(c)* dejar el informe como estaba, que era lo más barato y lo único deshonesto de las tres.
+- **Qué falló:** nada en la compilación. Lo que sí había que medir antes de dar el cambio por bueno es si
+  el subapartado nuevo empujaba el cuerpo por encima del límite de 40 páginas. Se recompiló el `.typ`
+  anterior a un PDF aparte y se compararon las páginas de inicio de los cinco últimos apartados: **reparto
+  idéntico**, 46 páginas totales y **39 contables** (cuerpo 4-42, anexos desde la 43). El subapartado cupo
+  en el espacio que dejó la columna de minutos retirada.
+- **A qué requisito toca:** el criterio de honestidad del enunciado y su límite de formato, la matriz de
+  trazabilidad y el apartado de limitaciones. **Evidencia:** commit `721315fc` en develop, escaneo de
+  secretos a cero con control positivo (12 en el `.typ` y 54 en el PDF vía pdftotext).
+  **Horas:** ~0,6 h de asistente.
+
+## Fase 3 (16-oct, mañana) — la revisión de josemax: fechas fuera, negritas al mínimo y figuras en su sitio
+
+- **Qué se hizo:** josemax leyó el PDF y fue pasando lo que le chirriaba, apuntado en el momento y sin
+  corregir nada hasta su señal. Catorce observaciones, y luego el encargo de aplicar sus ocho reglas de
+  estilo «de la página 13 hasta el final». Antes de tocar el documento decidió cuatro cosas: las fechas se
+  quitan **todas**, «congelada» sale de **todo** el documento, de las figuras se arregla **solo la
+  colocación** y **RNF-04 se queda en Parcial**. Aplicado: 73 fechas reescritas (la de entrega de la portada
+  se conserva), 15 apariciones de «congelar» sustituidas por lo que la frase quería decir, 25 rayas largas y
+  10 flechas fuera, 254 negritas retiradas de las 520 (las de mitad de frase y las seis que abarcaban
+  párrafos enteros, conservando rótulos, nombres de pantalla y los estados cortos de las tablas), el flotado
+  de las figuras retirado, el bloque «el frontend que se toma como base» borrado del apartado 4 y el módulo
+  de navegador identificado como RF-10 en el resumen.
+- **Por qué:** sus reglas son norma de la línea, no preferencia de una sesión, y ya las había pedido dos
+  veces. Las fechas y «congelada» son calendario y vocabulario internos, que es justo lo que su punto 6
+  manda quitar. Las figuras flotaban y aterrizaban a dos páginas de su párrafo, y como la prosa **no cita
+  ninguna figura por su número** quedaban huérfanas: de ahí sus tres preguntas de «qué hace esto aquí».
+- **Qué se descartó:** agrupar las trece figuras en el apartado de funcionalidades, que era su propuesta
+  inicial. Mueve nueve figuras, obliga a reanclar las citas de la matriz y deja el apartado de pruebas sin
+  las siete evidencias que el enunciado espera ahí. Lo descartó él con ese dato delante. También se descartó
+  subir RNF-04 a Cumplido.
+- **Qué falló:** la pasada de negritas se hizo línea a línea y **no veía las seis negritas que abarcaban
+  varias líneas**, que son las más invasivas de todas. Se cazaron contando asteriscos impares y comparando
+  con el respaldo previo, que demostró que ya estaban así antes y no las había roto la pasada. Corregidas
+  con una expresión que cruza saltos de línea.
+- **A qué requisito toca:** el criterio de claridad y coherencia del enunciado. **Evidencia:** commit de la
+  jornada en develop, 46 páginas totales y **40 contables**, cero asteriscos huérfanos y escaneo de secretos
+  a cero con control positivo. ⚠️ **40 es el límite exacto del enunciado**, sin margen.
+  **Horas:** ~1,4 h de asistente.
+
+## Fase 3 (16-oct, mediodía) — las tres capturas del apartado 5 se van al de pruebas
+
+- **Qué se hizo:** josemax dijo que las figuras 2, 3 y 4 le seguían chirriando después de quitarles el
+  flotado, y preguntó qué hacían ahí. La respuesta salió del historial, no de una suposición: la del
+  Repeater entró en un lote de siete capturas de producto y cayó al principio del apartado por ser la
+  primera del lote; las del Intruder y el codificador las sacó él a mano un día después y se pegaron al
+  final. Ninguna la llamaba ninguna frase. Con el dato de que la matriz las cita como evidencia de RF-05,
+  RF-06 y RF-07, eligió **llevarlas al apartado de pruebas**. Las tres se movieron al bloque de figuras del
+  pulido, las dos que no son del pulido con una frase que dice qué enseñan, y las **cuatro citas** se
+  reanclaron: las tres filas de la matriz, el caso PR-05 del plan y las tres remisiones de la tabla de
+  pantallas, que decían «figura en este apartado».
+- **Por qué:** el apartado de funcionalidades describe las pantallas y no es donde el enunciado espera la
+  evidencia. Con las figuras fuera, su entradilla («la columna dice dónde se ve cada una, sin repetir aquí
+  figuras que ya están en otros apartados») pasa a ser literalmente cierta.
+- **Qué se descartó:** quitarlas del informe, que habría dado una página de margen pero dejaba RF-06 y
+  RF-07 sin ninguna imagen en todo el documento; y agruparlas en funcionalidades, descartado antes.
+- **Qué falló:** nada roto, pero la numeración de las figuras se desplaza al mover tres de sitio. No rompe
+  ninguna cita porque la prosa **no cita figuras por número** en ningún punto del documento: todas las
+  remisiones son por apartado. Eso, que aquí ayuda, es también la causa de que una figura descolocada se
+  quede huérfana.
+- **A qué requisito toca:** RF-05, RF-06, RF-07 y el criterio de claridad. **Evidencia:** commit de la
+  jornada en develop; el apartado 5 queda con cero figuras y las tres aparecen como 3, 7 y 8 en el apartado
+  de pruebas. 46 páginas totales y **40 contables**, sin cambio. Escaneo de secretos a cero con control
+  positivo. **Horas:** ~0,4 h de asistente.
+
+## Fase 3 (16-oct, mediodía) — las tres reglas de estilo que quedaban: coherencia, jerga y explicación de más
+
+- **Qué se hizo:** aplicadas las reglas 5, 6 y 7 de josemax. **Coherencia (5):** los dos bloques gemelos del
+  pulido tenían forma distinta y ahora comparten esqueleto, cabecera de tabla idéntica («Nº | Qué pasaba |
+  Cómo apareció», antes una decía «\#») y la remisión al diario en el mismo sitio, detrás de la tabla en los
+  dos. Comprobado además a máquina que los esqueletos ya fijados siguen completos: las tres decisiones
+  técnicas con su «Qué se decidió · Por qué · Qué cuesta» y los cinco cambios de requisito con su «Versión
+  original · Versión nueva · Motivo · Consecuencias». Y en el apartado de pruebas, la mitad de los títulos
+  llevaba su requisito entre paréntesis y la otra mitad no: igualados los cinco que tienen un requisito
+  dominante claro. **Jerga de calendario (6):** fuera las nueve apariciones de «jornada» salvo tres, que son
+  dato de recuento y no calendario, más un «supuesto previo nuestro». **Explicación de más (7):** fuera las
+  frases que explicaban por qué se cuenta algo en lugar de contarlo, incluida «se documenta porque el
+  enunciado pide las pruebas que fallaron», las horas exactas del historial retirado y la enumeración que
+  repetía la tabla de los dieciséis defectos.
+- **Por qué:** son sus ocho reglas, repetidas tres veces, y las tres que quedaban eran justamente las que no
+  se pueden medir con un recuento. El criterio aplicado en la 7 fue conservar el hecho y quitar la
+  justificación: el enunciado premia contar lo que falló, no explicar por qué se cuenta.
+- **Qué se descartó:** recortar los bloques largos del apartado de pruebas por el simple hecho de ser largos.
+  Se midieron los subapartados y los más extensos son sustancia, un defecto con su arreglo y su prueba, no
+  relato. Recortar ahí habría quitado evidencia, que es lo contrario de lo que pide el enunciado.
+- **Qué falló:** nada, pero una medición previa engañaba: el recuento de palabras por subapartado inflaba
+  los bloques que contienen tablas, y el candidato que parecía más explícito resultó ser el más sustancial
+  al leerlo. La lista de frases meta, buscada por patrón, fue lo que localizó el problema real.
+- **A qué requisito toca:** el criterio de claridad y coherencia del enunciado. **Evidencia:** commit de la
+  jornada en develop. Estado medido: **0 rayas largas, 0 flechas, 0 puntos y coma y 0 fechas** en el cuerpo,
+  negritas de 520 a **272**, y **40 páginas contables** sin cambio. **Horas:** ~0,8 h de asistente.
+
+## Fase 3 (16-oct, tarde) — la segunda lectura de josemax, aplicada entera
+
+- **Qué se hizo:** once observaciones más (17 a 27), apuntadas durante su lectura y aplicadas de una pasada
+  al dar él la señal. **Los seis distintivos de colores, fuera**, y las salvedades que dos de ellos llevaban
+  dentro bajaron a la prosa para no perderlas. **Los tres huecos, fuera**, y lo que marcaban se declara en
+  texto: el caso del techo con límite distinto de cero que necesita una clave de API que la instalación
+  pública no tiene, y los dos defectos corregidos sin caso formal escrito. **El párrafo de IPv6 retirado**
+  con su distintivo. **El apartado de pruebas, agrupado en cuatro secciones** (el plan, las pruebas del
+  producto, la plataforma y el despliegue, y el módulo de análisis con IA), que era el descuadre que él
+  señaló al no encontrarle hilo a dieciséis bloques seguidos. **Dependencias comprimido** de siete viñetas a
+  cinco sin perder una cifra. **El anexo de despliegue remite al README** en lugar de solaparse con él.
+- **Dos arreglos de exactitud que salieron de sus dudas:** la entradilla del plan de pruebas prometía una
+  columna de procedencia que **no existe** desde el recorte de anoche, y no explicaba por qué la numeración
+  llega a veinte con dieciocho casos; las dos cosas corregidas. Y **el documento hablaba de «una fuga de
+  datos del cliente de otro» cuando no hay ningún cliente**: las pruebas se hacen contra una web propia del
+  grupo, así que ahora dice «los datos que otro estaba auditando». En el apartado de uso de IA, «el
+  rebobinado del cliente» pasa a «de la herramienta», que es lo que era.
+- **Por qué:** sus reglas de estilo mandan sobre el criterio del asistente, y dos de sus dudas eran defectos
+  reales, no impresiones.
+- **Qué se descartó:** reordenar el apartado de pruebas por requisito y comprimir los seis bloques del
+  módulo de IA, las dos opciones caras que se le ofrecieron. Y recortar el bloque de los defectos que
+  introdujo el asistente, que es el más denso del apartado de IA pero también lo que el enunciado premia
+  declarar.
+- **Qué falló:** la comprobación de citas dio siete ficheros «inexistentes» que sí existían: la expresión se
+  tragaba el punto final de la frase. Reverificado: **24 rutas citadas y las 24 existen**. También quedó por
+  el camino una concordancia rota de la pasada anterior («el día de la cierre del desarrollo»), que
+  desapareció al reescribir el bloque.
+- **A qué requisito toca:** el criterio de claridad del enunciado y su lista de comprobación. ⭐ **Con los
+  huecos fuera, la casilla «todos los apartados presentes y sin huecos» pasa a marcable.**
+  **Evidencia:** commit de la jornada en develop. **45 páginas totales y 39 contables**, una de margen
+  recuperada; 0 rayas, 0 flechas, 0 puntos y coma, 0 fechas, 0 huecos, 0 distintivos; las 24 citas vivas y
+  escaneo de secretos a cero con control positivo. **Horas:** ~1,2 h de asistente.
+
+## Fase 3 (16-oct, tarde) — las figuras dejan de ser «la figura del apartado 7»
+
+- **Qué se hizo:** tres cosas que josemax pidió sobre el plan de pruebas. *(a)* **Las celdas que remitían a
+  una figura ahora la citan por su número**, y el número **lo genera Typst**: la macro de figura acepta una
+  etiqueta, ocho figuras la llevan y las seis celdas usan referencias, de modo que si mañana se añade o se
+  quita una figura los números se recolocan solos. *(b)* **El párrafo de cómo leer la tabla sube delante de
+  ella**, para que el lector entre sabiendo que de los dieciocho casos seis están reejecutados, seis
+  apoyados en figuras, cinco sin reejecutar y uno caducado. *(c)* **El aviso de método queda en una frase**
+  dentro de ese mismo párrafo: que un 200 no se dio por bueno sin mirar el tipo de contenido, porque el
+  servidor devuelve la portada ante cualquier ruta desconocida.
+- **Por qué:** él preguntó dónde estaba «la figura del apartado 7» y la respuesta era que había que
+  adivinarlo. Las seis referencias tenían destino real, comprobado una a una, pero ninguna decía el número y
+  una de ellas apuntaba a una figura tres secciones más abajo. El documento **no citaba ni una sola figura
+  por su número** en ninguna de sus cuarenta páginas.
+- **Qué se descartó:** escribir los números a mano, que es más rápido y se descoloca con el primer cambio.
+- **Qué falló:** nada. Se comprobó que las referencias se resuelven dentro de las celdas, que las tablas
+  evalúan su contenido como marcado: **cero referencias sin resolver** en el PDF y los números coinciden con
+  la comprobación manual previa (Figura 6 para el rastreador, 4 y 5 para los dos envíos, 3 para el banco de
+  peticiones, 9 y 10 para el aislamiento).
+- **A qué requisito toca:** el criterio del enunciado de que cada figura tenga pie y referencia.
+  **Evidencia:** commit de la jornada en develop. **45 páginas totales y 38 contables**, dos de margen
+  sobre el límite. **Horas:** ~0,5 h de asistente.
+
+## Fase 3 (16-oct, tarde) — la matriz vuelve a leerse, y las figuras se van con su explicación
+
+- **Qué se hizo:** tres cosas que salieron de la revisión de josemax del apartado de pruebas y de la matriz.
+  *(a)* **La matriz de trazabilidad estaba ilegible** y se rehizo entera: la columna de estado era de ancho
+  automático y se comía la tabla, así que las de descripción e implementación quedaban en cuatro caracteres
+  por línea y las rutas se partían con guiones en mitad del nombre. Anchos nuevos en proporciones fijas,
+  rutas acortadas al fichero que importa, estados compactos y las figuras citadas por su número con las
+  etiquetas nuevas. *(b)* **Las figuras se reparten junto a lo que explican:** la del rastreador baja al
+  bloque del pulido del Spider, y las del Intruder y el codificador salen del bloque del Repeater, donde no
+  tenían nada que hacer, a un bloque propio que declara que esas dos pantallas se entregan como estaban.
+  *(c)* **Las referencias a evidencia dicen ahora el fichero y no el directorio:** la captura de la pestaña
+  retirada, las cinco de la exposición y las cuatro del antes y después de los defectos del rastreador.
+- **Por qué:** él lo dijo con precisión. Las referencias del tipo «las capturas se obtuvieron» o
+  «fotografiadas antes y después» no dejaban claro dónde mirar, y las figuras agrupadas bajo un bloque que
+  no las explicaba eran una incoherencia de organización, aunque otros sitios del documento las citaran.
+- **Qué se descartó:** mover las dos figuras de los dos envíos idénticos, que prueban RF-04 pero viven en el
+  bloque del Repeater. Un barrido de coherencia las marcó como sospechosas y se revisaron una a una: es
+  **correcto** que estén ahí, porque esa prueba se hizo con el Repeater y el defecto que la motivó era suyo.
+- **Qué falló:** nada roto, pero el primer barrido de referencias de evidencia dio mucho ruido: buscaba la
+  palabra «captura» y devolvía treinta y seis resultados, la mayoría prosa normal. Los casos reales eran
+  **tres**, y aparecieron al mirar si el párrafo nombraba un destino.
+- **A qué requisito toca:** la matriz entera y el criterio de claridad. **Evidencia:** commit de la jornada
+  en develop. **44 páginas totales y 37 contables**, tres de margen; 26 citas de figura por número y cero
+  referencias sin resolver; escaneo de secretos a cero con control positivo. **Horas:** ~0,9 h de asistente.
+
+## Fase 3 (16-oct, tarde) — barrido de las remisiones entre apartados
+
+- **Qué se hizo:** barrido completo de las remisiones internas del informe, a petición de josemax.
+  **Noventa y dos remisiones** a nueve apartados distintos, extraídas a máquina con su contexto y
+  verificadas contra lo que de verdad contiene cada destino: que el apartado exista, que tenga figuras
+  cuando la remisión promete una figura, y que las promesas de justificación, limitación o plan de pruebas
+  caigan en el apartado que las contiene. **Ninguna remisión está equivocada.** Las dos que parecían
+  sospechosas por quedarse sin contexto en el volcado se revisaron a mano y eran correctas, frases que
+  empiezan diciendo el apartado.
+- **Lo que sí encontró el barrido:** once citas de figura **sin número**, del tipo «figura en el apartado 7»
+  o «tres figuras en el apartado 7», repartidas entre la tabla de pantallas y la matriz. No eran falsas pero
+  eran inútiles, porque ese apartado tiene diez figuras. Con las etiquetas ya montadas, las once pasan a
+  citar el número, y se etiquetaron tres figuras más para poder hacerlo. **El documento ya no tiene ni una
+  sola cita de figura vaga.**
+- **Por qué:** una remisión que manda a un apartado de diez figuras obliga al lector a buscar, y el enunciado
+  pide que cada figura tenga pie y referencia. Además la matriz y el plan ya citaban por número, así que la
+  tabla de pantallas era además una incoherencia de formato entre bloques del mismo tipo.
+- **Qué falló:** la verificación automática por categorías dio cero sospechosas, y eso no bastaba: solo
+  comprobaba cuatro tipos de promesa. Lo que encontró el problema real fue mirar las celdas una a una.
+- **A qué requisito toca:** el criterio de coherencia del enunciado. **Evidencia:** commit de la jornada en
+  develop. **38 citas de figura por número, cero referencias sin resolver y cero citas vagas**; 44 páginas
+  totales y 37 contables. **Horas:** ~0,5 h de asistente.
+
+## Fase 3 (16-oct, tarde) — el apartado de uso de IA adelgaza
+
+- **Qué se hizo:** josemax eligió dos de las tres cosas que se le propusieron para el apartado de uso de
+  herramientas de IA. **Fuera el bloque «Leer sin leer»**, el que contaba el método de delegar en un segundo
+  asistente la lectura del material que el filtro bloqueaba: era método nuestro de trabajo de principio a
+  fin y no decía nada del producto ni de los requisitos, que es lo que su regla 6 manda quitar. Y
+  **comprimido el bloque de los defectos que introdujo el asistente**, de 623 a 512 palabras: se retira el
+  relato de dos de los ocho casos y se conserva lo que sostiene el apartado, la tabla de los ocho con qué
+  detectó cada uno, el reparto de quién los encontró, la regla concreta que salió del error repetido y la
+  conclusión sobre los efectos laterales.
+- **Por qué:** el apartado es obligatorio por enunciado y lo que el enunciado premia es declarar los
+  defectos que la IA introdujo, no el relato de cada uno. El apartado baja de cinco bloques a cuatro y de
+  1.647 a 1.315 palabras sin perder ninguna de sus afirmaciones.
+- **Qué se descartó:** recortar el episodio del rebobinado del primer bloque, que también es método interno.
+  Él no lo pidió y no se toca por iniciativa propia.
+- **Qué falló:** la compresión por coincidencia literal no entró, porque el texto del `.typ` era más largo
+  que lo que se había inspeccionado en pantalla. Se rehízo trabajando por rango de líneas. Y se comprobó
+  que el bloque retirado **no dejaba ninguna remisión huérfana** en el resto del documento.
+- **A qué requisito toca:** la declaración obligatoria de uso de IA. **Evidencia:** commit de la jornada en
+  develop. **43 páginas totales y 36 contables**, cuatro de margen; cero referencias sin resolver.
+  **Horas:** ~0,4 h de asistente.
+
+## Fase 3 (16-oct, tarde) — las pruebas, ejecutadas como las ejecutará el evaluador
+
+- **Qué se hizo:** josemax señaló un fallo de método real: las pruebas se habían ejecutado en el entorno
+  local de trabajo, con un árbol que lleva semanas encima, y **el evaluador las va a ejecutar en un clon
+  limpio, desde la raíz, copiando las órdenes que el documento escribe**. Se repitió así: clon nuevo de la
+  rama de desarrollo y las órdenes literales del informe y del README. Resultado de las ocho: **seis pasan**
+  (8/8, 19/19, 5/5, 11/11, 9/9 y el validador fallando limpiamente por falta de clave, con su mensaje) y
+  **dos no**. No hace falta instalar nada: ningún fallo de importación, así que el README dice la verdad al
+  afirmar que son scripts independientes.
+- **Los dos que no pasan, y están declarados en el informe por decisión suya, sin tocar una línea de
+  código:** *(a)* dos de los dieciocho casos del bus comprueban el camino que caía al laboratorio
+  vulnerable, retirado del producto, así que el producto hace lo correcto y la prueba se quedó atrás;
+  *(b)* el bloque de pruebas del README recorre todos los ficheros de su directorio sin argumentos, y el
+  que valida la bandera de los esquemas devuelve un error de uso, mientras el informe sí da su orden
+  completa.
+- **Por qué no se arreglaron:** se le planteó y eligió declararlos. Tocar el test el día de la entrega
+  significa cambiar la vara de medir hasta que dé verde, que es la lección que esta misma memoria cuenta
+  sobre validar contra tu propia prueba. Y el README está probado de punta a punta, así que cambiar su
+  bloque obligaría a reprobarlo entero.
+- **Qué falló:** dos cosas, las dos mías. La primera, el método: ejecutar desde dentro del directorio en vez
+  de desde la raíz me dio un falso fallo en el validador de esquemas, que **sí funciona** como el README
+  indica. La segunda, la redacción: la declaración nueva incluía un «se dice aquí porque», justo la
+  justificación que las reglas de redacción prohíben, y se retiró antes de confirmar.
+- **A qué requisito toca:** el plan de pruebas y la honestidad del apartado de limitaciones.
+  **Evidencia:** commit de la jornada en develop, **44 páginas totales y 37 contables**, escaneo de secretos
+  a cero con control positivo. **Horas:** ~0,7 h de asistente.
+
+## Fase 3 (16-oct, tarde) — dos datos falsos del informe, corregidos contra git
+
+- **Qué se hizo:** la verificación de cifras encontró **tres números equivocados en una sola frase** del
+  apartado de reparto. Decía «de las 41 confirmaciones de una sola jornada, una persona figura en 19, más
+  del doble que cualquier otra, pero 11 de esas 19 son regeneraciones de la memoria». Contado en git: **60
+  confirmaciones**, esa persona en **22**, de ellas **12** de la memoria, y la segunda persona tiene 11, de
+  modo que es **el doble** y no más del doble. Corregidas las cuatro cosas. Y la entradilla de la matriz
+  decía «las rutas están comprobadas en el código» cuando, desde que la tabla se compactó, cita **nombres
+  de fichero y no rutas**: ahora dice lo que hace.
+- **Por qué:** son cifras que el equipo docente puede contar en GitHub en dos clics, y una afirmación que
+  se desmiente leyendo la propia tabla. La regla de la línea es contrastar la fuente antes de afirmar, y aquí
+  la fuente es git.
+- **Qué falló:** la frase se escribió a media jornada y **la jornada siguió**, de 41 confirmaciones a 60.
+  Nadie la volvió a mirar. Es el mismo patrón que ya había dejado caducadas otras cifras: un dato correcto
+  cuando se escribe y falso unas horas después.
+- **A qué requisito toca:** el apartado de reparto del trabajo y la matriz. **Evidencia:** commit de la
+  jornada en develop, cifras recontadas con git log. **Horas:** ~0,2 h de asistente.
+
+## Fase 3 (16-oct, tarde) — el repositorio publica solo lo necesario
+
+- **Qué se hizo:** limpieza del árbol publicado, a propuesta de josemax. Inventario primero: el repositorio
+  llevaba **382 ficheros y 24,5 MB**, de los que el código del producto no llegaba a 1 MB. Fuera del índice
+  **144 ficheros**: el informe de la práctica anterior (4,1 MB), dos respaldos de la memoria que conservaban
+  su versión con huecos y distintivos, un respaldo de código, la fuente typst antigua, el artefacto HTML
+  (3 MB), las salidas de ejecución del módulo de navegador y del de captura (62 y 2 ficheros, sin una sola
+  cita en ningún documento) y **73 capturas que nadie citaba**, en su mayoría de la práctica anterior. Queda
+  en **248 ficheros y 8,5 MB**, y el directorio del informe con tres ficheros: la fuente, el PDF y el
+  diario. El `.gitignore` gana los patrones para que nada de eso vuelva.
+- **Por qué:** el README documenta una estructura del repositorio en la que **nada de lo retirado
+  aparecía**, así que el árbol se parece ahora a lo que el propio README promete. Y dos de los respaldos
+  publicaban la versión de la memoria anterior a la revisión, con sus huecos y sus distintivos dentro.
+- **Qué se comprobó antes de borrar, y evitó dos errores:** que ninguna de las **13 figuras** empotradas
+  saliera del índice (las trece siguen versionadas, comprobadas una a una), y que ninguna de las **25 rutas
+  citadas** quedara sin respaldo. Dos ficheros se salvaron por esa comprobación: la captura de la pestaña
+  retirada, que el informe cita por su nombre, y el diagrama de arquitectura de la primera figura.
+- **Qué se descartó:** reescribir el historial. Los ficheros salen del árbol publicado, **no del historial**,
+  porque reescribirlo exige un empuje forzado y eso no se hace el día de la entrega.
+- **Qué falló:** nada, pero la primera medición de pesos por carpeta salió en ceros por un error de formato
+  al leer la salida de git, y la primera lista de capturas sin citar daba cinco y cuatro de más, porque el
+  informe las cita **por directorio y prefijo** y la comprobación buscaba el nombre exacto.
+- **A qué requisito toca:** el criterio del enunciado sobre el contenido del repositorio. **Evidencia:**
+  commit de la jornada en develop, y **un clon limpio del repositorio compila la memoria con sus trece
+  figuras**. **Horas:** ~0,6 h de asistente.
+
+## Fase 3 (16-oct, tarde) — segunda pasada de limpieza: fuera lo que no cita nadie
+
+- **Qué se hizo:** segunda vuelta sobre el árbol publicado, con el criterio de josemax de dejar solo lo
+  estrictamente necesario. Fuera del índice **veintitrés ficheros que no cita ningún documento** y el
+  fichero de convenciones de contribución, que era de la práctica anterior. De los veintitrés: nueve
+  capturas de trabajo del pulido, tres capturas de la práctica anterior en el directorio del módulo de IA,
+  un marcador de directorio vacío, **la lista de capturas pendientes con el nombre de una persona en el
+  propio nombre del fichero**, que es organización interna sin sitio en un entregable público, y nueve
+  capturas de evidencia que resultaron ser **duplicados exactos** de las que se quedan.
+- **Por qué:** el repositorio es público y lo que se publica debe poder justificarse. La lista de trabajo
+  interna era el caso más claro.
+- **Qué se comprobó, y es lo que hace la limpieza segura:** las nueve capturas de evidencia se compararon
+  **por hash** con las de la carpeta que se conserva y son **idénticas**, de modo que no se pierde ninguna
+  evidencia. Se protegieron enteras las dos carpetas que el informe cita **por prefijo y no por nombre**,
+  y después de la pasada siguen versionadas **las trece figuras** y **cero rutas citadas** se quedan sin
+  respaldo. La memoria compila igual.
+- **A qué requisito toca:** el contenido del repositorio entregado. **Evidencia:** commit de la jornada en
+  develop. El repositorio queda en **225 ficheros y 6,4 MB**, desde los 382 y 24,5 MB de la mañana.
+  **Horas:** ~0,3 h de asistente.

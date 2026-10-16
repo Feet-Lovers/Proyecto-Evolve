@@ -7,3 +7,8 @@ node_modules/
 dist/
 build/
 nginx.conf.bak-20261006-basicauth
+*.bak-*
+playwright/results/
+devtools/results/
+results/
+docs/informe/P3-memoria.artefacto.html
