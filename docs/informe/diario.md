@@ -5247,3 +5247,26 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   **Evidencia:** commit de la jornada en develop. **45 páginas totales y 39 contables**, una de margen
   recuperada; 0 rayas, 0 flechas, 0 puntos y coma, 0 fechas, 0 huecos, 0 distintivos; las 24 citas vivas y
   escaneo de secretos a cero con control positivo. **Horas:** ~1,2 h de asistente.
+
+## Fase 3 (16-oct, tarde) — las figuras dejan de ser «la figura del apartado 7»
+
+- **Qué se hizo:** tres cosas que josemax pidió sobre el plan de pruebas. *(a)* **Las celdas que remitían a
+  una figura ahora la citan por su número**, y el número **lo genera Typst**: la macro de figura acepta una
+  etiqueta, ocho figuras la llevan y las seis celdas usan referencias, de modo que si mañana se añade o se
+  quita una figura los números se recolocan solos. *(b)* **El párrafo de cómo leer la tabla sube delante de
+  ella**, para que el lector entre sabiendo que de los dieciocho casos seis están reejecutados, seis
+  apoyados en figuras, cinco sin reejecutar y uno caducado. *(c)* **El aviso de método queda en una frase**
+  dentro de ese mismo párrafo: que un 200 no se dio por bueno sin mirar el tipo de contenido, porque el
+  servidor devuelve la portada ante cualquier ruta desconocida.
+- **Por qué:** él preguntó dónde estaba «la figura del apartado 7» y la respuesta era que había que
+  adivinarlo. Las seis referencias tenían destino real, comprobado una a una, pero ninguna decía el número y
+  una de ellas apuntaba a una figura tres secciones más abajo. El documento **no citaba ni una sola figura
+  por su número** en ninguna de sus cuarenta páginas.
+- **Qué se descartó:** escribir los números a mano, que es más rápido y se descoloca con el primer cambio.
+- **Qué falló:** nada. Se comprobó que las referencias se resuelven dentro de las celdas, que las tablas
+  evalúan su contenido como marcado: **cero referencias sin resolver** en el PDF y los números coinciden con
+  la comprobación manual previa (Figura 6 para el rastreador, 4 y 5 para los dos envíos, 3 para el banco de
+  peticiones, 9 y 10 para el aislamiento).
+- **A qué requisito toca:** el criterio del enunciado de que cada figura tenga pie y referencia.
+  **Evidencia:** commit de la jornada en develop. **45 páginas totales y 38 contables**, dos de margen
+  sobre el límite. **Horas:** ~0,5 h de asistente.
