@@ -401,7 +401,7 @@ y las consecuencias.
   extremos de red del backend también se conservan, y no por inercia: los consume el módulo de IA y el de
   Playwright, así que retirarlos habría roto RF-08. RF-01, el acceso desde el navegador sin instalar nada,
   se mantiene cumplido. La pestaña Red tal como estaba quedó capturada a propósito antes del arreglo,
-  porque el propio arreglo destruía la evidencia, y esa captura se conserva en docs/capturas/ del repositorio.
+  porque el propio arreglo destruía la evidencia, y esa captura se conserva en docs/capturas/devtools/devtools_red_tiempo_real.png del repositorio.
 
 
 = Arquitectura y decisiones técnicas
@@ -748,7 +748,7 @@ ante cualquier ruta desconocida. Las salidas completas están en docs/evidencias
 Pantalla por pantalla y requisito por requisito, con la evidencia capturada antes de cada arreglo.
 
 === Evidencia de exposición (RNF-07 / PR-16)
-La prueba PR-16, llamar a la API sin credenciales, y la verificación del frontend confirman que, antes de endurecer, el producto quedaba accesible sin autenticación. Las capturas se obtuvieron antes de cualquier arreglo, porque la evidencia de un fallo se captura antes de corregirlo: el propio arreglo la destruye. Lo que documentan, pieza a pieza: GET /health de la API respondía 200 sin credenciales ni cabecera WWW-Authenticate. La documentación interactiva (/docs) quedaba abierta, exponiendo las 40 operaciones, incluidas las que lanzan tráfico contra terceros. El frontend servido por el puerto 3000 cargaba sin pedir credencial, evitando por completo el control de la entrada principal, que sí pedía credencial: el control existía, pero se podía rodear por el puerto directo. Y la credencial documentada en el informe de la P1 era rechazada con 401, ya no abría nada. Las cinco capturas están en docs/capturas/exposicion/ del repositorio.
+La prueba PR-16, llamar a la API sin credenciales, y la verificación del frontend confirman que, antes de endurecer, el producto quedaba accesible sin autenticación. Las capturas se obtuvieron antes de cualquier arreglo, porque la evidencia de un fallo se captura antes de corregirlo: el propio arreglo la destruye. Lo que documentan, pieza a pieza: GET /health de la API respondía 200 sin credenciales ni cabecera WWW-Authenticate. La documentación interactiva (/docs) quedaba abierta, exponiendo las 40 operaciones, incluidas las que lanzan tráfico contra terceros. El frontend servido por el puerto 3000 cargaba sin pedir credencial, evitando por completo el control de la entrada principal, que sí pedía credencial: el control existía, pero se podía rodear por el puerto directo. Y la credencial documentada en el informe de la P1 era rechazada con 401, ya no abría nada. Las cinco capturas, una por cada punto de los anteriores, están en docs/capturas/exposicion/ del repositorio, con el prefijo RNF07.
 
 
 === Los doce defectos del prototipo, corregidos y verificados
@@ -773,7 +773,7 @@ Todos se reprodujeron antes de corregirlos y se verificaron después en producci
   "
 )
 
-Dos de los doce quedaron además fotografiados antes y después de corregir, sobre el producto desplegado y contra una web propia del equipo: el panel que arrastraba 52 entradas de formulario idénticas por una sola petición queda en una, y el botón de detener que no existía aparece junto al de ejecución. Las cuatro capturas están en docs/capturas/fase1/ del repositorio.
+Dos de los doce quedaron además fotografiados antes y después de corregir, sobre el producto desplegado y contra una web propia del equipo: el panel que arrastraba 52 entradas de formulario idénticas por una sola petición queda en una, y el botón de detener que no existía aparece junto al de ejecución. Las cuatro capturas, antes y después de cada uno de los dos defectos, están en docs/capturas/fase1/ del repositorio, con el prefijo RF-03.
 
 > Nota de tratamiento de las capturas. Las dos del estado anterior mostraban un identificador de sesión de la web de pruebas en la franja superior. Se publican con esa franja tapada, y los originales no salen del almacén interno. Las del estado posterior no lo contienen porque la sesión no estaba autenticada.
 
@@ -795,6 +795,8 @@ En este tramo no se añadió funcionalidad: se pulió lo que ya existía, pesta�
 )
 
 Son seis de los quince, los que mejor enseñan el patrón. Los quince completos, cada uno con su entrada del diario, están en docs/informe/diario.md del repositorio.
+
+#imagen("../capturas/fase3/RF-03-spider-rotulos-despues.png", "RF-03 · el panel de detalle después del pulido, con los dos defectos de fidelidad corregidos: los rótulos de sección se distinguen del contenido (antes compartían el mismo gris, y eso llevó a leer las cabeceras de respuesta como si fueran de petición) y las cabeceras que se muestran son las realmente enviadas, con la Cookie de sesión incluida. Los cuatro valores de sesión van tapados.", et: "fig-spider-rotulos")
 
 *El patrón que se repite.* En once de los quince, el backend ya sabía la respuesta y no llegaba a la pantalla: no eran fallos de cálculo sino de traslado, funciones correctas que la interfaz no dejaba ver, y las pruebas que miran el backend no detectan nada de esto. Dos de los quince los introdujimos nosotros al arreglar otros, y se detallan en el apartado 11.
 
@@ -830,18 +832,19 @@ Son seis de los dieciséis, los que mejor enseñan el patrón. Los dieciséis co
 
 #imagen("../capturas/fase3/RF-04-repeater-dos-envios-mismo-resultado-2.png", "RF-04 · segundo envío de la misma petición, sin tocar nada: idénticos el estado, el tamaño, el destino y el cuerpo de la respuesta. Lo único que cambia es el tiempo (56 ms frente a 73 ms), y ese cambio es justamente lo que demuestra que son dos envíos distintos y no la misma figura repetida. Con el cliente compartido anterior, dos envíos iguales podían no coincidir.", et: "fig-repeater-envio-2")
 
-#imagen("../capturas/fase3/RF-03-spider-rotulos-despues.png", "RF-03 · el panel de detalle después del pulido, con los dos defectos de fidelidad corregidos: los rótulos de sección se distinguen del contenido (antes compartían el mismo gris, y eso llevó a leer las cabeceras de respuesta como si fueran de petición) y las cabeceras que se muestran son las realmente enviadas, con la Cookie de sesión incluida. Los cuatro valores de sesión van tapados.", et: "fig-spider-rotulos")
 
-Las dos pantallas que no se pulieron también se comprueban, y sus figuras cierran el bloque: el Intruder
-con un ataque lanzado y cancelable (RF-06) y el codificador resolviendo un JWT (RF-07), que es la
-conversión que la verificación inicial había dado por ausente.
+
+
+> Nota de tratamiento de las figuras de este apartado. Se tomaron contra una web propia del equipo autorizada para ello. El panel de cabeceras muestra la cookie de sesión del objetivo, es lo correcto porque es lo que se envía, así que cada figura se publica con esos valores tapados y los originales no salen del almacén interno. En el par de aislamiento, la captura del usuario A llevaba el identificador de sesión capturado de la web auditada, justo el dato que RF-12 existe para no compartir: va tapado y con la etiqueta a la vista, para que se vea qué se redactó.
+
+=== Intruder y Utilidades (RF-06, RF-07), tal como se entregan
+Estas dos pantallas no se pulieron en esta práctica y se entregan como estaban, con un solo cambio en el
+Intruder, su cancelación corregida. Se comprueban igual: el Intruder con un ataque lanzado y cancelable, y
+el codificador resolviendo un JWT, que es la conversión que la verificación inicial había dado por ausente.
 
 #imagen("../capturas/fase3/RF-06-intruder-ataque-lanzado-censurada.png", "RF-06 · el Intruder con un ataque de inyección SQL lanzado contra el formulario de acceso del objetivo propio: trece payloads numerados, cada uno con su código, tamaño, tiempo y veredicto, y el parámetro marcado con el asterisco. Los trece responden 419 porque el objetivo exige un testigo CSRF válido en cada envío: lo que la captura demuestra es el mecanismo de fuzzing, no un hallazgo. El testigo va tapado.")
 
 #imagen("../capturas/fase3/RF-07-utilidades-jwt.png", "RF-07 · el codificador con un JWT en la entrada y sus cuatro conversiones resueltas a la vez: base64, URL, HTML y la lectura del JWT, justo la conversión que la verificación inicial dio por ausente. El testigo mostrado es el ejemplo público de documentación («John Doe»), no una credencial del producto.")
-
-
-> Nota de tratamiento de las figuras de este apartado. Se tomaron contra una web propia del equipo autorizada para ello. El panel de cabeceras muestra la cookie de sesión del objetivo, es lo correcto porque es lo que se envía, así que cada figura se publica con esos valores tapados y los originales no salen del almacén interno. En el par de aislamiento, la captura del usuario A llevaba el identificador de sesión capturado de la web auditada, justo el dato que RF-12 existe para no compartir: va tapado y con la etiqueta a la vista, para que se vea qué se redactó.
 
 === El aislamiento (RF-12): las fugas capturadas antes, y la verificación después
 *Antes del arreglo*, cuatro pruebas lanzadas contra el entorno local a través del proxy, porque el propio arreglo borra esta evidencia. Las cuatro confirmaron el fallo: la API responde 200 sin credencial, un token inventado obtiene sesión propia, un segundo usuario lee la cookie capturada por el primero, y una vulnerabilidad publicada sin token aparece en la sesión de dos auditores distintos. La captura íntegra, con la causa en fichero y línea de cada una, está en docs/evidencias/fugas-aislamiento-06oct.md.
@@ -949,30 +952,30 @@ El filtro por confianza compara el valor que devuelve el modelo contra un umbral
 = Matriz de trazabilidad
 La pieza con la que se corrige la práctica: requisito por requisito, dónde está implementado, qué prueba lo verifica y dónde se ve. Las rutas están comprobadas en el código. La columna de evidencia enlaza la figura de la memoria y el apartado donde se explica.
 #tabla(
-  (auto, 4fr, auto, 4fr, 4fr),
+  (auto, 2.4fr, 3.1fr, 2.5fr, 2.3fr),
   "
-  Req. | Descripción | Estado | Implementación (ruta) | Prueba y evidencia
-  RF-01 | Dashboard web sin instalación | Cumplido (seis pestañas: Red fuera, Manual dentro) | frontend/src/App.jsx + Layout.jsx + pages/manual/ | PR-01 · fig. apdo. 9
-  RF-02 | Proxy del lado servidor (httpx) | Modificado (justif. apdo. 3) | backend/services/proxy_service.py | PR-19 · justif. apdo. 3
-  RF-03 | Spider / rastreo | Cumplido (19 defectos corregidos, apdo. 7) | backend/services/spider_service.py + frontend/src/pages/proxy/ | PR-03 · fig. apdo. 7
-  RF-04 | Auditoría autenticada (sesión compartida) | *Modificado* (cliente propio, justif. apdo. 3) | backend/services/session_service.py + proxy_service.py | PR-04 · justif. apdo. 3 · figs. apdo. 7
-  RF-05 | Repeater | Cumplido (16 defectos corregidos, historial retirado por diseño, apdo. 9) | backend/routes/repeater.py + frontend/src/pages/repeater/ | PR-05 · fig. apdo. 7
-  RF-06 | Intruder / fuzzing | Cumplido (cancelación corregida) | backend/services/intruder_service.py | PR-06 · fig. apdo. 7
-  RF-07 | Utilidades (incl. JWT) | Cumplido | frontend/src/pages/utilities/ | PR-07 · fig. apdo. 7
-  RF-08 | IA que alimenta el panel Vulnerabilidades | Parcial: recorrido y techo verificados, *ningún hallazgo analizado aún* (apdo. 7) | ia/ + backend/services/redis_consumer.py | PR-08 · figs. apdo. 7
-  RF-09 | DevTools que alimenta el panel Red | *Descartado* (justif. apdo. 3) | devtools/ conservado · backend/routes/network.py se mantiene | justif. apdo. 3
-  RF-10 | Playwright | *Parcial* (sin prueba ejecutada y sondeo con 401, apdos. 6-7) | playwright/ + backend/routes/playwright.py | PR-10 · apdos. 6-7
-  RF-11 | Multi-usuario | Cumplido (reimplementado con el acceso por usuario) | backend/services/guardia.py + auth_service.py | PR-11 · apdo. 6 · figs. apdo. 7
-  RF-12 | Registro y login por usuario + aislamiento | Cumplido (fugas cerradas en producción, batería 11/11 en local) | backend/services/auth_service.py + guardia.py | PR-12 · apdo. 6 · figs. apdo. 7
-  RNF-01 | Accesible desde navegador sin instalar nada en el cliente | Cumplido, con limitación en móvil (apdo. 9) | frontend/ servido por Nginx | PR-01 · apdo. 9
-  RNF-02 | WebSocket en tiempo real | Cumplido (canal autenticado) | backend/main.py (/ws/) | PR-17 · apdo. 6
-  RNF-03 | Despliegue Docker en Hetzner | Cumplido (reproducibilidad probada, apdo. 7) | docker-compose.yml + infra/nginx.conf + README.md | PR-13 · apdo. 7
-  RNF-04 | Historial de commits que refleje el trabajo del grupo | Parcial: no hubo reparto y la autoría se sortea (apdo. 10) | repositorio del producto | apdo. 10
-  RNF-05 | Límite de concurrencia | Cumplido | backend/services/intruder_service.py (asyncio.Semaphore) | PR-20 · apdo. 7
-  RNF-06 | Operación degradada cuando la IA falla o no supera el umbral | Cumplido y *visto en el panel* | ia/client.py + ia/analyzers/ | test_tres_estados.py (8/8) y test_escala_confianza.py (19/19) · fig. apdo. 7
-  RNF-07 | Seguridad del producto | Parcial: dependencias con avisos sin actualizar (apdo. 6) | ver apartado 6 | PR-14 y PR-16 · apdos. 6-7
-  RNF-08 | Firewall dinámico por sesión | Cumplido en la P1, *no reejercitado* (PR-15 sin caso) | firewall_agent.py | PR-15 · apdos. 6-7
-  RNF-09 | TLS/HTTPS | Pendiente | (por configurar en Nginx) | PR-18 · apdo. 7
+  Req. | Descripción | Estado | Implementación | Prueba y evidencia
+  RF-01 | Panel web sin instalación | Cumplido · seis pestañas | App.jsx + Layout.jsx + pages/manual/ | PR-01 · fig. apdo. 9
+  RF-02 | Proxy del lado servidor (httpx) | Modificado · apdo. 3 | proxy_service.py | PR-19 · apdo. 3
+  RF-03 | Spider / rastreo | Cumplido · 19 defectos corregidos | spider_service.py + pages/proxy/ | PR-03 · @fig-spider-rotulos
+  RF-04 | Auditoría autenticada | Modificado · cliente propio, apdo. 3 | session_service.py + proxy_service.py | PR-04 · @fig-repeater-envio-1
+  RF-05 | Repeater | Cumplido · 16 defectos, sin historial por diseño | repeater.py + pages/repeater/ | PR-05 · @fig-repeater-preparar
+  RF-06 | Intruder / fuzzing | Cumplido · cancelación corregida | intruder_service.py | PR-06 · fig. apdo. 7
+  RF-07 | Utilidades (incl. JWT) | Cumplido | pages/utilities/ | PR-07 · fig. apdo. 7
+  RF-08 | IA que alimenta Vulnerabilidades | Parcial · recorrido y techo probados, ningún hallazgo analizado | ia/ + redis_consumer.py | PR-08 · @fig-techo-cero
+  RF-09 | DevTools que alimenta Red | Descartado · apdo. 3 | devtools/ y network.py conservados | apdo. 3
+  RF-10 | Playwright | Parcial · sin prueba ejecutada, sondeo con 401 | playwright/ + routes/playwright.py | PR-10 · apdos. 6-7
+  RF-11 | Multiusuario | Cumplido · rehecho con el acceso por usuario | guardia.py + auth_service.py | PR-11 · apdo. 6
+  RF-12 | Registro, login y aislamiento | Cumplido · fugas cerradas, 11/11 en local | auth_service.py + guardia.py | PR-12 · @fig-aislamiento-a
+  RNF-01 | Acceso sin instalar nada | Cumplido · con limitación en móvil | frontend/ tras Nginx | PR-01 · apdo. 9
+  RNF-02 | Tiempo real (WebSocket) | Cumplido · canal autenticado | main.py (/ws/) | PR-17 · @fig-sesion-produccion
+  RNF-03 | Despliegue reproducible | Cumplido · probado desde cero | docker-compose.yml + nginx.conf + README | PR-13 · apdo. 7
+  RNF-04 | Historial de commits del grupo | Parcial · sin reparto, autoría sorteada | repositorio del producto | apdo. 10
+  RNF-05 | Límite de concurrencia | Cumplido | intruder_service.py | PR-20 · apdo. 7
+  RNF-06 | Operación degradada | Cumplido · visto en el panel | client.py + analyzers/ | test_tres_estados (8/8) · apdo. 7
+  RNF-07 | Seguridad del producto | Parcial · dependencias con avisos sin actualizar | ver apdo. 6 | PR-14 y PR-16 · apdos. 6-7
+  RNF-08 | Cortafuegos por sesión | Cumplido en la P1 · no reejercitado | firewall_agent.py | PR-15 · apdos. 6-7
+  RNF-09 | TLS/HTTPS | Pendiente | por configurar en Nginx | PR-18 · apdo. 7
   ",
 )
 
