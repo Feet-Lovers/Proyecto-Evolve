@@ -901,6 +901,11 @@ Reconectar el módulo por un bus interno (apartado 4) cambia la forma del riesgo
 
 Los dos que justifican el esfuerzo: un hallazgo sin dueño se descarta, no se guarda ni se emite (sin esa regla, un mensaje mal formado reabriría exactamente la fuga de aislamiento ya cerrada), y dos auditores no ven lo del otro, comprobado repartiendo a dos espacios y verificando que cada uno recibe solo lo suyo. Tres más cubren el fallo silencioso en el otro extremo: si la auditoría se interrumpe se publica el motivo, si nadie escucha el bus publicar lo dice en vez de dar el trabajo por encolado, y si una orden llega sin dueño no se audita. Reproducible con python3 backend/tests/test_bus_reparto.py y python3 ia/tests/test_bus_publicacion.py.
 
+Dos de los dieciocho no pasan hoy. Los dos
+ejercitan el camino que caía al laboratorio vulnerable, retirado del producto: ahora una orden sin objetivo
+se descarta, que es el comportamiento correcto, y son las pruebas las que se han quedado atrás.
+Actualizarlas queda anotado en el apartado 9.
+
 === El disparador y el techo de gasto, verificados de punta a punta (RF-08)
 Durante cuatro días el disparador estuvo construido y sin poder demostrarse: el botón existía, el bus estaba cableado, y una pulsación desde el panel no movía ni una línea del módulo de IA. Se cerró anotando la hora exacta de la pulsación y midiendo contra ella: a partir de las 13:58:10 el servidor registra una petición al disparador con respuesta correcta y el registro del módulo pasa de 192 a 376 líneas. Del panel a la autenticación, de ahí al bus y al módulo suscrito, el recorrido entero por primera vez. Lo que no se da por explicado: cincuenta y ocho minutos antes la misma pulsación no movió nada sin que se tocara el producto entre una y otra. Queda abierto y declarado, porque un apartado de pruebas que explica lo que no sabe explicar vale menos que uno que lo admite.
 
@@ -1037,6 +1042,15 @@ El repositorio tiene configurado un analizador estático para el frontend y nunc
 
 == Restos del laboratorio retirado
 El laboratorio vulnerable salió del producto (apartado 6), pero su nombre sigue en dos sitios que no se ejecutan: la función de acceso del módulo de navegador (RF-10, parcial) y los datos de ejemplo del frontend, que sí viajan en el paquete que se sirve al navegador aunque solo se usen cuando no hay servidor detrás. No es un riesgo, los valores son inventados, pero el entregable menciona un componente que ya no incluye. Es limpieza de diez minutos que no se hizo a propósito: tocar código que funciona, el último día, para arreglar un nombre, es justo el cambio que no compensa.
+
+== Dos pruebas que se quedaron atrás, y una orden del README que falla
+Al retirar el laboratorio vulnerable, dos de los dieciocho casos del bus dejaron de pasar: comprueban el
+camino que caía a él, que ya no existe. El producto hace lo correcto y la prueba es la que está vieja.
+Queda actualizarla, y no se ha hecho ahora para no tocar el código que se entrega.
+
+El bloque de pruebas del README recorre todos los ficheros de su directorio sin pasarles argumentos, de modo
+que el que valida la bandera de los esquemas devuelve un error de uso en lugar de su resultado. Su orden
+completa, con el fichero de esquemas como argumento, está en el apartado 7.
 
 == La herramienta que genera los esquemas no está versionada
 El generador de esquemas vive en la carpeta de trabajo de la práctica, fuera del repositorio del producto: sin historial, sin revisión y sin autoría registrada, al contrario que todo el código. No es una incoherencia inocua: el único sitio sin historial resultó ser exactamente donde estaba el defecto del apartado 7. Trabajo futuro de coste bajo: mover las herramientas al repositorio, cosa que no se hizo con el desarrollo a punto de cerrarse porque introducía riesgo sin aportar nada al producto.
