@@ -5214,3 +5214,36 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
 - **A qué requisito toca:** el criterio de claridad y coherencia del enunciado. **Evidencia:** commit de la
   jornada en develop. Estado medido: **0 rayas largas, 0 flechas, 0 puntos y coma y 0 fechas** en el cuerpo,
   negritas de 520 a **272**, y **40 páginas contables** sin cambio. **Horas:** ~0,8 h de asistente.
+
+## Fase 3 (16-oct, tarde) — la segunda lectura de josemax, aplicada entera
+
+- **Qué se hizo:** once observaciones más (17 a 27), apuntadas durante su lectura y aplicadas de una pasada
+  al dar él la señal. **Los seis distintivos de colores, fuera**, y las salvedades que dos de ellos llevaban
+  dentro bajaron a la prosa para no perderlas. **Los tres huecos, fuera**, y lo que marcaban se declara en
+  texto: el caso del techo con límite distinto de cero que necesita una clave de API que la instalación
+  pública no tiene, y los dos defectos corregidos sin caso formal escrito. **El párrafo de IPv6 retirado**
+  con su distintivo. **El apartado de pruebas, agrupado en cuatro secciones** (el plan, las pruebas del
+  producto, la plataforma y el despliegue, y el módulo de análisis con IA), que era el descuadre que él
+  señaló al no encontrarle hilo a dieciséis bloques seguidos. **Dependencias comprimido** de siete viñetas a
+  cinco sin perder una cifra. **El anexo de despliegue remite al README** en lugar de solaparse con él.
+- **Dos arreglos de exactitud que salieron de sus dudas:** la entradilla del plan de pruebas prometía una
+  columna de procedencia que **no existe** desde el recorte de anoche, y no explicaba por qué la numeración
+  llega a veinte con dieciocho casos; las dos cosas corregidas. Y **el documento hablaba de «una fuga de
+  datos del cliente de otro» cuando no hay ningún cliente**: las pruebas se hacen contra una web propia del
+  grupo, así que ahora dice «los datos que otro estaba auditando». En el apartado de uso de IA, «el
+  rebobinado del cliente» pasa a «de la herramienta», que es lo que era.
+- **Por qué:** sus reglas de estilo mandan sobre el criterio del asistente, y dos de sus dudas eran defectos
+  reales, no impresiones.
+- **Qué se descartó:** reordenar el apartado de pruebas por requisito y comprimir los seis bloques del
+  módulo de IA, las dos opciones caras que se le ofrecieron. Y recortar el bloque de los defectos que
+  introdujo el asistente, que es el más denso del apartado de IA pero también lo que el enunciado premia
+  declarar.
+- **Qué falló:** la comprobación de citas dio siete ficheros «inexistentes» que sí existían: la expresión se
+  tragaba el punto final de la frase. Reverificado: **24 rutas citadas y las 24 existen**. También quedó por
+  el camino una concordancia rota de la pasada anterior («el día de la cierre del desarrollo»), que
+  desapareció al reescribir el bloque.
+- **A qué requisito toca:** el criterio de claridad del enunciado y su lista de comprobación. ⭐ **Con los
+  huecos fuera, la casilla «todos los apartados presentes y sin huecos» pasa a marcable.**
+  **Evidencia:** commit de la jornada en develop. **45 páginas totales y 39 contables**, una de margen
+  recuperada; 0 rayas, 0 flechas, 0 puntos y coma, 0 fechas, 0 huecos, 0 distintivos; las 24 citas vivas y
+  escaneo de secretos a cero con control positivo. **Horas:** ~1,2 h de asistente.
