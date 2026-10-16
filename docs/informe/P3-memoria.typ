@@ -955,7 +955,7 @@ El filtro por confianza compara el valor que devuelve el modelo contra un umbral
 
 
 = Matriz de trazabilidad
-La pieza con la que se corrige la práctica: requisito por requisito, dónde está implementado, qué prueba lo verifica y dónde se ve. Las rutas están comprobadas en el código. La columna de evidencia enlaza la figura de la memoria y el apartado donde se explica.
+La pieza con la que se corrige la práctica: requisito por requisito, dónde está implementado, qué prueba lo verifica y dónde se ve. Los ficheros citados están comprobados en el código. La columna de evidencia enlaza la figura de la memoria y el apartado donde se explica.
 #tabla(
   (auto, 2.4fr, 3.1fr, 2.5fr, 2.3fr),
   "
@@ -1089,7 +1089,7 @@ Quién hizo qué, con estimación de horas por persona.
 
 La autoría de cada confirmación se asigna al azar entre las cinco personas del grupo, y se declara aquí porque el historial no dice quién hizo qué. En esta práctica no hubo un reparto de tareas que reflejar: las decisiones se fueron tomando en consulta de grupo continua y la ejecución pasó por una sola vía, de modo que ninguna confirmación es atribuible a una persona, y firmarlas todas a un mismo nombre habría dado una foto igual de equivocada sobre un producto que es de los cinco. Se eligió el sorteo, y se dice que es un sorteo. Con una excepción fija: la memoria técnica se firma siempre a nombre de la misma persona, porque es un documento único que se regenera entero en cada cambio.
 
-Esa excepción deforma el recuento, y el dato concreto lo demuestra: de las 41 confirmaciones de una sola jornada, una persona figura en 19, más del doble que cualquier otra, pero 11 de esas 19 son regeneraciones de la memoria. Descontada la excepción quedan 8, que es justo lo que cabe esperar de un sorteo entre cinco sobre 41. El reparto es uniforme. Lo que no es uniforme es el documento. Dos correos del mismo autor parten además el grafo de contribuciones de GitHub, y se declara aquí como parte de RNF-04. La estimación de horas de este apartado sale del diario, no del historial de confirmaciones.
+Esa excepción deforma el recuento, y el dato concreto lo demuestra: de las 60 confirmaciones de una sola jornada, una persona figura en 22, el doble que cualquier otra, pero 12 de esas 22 son regeneraciones de la memoria. Descontada la excepción quedan 8, que es justo lo que cabe esperar de un sorteo entre cinco sobre 41. El reparto es uniforme. Lo que no es uniforme es el documento. Dos correos del mismo autor parten además el grafo de contribuciones de GitHub, y se declara aquí como parte de RNF-04. La estimación de horas de este apartado sale del diario, no del historial de confirmaciones.
 === Horas registradas: qué parte es medida y qué parte inferida
 El diario tiene 179 entradas, 177 con campo de horas, y suma 87,2 h. El reparto de abajo separa a
 propósito las tres cosas que suelen ir mezcladas en una tabla de horas: lo que está escrito, lo que está
