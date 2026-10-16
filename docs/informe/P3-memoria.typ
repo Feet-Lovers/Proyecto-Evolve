@@ -209,7 +209,7 @@ desplegado y verificable. El recorrido completo está en el apartado 2.
 *En qué estado se entrega.* De los veintiún requisitos numerados, trece quedan cumplidos, cuatro
 parciales, dos modificados, uno descartado y uno pendiente.
 
-Los cuatro parciales conviene decirlos uno a uno. El navegador real con el que se ejecutan los ataques
+Los cuatro parciales, uno a uno. El navegador real con el que se ejecutan los ataques
 dirigidos (RF-10) está construido y conectado a la red interna, pero su prueba no se ha llegado a ejecutar. El historial del repositorio no refleja un
 reparto de tareas, sencillamente porque no lo hubo: la autoría de cada confirmación se sortea, y el
 apartado 10 lo explica. El análisis con inteligencia artificial tiene el recorrido verificado de punta a
@@ -502,7 +502,7 @@ de la derecha dice dónde se ve cada una, sin repetir aquí figuras que ya está
   ",
 )
 
-*Tres piezas trabajan sin pestaña propia*, y conviene decirlo porque quien busque su pantalla no la va a
+*Tres piezas trabajan sin pestaña propia*, y quien busque su pantalla no la va a
 encontrar: el proxy del lado servidor (RF-02) es el que ejecuta las peticiones por debajo de Spider,
 Repeater e Intruder. El navegador real (RF-10) lo dirige el módulo de IA, no una persona. Y el
 *cortafuegos por sesión* (RNF-08) es un agente del sistema. La séptima pestaña que hubo, Red (RF-09), se
@@ -553,7 +553,7 @@ Estado de partida, verificado en vivo sobre el prototipo (evidencia fotográfica
 - La API :8000 no tenía autenticación: lo declaraba su propia openapi.json (40 operaciones sin seguridad) y /health respondía sin credenciales.
 - El Basic Auth del :80 se evitaba sirviendo el frontend directamente por :3000.
 - El servidor no tenía cortafuegos (política de aceptación por defecto) ni protección contra fuerza bruta, y acumulaba unos 127.000 intentos de acceso en 7 días.
-- DVWA no estaba expuesto a internet (solo red interna), lo que corrige un supuesto previo nuestro.
+- DVWA no estaba expuesto a internet (solo red interna), lo que corrige un supuesto anterior.
 
 == Endurecimiento aplicado al inicio de la práctica
 === Cierre de la exposición
@@ -594,7 +594,7 @@ Hasta que se rehízo el acceso, la API y el WebSocket no tenían autenticación 
 )
 
 === Un quinto fallo, que introdujo la propia corrección
-Se documenta porque el enunciado pide las pruebas que fallaron, y porque la lección vale más que el acierto. El guardián comprobaba que el espacio de datos nombrado en la ruta fuera el tuyo, pero cinco rutas reciben ese nombre en el cuerpo de la petición, y ahí no miraba nadie: un usuario autenticado podía escribir en el espacio de otro con solo ponerlo en el cuerpo. La peor de las cinco fue el Repeater, que mantiene un cliente HTTP persistente por usuario con las cookies del objetivo auditado: nombrar a otro en el cuerpo reutilizaba su sesión ya autenticada contra la web auditada. Se descartó la corrección evidente, validar ese campo contra el token, porque deja el dato en manos del cliente: las rutas toman el espacio del token y descartan lo que venga en el cuerpo, y lo que no se lee no se puede falsear. Comprobado como ataque real (apartado 7).
+El guardián comprobaba que el espacio de datos nombrado en la ruta fuera el tuyo, pero cinco rutas reciben ese nombre en el cuerpo de la petición, y ahí no miraba nadie: un usuario autenticado podía escribir en el espacio de otro con solo ponerlo en el cuerpo. La peor de las cinco fue el Repeater, que mantiene un cliente HTTP persistente por usuario con las cookies del objetivo auditado: nombrar a otro en el cuerpo reutilizaba su sesión ya autenticada contra la web auditada. Se descartó la corrección evidente, validar ese campo contra el token, porque deja el dato en manos del cliente: las rutas toman el espacio del token y descartan lo que venga en el cuerpo, y lo que no se lee no se puede falsear. Comprobado como ataque real (apartado 7).
 
 === Desplegado y verificado en producción
 Hasta entonces todo estaba verificado solo en el entorno local, y después se comprobó en vivo y en la propia instalación pública que las fugas no eran teóricas: la API respondía sin credencial a cualquiera. El despliegue se hizo en cuatro pasos, con punto de retorno previo: se etiquetaron las imágenes en servicio y se copió la configuración, se mergeó el cambio a la rama principal, se trajo el código a la caja con git reset --hard y se generaron los secretos, y se reconstruyeron los contenedores. La verificación inmediata, con el sistema ya en marcha:
@@ -781,14 +781,14 @@ Dos de los doce quedaron además fotografiados antes y después de corregir, sob
 
 > Nota de tratamiento de las capturas. Las dos del estado anterior mostraban un identificador de sesión de la web de pruebas en la franja superior. Se publican con esa franja tapada, y los originales no salen del almacén interno. Las del estado posterior no lo contienen porque la sesión no estaba autenticada.
 
-== El pulido del Spider: quince defectos, y catorce los encontró el uso
+== El pulido del Spider (RF-03): quince defectos, y catorce los encontró el uso
 
-En esa jornada no se añadió funcionalidad: se dedicó a pulir lo que ya existía, pestaña por pestaña, empezando por la primera. De esa pasada salen quince defectos corregidos en el Spider. Lo que más dice de ellos no es el número, sino cómo aparecieron: catorce usando la herramienta y uno leyendo el código. La tabla recoge seis, los más ilustrativos. Los quince completos, cada uno con su entrada del diario de desarrollo, están en docs/informe/diario.md del repositorio.
+En este tramo no se añadió funcionalidad: se pulió lo que ya existía, pestaña por pestaña. De esa pasada salen quince defectos corregidos en el Spider, y lo que más dice de ellos es cómo aparecieron: catorce usando la herramienta y uno leyendo el código.
 
 #tabla(
   (auto, 6fr, 2fr),
   "
-  \# | Qué pasaba | Cómo apareció
+  Nº | Qué pasaba | Cómo apareció
   1 | Pulsar «Detener» no paraba hasta terminar todos los formularios de la página en curso | usando
   3 | El indicador de sesión decía «autenticado» sin que nadie se hubiera autenticado | usando
   7 | La pestaña se llamaba «Proxy» y no es un proxy, sino un rastreador | usando
@@ -798,12 +798,14 @@ En esa jornada no se añadió funcionalidad: se dedicó a pulir lo que ya exist�
   ",
 )
 
-*El patrón que se repite, y es el hallazgo de la jornada.* En once de los quince, el backend ya sabía la respuesta y no llegaba a la pantalla: no eran fallos de cálculo sino de traslado, funciones correctas que la interfaz no dejaba ver, y las pruebas que miran el backend no detectan nada de esto. El decimoquinto apareció al documentar el filtro para el manual: filtraba las filas antes de agruparlas, de modo que filtrar por POST vaciaba la tabla entera. Y dos de los quince los introdujimos nosotros al arreglar otros: se detallan en el apartado 11, porque el recuento honesto incluye los defectos propios.
+Son seis de los quince, los que mejor enseñan el patrón. Los quince completos, cada uno con su entrada del diario, están en docs/informe/diario.md del repositorio.
+
+*El patrón que se repite.* En once de los quince, el backend ya sabía la respuesta y no llegaba a la pantalla: no eran fallos de cálculo sino de traslado, funciones correctas que la interfaz no dejaba ver, y las pruebas que miran el backend no detectan nada de esto. Dos de los quince los introdujimos nosotros al arreglar otros, y se detallan en el apartado 11.
 
 
-== El pulido del Repeater: dieciséis defectos, y una función retirada el mismo día
+== El pulido del Repeater (RF-05): dieciséis defectos, y una función retirada el mismo día
 
-La jornada siguiente repitió el método sobre la segunda pestaña: no se añadió alcance, se pulió lo que había. El resultado se parece al del Spider en el número y se diferencia en algo que conviene contar entero, porque es lo más instructivo de la jornada: una función se añadió por la mañana y se retiró por la tarde.
+El tramo siguiente repitió el método sobre la segunda pestaña: no se añadió alcance, se pulió lo que había. El resultado se parece al del Spider en el número y se diferencia en algo que conviene contar entero, porque es lo más instructivo del tramo: una función se añadió y se retiró el mismo día.
 
 #tabla(
   (auto, 6fr, 2fr),
@@ -820,11 +822,11 @@ La jornada siguiente repitió el método sobre la segunda pestaña: no se añadi
 
 Son seis de los dieciséis, los que mejor enseñan el patrón. Los dieciséis completos, cada uno con su entrada del diario, están en docs/informe/diario.md del repositorio.
 
-*La función que no llegó a la noche, y por qué se cuenta en vez de omitirse.* A las 10:08 el Repeater ganó un historial de peticiones y a las 17:28 se retiró entero: todo el comportamiento errático de la jornada giraba a su alrededor y tres arreglos sucesivos no lo dejaron estable, con el cierre del desarrollo al día siguiente. Un Repeater que mezcla respuestas es peor para un informe que un Repeater sin historial, y lo que ocupó su lugar es la decisión de diseño del apartado 9: una petición cada vez. La causa de fondo apareció cuatro horas después de retirarlo, el 302 invisible hacía que la respuesta del GET posterior pareciera la del POST, y se deja escrito porque ese es el orden real de los hechos: primero se retiró el síntoma y después se encontró la causa.
+*La función que se añadió y se retiró el mismo día.* El Repeater ganó un historial de peticiones y se retiró entero horas después: todo el comportamiento errático giraba a su alrededor y tres arreglos sucesivos no lo dejaron estable. Un Repeater que mezcla respuestas es peor para un informe que un Repeater sin historial, y su lugar lo ocupa la decisión de diseño del apartado 9, una petición cada vez. La causa de fondo apareció después de retirarlo: el 302 invisible hacía que la respuesta del GET posterior pareciera la del POST.
 
-*El patrón de los dieciséis, comparado con el del Spider.* En el Spider, once de quince eran fallos de traslado: el servidor sabía la respuesta y la pantalla no la enseñaba. Aquí el patrón es otro y más incómodo: siete de los dieciséis son fallos de fidelidad, el producto mostraba algo distinto de lo que hacía. Cabeceras que no eran las enviadas, un 302 que no se veía, dos envíos iguales con distinto resultado, un fallo de red disfrazado de respuesta. En una herramienta de auditoría ese es el defecto más caro, porque lo que la herramienta muestra es la evidencia que acaba en el informe: un auditor que copie esas cabeceras documenta algo que no ocurrió.
+*El patrón de los dieciséis.* Donde el Spider acumulaba fallos de traslado, aquí son de fidelidad: siete de los dieciséis mostraban algo distinto de lo que el producto hacía. En una herramienta de auditoría ese es el defecto más caro, porque lo que la herramienta muestra es la evidencia que acaba en el informe: un auditor que copie esas cabeceras documenta algo que no ocurrió.
 
-*El proyecto tenía un verificador configurado y sin usar.* La regresión más tonta de la jornada (el botón de enviar dejó de hacer nada porque un borrado se llevó la declaración de una variable) la habría cazado el analizador estático del propio repositorio, que nunca se había ejecutado. Desde entonces va por delante de cada verificación y hoy no queda ninguna variable no declarada en el frontend. Lo que destapa de paso va al apartado 9: el frontend acumula veintitrés errores y dos avisos de otras reglas y no pasa su propio analizador. Los defectos que el asistente introdujo ese día, y por qué sus verificaciones no los cazaban, están en el apartado 11.
+*El proyecto tenía un verificador configurado y sin usar.* La regresión más tonta del tramo, el botón de enviar dejó de funcionar porque un borrado se llevó la declaración de una variable, la habría cazado el analizador estático del propio repositorio, que nunca se había ejecutado. Ahora va por delante de cada verificación y no queda ninguna variable sin declarar en el frontend. Lo que destapa de paso va al apartado 9: el frontend acumula veintitrés errores y dos avisos de otras reglas. Los defectos que el asistente introdujo aquí están en el apartado 11.
 
 #imagen("../capturas/fase3/RF-05-repeater-preparar-formulario.png", "RF-05 · el Repeater tras pulsar «preparar» sobre un formulario traído del Spider: el aviso de sesión heredada con el botón que la retira, el acuse de campos ocultos y cookie actualizados, el aviso de redirección no seguida con el 302 y su destino, y la pestaña Formulario mostrando la página pedida sin reenviar nada. Los valores de sesión van tapados.")
 
@@ -857,12 +859,12 @@ conversión que la verificación inicial había dado por ausente.
 
 
 
-== El despliegue habría terminado «en verde» sin aplicar la configuración del proxy
+== El despliegue (RNF-03) habría terminado «en verde» sin aplicar la configuración del proxy
 La comprobación previa al despliegue del sistema de acceso encontró un defecto no en el producto, sino en el propio plan de despliegue. El plan mandaba reconstruir «solo el frontend, el backend y el proxy», pero el proxy no se construye: usa una imagen descargada y su bloque del fichero de composición no cambiaba ni un byte, de modo que Compose no lo habría recreado. Como el proxy lee su configuración una sola vez al arrancar, el despliegue habría acabado sin errores y sin aplicar nada. Era el mismo fallo que ya había ocurrido dos días antes, y la razón de que se repitiera es instructiva: nombrar un servicio en un comando da la impresión de cubrirlo.
 
 *Después apareció el caso espejo.* Se recrearon el frontend, la API y el módulo de IA y no el proxy, porque su configuración no había cambiado. Resultado: 502 en todo, porque los contenedores recreados reciben direcciones nuevas y el proxy resuelve los nombres de sus destinos una sola vez, al arrancar. Las dos mitades tienen la misma raíz, el estado del proxy se fija al arrancar, y de ahí sale la regla operativa que ahora está escrita: cuando se recrea cualquiera de los servicios a los que el proxy apunta, se recrea también el proxy, forzándolo explícitamente.
 
-== La instalación desde cero, ejecutada: dos defectos que solo aparecen al seguir las instrucciones
+== La instalación desde cero (RNF-03), ejecutada: dos defectos que solo aparecen al seguir las instrucciones
 RNF-03 pide un despliegue reproducible, y lo único que lo respaldaba era que el servicio estaba en pie en producción, no que alguien pudiera levantarlo desde cero. La segunda cosa se probó siguiendo el README paso a paso, sobre un árbol independiente y con su propio proyecto de contenedores.
 
 *Salieron dos defectos, y ninguno se habría visto leyendo el documento.* El primero: con el puerto 80 ocupado, el arranque falla con «address already in use» y el aviso del README ofrecía un único valor concreto como alternativa, que en esa misma máquina también estaba ocupado: seguir las instrucciones al pie de la letra producía el mismo error dos veces. El segundo es más fino, y es el que importa: ese fallo solo tumba el proxy, el único servicio que publica puerto, mientras los otros cinco arrancan con normalidad, de modo que quien no lea la salida del arranque ve cinco servicios en marcha y puede creer que ha instalado. Es la misma familia que el caso de arriba: algo que parece verde y no lo está.
@@ -887,7 +889,7 @@ La prueba más barata de esta práctica fue una petición con curl, y descubrió
 
 *Lo grave no es el defecto, es por qué no se vio.* El código comprobaba si la respuesta era un éxito, y un rechazo por credencial no provoca ningún error, simplemente no es un éxito: el bucle volvía a dormir y el registro decía que estaba esperando instrucciones. Un operador habría visto un módulo en marcha y a la espera. Estaba en marcha, y no podía recibir nada. Es el mismo patrón que RNF-06 vino a cerrar un nivel más arriba, un fallo que no se distingue de la normalidad, y la razón por la que ahora el módulo falla ruidosamente: comprueba el bus al arrancar y se detiene si no está. Se midió con tres peticiones sin credencial, las tres rechazadas. Evidencia como texto en docs/evidencias/canal-ia-backend-muerto-10oct.md.
 
-== Las dos contrapartidas del bus, probadas antes de confiar en él
+== Las dos contrapartidas del bus (RF-08), probadas antes de confiar en él
 Reconectar el módulo por un bus interno (apartado 4) cambia la forma del riesgo: un control de acceso falla cerrando, un bus falla abriendo. Así que lo que se prueba no es solo que el reparto funcione, sino que no se puede repartir mal. Dieciocho casos en dos conjuntos, con dobles para el bus, el gestor de sesiones y el orquestador: ni red, ni credencial de modelo, ni contenedores, cero coste.
 
 Los dos que justifican el esfuerzo: un hallazgo sin dueño se descarta, no se guarda ni se emite (sin esa regla, un mensaje mal formado reabriría exactamente la fuga de aislamiento ya cerrada), y dos auditores no ven lo del otro, comprobado repartiendo a dos espacios y verificando que cada uno recibe solo lo suyo. Tres más cubren el fallo silencioso en el otro extremo: si la auditoría se interrumpe se publica el motivo, si nadie escucha el bus publicar lo dice en vez de dar el trabajo por encolado, y si una orden llega sin dueño no se audita. Reproducible con python3 backend/tests/test_bus_reparto.py y python3 ia/tests/test_bus_publicacion.py.
@@ -1089,7 +1091,7 @@ significaba lo mismo antes de decirlo. No es una medida y no se presenta como ta
 más de la mitad, y por eso la cifra del asistente se da como 87,1 h con su desglose a la vista en lugar de
 como un total redondo. (40,7 + 46,4 = 87,1. La décima que falta hasta 87,2 es redondeo de cada entrada.)
 
-*Lo que esta tabla NO es, y conviene decirlo antes de que alguien la lea mal.* No es el esfuerzo del grupo
+*Lo que esta tabla no es.* No es el esfuerzo del grupo
 en el producto, que los cinco escribieron en la práctica anterior: el diario solo cubre las sesiones de la
 P3. Tampoco mide valor: una decisión de treinta segundos cambió el entregable más que varias horas de
 construcción. Y el límite honesto: fuera de esa hora de reunión, el tiempo del grupo no está en ningún
@@ -1129,7 +1131,7 @@ De los quince defectos del pulido del Spider (apdo. 7), dos los causamos nosotro
   ",
 )
 
-*El reparto es el hallazgo.* Seis de los ocho los encontró una persona usando el producto. Uno lo cazó la construcción de la imagen. Uno, una comprobación que el propio asistente hizo después de dar el cambio por terminado. Y ninguno lo cazó el método con el que el asistente verificó sus cambios durante toda la jornada, contar cadenas de texto dentro del paquete construido. Ese método confirma que algo está: no dice que se lea bien ni que funcione.
+*El reparto es el hallazgo.* Seis de los ocho los encontró una persona usando el producto. Uno lo cazó la construcción de la imagen. Uno, una comprobación que el propio asistente hizo después de dar el cambio por terminado. Y ninguno lo cazó el método con el que el asistente verificó sus cambios en todo ese tramo, contar cadenas de texto dentro del paquete construido. Ese método confirma que algo está: no dice que se lea bien ni que funcione.
 
 *Dos de los ocho son el mismo error repetido el mismo día:* borrar código por rango de líneas sin comprobar qué quedaba al lado. La primera vez se llevó por delante la declaración de una variable. La segunda, el cierre de un condicional anidado. De ahí sale una regla concreta, que vale más que la buena intención de «revisar mejor»: los bloques se delimitan por contenido, no por el primer cierre que aparezca, y después se comprueba qué ha quedado huérfano.
 
@@ -1221,7 +1223,7 @@ mal dirigidas, preguntaban a la pieza equivocada, y se cazaron probándolas, que
 == Usuarios de prueba y acceso para la corrección
 El producto ya no tiene una contraseña compartida: desde el cambio de acceso cada persona se da de alta ella misma
 con un código de invitación y elige su contraseña, que nadie más conoce. Eso cambia cómo se entrega el
-acceso para corregir, y conviene decirlo con claridad:
+acceso para corregir:
 
 - *En este repositorio no hay ninguna credencial*, ni de prueba ni ficticia. El repositorio es público: una
   contraseña escrita aquí sería una contraseña publicada, y la instalación a la que abre está en internet.
