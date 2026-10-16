@@ -5133,3 +5133,32 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   trazabilidad y el apartado de limitaciones. **Evidencia:** commit `721315fc` en develop, escaneo de
   secretos a cero con control positivo (12 en el `.typ` y 54 en el PDF vía pdftotext).
   **Horas:** ~0,6 h de asistente.
+
+## Fase 3 (16-oct, mañana) — la revisión de josemax: fechas fuera, negritas al mínimo y figuras en su sitio
+
+- **Qué se hizo:** josemax leyó el PDF y fue pasando lo que le chirriaba, apuntado en el momento y sin
+  corregir nada hasta su señal. Catorce observaciones, y luego el encargo de aplicar sus ocho reglas de
+  estilo «de la página 13 hasta el final». Antes de tocar el documento decidió cuatro cosas: las fechas se
+  quitan **todas**, «congelada» sale de **todo** el documento, de las figuras se arregla **solo la
+  colocación** y **RNF-04 se queda en Parcial**. Aplicado: 73 fechas reescritas (la de entrega de la portada
+  se conserva), 15 apariciones de «congelar» sustituidas por lo que la frase quería decir, 25 rayas largas y
+  10 flechas fuera, 254 negritas retiradas de las 520 (las de mitad de frase y las seis que abarcaban
+  párrafos enteros, conservando rótulos, nombres de pantalla y los estados cortos de las tablas), el flotado
+  de las figuras retirado, el bloque «el frontend que se toma como base» borrado del apartado 4 y el módulo
+  de navegador identificado como RF-10 en el resumen.
+- **Por qué:** sus reglas son norma de la línea, no preferencia de una sesión, y ya las había pedido dos
+  veces. Las fechas y «congelada» son calendario y vocabulario internos, que es justo lo que su punto 6
+  manda quitar. Las figuras flotaban y aterrizaban a dos páginas de su párrafo, y como la prosa **no cita
+  ninguna figura por su número** quedaban huérfanas: de ahí sus tres preguntas de «qué hace esto aquí».
+- **Qué se descartó:** agrupar las trece figuras en el apartado de funcionalidades, que era su propuesta
+  inicial. Mueve nueve figuras, obliga a reanclar las citas de la matriz y deja el apartado de pruebas sin
+  las siete evidencias que el enunciado espera ahí. Lo descartó él con ese dato delante. También se descartó
+  subir RNF-04 a Cumplido.
+- **Qué falló:** la pasada de negritas se hizo línea a línea y **no veía las seis negritas que abarcaban
+  varias líneas**, que son las más invasivas de todas. Se cazaron contando asteriscos impares y comparando
+  con el respaldo previo, que demostró que ya estaban así antes y no las había roto la pasada. Corregidas
+  con una expresión que cruza saltos de línea.
+- **A qué requisito toca:** el criterio de claridad y coherencia del enunciado. **Evidencia:** commit de la
+  jornada en develop, 46 páginas totales y **40 contables**, cero asteriscos huérfanos y escaneo de secretos
+  a cero con control positivo. ⚠️ **40 es el límite exacto del enunciado**, sin margen.
+  **Horas:** ~1,4 h de asistente.
