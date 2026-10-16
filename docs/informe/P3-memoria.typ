@@ -482,7 +482,6 @@ construido aparte, y la evidencia que se muestra es la que acaba copiada en un i
 Cada funcionalidad con lo que hace, cómo se usa y qué requisitos cubre. El panel tiene seis pestañas más la
 pantalla de acceso, y el módulo de IA trabaja por detrás, sin pestaña propia.
 
-#imagen("../capturas/fase3/RF-05-repeater-preparar-formulario.png", "RF-05 · el Repeater tras pulsar «preparar» sobre un formulario traído del Spider: el aviso de sesión heredada con el botón que la retira, el acuse de campos ocultos y cookie actualizados, el aviso de redirección no seguida con el 302 y su destino, y la pestaña Formulario mostrando la página pedida sin reenviar nada. Los valores de sesión van tapados.")
 
 
 == Las funcionalidades, una a una: qué hace, cómo se usa y qué requisito cubre
@@ -494,9 +493,9 @@ de la derecha dice dónde se ve cada una, sin repetir aquí figuras que ya está
   "
   Pantalla | Qué hace y cómo se usa | Requisitos | Dónde se ve
   *Spider* | Rastrea el objetivo siguiendo enlaces y formularios y levanta su mapa. Se escribe la dirección, se lanza, y la tabla se va llenando. Se puede detener a medias, filtrar por método y mandar una petición al Repeater. Las cabeceras que muestra son las que se enviaron de verdad, no una plantilla | RF-03 | fig. apdo. 7 (el panel de detalle tras el pulido)
-  *Repeater* | Banco de trabajo de una petición: se modifica y se reenvía exactamente lo que se ve en pantalla. Avisa si la petición lleva sesión heredada y ofrece quitarla. El botón «preparar» convierte la plantilla de un formulario en una petición que funciona. La respuesta se lee en Raw, Pretty, Preview, Headers y la página preparada | RF-04 · RF-05 | figura en este apartado y dos en el 7
-  *Intruder* | Prueba muchos valores en un punto marcado de la petición y señala las respuestas que se salen del patrón. Se marca el campo, se elige diccionario, se lanza y se puede cancelar sin dejar el servidor trabajando | RF-06 | figura en este apartado
-  *Utilidades* | Cuatro herramientas que no salen a la red: codificador (base64, URL, HTML y lectura de JWT), generador de huellas, probador de expresiones regulares y generador de payloads. Se pega el texto y se ve el resultado al lado | RF-07 | figura en este apartado
+  *Repeater* | Banco de trabajo de una petición: se modifica y se reenvía exactamente lo que se ve en pantalla. Avisa si la petición lleva sesión heredada y ofrece quitarla. El botón «preparar» convierte la plantilla de un formulario en una petición que funciona. La respuesta se lee en Raw, Pretty, Preview, Headers y la página preparada | RF-04 · RF-05 | tres figuras en el apdo. 7
+  *Intruder* | Prueba muchos valores en un punto marcado de la petición y señala las respuestas que se salen del patrón. Se marca el campo, se elige diccionario, se lanza y se puede cancelar sin dejar el servidor trabajando | RF-06 | figura en el apdo. 7
+  *Utilidades* | Cuatro herramientas que no salen a la red: codificador (base64, URL, HTML y lectura de JWT), generador de huellas, probador de expresiones regulares y generador de payloads. Se pega el texto y se ve el resultado al lado | RF-07 | figura en el apdo. 7
   *Vulnerabilidades* | Panel donde se dispara la auditoría con IA y donde aterriza su resultado. Lo que está visto funcionando es el camino degradado: lo que la IA no pudo analizar sale aparte y con su motivo. Nunca se ha visto un hallazgo analizado con su severidad, porque ninguna auditoría ha llegado a devolver uno. La pantalla queda sin pulir y sin terminar | RF-08 · RNF-06 | figura del apdo. 7 (operación degradada)
   *Manual* | Manual de uso dentro del propio producto, control por control y navegable por pastillas. No lo pide ningún requisito: salió del pulido, al comprobar que explicar una pantalla destapa sus defectos | no aplica (mejora) | figura del apdo. 9
   *Acceso* (fuera de la barra) | Alta con código de invitación y entrada con token firmado por el servidor. Cada cuenta ve solo sus propios datos | RF-11 · RF-12 | figura de producción en el apdo. 6 y par de aislamiento en el 7
@@ -521,9 +520,7 @@ retiró al descartar ese requisito, con su captura tomada antes de retirarla y c
   existía y lo equivocado era la nota de la verificación inicial, que la daba por ausente. RF-07 queda cumplido
   sin salvedades.
 
-#imagen("../capturas/fase3/RF-06-intruder-ataque-lanzado-censurada.png", "RF-06 · el Intruder con un ataque de inyección SQL lanzado contra el formulario de acceso del objetivo propio: trece payloads numerados, cada uno con su código, tamaño, tiempo y veredicto, y el parámetro marcado con el asterisco. Los trece responden 419 porque el objetivo exige un testigo CSRF válido en cada envío: lo que la captura demuestra es el mecanismo de fuzzing, no un hallazgo. El testigo va tapado.")
 
-#imagen("../capturas/fase3/RF-07-utilidades-jwt.png", "RF-07 · el codificador con un JWT en la entrada y sus cuatro conversiones resueltas a la vez: base64, URL, HTML y la lectura del JWT, justo la conversión que la verificación inicial dio por ausente. El testigo mostrado es el ejemplo público de documentación («John Doe»), no una credencial del producto.")
 
 == Nada de lo que se entrega funciona con datos simulados
 El enunciado pide que, si una integración externa no está disponible y hay que simularla, se indique de
@@ -731,7 +728,7 @@ El plan original del equipo tenía doce casos, de modo que seis de los códigos 
   PR-01 | RF-01 | Abrir la URL pública en un navegador limpio | 401 Basic Auth: la credencial documentada no entra | *200*, sirve el panel · reejecutada en producción
   PR-03 | RF-03 | Rastrear un objetivo y revisar el panel de detalle | no ejecutada | *pasa* · figura del apdo. 7: rótulos legibles y cabeceras reales
   PR-04 | RF-04 | Enviar dos veces la misma petición y comparar | *sin caso escrito* | *pasa* · figuras del apdo. 7: mismo estado, tamaño y cuerpo. Distinto tiempo
-  PR-05 | RF-05 | Modificar y reenviar una petición. Ver la respuesta | envío correcto, historial vacío | *pasa* · figura del apdo. 5. El historial se retiró por diseño (apdo. 9)
+  PR-05 | RF-05 | Modificar y reenviar una petición. Ver la respuesta | envío correcto, historial vacío | *pasa* · figura del apdo. 7. El historial se retiró por diseño (apdo. 9)
   PR-06 | RF-06 | Marcar un campo y lanzar el Intruder | diccionarios servidos. Ejecución sin probar | *no reejecutada*: exige tráfico de ataque real y su procedimiento nombraba el laboratorio retirado
   PR-07 | RF-07 | Hash, codificadores y regex con casos conocidos | hash y codificadores correctos. JWT no soportado | *no reejecutada*: exige credencial de usuario
   PR-08 | RF-08 | Publicar un hallazgo y recuperarlo por el panel | backend correcto. Faltaba el productor | *pasa* · recorrido verificado y figura del apdo. 7 (techo a 0 euros)
@@ -829,11 +826,21 @@ Son seis de los dieciséis, los que mejor enseñan el patrón. Los dieciséis co
 
 *El proyecto tenía un verificador configurado y sin usar.* La regresión más tonta de la jornada (el botón de enviar dejó de hacer nada porque un borrado se llevó la declaración de una variable) la habría cazado el analizador estático del propio repositorio, que nunca se había ejecutado. Desde entonces va por delante de cada verificación y hoy no queda ninguna variable no declarada en el frontend. Lo que destapa de paso va al apartado 9: el frontend acumula veintitrés errores y dos avisos de otras reglas y no pasa su propio analizador. Los defectos que el asistente introdujo ese día, y por qué sus verificaciones no los cazaban, están en el apartado 11.
 
+#imagen("../capturas/fase3/RF-05-repeater-preparar-formulario.png", "RF-05 · el Repeater tras pulsar «preparar» sobre un formulario traído del Spider: el aviso de sesión heredada con el botón que la retira, el acuse de campos ocultos y cookie actualizados, el aviso de redirección no seguida con el 302 y su destino, y la pestaña Formulario mostrando la página pedida sin reenviar nada. Los valores de sesión van tapados.")
+
 #imagen("../capturas/fase3/RF-04-repeater-dos-envios-mismo-resultado-1.png", "RF-04 · prueba de aceptación del Repeater con cliente propio, primer envío: 302, 0,4 KB y destino /tienda/205.")
 
 #imagen("../capturas/fase3/RF-04-repeater-dos-envios-mismo-resultado-2.png", "RF-04 · segundo envío de la misma petición, sin tocar nada: idénticos el estado, el tamaño, el destino y el cuerpo de la respuesta. Lo único que cambia es el tiempo (56 ms frente a 73 ms), y ese cambio es justamente lo que demuestra que son dos envíos distintos y no la misma figura repetida. Con el cliente compartido anterior, dos envíos iguales podían no coincidir.")
 
 #imagen("../capturas/fase3/RF-03-spider-rotulos-despues.png", "RF-03 · el panel de detalle después del pulido, con los dos defectos de fidelidad corregidos: los rótulos de sección se distinguen del contenido (antes compartían el mismo gris, y eso llevó a leer las cabeceras de respuesta como si fueran de petición) y las cabeceras que se muestran son las realmente enviadas, con la Cookie de sesión incluida. Los cuatro valores de sesión van tapados.")
+
+Las dos pantallas que no se pulieron también se comprueban, y sus figuras cierran el bloque: el Intruder
+con un ataque lanzado y cancelable (RF-06) y el codificador resolviendo un JWT (RF-07), que es la
+conversión que la verificación inicial había dado por ausente.
+
+#imagen("../capturas/fase3/RF-06-intruder-ataque-lanzado-censurada.png", "RF-06 · el Intruder con un ataque de inyección SQL lanzado contra el formulario de acceso del objetivo propio: trece payloads numerados, cada uno con su código, tamaño, tiempo y veredicto, y el parámetro marcado con el asterisco. Los trece responden 419 porque el objetivo exige un testigo CSRF válido en cada envío: lo que la captura demuestra es el mecanismo de fuzzing, no un hallazgo. El testigo va tapado.")
+
+#imagen("../capturas/fase3/RF-07-utilidades-jwt.png", "RF-07 · el codificador con un JWT en la entrada y sus cuatro conversiones resueltas a la vez: base64, URL, HTML y la lectura del JWT, justo la conversión que la verificación inicial dio por ausente. El testigo mostrado es el ejemplo público de documentación («John Doe»), no una credencial del producto.")
 
 
 > Nota de tratamiento de las figuras de este apartado. Se tomaron contra una web propia del equipo autorizada para ello. El panel de cabeceras muestra la cookie de sesión del objetivo, es lo correcto porque es lo que se envía, así que cada figura se publica con esos valores tapados y los originales no salen del almacén interno. En el par de aislamiento, la captura del usuario A llevaba el identificador de sesión capturado de la web auditada, justo el dato que RF-12 existe para no compartir: va tapado y con la etiqueta a la vista, para que se vea qué se redactó.
@@ -941,9 +948,9 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
   RF-02 | Proxy del lado servidor (httpx) | Modificado (justif. apdo. 3) | backend/services/proxy_service.py | PR-19 · justif. apdo. 3
   RF-03 | Spider / rastreo | Cumplido (19 defectos corregidos, apdo. 7) | backend/services/spider_service.py + frontend/src/pages/proxy/ | PR-03 · fig. apdo. 7
   RF-04 | Auditoría autenticada (sesión compartida) | *Modificado* (cliente propio, justif. apdo. 3) | backend/services/session_service.py + proxy_service.py | PR-04 · justif. apdo. 3 · figs. apdo. 7
-  RF-05 | Repeater | Cumplido (16 defectos corregidos, historial retirado por diseño, apdo. 9) | backend/routes/repeater.py + frontend/src/pages/repeater/ | PR-05 · fig. apdo. 5
-  RF-06 | Intruder / fuzzing | Cumplido (cancelación corregida) | backend/services/intruder_service.py | PR-06 · fig. apdo. 5
-  RF-07 | Utilidades (incl. JWT) | Cumplido | frontend/src/pages/utilities/ | PR-07 · fig. apdo. 5
+  RF-05 | Repeater | Cumplido (16 defectos corregidos, historial retirado por diseño, apdo. 9) | backend/routes/repeater.py + frontend/src/pages/repeater/ | PR-05 · fig. apdo. 7
+  RF-06 | Intruder / fuzzing | Cumplido (cancelación corregida) | backend/services/intruder_service.py | PR-06 · fig. apdo. 7
+  RF-07 | Utilidades (incl. JWT) | Cumplido | frontend/src/pages/utilities/ | PR-07 · fig. apdo. 7
   RF-08 | IA que alimenta el panel Vulnerabilidades | Parcial: recorrido y techo verificados, *ningún hallazgo analizado aún* (apdo. 7) | ia/ + backend/services/redis_consumer.py | PR-08 · figs. apdo. 7
   RF-09 | DevTools que alimenta el panel Red | *Descartado* (justif. apdo. 3) | devtools/ conservado · backend/routes/network.py se mantiene | justif. apdo. 3
   RF-10 | Playwright | *Parcial* (sin prueba ejecutada y sondeo con 401, apdos. 6-7) | playwright/ + backend/routes/playwright.py | PR-10 · apdos. 6-7
