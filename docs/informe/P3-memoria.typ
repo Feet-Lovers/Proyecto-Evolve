@@ -56,7 +56,10 @@
     ..cuerpo.flatten().map(c => table.cell(text(size: 8pt, fill: rgb("#DCE4EF"), eval(c, mode: "markup")))),
   ))
 }
-#let imagen(ruta, pie) = figure(image(ruta, width: 80%), caption: eval(pie, mode: "markup"))
+#let imagen(ruta, pie, et: none) = {
+  let f = figure(image(ruta, width: 80%), caption: eval(pie, mode: "markup"))
+  if et == none { f } else { [#f#label(et)] }
+}
 
 #set document(title: "HookSuite · Memoria técnica (Práctica 3)")
 // ── Diseño heredado del informe de la Práctica 1 (mismo esqueleto visual) ──
@@ -613,7 +616,7 @@ El dato de los cero reinicios no es decorativo: el acceso por usuario se diseñ�
 
 El acceso, capturado en la instalación pública el mismo día del despliegue (la entrada carga ya sin el cuadro de Basic Auth que antes pedía una contraseña compartida por todo el grupo):
 
-#imagen("../capturas/fase2/RF-12-prod-sesion-iniciada.png", "RF-12 y RNF-07 · sesión iniciada en producción, con el alta hecha mediante el código de invitación sobre una instalación que arrancó deliberadamente con cero usuarios: el usuario figura en la cabecera y el interceptor aparece como conectado, lo que prueba que el WebSocket viaja también autenticado y no solo la API.")
+#imagen("../capturas/fase2/RF-12-prod-sesion-iniciada.png", "RF-12 y RNF-07 · sesión iniciada en producción, con el alta hecha mediante el código de invitación sobre una instalación que arrancó deliberadamente con cero usuarios: el usuario figura en la cabecera y el interceptor aparece como conectado, lo que prueba que el WebSocket viaja también autenticado y no solo la API.", et: "fig-sesion-produccion")
 
 
 === Dos efectos del pulido del Repeater sobre la seguridad del producto
@@ -709,34 +712,37 @@ Plan de pruebas, casos ejecutados, resultados y las pruebas que fallaron con su 
 
 El plan original del equipo tenía doce casos, de modo que seis de los códigos que la matriz cita (PR-03, PR-04, PR-10, PR-12, PR-15 y PR-20) no tenían caso escrito: se redactan aquí por primera vez. Y los doce que existían llevaban los resultados medidos sobre el prototipo, de modo que varios eran hoy literalmente falsos (PR-01 figuraba como fallo por un control de acceso que ya no existe, PR-16 decía que toda la API respondía sin credenciales, PR-19 daba un error de servidor ya corregido). Esos resultados tampoco son basura: son la foto del punto de partida. Por eso la tabla lleva dos resultados, el del prototipo y el de hoy sobre el código que se entrega, y la celda de hoy dice además de dónde sale ese resultado: una reejecución, una figura de esta memoria, o nada, y entonces se dice. Los códigos son los del plan de la práctica anterior y se conservan tal cual para que las remisiones de la matriz sigan valiendo, de ahí que la numeración llegue a veinte con dieciocho casos.
 
+*Cómo leer la tabla.* De los dieciocho casos, seis se han reejecutado contra producción, seis los demuestra
+una figura de esta memoria, cinco no se han reejecutado y se dice por qué, y uno, PR-11, tiene el
+procedimiento caducado porque cita una ruta que el cambio de acceso retiró. En las filas reejecutadas, un
+200 no se ha dado por bueno sin mirar el tipo de contenido, porque el servidor devuelve la portada del panel
+ante cualquier ruta desconocida. Las salidas completas están en docs/evidencias/pruebas-reejecutadas-13oct.md.
+
 #tabla(
   (auto, auto, 4fr, 3fr, 4fr),
   "
   ID | Req. | Qué prueba | Prototipo | Código que se entrega
   PR-01 | RF-01 | Abrir la URL pública en un navegador limpio | 401 Basic Auth: la credencial documentada no entra | *200*, sirve el panel · reejecutada en producción
-  PR-03 | RF-03 | Rastrear un objetivo y revisar el panel de detalle | no ejecutada | *pasa* · figura del apdo. 7: rótulos legibles y cabeceras reales
-  PR-04 | RF-04 | Enviar dos veces la misma petición y comparar | *sin caso escrito* | *pasa* · figuras del apdo. 7: mismo estado, tamaño y cuerpo. Distinto tiempo
-  PR-05 | RF-05 | Modificar y reenviar una petición. Ver la respuesta | envío correcto, historial vacío | *pasa* · figura del apdo. 7. El historial se retiró por diseño (apdo. 9)
+  PR-03 | RF-03 | Rastrear un objetivo y revisar el panel de detalle | no ejecutada | *pasa* · @fig-spider-rotulos: rótulos legibles y cabeceras reales
+  PR-04 | RF-04 | Enviar dos veces la misma petición y comparar | *sin caso escrito* | *pasa* · @fig-repeater-envio-1 y @fig-repeater-envio-2: mismo estado, tamaño y cuerpo. Distinto tiempo
+  PR-05 | RF-05 | Modificar y reenviar una petición. Ver la respuesta | envío correcto, historial vacío | *pasa* · @fig-repeater-preparar. El historial se retiró por diseño (apdo. 9)
   PR-06 | RF-06 | Marcar un campo y lanzar el Intruder | diccionarios servidos. Ejecución sin probar | *no reejecutada*: exige tráfico de ataque real y su procedimiento nombraba el laboratorio retirado
   PR-07 | RF-07 | Hash, codificadores y regex con casos conocidos | hash y codificadores correctos. JWT no soportado | *no reejecutada*: exige credencial de usuario
-  PR-08 | RF-08 | Publicar un hallazgo y recuperarlo por el panel | backend correcto. Faltaba el productor | *pasa* · recorrido verificado y figura del apdo. 7 (techo a 0 euros)
+  PR-08 | RF-08 | Publicar un hallazgo y recuperarlo por el panel | backend correcto. Faltaba el productor | *pasa* · recorrido verificado y @fig-techo-cero (techo a 0 euros)
   PR-10 | RF-10 | Ejercitar el módulo de navegador | *sin caso escrito* | *no reejecutada*: el módulo ni siquiera estaba en la red interna hasta el último despliegue
   PR-11 | RF-11 | Que cada usuario tenga su espacio de datos | tokens correctos por /api/session/new | *procedimiento caducado*: esa ruta se retiró con el acceso por usuario. Hoy RF-11 se prueba con PR-12
-  PR-12 | RF-12 | Que un usuario no vea los datos de otro | *sin caso escrito* | *pasa* · par de figuras A/B de este apartado, verificado 11/11 en el entorno local
+  PR-12 | RF-12 | Que un usuario no vea los datos de otro | *sin caso escrito* | *pasa* · @fig-aislamiento-a y @fig-aislamiento-b, verificado 11/11 en el entorno local
   PR-13 | RNF-03 | Servicio en pie y API publicada en la caja | /health correcto. Esquema de la API *abierto* | *pasa y mejora*: /health 200 y el esquema *ya no se publica* · reejecutada
   PR-14 | RNF-07 | Sin claves en lo que se publica | por ejecutar | *pasa* · cero ficheros seguidos por git con clave, con control positivo · reejecutada
   PR-15 | RNF-08 | Cortafuegos por sesión | *sin caso escrito* | *no reejecutada*: el agente está operativo y endurecido (apdos. 6-7), pero no se ha vuelto a ejercitar
   PR-16 | RNF-07 | Llamar a la API sin ninguna credencial | *toda la API respondía* | *pasa*: 401, y los puertos 8000 y 3000 rechazan conexión desde fuera · reejecutada
-  PR-17 | RNF-02 | Conexión en tiempo real con el servidor | enlace correcto, sin autenticar | *pasa* · el indicador «conectado» de la figura del apdo. 6 lo prueba ya autenticado
+  PR-17 | RNF-02 | Conexión en tiempo real con el servidor | enlace correcto, sin autenticar | *pasa* · el indicador «conectado» de @fig-sesion-produccion lo prueba ya autenticado
   PR-18 | RNF-09 | Responder por TLS | sin HTTPS | *sigue sin TLS* · reejecutada. RNF-09 es el único requisito declarado pendiente
   PR-19 | RF-02 | Estado del proxy del lado servidor | *500*, error de servidor | *pasa*: 401, el extremo responde y exige credencial · reejecutada
   PR-20 | RNF-05 | Límite de peticiones simultáneas | *sin caso escrito* | *no reejecutada*: el límite está implementado y citado en el apdo. 7, pero sin prueba propia
   ",
 )
 
-*Cómo leer esta tabla, dicho sin adornos.* De los dieciocho casos, seis se han reejecutado contra producción, seis los demuestra una figura de esta memoria, cinco no se han reejecutado y se dice por qué, y uno, PR-11, tiene el procedimiento caducado porque cita una ruta que el cambio de acceso retiró.
-
-*Un aviso de método que vale para quien repita estas medidas.* El frontend es una aplicación de una sola página, y el servidor devuelve su portada a cualquier ruta desconocida: una dirección inventada responde 200 igual que una real. Por eso, en las filas reejecutadas, un 200 no se ha dado por bueno sin mirar el tipo de contenido, y es lo que evitó concluir que el esquema de la API seguía publicado cuando lo que respondía era la portada. Las salidas completas están en docs/evidencias/pruebas-reejecutadas-13oct.md.
 
 == Las pruebas del producto
 Pantalla por pantalla y requisito por requisito, con la evidencia capturada antes de cada arreglo.
@@ -818,13 +824,13 @@ Son seis de los dieciséis, los que mejor enseñan el patrón. Los dieciséis co
 
 *El proyecto tenía un verificador configurado y sin usar.* La regresión más tonta del tramo, el botón de enviar dejó de funcionar porque un borrado se llevó la declaración de una variable, la habría cazado el analizador estático del propio repositorio, que nunca se había ejecutado. Ahora va por delante de cada verificación y no queda ninguna variable sin declarar en el frontend. Lo que destapa de paso va al apartado 9: el frontend acumula veintitrés errores y dos avisos de otras reglas. Los defectos que el asistente introdujo aquí están en el apartado 11.
 
-#imagen("../capturas/fase3/RF-05-repeater-preparar-formulario.png", "RF-05 · el Repeater tras pulsar «preparar» sobre un formulario traído del Spider: el aviso de sesión heredada con el botón que la retira, el acuse de campos ocultos y cookie actualizados, el aviso de redirección no seguida con el 302 y su destino, y la pestaña Formulario mostrando la página pedida sin reenviar nada. Los valores de sesión van tapados.")
+#imagen("../capturas/fase3/RF-05-repeater-preparar-formulario.png", "RF-05 · el Repeater tras pulsar «preparar» sobre un formulario traído del Spider: el aviso de sesión heredada con el botón que la retira, el acuse de campos ocultos y cookie actualizados, el aviso de redirección no seguida con el 302 y su destino, y la pestaña Formulario mostrando la página pedida sin reenviar nada. Los valores de sesión van tapados.", et: "fig-repeater-preparar")
 
-#imagen("../capturas/fase3/RF-04-repeater-dos-envios-mismo-resultado-1.png", "RF-04 · prueba de aceptación del Repeater con cliente propio, primer envío: 302, 0,4 KB y destino /tienda/205.")
+#imagen("../capturas/fase3/RF-04-repeater-dos-envios-mismo-resultado-1.png", "RF-04 · prueba de aceptación del Repeater con cliente propio, primer envío: 302, 0,4 KB y destino /tienda/205.", et: "fig-repeater-envio-1")
 
-#imagen("../capturas/fase3/RF-04-repeater-dos-envios-mismo-resultado-2.png", "RF-04 · segundo envío de la misma petición, sin tocar nada: idénticos el estado, el tamaño, el destino y el cuerpo de la respuesta. Lo único que cambia es el tiempo (56 ms frente a 73 ms), y ese cambio es justamente lo que demuestra que son dos envíos distintos y no la misma figura repetida. Con el cliente compartido anterior, dos envíos iguales podían no coincidir.")
+#imagen("../capturas/fase3/RF-04-repeater-dos-envios-mismo-resultado-2.png", "RF-04 · segundo envío de la misma petición, sin tocar nada: idénticos el estado, el tamaño, el destino y el cuerpo de la respuesta. Lo único que cambia es el tiempo (56 ms frente a 73 ms), y ese cambio es justamente lo que demuestra que son dos envíos distintos y no la misma figura repetida. Con el cliente compartido anterior, dos envíos iguales podían no coincidir.", et: "fig-repeater-envio-2")
 
-#imagen("../capturas/fase3/RF-03-spider-rotulos-despues.png", "RF-03 · el panel de detalle después del pulido, con los dos defectos de fidelidad corregidos: los rótulos de sección se distinguen del contenido (antes compartían el mismo gris, y eso llevó a leer las cabeceras de respuesta como si fueran de petición) y las cabeceras que se muestran son las realmente enviadas, con la Cookie de sesión incluida. Los cuatro valores de sesión van tapados.")
+#imagen("../capturas/fase3/RF-03-spider-rotulos-despues.png", "RF-03 · el panel de detalle después del pulido, con los dos defectos de fidelidad corregidos: los rótulos de sección se distinguen del contenido (antes compartían el mismo gris, y eso llevó a leer las cabeceras de respuesta como si fueran de petición) y las cabeceras que se muestran son las realmente enviadas, con la Cookie de sesión incluida. Los cuatro valores de sesión van tapados.", et: "fig-spider-rotulos")
 
 Las dos pantallas que no se pulieron también se comprueban, y sus figuras cierran el bloque: el Intruder
 con un ataque lanzado y cancelable (RF-06) y el codificador resolviendo un JWT (RF-07), que es la
@@ -842,9 +848,9 @@ conversión que la verificación inicial había dado por ausente.
 
 *Después*, con el sistema de acceso puesto, se repitieron las mismas pruebas. Once comprobaciones, once en verde: alta y entrada de dos usuarios distintos, contraseña incorrecta rechazada con 401 y no con un error del servidor, la API respondiendo con token y 403 al intentar tocar el espacio de otro con token propio (autenticación y autorización, que son cosas distintas), y el segundo usuario sin ver ni el hallazgo ni la cookie del primero. Se probó además como ataque: un usuario autenticado intentó dirigir el Spider al espacio de otro nombrándolo en el cuerpo de la petición, el quinto fallo del apartado 6, y el rastreo fue a parar al espacio del atacante. Ni el código de invitación ni las contraseñas aparecen en ninguna salida: el guion de pruebas los mantiene en variables.
 
-#imagen("../capturas/fase2/RF-12-aislamiento-usuarioA-con-datos.png", "RF-12 · antes de rehacer el acceso este panel era común a todos. Ahora el usuario A, autenticado, ve las trece peticiones que su propio Spider capturó del objetivo autorizado. Compárese con la captura siguiente, tomada al mismo tiempo.")
+#imagen("../capturas/fase2/RF-12-aislamiento-usuarioA-con-datos.png", "RF-12 · antes de rehacer el acceso este panel era común a todos. Ahora el usuario A, autenticado, ve las trece peticiones que su propio Spider capturó del objetivo autorizado. Compárese con la captura siguiente, tomada al mismo tiempo.", et: "fig-aislamiento-a")
 
-#imagen("../capturas/fase2/RF-12-aislamiento-usuarioB-sin-datos.png", "RF-12 · el contraste: el usuario B, autenticado a la vez y en otro navegador, ve su panel vacío. Antes del cambio habría visto exactamente lo mismo que el usuario A. Este par es la prueba del aislamiento por usuario. El alta de ambos exige el código de invitación: el registro no es abierto a propósito, porque la herramienta lanza tráfico contra terceros y con altas anónimas cualquiera podría atacar desde la infraestructura del grupo.")
+#imagen("../capturas/fase2/RF-12-aislamiento-usuarioB-sin-datos.png", "RF-12 · el contraste: el usuario B, autenticado a la vez y en otro navegador, ve su panel vacío. Antes del cambio habría visto exactamente lo mismo que el usuario A. Este par es la prueba del aislamiento por usuario. El alta de ambos exige el código de invitación: el registro no es abierto a propósito, porque la herramienta lanza tráfico contra terceros y con altas anónimas cualquiera podría atacar desde la infraestructura del grupo.", et: "fig-aislamiento-b")
 La batería de once casos de aislamiento pasa completa en el entorno local. En la instalación pública
 se han verificado las cuatro fugas cerradas, no la batería entera, y conviene no confundir una cosa con la otra.
 
@@ -910,7 +916,7 @@ La prueba que demuestra RNF-06 no necesita ni clave de API ni conexión: sustitu
 
 Una prueba unitaria demuestra que el clasificador devuelve el estado degradado, no que alguien lo enseñe, y entre las dos cosas hubo un hueco real: durante un día el estado existió y no lo consumía nadie al otro lado, de modo que RNF-06 estaba cumplido y era invisible. El hueco se cerró y se comprobó en la interfaz, con una auditoría lanzada desde el panel y sesión real.
 
-#imagen("../capturas/ia/RNF-06-panel-no-analizado-techo0.png", "RNF-06 / RF-08 · el panel tras una auditoría truncada por el techo de gasto: 48 sin analizar, la IA no pudo valorarlo, cada entrada con su motivo («techo de 0 llamadas por auditoria alcanzado») y el recuento «0 detectadas · 48 sin analizar» separando las dos cosas. Los elementos provienen de un rastreo previo sobre una web propia del equipo. El objetivo de la barra era el valor fijo que el panel traía entonces, sustituido después por la herencia del objetivo rastreado.")
+#imagen("../capturas/ia/RNF-06-panel-no-analizado-techo0.png", "RNF-06 / RF-08 · el panel tras una auditoría truncada por el techo de gasto: 48 sin analizar, la IA no pudo valorarlo, cada entrada con su motivo («techo de 0 llamadas por auditoria alcanzado») y el recuento «0 detectadas · 48 sin analizar» separando las dos cosas. Los elementos provienen de un rastreo previo sobre una web propia del equipo. El objetivo de la barra era el valor fijo que el panel traía entonces, sustituido después por la herencia del objetivo rastreado.", et: "fig-techo-cero")
 
 Lo que la figura prueba, y que ninguna prueba unitaria alcanzaba: que el mensaje de lista vacía dejó de mentir. Antes, una auditoría que no había podido analizar nada y otra que había analizado y no encontrado nada producían la misma pantalla. Ahora el aviso va aparte de los hallazgos, en su propia tira, por encima, porque mezclarlo obligaría a inventarle una severidad a algo que precisamente no se pudo valorar.
 
