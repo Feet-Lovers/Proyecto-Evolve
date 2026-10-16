@@ -5469,3 +5469,20 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
 - **A qué requisito toca:** la casilla del enunciado que pide que no haya secretos reales ni en el código ni
   en el historial. **Evidencia:** recuentos con control positivo sobre el commit etiquetado.
   **Horas:** ~0,2 h de asistente.
+
+## Fase 3 (16-oct) — entregado
+
+- **Qué se hizo:** el portavoz subió la memoria en PDF a la tarea del campus, con el comentario que lleva el
+  enlace al repositorio, el código de invitación del producto desplegado y la declaración de que el vídeo no
+  se entrega. Antes de subir se releyó **el enunciado del PDF**, no las notas de trabajo, y de esa lectura
+  salió una comprobación que no estaba en la lista: el enunciado pide abrir los enlaces desde una ventana de
+  incógnito antes de enviar. Comprobado sin credenciales: el repositorio, la etiqueta y el propio PDF
+  responden a quien no tiene cuenta.
+- **El estado de la lista de comprobación del enunciado:** nueve de catorce casillas marcadas, que es el
+  techo que quedaba. Las cinco restantes se quedan sin marcar **por decisiones conscientes y declaradas**:
+  tres dependían del vídeo, una del enlace del vídeo en la portada y la última de que alguien ajeno al grupo
+  instalara el producto.
+- **La comprobación que cierra el círculo:** el PDF subido es **idéntico byte a byte** al que contiene el
+  commit etiquetado, de modo que lo que se corrige y lo que se entregó son el mismo documento.
+- **A qué requisito toca:** la entrega. **Evidencia:** la etiqueta en el remoto y el hash del PDF.
+  **Horas:** ~0,3 h de asistente.
