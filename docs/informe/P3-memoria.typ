@@ -167,7 +167,7 @@
       *Seguridad* | Cierre de la API, orígenes permitidos, canal autenticado, gestión de secretos y limpieza del historial
       *Infraestructura y despliegue* | Contenedores, servidor público y despliegue reproducible
       *Pruebas y evidencias* | Plan de pruebas, ejecución y capturas
-      *Documentación* | Memoria técnica, README y vídeo
+      *Documentación* | Memoria técnica y README
       ",
     )
     #v(0.65cm)
@@ -177,8 +177,6 @@
       text(size: 9.5pt, fill: azul-acento)[#link("https://github.com/Feet-Lovers/Proyecto-Evolve")[github.com/Feet-Lovers/Proyecto-Evolve]],
       text(size: 9.5pt, fill: hielo)[Entrega · 16 de octubre de 2026],
     )
-    #v(0.35cm)
-    #text(size: 10pt, fill: rgb("#FF3B30"), weight: "bold")[Vídeo de demostración · PENDIENTE DE ENLACE]
   ]
 ]
 
@@ -536,8 +534,8 @@ retiró al descartar ese requisito, con su captura tomada antes de retirarla y c
 #imagen("../capturas/fase3/RF-07-utilidades-jwt.png", "RF-07 — el codificador con un JWT en la entrada y sus cuatro conversiones resueltas a la vez: base64, URL, HTML y la lectura del JWT, justo la conversión que la verificación del 29 de septiembre dio por ausente. El testigo mostrado es el ejemplo público de documentación («John Doe»), no una credencial del producto.")
 
 == Nada de lo que se entrega funciona con datos simulados
-El enunciado lo pide con estas palabras: si una integración externa no está disponible y hay que simularla,
-*se indica de forma explícita en la memoria y en el vídeo*. Aquí no hace falta simular ninguna, y conviene
+El enunciado pide que, si una integración externa no está disponible y hay que simularla, se indique de
+forma explícita. Aquí no hace falta simular ninguna, y conviene
 decirlo con los interruptores delante porque el código sí trae los mecanismos para hacerlo.
 
 - *La única integración externa del producto es la API del modelo*, y no se simula. Cuando falta la clave o
@@ -698,7 +696,7 @@ herramientas, sin redondear hacia abajo.
   y el de herramientas de depuración las tres. *El módulo de IA solo una de cuatro*, así que su construcción
   no es reproducible al día de hoy. El frontend declara rangos, pero el fichero de bloqueo fija el árbol.
 - *Qué no se ha hecho, y por qué:* *no se ha actualizado ninguna dependencia hoy.* Es el día de la
-  congelación, el vídeo se graba sobre esta etiqueta y subir la librería de tokens o el cliente HTTP cambia
+  congelación, la entrega se hace sobre esta etiqueta y subir la librería de tokens o el cliente HTTP cambia
   el código que se entrega. Queda declarado aquí y en el apartado 9.
 - *Honestidad de método:* pip-audit resuelve el árbol completo, así que esos 78 incluyen transitivas, y
   *no se ha medido cuáles son alcanzables* desde el camino de ejecución del producto. Decir «78 avisos» no
@@ -942,26 +940,26 @@ El filtro por confianza compara el valor que devuelve el modelo contra un umbral
 
 
 = Matriz de trazabilidad
-La pieza con la que se corrige la práctica: requisito por requisito, dónde está implementado, qué prueba lo verifica y dónde se ve. Las rutas están comprobadas en el código (4-oct). La columna de evidencia enlaza la figura de la memoria y el *minuto exacto del vídeo*. Se rellena al grabar.
+La pieza con la que se corrige la práctica: requisito por requisito, dónde está implementado, qué prueba lo verifica y dónde se ve. Las rutas están comprobadas en el código (4-oct). La columna de evidencia enlaza la figura de la memoria y el apartado donde se explica.
 #tabla(
   (auto, 4fr, auto, 4fr, 4fr),
   "
   Req. | Descripción | Estado | Implementación (ruta) | Prueba y evidencia
-  RF-01 | Dashboard web sin instalación | Cumplido (seis pestañas: Red fuera, Manual dentro) | frontend/src/App.jsx + Layout.jsx + pages/manual/ | PR-01 · fig. apdo. 9 · vídeo —:—
+  RF-01 | Dashboard web sin instalación | Cumplido (seis pestañas: Red fuera, Manual dentro) | frontend/src/App.jsx + Layout.jsx + pages/manual/ | PR-01 · fig. apdo. 9
   RF-02 | Proxy del lado servidor (httpx) | Modificado (justif. apdo. 3) | backend/services/proxy_service.py | PR-19 · justif. apdo. 3
-  RF-03 | Spider / rastreo | Cumplido (19 defectos corregidos, apdo. 7) | backend/services/spider_service.py + frontend/src/pages/proxy/ | PR-03 · fig. apdo. 7 · vídeo —:—
+  RF-03 | Spider / rastreo | Cumplido (19 defectos corregidos, apdo. 7) | backend/services/spider_service.py + frontend/src/pages/proxy/ | PR-03 · fig. apdo. 7
   RF-04 | Auditoría autenticada (sesión compartida) | *Modificado* (cliente propio, justif. apdo. 3) | backend/services/session_service.py + proxy_service.py | PR-04 · justif. apdo. 3 · figs. apdo. 7
-  RF-05 | Repeater | Cumplido (16 defectos corregidos, historial retirado por diseño, apdo. 9) | backend/routes/repeater.py + frontend/src/pages/repeater/ | PR-05 · fig. apdo. 5 · vídeo —:—
-  RF-06 | Intruder / fuzzing | Cumplido (cancelación corregida) | backend/services/intruder_service.py | PR-06 · fig. apdo. 5 · vídeo —:—
-  RF-07 | Utilidades (incl. JWT) | Cumplido | frontend/src/pages/utilities/ | PR-07 · fig. apdo. 5 · vídeo —:—
-  RF-08 | IA → panel Vulnerabilidades | Parcial: recorrido y techo verificados, *ningún hallazgo analizado aún* (apdo. 7) | ia/ + backend/services/redis_consumer.py | PR-08 · figs. apdo. 7 · vídeo —:—
-  RF-09 | DevTools → panel Red | *Descartado* (justif. apdo. 3) | devtools/ conservado · backend/routes/network.py se mantiene | justif. apdo. 3 · vídeo —:—
-  RF-10 | Playwright | *Parcial* (sin prueba ejecutada y sondeo con 401, apdos. 6-7) | playwright/ + backend/routes/playwright.py | PR-10 · apdos. 6-7 · vídeo —:—
+  RF-05 | Repeater | Cumplido (16 defectos corregidos, historial retirado por diseño, apdo. 9) | backend/routes/repeater.py + frontend/src/pages/repeater/ | PR-05 · fig. apdo. 5
+  RF-06 | Intruder / fuzzing | Cumplido (cancelación corregida) | backend/services/intruder_service.py | PR-06 · fig. apdo. 5
+  RF-07 | Utilidades (incl. JWT) | Cumplido | frontend/src/pages/utilities/ | PR-07 · fig. apdo. 5
+  RF-08 | IA → panel Vulnerabilidades | Parcial: recorrido y techo verificados, *ningún hallazgo analizado aún* (apdo. 7) | ia/ + backend/services/redis_consumer.py | PR-08 · figs. apdo. 7
+  RF-09 | DevTools → panel Red | *Descartado* (justif. apdo. 3) | devtools/ conservado · backend/routes/network.py se mantiene | justif. apdo. 3
+  RF-10 | Playwright | *Parcial* (sin prueba ejecutada y sondeo con 401, apdos. 6-7) | playwright/ + backend/routes/playwright.py | PR-10 · apdos. 6-7
   RF-11 | Multi-usuario | Cumplido (reimplementado con el acceso por usuario) | backend/services/guardia.py + auth_service.py | PR-11 · apdo. 6 · figs. apdo. 7
   RF-12 | Registro y login por usuario + aislamiento | Cumplido (fugas cerradas en producción, batería 11/11 en local) | backend/services/auth_service.py + guardia.py | PR-12 · apdo. 6 · figs. apdo. 7
   RNF-01 | Accesible desde navegador sin instalar nada en el cliente | Cumplido, con limitación en móvil (apdo. 9) | frontend/ servido por Nginx | PR-01 · apdo. 9
-  RNF-02 | WebSocket en tiempo real | Cumplido (canal autenticado) | backend/main.py (/ws/) | PR-17 · apdo. 6 · vídeo —:—
-  RNF-03 | Despliegue Docker en Hetzner | Cumplido (reproducibilidad probada el 15-oct, apdo. 7) | docker-compose.yml + infra/nginx.conf + README.md | PR-13 · apdo. 7 · vídeo —:—
+  RNF-02 | WebSocket en tiempo real | Cumplido (canal autenticado) | backend/main.py (/ws/) | PR-17 · apdo. 6
+  RNF-03 | Despliegue Docker en Hetzner | Cumplido (reproducibilidad probada el 15-oct, apdo. 7) | docker-compose.yml + infra/nginx.conf + README.md | PR-13 · apdo. 7
   RNF-04 | Historial de commits que refleje el trabajo del grupo | Parcial: no hubo reparto y la autoría se sortea (apdo. 10) | repositorio del producto | apdo. 10
   RNF-05 | Límite de concurrencia | Cumplido | backend/services/intruder_service.py (asyncio.Semaphore) | PR-20 · apdo. 7
   RNF-06 | Operación degradada cuando la IA falla o no supera el umbral | Cumplido y *visto en el panel* (10-oct y 15-oct) | ia/client.py + ia/analyzers/ | test_tres_estados.py (8/8) y test_escala_confianza.py (19/19) · fig. apdo. 7
@@ -970,13 +968,12 @@ La pieza con la que se corrige la práctica: requisito por requisito, dónde est
   RNF-09 | TLS/HTTPS | Pendiente | (por configurar en Nginx) | PR-18 · apdo. 7
   ",
 )
-#estado("curso", "RUTAS VERIFICADAS EN CÓDIGO · PRUEBAS Y MINUTOS DE VÍDEO POR COMPLETAR")
+#estado("curso", "RUTAS VERIFICADAS EN CÓDIGO · PRUEBAS SEGÚN EL PLAN DEL APARTADO 7")
 
 
 La columna de prueba remite al *plan de pruebas del apartado 7*, que reconstruye los dieciocho casos citados con dos resultados, el del 29 de septiembre sobre el prototipo y el de hoy sobre el código congelado, y declara caso por caso de dónde sale el resultado de hoy. La numeración RF/RNF es la fijada en el apartado 3.
 
 
-#hueco("el grupo", "Al revisar el vídeo grabado, anotar el minuto exacto donde se demuestra cada requisito y el número de figura de su captura.")
 
 = Limitaciones y trabajo futuro
 Qué no funciona, qué funciona con condiciones y qué se haría con más tiempo. Este apartado recibe material hasta el último día.
@@ -1034,6 +1031,21 @@ El laboratorio vulnerable salió del producto el 13-oct (apartado 6), pero *su n
 
 == La herramienta que genera los esquemas no está versionada
 El generador de esquemas vive en la carpeta de trabajo de la práctica, *fuera del repositorio del producto*: sin historial, sin revisión y sin autoría registrada, al contrario que todo el código. No es una incoherencia inocua: *el único sitio sin historial resultó ser exactamente donde estaba el defecto del apartado 7*. Trabajo futuro de coste bajo: mover las herramientas al repositorio, cosa que no se hizo a tres días de la congelación porque introducía riesgo sin aportar nada al producto.
+
+== El vídeo de demostración no se entrega
+De los tres entregables que pide el enunciado se entregan dos, la memoria técnica y el repositorio. El vídeo
+de demostración no se ha grabado por falta de tiempo en la última semana de la práctica, y queda declarado
+aquí en lugar de entregarse sin explicación.
+
+*Qué se pierde con ello.* El enunciado reserva al vídeo la demostración del producto en marcha y pide que
+cada requisito lleve anotado en la matriz el minuto donde se demuestra. Quedan sin cumplir las tres
+comprobaciones de la lista de entrega que dependen de la grabación y la que pide el enlace en la portada, y
+la matriz se entrega sin columna de minutos.
+
+*Qué queda en su lugar.* Las figuras del producto citadas una por una en la matriz de trazabilidad, el plan
+de pruebas del apartado 7 con sus dieciocho casos y sus dos resultados, y la instalación desde cero
+ejecutada y documentada en el apartado 7. Ninguna de las tres sustituye al vídeo y no se presentan como
+equivalentes.
 
 #hueco("el grupo", "Acumular las limitaciones que aparezcan hasta el cierre de la entrega. Este apartado recibe material hasta el último día.")
 
