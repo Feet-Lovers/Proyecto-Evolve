@@ -5318,3 +5318,25 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
 - **A qué requisito toca:** el criterio de coherencia del enunciado. **Evidencia:** commit de la jornada en
   develop. **38 citas de figura por número, cero referencias sin resolver y cero citas vagas**; 44 páginas
   totales y 37 contables. **Horas:** ~0,5 h de asistente.
+
+## Fase 3 (16-oct, tarde) — el apartado de uso de IA adelgaza
+
+- **Qué se hizo:** josemax eligió dos de las tres cosas que se le propusieron para el apartado de uso de
+  herramientas de IA. **Fuera el bloque «Leer sin leer»**, el que contaba el método de delegar en un segundo
+  asistente la lectura del material que el filtro bloqueaba: era método nuestro de trabajo de principio a
+  fin y no decía nada del producto ni de los requisitos, que es lo que su regla 6 manda quitar. Y
+  **comprimido el bloque de los defectos que introdujo el asistente**, de 623 a 512 palabras: se retira el
+  relato de dos de los ocho casos y se conserva lo que sostiene el apartado, la tabla de los ocho con qué
+  detectó cada uno, el reparto de quién los encontró, la regla concreta que salió del error repetido y la
+  conclusión sobre los efectos laterales.
+- **Por qué:** el apartado es obligatorio por enunciado y lo que el enunciado premia es declarar los
+  defectos que la IA introdujo, no el relato de cada uno. El apartado baja de cinco bloques a cuatro y de
+  1.647 a 1.315 palabras sin perder ninguna de sus afirmaciones.
+- **Qué se descartó:** recortar el episodio del rebobinado del primer bloque, que también es método interno.
+  Él no lo pidió y no se toca por iniciativa propia.
+- **Qué falló:** la compresión por coincidencia literal no entró, porque el texto del `.typ` era más largo
+  que lo que se había inspeccionado en pantalla. Se rehízo trabajando por rango de líneas. Y se comprobó
+  que el bloque retirado **no dejaba ninguna remisión huérfana** en el resto del documento.
+- **A qué requisito toca:** la declaración obligatoria de uso de IA. **Evidencia:** commit de la jornada en
+  develop. **43 páginas totales y 36 contables**, cuatro de margen; cero referencias sin resolver.
+  **Horas:** ~0,4 h de asistente.
