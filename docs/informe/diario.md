@@ -5452,3 +5452,20 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
   es lo que se entrega.
 - **A qué requisito toca:** la casilla del enunciado que pide la etiqueta sobre el commit entregado, y las
   dos que dependían de ella. **Evidencia:** la etiqueta en el remoto. **Horas:** ~0,5 h de asistente.
+
+## Fase 3 (16-oct, tarde) — escaneo final de secretos, sobre el repositorio ya cerrado
+
+- **Qué se hizo:** el escaneo que cierra la entrega, sobre los ficheros versionados del commit etiquetado y
+  sobre el **texto extraído** del PDF, no sobre el PDF en crudo, porque ahí un buscador devuelve ceros
+  falsos. Con control positivo, que es lo que demuestra que el escáner cuenta: treinta y tres ficheros y
+  cincuenta y dos coincidencias del nombre del producto.
+- **Resultado:** sin tokens de la plataforma de código, sin claves privadas, sin credenciales de sesión, sin
+  valores reales de ninguna de las cuatro variables sensibles y **sin un solo correo personal**, ni en el
+  repositorio ni en el documento.
+- **Dos positivos que había que resolver, y los dos son falsos:** el prefijo de las claves de la API aparece
+  en cinco ficheros y el nombre de la cabecera de sesión en tres. Medido con un patrón de clave completa y
+  con otro de valor largo tras el nombre: **cero y cero**. Son el prefijo y el nombre en prosa, contando el
+  incidente, que es como la norma del equipo manda contarlo.
+- **A qué requisito toca:** la casilla del enunciado que pide que no haya secretos reales ni en el código ni
+  en el historial. **Evidencia:** recuentos con control positivo sobre el commit etiquetado.
+  **Horas:** ~0,2 h de asistente.
