@@ -5411,3 +5411,23 @@ solo commit porque se entrelazan en los mismos ficheros y por separado no compil
 - **A qué requisito toca:** el criterio del enunciado sobre el contenido del repositorio. **Evidencia:**
   commit de la jornada en develop, y **un clon limpio del repositorio compila la memoria con sus trece
   figuras**. **Horas:** ~0,6 h de asistente.
+
+## Fase 3 (16-oct, tarde) — segunda pasada de limpieza: fuera lo que no cita nadie
+
+- **Qué se hizo:** segunda vuelta sobre el árbol publicado, con el criterio de josemax de dejar solo lo
+  estrictamente necesario. Fuera del índice **veintitrés ficheros que no cita ningún documento** y el
+  fichero de convenciones de contribución, que era de la práctica anterior. De los veintitrés: nueve
+  capturas de trabajo del pulido, tres capturas de la práctica anterior en el directorio del módulo de IA,
+  un marcador de directorio vacío, **la lista de capturas pendientes con el nombre de una persona en el
+  propio nombre del fichero**, que es organización interna sin sitio en un entregable público, y nueve
+  capturas de evidencia que resultaron ser **duplicados exactos** de las que se quedan.
+- **Por qué:** el repositorio es público y lo que se publica debe poder justificarse. La lista de trabajo
+  interna era el caso más claro.
+- **Qué se comprobó, y es lo que hace la limpieza segura:** las nueve capturas de evidencia se compararon
+  **por hash** con las de la carpeta que se conserva y son **idénticas**, de modo que no se pierde ninguna
+  evidencia. Se protegieron enteras las dos carpetas que el informe cita **por prefijo y no por nombre**,
+  y después de la pasada siguen versionadas **las trece figuras** y **cero rutas citadas** se quedan sin
+  respaldo. La memoria compila igual.
+- **A qué requisito toca:** el contenido del repositorio entregado. **Evidencia:** commit de la jornada en
+  develop. El repositorio queda en **225 ficheros y 6,4 MB**, desde los 382 y 24,5 MB de la mañana.
+  **Horas:** ~0,3 h de asistente.
